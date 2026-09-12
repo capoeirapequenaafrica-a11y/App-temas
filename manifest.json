@@ -1,0 +1,21 @@
+{
+  "name": "Universo Capoeira",
+  "short_name": "Capoeira",
+  "description": "App completo da academia Capoeira na Pequena África - check-in, avaliações, mural e mais",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#050b0e",
+  "theme_color": "#00e676",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "education", "lifestyle"],
+  "screenshots": []
+}

@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#00e676">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Universo Capoeira">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="App completo da academia Capoeira na Pequena África - check-in, avaliações, mural e mais">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg">
+  <title>Universo Capoeira v86 - Web & Mobile Edition</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box !important; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      -webkit-tap-highlight-color: transparent; 
+    }
+    
+    :root {
+      --primary-green: #00e676;
+      --primary-green-dark: #1b5e20;
+      --accent-blue: #00d2ff;
+      --accent-blue-dark: #0083b0;
+      --card-bg: #1a2a32;
+      --card-border: #2c434e;
+      --text-main: #ffffff;
+      --text-sub: #b0bec5;
+      --danger: #c62828;
+      --gold: #ffb300;
+      --gympass-red: #ff004f;
+      --insta-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    }
+
+    html, body { 
+      background-color: #050b0e !important; 
+      color: var(--text-main) !important; 
+      width: 100vw !important;
+      height: 100vh !important;
+      overflow: hidden !important;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app-frame {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      background: #0f2027;
+      border: 2px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    iframe, [class*="appsgeyser"], [id*="appsgeyser"], [id*="banner"], [class*="banner"], div[style*="position: fixed; bottom: 0"] {
+      display: none !important; height: 0 !important; width: 0 !important; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important;
+    }
+
+    header { 
+      background: #11222a; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); width: 100%; flex-shrink: 0; gap: 6px;
+    }
+
+    .logos-header-box { display: flex; align-items: center; gap: 6px; }
+    .app-logo-img { height: 32px; max-height: 60px; object-fit: contain; border-radius: 4px; display: none; }
+    .app-title { font-weight: 700; font-size: 0.85rem; color: var(--primary-green); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+
+    .cronometro-box { 
+      background: #081217; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--accent-blue); display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+    }
+    .cronometro-display { font-family: monospace; font-size: 0.95rem; color: var(--accent-blue); font-weight: 700; }
+    .cronometro-controls { display: flex; gap: 2px; margin-top: 2px; }
+    .cronometro-btn { background: #1a2a32; border: 1px solid var(--card-border); color: #fff; border-radius: 4px; padding: 2px 4px; font-size: 0.6rem; cursor: pointer; }
+
+    .tabs-container { padding: 6px 8px 2px 8px; background: #091419; border-bottom: 1px solid var(--card-border); flex-shrink: 0; }
+    .tabs { display: flex; overflow-x: auto; background: #0b171d; padding: 4px; gap: 4px; border: 1px solid var(--card-border); border-radius: 8px; width: 100%; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs button { 
+      flex: 1; min-width: 58px; padding: 6px 2px; background: transparent; border: none; color: var(--text-sub); font-weight: 600; font-size: 0.68rem; border-radius: 6px; cursor: pointer; white-space: nowrap; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .tabs button.active { color: #fff; background: var(--primary-green-dark); }
+
+    .tab-content { display: none; padding: 10px; flex: 1; width: 100% !important; max-width: 100% !important; overflow-y: auto; }
+    .tab-content.active { display: block; }
+
+    .card { 
+      background: var(--card-bg) !important; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; border: 1px solid var(--card-border); width: 100% !important; max-width: 100% !important;
+    }
+    .card h3 { margin-bottom: 6px; color: var(--primary-green); font-size: 0.88rem; display: flex; align-items: center; gap: 6px; }
+
+    .btn { 
+      background: var(--primary-green-dark); border: none; color: #fff; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-weight: 600; margin: 4px 0; width: 100%; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none;
+    }
+    .btn-secondary { background: var(--accent-blue-dark); }
+    .btn-danger { background: var(--danger); }
+    .btn-whatsapp { background: #128c7e; }
+    .btn-instagram { background: var(--insta-gradient); color: #fff; }
+    .btn-gympass { background: linear-gradient(135deg, var(--gympass-red), #b30037); color: #fff; }
+    .btn-back { background: #37474f; margin-bottom: 8px; }
+
+    .flex-btn { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; }
+    .flex-btn .btn { flex: 1 1 110px; min-width: 0; }
+
+    input, select, textarea { 
+      width: 100% !important; padding: 8px 10px; margin: 3px 0; border-radius: 8px; border: 1px solid var(--card-border); background: #0a1419; color: #fff; font-size: 0.8rem; outline: none;
+    }
+
+    .lado-flex { display: flex; gap: 4px; margin: 2px 0; }
+    .lado-flex input { flex: 1; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-card { background: #11222a; border: 1px solid var(--accent-blue); border-radius: 14px; padding: 16px; max-width: 320px; width: 100%; color: #fff; }
+
+    footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text-sub); border-top: 1px solid var(--card-border); margin-top: auto; width: 100%; flex-shrink: 0; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary-green-dark); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; z-index: 1000; display: none; text-align: center; max-width: 90%; }
+    
+    .alerta-dificuldade { background: rgba(198, 40, 40, 0.2); border-left: 3px solid var(--danger); padding: 4px 6px; margin: 3px 0; border-radius: 4px; font-size: 0.72rem; }
+    .badge-count { background: var(--gold); color: #000; font-weight: bold; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; }
+
+    .status-firebase {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+    .status-online { background: #1b5e20; color: #a5d6a7; }
+    .status-offline { background: #b71c1c; color: #ffcdd2; }
+  </style>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+</head>
+<body>
+
+<div class="app-frame">
+
+  <header>
+    <div class="logos-header-box">
+      <img id="headerLogo1" class="app-logo-img" alt="Logo 1">
+      <img id="headerLogo2" class="app-logo-img" alt="Logo 2">
+      <div class="app-title" id="headerAppTitle">
+        <i class="fas fa-child-reaching"></i> Universo Capoeira
+        <span id="firebaseStatus" class="status-firebase status-offline">OFFLINE</span>
+      </div>
+    </div>
+
+    <div class="cronometro-box">
+      <div class="cronometro-display" id="timerDisplay">01:30</div>
+      <div class="cronometro-controls">
+        <button class="cronometro-btn" onclick="iniciarPausarTimer()" id="btnStartTimer"><i class="fas fa-play"></i></button>
+        <button class="cronometro-btn" onclick="resetarTimer()"><i class="fas fa-undo"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs-container">
+    <div class="tabs" id="protectedSystemTabs">
+      <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-home"></i>Início</button>
+      <button onclick="abrirAba('tab2', this)"><i class="fas fa-map-marker-alt"></i>Check-in</button>
+      <button onclick="abrirAba('tab3', this)"><i class="fas fa-user-graduate"></i>Aluno</button>
+      <button onclick="abrirAba('tab4', this)"><i class="fas fa-chalkboard-teacher"></i>Professor</button>
+      <button onclick="abrirAba('tab5', this)"><i class="fas fa-sliders-h"></i>ADM</button>
+      <button onclick="abrirAba('tab6', this)"><i class="fas fa-code"></i>Dev</button>
+    </div>
+  </div>
+
+  <!-- 1. ABA INÍCIO -->
+  <div id="tab1" class="tab-content active">
+    <div class="card" style="border: 1px solid var(--primary-green);">
+      <h3><i class="fas fa-share-nodes" style="color:var(--primary-green);"></i> Compartilhar App com os Alunos</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Envie o link oficial para os seus alunos acessarem diretamente no celular:</p>
+      <button class="btn btn-whatsapp" onclick="compartilharAplicativo()"><i class="fab fa-whatsapp"></i> Enviar Link para Alunos (WhatsApp)</button>
+    </div>
+
+    <div class="card" style="border: 1px solid #e6683c;">
+      <h3 style="color:#f09433;"><i class="fab fa-instagram"></i> Instagram da Academia</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe as fotos, vídeos e novidades no nosso perfil oficial:</p>
+      <p style="font-size:0.8rem; font-weight:bold; color:#fff; margin-bottom:8px;">@capoeiranapequenaafrica</p>
+      <button class="btn btn-instagram" onclick="abrirInstagramOficial()"><i class="fab fa-instagram"></i> Acessar Instagram Oficial</button>
+    </div>
+
+    <div class="card" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
+      <h3><i class="fas fa-broadcast-tower" style="color:var(--accent-blue);"></i> Local Notificado pelo Professor</h3>
+      <p id="textoNotificacaoLocal" style="font-size:0.75rem; color:#fff; margin-top:2px;"></p>
+      <a id="linkGmapsNotificacao" href="#" target="_blank" style="display:none; color:var(--primary-green); font-size:0.7rem; text-decoration:underline; margin-top:4px;">Ver no Google Maps</a>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-comments"></i> Mural & Bate-Papo da Academia</h3>
+      <div id="chatMessages" style="max-height:160px; overflow-y:auto; margin-bottom:6px; font-size:0.75rem;"></div>
+      <div style="display:flex; gap:4px; align-items:center;">
+        <input id="chatInput" placeholder="Digite uma mensagem..." onkeypress="if(event.key==='Enter') enviarMensagemNuvem()" style="flex:1;">
+        <button class="btn btn-secondary" style="width:auto; padding:8px 10px; margin:0;" onclick="document.getElementById('inputFotoChat').click()"><i class="fas fa-camera"></i></button>
+        <input type="file" id="inputFotoChat" accept="image/*" style="display:none;" onchange="uploadFotoChat(this)">
+      </div>
+      <button class="btn" style="margin-top:4px;" onclick="enviarMensagemNuvem()"><i class="fas fa-paper-plane"></i> Publicar Mensagem</button>
+    </div>
+  </div>
+
+  <!-- 2. ABA CHECK-IN -->
+  <div id="tab2" class="tab-content">
+    <div class="card" style="border:1px solid var(--gympass-red);">
+      <h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-in Gympass / Wellhub</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Insira o código gerado no app do Wellhub para validar na unidade <strong>Capoeira na Pequena África</strong>.</p>
+      <input id="gympassAlunoNome" placeholder="Nome do Aluno">
+      <input id="gympassTokenVal" placeholder="Token Wellhub / Gympass (6 dígitos)">
+      <button class="btn btn-gympass" onclick="validarCheckinGympassNuvem()"><i class="fas fa-check-circle"></i> Confirmar Token Gympass</button>
+    </div>
+
+    <div class="card">
+      <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Selecione o polo cadastrado pelo professor:</p>
+      <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo">
+      <select id="selectPoloFixoTreino"><option value="">Aguardando professor cadastrar local...</option></select>
+      <button class="btn" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
+    </div>
+  </div>
+
+  <!-- 3. ABA ALUNO -->
+  <div id="tab3" class="tab-content">
+    <div class="card" id="cardAlunoLogin">
+      <h3><i class="fas fa-user-lock"></i> Área do Aluno (Login)</h3>
+      <input id="alunoLoginNome" placeholder="Nome Completo ou Apelido">
+      <input id="alunoLoginSenha" type="password" placeholder="Senha">
+      <button class="btn" onclick="autenticarAlunoNuvem()"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</button>
+      <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:6px;">
+        <button class="btn btn-secondary" onclick="toggleAutoCadastroAluno(true)"><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</button>
+      </div>
+    </div>
+
+    <div class="card" id="cardAlunoPrimeiroCadastro" style="display:none;">
+      <button class="btn btn-back" onclick="toggleAutoCadastroAluno(false)"><i class="fas fa-arrow-left"></i> Voltar</button>
+      <h3><i class="fas fa-user-plus"></i> Cadastro de Aluno</h3>
+      <input id="autoCadNome" placeholder="Seu Nome Completo">
+      <input id="autoCadApelido" placeholder="Apelido na Capoeira">
+      
+      <label style="font-size:0.7rem; color:var(--gold); margin-top:4px; display:block;">Sua Corda / Graduação Atual:</label>
+      <select id="autoCadGraduacaoSelect">
+        <option value="Iniciante - Corda Crua">Iniciante - Corda Crua</option>
+        <option value="Aluno - Crua e Amarela">Aluno - Crua e Amarela</option>
+        <option value="Aluno - Amarela">Aluno - Amarela</option>
+        <option value="Aluno - Amarela e Laranja">Aluno - Amarela e Laranja</option>
+        <option value="Aluno - Laranja">Aluno - Laranja</option>
+        <option value="Aluno - Laranja e Azul">Aluno - Laranja e Azul</option>
+        <option value="Aluno Formado - Azul">Aluno Formado - Azul</option>
+        <option value="Aluno Formado - Azul e Verde">Aluno Formado - Azul e Verde</option>
+        <option value="Graduado - Verde">Graduado - Verde</option>
+        <option value="Graduado - Verde e Roxa">Graduado - Verde e Roxa</option>
+        <option value="Instrutor - Corda Roxa">Instrutor - Corda Roxa</option>
+        <option value="Instrutor - Roxa e Marrom">Instrutor - Roxa e Marrom</option>
+        <option value="Professor - Corda Marrom">Professor - Corda Marrom</option>
+        <option value="Contra-Mestre - Corda Marrom e Vermelha">Contra-Mestre - Corda Marrom e Vermelha</option>
+        <option value="Mestre - Corda Vermelha">Mestre - Corda Vermelha</option>
+      </select>
+
+      <input id="autoCadInstagram" placeholder="@SeuInstagram (Ex: @joao_capoeira)">
+      <input id="autoCadSenha" type="password" placeholder="Crie sua Senha">
+      
+      <label style="font-size:0.7rem; color:var(--accent-blue); margin-top:4px; display:block;">Selecione seu Professor:</label>
+      <select id="selectProfessorVinculoAluno"><option value="Dyno">Instrutor Dyno</option></select>
+      
+      <button class="btn" style="margin-top:8px;" onclick="realizarAutoCadastroAlunoComProfessor()"><i class="fas fa-check"></i> Concluir Cadastro</button>
+    </div>
+
+    <div id="painelAlunoConteudo" style="display:none;">
+      <button class="btn btn-back" onclick="deslogarAluno()"><i class="fas fa-sign-out-alt"></i> Sair / Voltar</button>
+      
+      <div class="card" style="border:1px solid var(--gold);">
+        <h3><i class="fas fa-ribbon" style="color:var(--gold);"></i> Minha Graduação</h3>
+        <p style="font-size:0.85rem; color:#fff; font-weight:bold;" id="displayGraduacaoAlunoTexto">Iniciante - Corda Crua</p>
+      </div>
+
+      <div class="card" style="border:1px solid #dc2743;">
+        <h3><i class="fab fa-instagram" style="color:#dc2743;"></i> Perfil no Instagram</h3>
+        <p style="font-size:0.75rem; color:#fff;" id="displayInstaAlunoTexto">@NãoInformado</p>
+        <button class="btn btn-instagram" id="btnAbrirInstaAluno" style="margin-top:6px;"><i class="fab fa-instagram"></i> Ver Instagram</button>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-clipboard-check"></i> Boletim de Avaliação Oficial</h3>
+        <div id="boletimAlunoDinamico" style="font-size:0.75rem; color:var(--text-sub);">
+          <p>Aguardando lançamento da avaliação do professor...</p>
+        </div>
+      </div>
+
+      <div class="card" id="cardAvisoEventoAluno" style="display:none; border:1px solid var(--gold);">
+        <h3 style="color:var(--gold);"><i class="fas fa-bullhorn"></i> Aviso de Aula / Evento</h3>
+        <p id="txtAvisoEventoAluno" style="font-size:0.78rem; color:#fff; margin-bottom:8px;"></p>
+        <div id="boxRespostaAvisoAluno">
+          <div class="flex-btn">
+            <button class="btn" onclick="responderAvisoAluno('vou')"><i class="fas fa-check"></i> Vou</button>
+            <button class="btn btn-danger" onclick="responderAvisoAluno('nao_vou')"><i class="fas fa-times"></i> Não Vou</button>
+          </div>
+        </div>
+        <p id="txtRespostaJaEnviadaAluno" style="display:none; font-size:0.75rem; color:var(--primary-green); margin-top:6px;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ABA PROFESSOR -->
+  <div id="tab4" class="tab-content">
+    <div class="card" id="cardProfLogin">
+      <h3><i class="fas fa-chalkboard-teacher"></i> Área do Professor / Mestre</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Digite seu Apelido / Nome e sua senha:</p>
+      <input id="profLoginNomeInput" value="Dyno" placeholder="Nome Completo ou Apelido">
+      <input id="profLoginSenha" type="password" value="2803" placeholder="Senha">
+      <button class="btn" onclick="autenticarProfNuvem()"><i class="fas fa-key"></i> Acessar Painel Docente</button>
+      
+      <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:6px;">
+        <button class="btn btn-secondary" onclick="toggleCadastroProfessor(true)"><i class="fas fa-id-card"></i> Inscrição de Novo Professor</button>
+      </div>
+    </div>
+
+    <div class="card" id="cardCadastroNovoProfessor" style="display:none;">
+      <button class="btn btn-back" onclick="toggleCadastroProfessor(false)"><i class="fas fa-arrow-left"></i> Voltar</button>
+      <h3><i class="fas fa-id-card"></i> Inscrição de Novo Professor</h3>
+      <input id="cadProfNome" value="Anderson dos Santos Ferreira" placeholder="Nome Completo">
+      <input id="cadProfApelido" value="Dyno" placeholder="Apelido na Capoeira">
+      
+      <label style="font-size:0.7rem; color:var(--gold); margin-top:4px; display:block;">Sua Graduação / Título:</label>
+      <select id="cadProfGraduacaoSelect">
+        <option value="Instrutor - Corda Roxa" selected>Instrutor - Corda Roxa</option>
+        <option value="Instrutor - Roxa e Marrom">Instrutor - Roxa e Marrom</option>
+        <option value="Professor - Corda Marrom">Professor - Corda Marrom</option>
+        <option value="Contra-Mestre - Corda Marrom e Vermelha">Contra-Mestre - Corda Marrom e Vermelha</option>
+        <option value="Mestre - Corda Vermelha">Mestre - Corda Vermelha</option>
+      </select>
+
+      <label style="font-size:0.7rem; color:var(--accent-blue); margin-top:4px; display:block;">Seu Polo / Local Principal de Aula:</label>
+      <input id="cadProfNomeLocal" value="Instituto Central do Povo" placeholder="Nome do Espaço / Polo">
+      <input id="cadProfEnderecoLocal" value="https://maps.app.goo.gl/ya24kSkg7LvKroSU6" placeholder="Endereço ou Link do Google Maps">
+
+      <input id="cadProfSenha" type="password" value="2803" placeholder="Senha de Acesso">
+      <button class="btn btn-secondary" style="margin-top:8px;" onclick="realizarCadastroNovoProfessor()"><i class="fas fa-check-circle"></i> Cadastrar e Abrir Painel</button>
+    </div>
+
+    <div id="painelProfConteudo" style="display:none;">
+      <button class="btn btn-back" onclick="deslogarProfessor()"><i class="fas fa-sign-out-alt"></i> Sair / Voltar</button>
+      
+      <div class="card" style="border:1px solid var(--gold);">
+        <h3 style="color:var(--gold);"><i class="fas fa-user-shield"></i> Perfil do Professor</h3>
+        <p style="font-size:0.8rem; color:#fff;" id="profPerfilNomeDisplay"><strong>Instrutor Dyno</strong> (Corda Roxa)</p>
+        <p style="font-size:0.72rem; color:var(--text-sub);" id="profPerfilPoloDisplay">Polo Principal: Instituto Central do Povo</p>
+      </div>
+
+      <div class="card" style="border:1px solid var(--primary-green);">
+        <h3><i class="fas fa-clipboard-check"></i> Avaliação Oficial de Capoeira (0 a 100 pts)</h3>
+        
+        <label style="font-size:0.75rem; color:var(--accent-blue);">Nome do Professor Avaliador:</label>
+        <input id="profNomeAvaliadorInput" value="Dyno" placeholder="Seu Nome / Apelido de Professor">
+
+        <label style="font-size:0.75rem; color:var(--accent-blue); margin-top:4px; display:block;">Selecione o Aluno:</label>
+        <select id="selectAlunoParaAvaliarProf"><option value="">Selecione o Aluno...</option></select>
+
+        <label style="font-size:0.75rem; color:var(--gold); margin-top:6px; display:block;">Etapa da Avaliação:</label>
+        <select id="profAvalEtapaSelect">
+          <option value="1a_avaliacao">1ª Avaliação (Parcial / Boletim de Notas)</option>
+          <option value="2a_avaliacao">2ª Avaliação (Anual + Anúncio de Corda do Próximo Ano)</option>
+        </select>
+
+        <hr style="border:0; border-top:1px solid var(--card-border); margin:8px 0;">
+
+        <h4 style="color:var(--gold); font-size:0.78rem;">Chutes (Avaliação Direita e Esquerda):</h4>
+        
+        <label style="font-size:0.7rem; color:var(--text-sub);">Queixada:</label>
+        <div class="lado-flex">
+          <input type="number" id="notaQueixadaDir" placeholder="Direita (0-100)" min="0" max="100">
+          <input type="number" id="notaQueixadaEsq" placeholder="Esquerda (0-100)" min="0" max="100">
+        </div>
+
+        <label style="font-size:0.7rem; color:var(--text-sub);">Armada:</label>
+        <div class="lado-flex">
+          <input type="number" id="notaArmadaDir" placeholder="Direita (0-100)" min="0" max="100">
+          <input type="number" id="notaArmadaEsq" placeholder="Esquerda (0-100)" min="0" max="100">
+        </div>
+
+        <label style="font-size:0.7rem; color:var(--text-sub);">Meia Lua de Compasso:</label>
+        <div class="lado-flex">
+          <input type="number" id="notaMeiaLuaDir" placeholder="Direita (0-100)" min="0" max="100">
+          <input type="number" id="notaMeiaLuaEsq" placeholder="Esquerda (0-100)" min="0" max="100">
+        </div>
+
+        <label style="font-size:0.7rem; color:var(--text-sub);">Meia Lua de Frente:</label>
+        <div class="lado-flex">
+          <input type="number" id="notaMeiaLuaFrenteDir" placeholder="Direita (0-100)" min="0" max="100">
+          <input type="number" id="notaMeiaLuaFrenteEsq" placeholder="Esquerda (0-100)" min="0" max="100">
+        </div>
+
+        <h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Esquivas (Avaliação Direita e Esquerda):</h4>
+        
+        <label style="font-size:0.7rem; color:var(--text-sub);">Esquiva de Frente:</label>
+        <div class="lado-flex">
+          <input type="number" id="notaEsquivaFrenteDir" placeholder="Direita (0-100)" min="0" max="100">
+          <input type="number" id="notaEsquivaFrenteEsq" placeholder="Esquerda (0-100)" min="0" max="100">
+        </div>
+
+        <label style="font-size:0.7rem; color:var(--text-sub);">Esquiva Lateral:</label>
+        <div class="lado-flex">
+          <input type="number" id="notaEsquivaLateralDir" placeholder="Direita (0-100)" min="0" max="100">
+          <input type="number" id="notaEsquivaLateralEsq" placeholder="Esquerda (0-100)" min="0" max="100">
+        </div>
+
+        <label style="font-size:0.7rem; color:var(--text-sub);">Esquiva Diagonal:</label>
+        <div class="lado-flex">
+          <input type="number" id="notaEsquivaDiagonalDir" placeholder="Direita (0-100)" min="0" max="100">
+          <input type="number" id="notaEsquivaDiagonalEsq" placeholder="Esquerda (0-100)" min="0" max="100">
+        </div>
+
+        <label style="font-size:0.7rem; color:var(--text-sub);">Descida Básica:</label>
+        <div class="lado-flex">
+          <input type="number" id="notaDescidaBasicaDir" placeholder="Direita (0-100)" min="0" max="100">
+          <input type="number" id="notaDescidaBasicaEsq" placeholder="Esquerda (0-100)" min="0" max="100">
+        </div>
+
+        <h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Sequências Básicas:</h4>
+        <input type="number" id="notaSeqNegativaRole" placeholder="Descida básica troca pra negativa e rolê (0 - 100)" min="0" max="100">
+        <input type="number" id="notaSeqSobeTras" placeholder="Descida básica troca pra negativa e sobe por trás (0 - 100)" min="0" max="100">
+        <input type="number" id="notaSeqSobeLateral" placeholder="Descida básica troca pra negativa e sobe pela lateral (0 - 100)" min="0" max="100">
+
+        <h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Jogo nos Toques da Academia:</h4>
+        <input type="number" id="notaJogoAngola" placeholder="Jogo de Angola (0 - 100)" min="0" max="100">
+        <input type="number" id="notaJogoBenguela" placeholder="Jogo de Benguela (0 - 100)" min="0" max="100">
+        <input type="number" id="notaJogoSaoBento" placeholder="Jogo de São Bento Grande de Bimba (0 - 100)" min="0" max="100">
+
+        <h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Ritmo & Instrumentos:</h4>
+        <input type="number" id="notaBerimbau" placeholder="Toques de Berimbau (Angola, Benguela, São Bento) (0 - 100)" min="0" max="100">
+        <input type="number" id="notaAtabaquePandeiro" placeholder="Atabaque e Pandeiro (0 - 100)" min="0" max="100">
+
+        <h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Assiduidade & Compromisso:</h4>
+        <input type="number" id="notaFaltasAtrasos" placeholder="Faltas, Atrasos & Compromisso (0 - 100)" min="0" max="100">
+
+        <h4 style="color:var(--primary-green); font-size:0.78rem; margin-top:6px;">Graduação Anunciada para o Próximo Ano:</h4>
+        <select id="profAvalProximaCordaSelect">
+          <option value="">Manter Graduação Atual</option>
+          <option value="Aluno - Crua e Amarela">Aluno - Crua e Amarela</option>
+          <option value="Aluno - Amarela">Aluno - Amarela</option>
+          <option value="Aluno - Amarela e Laranja">Aluno - Amarela e Laranja</option>
+          <option value="Aluno - Laranja">Aluno - Laranja</option>
+          <option value="Aluno - Laranja e Azul">Aluno - Laranja e Azul</option>
+          <option value="Aluno Formado - Azul">Aluno Formado - Azul</option>
+          <option value="Aluno Formado - Azul e Verde">Aluno Formado - Azul e Verde</option>
+          <option value="Graduado - Verde">Graduado - Verde</option>
+          <option value="Graduado - Verde e Roxa">Graduado - Verde e Roxa</option>
+          <option value="Instrutor - Corda Roxa">Instrutor - Corda Roxa</option>
+        </select>
+
+        <textarea id="profAvalObsGerais" placeholder="Observações e Recomendações do Professor..." rows="2" style="margin-top:6px;"></textarea>
+
+        <button class="btn" style="margin-top:8px;" onclick="salvarAvaliacaoCompletaProfessor()"><i class="fas fa-save"></i> Salvar Avaliação na Nuvem</button>
+      </div>
+
+      <div class="card" style="border:1px solid var(--accent-blue);">
+        <h3><i class="fas fa-map-marked-alt"></i> Publicar Aula ou Evento para Alunos</h3>
+        
+        <label style="font-size:0.75rem; color:var(--gold);">Tipo de Notificação:</label>
+        <select id="profTipoAulaEventoSelect">
+          <option value="Aula Normal">Aula Normal</option>
+          <option value="Evento / Roda / Batizado">Evento / Roda / Batizado</option>
+        </select>
+
+        <input id="profNomeLocalTexto" value="Instituto Central do Povo" placeholder="Nome do Espaço / Polo / Evento">
+        <input id="profEnderecoOUGoogleMaps" value="https://maps.app.goo.gl/ya24kSkg7LvKroSU6" placeholder="Endereço ou Link do Maps">
+        
+        <button class="btn btn-secondary" onclick="obterGpsEPreencherLocalProfessor()"><i class="fas fa-location-arrow"></i> Usar Minha Localização Atual (GPS)</button>
+        <button class="btn" onclick="professorSalvarLocalComEndereco()"><i class="fas fa-broadcast-tower"></i> Notificar Alunos Agora</button>
+      </div>
+
+      <div class="card">
+        <h3><i class="fas fa-tasks"></i> Confirmar Presenças Pendentes</h3>
+        <div id="listaCheckinsPendentesProf" style="max-height:140px; overflow-y:auto;"></div>
+      </div>
+
+      <div class="card" style="border:1px solid var(--gold);">
+        <h3 style="color:var(--gold);"><i class="fas fa-bullhorn"></i> Publicar Aviso de Aula / Evento</h3>
+        <input id="avisoTituloInput" placeholder="Título (Ex: Roda de Sábado)">
+        <textarea id="avisoDescricaoInput" placeholder="Detalhes (data, horário, local...)" rows="2"></textarea>
+        <button class="btn" onclick="publicarAvisoProfessor()"><i class="fas fa-paper-plane"></i> Enviar Aviso e Pedir Confirmação</button>
+
+        <hr style="border:0; border-top:1px solid var(--card-border); margin:8px 0;">
+        <h4 style="color:var(--accent-blue); font-size:0.75rem; margin-bottom:4px;">Confirmações do Último Aviso:</h4>
+        <div id="resumoConfirmacoesAviso" style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Nenhum aviso publicado ainda.</div>
+        <div id="listaConfirmacoesAviso" style="max-height:140px; overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. ABA ADM -->
+  <div id="tab5" class="tab-content">
+    <button class="btn btn-back" onclick="abrirAba('tab1', null)"><i class="fas fa-arrow-left"></i> Sair do Painel ADM</button>
+
+    <div class="card" style="border:1px solid var(--primary-green);">
+      <h3><i class="fas fa-users-cog"></i> Gestão Global & Contagem de Alunos <span id="totalAlunosBadge" class="badge-count">0</span></h3>
+      <button class="btn btn-secondary" onclick="atualizarListaAlunosManual()"><i class="fas fa-sync"></i> Atualizar Lista de Alunos</button>
+      <select id="selectAlunoRelatorioAdm" onchange="carregarDetalhesAlunoAdm()"><option value="">Selecione o Aluno...</option></select>
+      
+      <div id="boxDetalhesAlunoAdm" style="margin-top:6px; font-size:0.75rem; background:#081217; padding:6px; border-radius:6px; display:none;">
+        <p><strong>Graduação Cadastrada:</strong> <span id="admAlunoGradTxt" style="color:var(--gold);">-</span></p>
+        <p><strong>Instagram:</strong> <span id="admAlunoInstaTxt">-</span></p>
+        <p><strong>Tempo na Capoeira (Anos):</strong> <span id="admAlunoAnosTxt" style="color:var(--accent-blue);">0</span> anos</p>
+        <p><strong>Total de Faltas Registradas:</strong> <span id="admAlunoFaltasTxt" style="color:var(--danger);">0</span></p>
+      </div>
+
+      <div style="margin-top:6px; border-top:1px solid var(--card-border); padding-top:6px;">
+        <h4 style="font-size:0.75rem; color:var(--gold);">Atualizar Anos de Treino e Faltas:</h4>
+        <input id="admAnoTreinoInput" type="number" placeholder="Anos de Treino / Experiência">
+        <input id="admFaltasInput" type="number" placeholder="Quantidade de Faltas">
+        <button class="btn btn-secondary" onclick="admAtualizarAnosEFaltas()"><i class="fas fa-user-edit"></i> Atualizar Dados do Aluno</button>
+      </div>
+
+      <div class="flex-btn" style="margin-top:6px;">
+        <button class="btn btn-whatsapp" onclick="gerarAvisoWhatsApp('presenca')">Aviso Presença</button>
+        <button class="btn btn-danger" onclick="gerarAvisoWhatsApp('falta')">Aviso Falta</button>
+      </div>
+    </div>
+
+    <div class="card" style="border:1px solid var(--gympass-red);">
+      <h3><i class="fas fa-network-wired"></i> Gerenciamento Wellhub / Gympass Global</h3>
+      <a href="https://partners.gympass.com/new/integrations/adc2a704-bc96-4222-8f8f-677453ea1d90" target="_blank" class="btn btn-secondary">
+        <i class="fas fa-external-link-alt"></i> Portal de Parceiros Gympass
+      </a>
+      <h4 style="font-size:0.75rem; color:#fff; margin-top:8px;">Histórico de Check-ins Registrados:</h4>
+      <div id="listaHistoricoGympass" style="max-height:120px; overflow-y:auto; font-size:0.72rem; margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <!-- 6. ABA DEV -->
+  <div id="tab6" class="tab-content">
+    <button class="btn btn-back" onclick="abrirAba('tab1', null)"><i class="fas fa-arrow-left"></i> Sair da Área Dev</button>
+    
+    <div class="card">
+      <h3><i class="fas fa-code"></i> Status e Varredura Completa Firebase</h3>
+      <button class="btn" onclick="executarVarreduraFirebaseDev()">Testar Conexão e Varredura Firebase</button>
+      <div id="resultadoVarreduraDev" style="font-size:0.7rem; color:var(--primary-green); margin-top:6px;"></div>
+    </div>
+
+    <div class="card" style="border:1px solid var(--danger);">
+      <h3><i class="fas fa-bug"></i> Telemetria & Monitor de Erros em Tempo Real</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Qualquer erro de script é capturado e exibido abaixo:</p>
+      <div id="boxTelemetriaErrosLog" style="max-height:140px; overflow-y:auto; font-size:0.7rem; color:#fff; background:#081217; padding:6px; border-radius:6px;">Nenhum erro registrado até o momento (Sistema Estável).</div>
+      <button class="btn btn-danger" style="margin-top:6px;" onclick="limparTelemetriaErros()"><i class="fas fa-trash"></i> Limpar Relatório de Erros</button>
+    </div>
+
+    <div class="card" style="border:1px solid var(--accent-blue);">
+      <h3><i class="fas fa-upload"></i> Atualização do App via HTML / Firebase</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Envie o código HTML ou confirme a versão no Firestore para atualizar a aplicação nos dispositivos dos usuários.</p>
+      <textarea id="devHtmlInput" rows="4" placeholder="Cole aqui o código HTML atualizado..."></textarea>
+      <button class="btn btn-secondary" onclick="devPublicarAtualizacaoHtml()"><i class="fas fa-cloud-upload-alt"></i> Confirmar e Publicar Versão no Firebase</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>Universo Capoeira v86 Full Edition</p>
+  </footer>
+
+</div>
+
+<div id="authGateOverlay" class="modal-overlay">
+  <div class="modal-card">
+    <h3 style="color:var(--accent-blue);"><i class="fas fa-lock"></i> Área Restrita ADM / DEV</h3>
+    <input id="authGateSenha" type="password" placeholder="Senha de Acesso" autocomplete="off">
+    <div class="flex-btn" style="margin-top:8px;">
+      <button class="btn" onclick="confirmarSenhaAcesso()">Entrar</button>
+      <button class="btn btn-danger" onclick="cancelarSenhaAcesso()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastEl" class="toast"></div>
+
+<script>
+/* ==================== TELEMETRIA ==================== */
+window.telemetriaErros = [];
+function registrarTelemetriaErro(mensagem, origem, linha) {
+  const detalhe = `[${new Date().toLocaleTimeString()}] Erro: ${mensagem} (Linha: ${linha || 'N/A'})`;
+  window.telemetriaErros.unshift(detalhe);
+  if (window.telemetriaErros.length > 30) window.telemetriaErros.pop();
+  
+  const box = document.getElementById('boxTelemetriaErrosLog');
+  if (box) {
+    box.innerHTML = window.telemetriaErros.map(e => `<div style="border-bottom:1px solid #2c434e; padding:2px 0; color:#ff5252;">${e}</div>`).join('');
+  }
+}
+
+window.onerror = function(msg, url, line) {
+  registrarTelemetriaErro(msg, url, line);
+  return false;
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+  registrarTelemetriaErro(event.reason ? (event.reason.message || event.reason) : 'Promessa rejeitada', 'Promise', 0);
+});
+
+function limparTelemetriaErros() {
+  window.telemetriaErros = [];
+  const box = document.getElementById('boxTelemetriaErrosLog');
+  if (box) box.textContent = "Nenhum erro registrado até o momento (Sistema Estável).";
+  exhibirToast("Relatório de erros limpo!");
+}
+
+/* ==================== FIREBASE ==================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDlmXcUACxQZ3QMjaQIXsJb_gUnv10P85A",
+  authDomain: "project-10dd7ec8-159b-4351-90a.firebaseapp.com",
+  projectId: "project-10dd7ec8-159b-4351-90a",
+  storageBucket: "project-10dd7ec8-159b-4351-90a.firebasestorage.app",
+  messagingSenderId: "944397472361",
+  appId: "1:944397472361:web:f66ba584699859727b08f8",
+  measurementId: "G-F8PW3VL58H"
+};
+
+let db = null;
+let storage = null;
+let firebaseOnline = false;
+
+function atualizarStatusFirebase(online) {
+  firebaseOnline = online;
+  const el = document.getElementById('firebaseStatus');
+  if (el) {
+    el.textContent = online ? 'ONLINE' : 'OFFLINE';
+    el.className = 'status-firebase ' + (online ? 'status-online' : 'status-offline');
+  }
+}
+
+function inicializarFirebaseSeguro() {
+  try {
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    if (typeof firebase !== 'undefined') {
+      db = firebase.firestore();
+      try { storage = firebase.storage(); } catch (e) { storage = null; }
+      
+      db.collection("configuracoes").doc("ping").set({
+        ts: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        atualizarStatusFirebase(true);
+        sincronizarConfiguracoesAoAbrir();
+      }).catch((err) => {
+        atualizarStatusFirebase(false);
+        console.warn("Firebase offline ou API não habilitada:", err.message);
+      });
+    }
+  } catch (e) {
+    console.warn("Firebase não inicializado:", e);
+    atualizarStatusFirebase(false);
+  }
+}
+inicializarFirebaseSeguro();
+
+/* ==================== UTILITÁRIOS ==================== */
+function exhibirToast(m) {
+  const el = document.getElementById('toastEl');
+  if (!el) return;
+  el.textContent = m;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+function getAlunoDocId(texto) {
+  if (!texto) return '';
+  return texto.trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+function abrirLinkWebDirecto() {
+  window.open("https://project-10dd7ec8-159b-4351-90a.web.app", "_blank");
+}
+
+function abrirInstagramOficial() {
+  window.open("https://instagram.com/capoeiranapequenaafrica", '_blank');
+}
+
+function compartilharAplicativo() {
+  const url = "https://project-10dd7ec8-159b-4351-90a.web.app";
+  const texto = "Acesse o app Universo Capoeira para cadastro e check-in:";
+  if (navigator.share) {
+    navigator.share({ title: 'Universo Capoeira', text: texto, url: url });
+  } else {
+    window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(`${texto} ${url}`), '_blank');
+  }
+}
+
+/* ==================== CRONÔMETRO ==================== */
+let timerInterval = null;
+let timerSegundos = 90;
+let timerRodando = false;
+let apito60Disparado = false;
+
+function formatarTempoTimer(seg) {
+  const m = Math.floor(seg / 60).toString().padStart(2, '0');
+  const s = (seg % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function tocarApitoTimer() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } catch (e) {}
+}
+
+function iniciarPausarTimer() {
+  const btn = document.getElementById('btnStartTimer');
+  const display = document.getElementById('timerDisplay');
+
+  if (timerRodando) {
+    clearInterval(timerInterval);
+    timerRodando = false;
+    if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
+    return;
+  }
+
+  if (timerSegundos <= 0) {
+    timerSegundos = 90;
+    apito60Disparado = false;
+  }
+  
+  tocarApitoTimer();
+  timerRodando = true;
+  if (btn) btn.innerHTML = '<i class="fas fa-pause"></i>';
+
+  timerInterval = setInterval(() => {
+    timerSegundos--;
+    if (display) display.textContent = formatarTempoTimer(timerSegundos);
+
+    if (timerSegundos <= 60 && !apito60Disparado) {
+      tocarApitoTimer();
+      apito60Disparado = true;
+    }
+
+    if (timerSegundos <= 0) {
+      clearInterval(timerInterval);
+      timerRodando = false;
+      tocarApitoTimer();
+      if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
+    }
+  }, 1000);
+}
+
+function resetarTimer() {
+  clearInterval(timerInterval);
+  timerRodando = false;
+  timerSegundos = 90;
+  apito60Disparado = false;
+  const display = document.getElementById('timerDisplay');
+  if (display) display.textContent = formatarTempoTimer(timerSegundos);
+  const btn = document.getElementById('btnStartTimer');
+  if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
+}
+
+/* ==================== SESSÃO ==================== */
+let alunoSessao = null;
+let profSessao = null;
+
+/* ==================== ABAS ==================== */
+const SENHA_ACESSO_RESTRITO = '2803';
+let acessoRestritoLiberado = false;
+let tabPendente = null;
+
+function abrirAba(tabId, btn) {
+  if ((tabId === 'tab5' || tabId === 'tab6') && !acessoRestritoLiberado) {
+    tabPendente = tabId;
+    document.getElementById('authGateSenha').value = '';
+    document.getElementById('authGateOverlay').style.display = 'flex';
+    return;
+  }
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  if (tabId === 'tab2') carregarDadosAbaCheckin();
+  if (tabId === 'tab5') carregarDadosAbaAdm();
+}
+
+function confirmarSenhaAcesso() {
+  if (document.getElementById('authGateSenha').value === SENHA_ACESSO_RESTRITO) {
+    acessoRestritoLiberado = true;
+    document.getElementById('authGateOverlay').style.display = 'none';
+    if (tabPendente) abrirAba(tabPendente, null);
+  } else {
+    exhibirToast("Senha incorreta!");
+  }
+}
+
+function cancelarSenhaAcesso() {
+  document.getElementById('authGateOverlay').style.display = 'none';
+}
+
+/* ==================== ALUNO ==================== */
+function salvarSessaoAlunoLocal(a) {
+  try { localStorage.setItem('alunoSessaoAtiva', JSON.stringify(a)); } catch (e) {}
+}
+
+function limparSessaoAlunoLocal() {
+  try { localStorage.removeItem('alunoSessaoAtiva'); } catch (e) {}
+}
+
+function restaurarSessaoAlunoSalva() {
+  try {
+    const raw = localStorage.getItem('alunoSessaoAtiva');
+    if (raw) {
+      alunoSessao = JSON.parse(raw);
+      abrirPainelAlunoLogado(alunoSessao);
+    }
+  } catch (e) {}
+}
+
+function toggleAutoCadastroAluno(e) {
+  document.getElementById('cardAlunoPrimeiroCadastro').style.display = e ? 'block' : 'none';
+  document.getElementById('cardAlunoLogin').style.display = e ? 'none' : 'block';
+}
+
+function realizarAutoCadastroAlunoComProfessor() {
+  const nome = document.getElementById('autoCadNome').value.trim();
+  const apelido = document.getElementById('autoCadApelido').value.trim();
+  const sen = document.getElementById('autoCadSenha').value;
+  const profNome = document.getElementById('selectProfessorVinculoAluno').value || "Dyno";
+  const grad = document.getElementById('autoCadGraduacaoSelect').value;
+  let insta = document.getElementById('autoCadInstagram').value.trim();
+
+  if (!nome || !sen) return exhibirToast("Preencha nome e senha!");
+  if (insta && !insta.startsWith('@')) insta = '@' + insta;
+
+  const docId = getAlunoDocId(apelido || nome);
+  const dadosAluno = {
+    nome, apelido: apelido || nome, senha: sen,
+    graduacao: grad || "Iniciante - Corda Crua",
+    instagram: insta || "", professorNome: profNome,
+    anosTreino: 0, faltas: 0
+  };
+
+  if (db && firebaseOnline) {
+    db.collection("alunos").doc(docId).set(dadosAluno).then(() => {
+      exhibirToast("✅ Cadastro Concluído!");
+      alunoSessao = dadosAluno;
+      salvarSessaoAlunoLocal(dadosAluno);
+      toggleAutoCadastroAluno(false);
+      abrirPainelAlunoLogado(dadosAluno);
+    }).catch(err => exhibirToast("Erro ao cadastrar: " + err.message));
+  } else {
+    alunoSessao = dadosAluno;
+    salvarSessaoAlunoLocal(dadosAluno);
+    toggleAutoCadastroAluno(false);
+    abrirPainelAlunoLogado(dadosAluno);
+    exhibirToast("✅ Cadastro local (Firebase offline)");
+  }
+}
+
+function autenticarAlunoNuvem() {
+  const nomeInput = document.getElementById('alunoLoginNome').value.trim().toLowerCase();
+  const sen = document.getElementById('alunoLoginSenha').value;
+  if (!nomeInput || !sen) return exhibirToast("Informe login e senha.");
+
+  if (db && firebaseOnline) {
+    db.collection("alunos").get().then(snapshot => {
+      let achou = false;
+      snapshot.forEach(doc => {
+        const a = doc.data();
+        if (((a.nome && a.nome.toLowerCase() === nomeInput) || (a.apelido && a.apelido.toLowerCase() === nomeInput)) && a.senha === sen) {
+          achou = true;
+          alunoSessao = a;
+          salvarSessaoAlunoLocal(a);
+          abrirPainelAlunoLogado(a);
+          exhibirToast("Bem-vindo, " + (a.apelido || a.nome));
+        }
+      });
+      if (!achou) exhibirToast("Aluno não encontrado ou senha incorreta.");
+    }).catch(() => exhibirToast("Erro de conexão com a nuvem."));
+  } else {
+    exhibirToast("Firebase offline. Cadastre-se primeiro.");
+  }
+}
+
+function abrirPainelAlunoLogado(a) {
+  document.getElementById('painelAlunoConteudo').style.display = 'block';
+  document.getElementById('cardAlunoLogin').style.display = 'none';
+  document.getElementById('cardAlunoPrimeiroCadastro').style.display = 'none';
+
+  document.getElementById('displayGraduacaoAlunoTexto').textContent = a.graduacao || "Iniciante - Corda Crua";
+  document.getElementById('displayInstaAlunoTexto').textContent = a.instagram || "@NãoInformado";
+  
+  const btnInsta = document.getElementById('btnAbrirInstaAluno');
+  if (btnInsta && a.instagram) {
+    const user = a.instagram.replace('@', '');
+    btnInsta.onclick = () => window.open(`https://instagram.com/${user}`, '_blank');
+  }
+
+  carregarAvisoAtivoParaAluno(a.apelido || a.nome);
+
+  if (db && firebaseOnline) {
+    const alunoId = getAlunoDocId(a.apelido || a.nome);
+    db.collection("boletins").doc(alunoId).onSnapshot(doc => {
+      const box = document.getElementById('boletimAlunoDinamico');
+      if (doc.exists && box) {
+        const b = doc.data();
+        let htmlDificuldades = '';
+        if (b.dificuldades && b.dificuldades.length > 0) {
+          htmlDificuldades = '<p style="color:var(--danger); font-weight:bold; margin-top:6px;">Pontos a Melhorar (Nota ≤ 85):</p>';
+          b.dificuldades.forEach(d => {
+            htmlDificuldades += `<div class="alerta-dificuldade"><i class="fas fa-exclamation-triangle"></i> ${d}</div>`;
+          });
+        }
+
+        const tituloEtapa = b.etapa === '2a_avaliacao' ? '2ª Avaliação (Anual Final)' : '1ª Avaliação (Parcial)';
+        const blocoProximaCorda = (b.etapa === '2a_avaliacao' && b.proximaCorda) ? 
+          `<p style="color:var(--gold); font-weight:bold; margin-top:6px;"><i class="fas fa-award"></i> Corda Anunciada: ${b.proximaCorda}</p>` : '';
+
+        box.innerHTML = `
+          <p><strong>Avaliador:</strong> ${b.avaliadoPor || 'Professor'}</p>
+          <p><strong>Etapa:</strong> ${tituloEtapa}</p>
+          ${blocoProximaCorda}
+          ${htmlDificuldades}
+          <p style="margin-top:6px;"><strong>Observações:</strong> ${b.obs || 'Nenhuma'}</p>
+        `;
+      }
+    });
+  }
+}
+
+function deslogarAluno() {
+  alunoSessao = null;
+  limparSessaoAlunoLocal();
+  document.getElementById('painelAlunoConteudo').style.display = 'none';
+  document.getElementById('cardAlunoLogin').style.display = 'block';
+}
+
+/* ==================== PROFESSOR ==================== */
+function autenticarProfNuvem() {
+  const sen = document.getElementById('profLoginSenha').value.trim();
+  if (sen === "2803") {
+    profSessao = {
+      nome: "Anderson dos Santos Ferreira",
+      apelido: "Dyno",
+      graduacao: "Instrutor - Corda Roxa",
+      localNome: "Instituto Central do Povo"
+    };
+    exhibirToast("Bem-vindo, Instrutor Dyno!");
+    salvarSessaoProfessorLocal(profSessao);
+    abrirPainelProfessorLogado(profSessao);
+  } else {
+    exhibirToast("Senha incorreta.");
+  }
+}
+
+function salvarSessaoProfessorLocal(p) {
+  try { localStorage.setItem('profSessaoAtiva', JSON.stringify(p)); } catch (e) {}
+}
+
+function limparSessaoProfessorLocal() {
+  try { localStorage.removeItem('profSessaoAtiva'); } catch (e) {}
+}
+
+function restaurarSessaoProfessorSalva() {
+  try {
+    const raw = localStorage.getItem('profSessaoAtiva');
+    if (raw) {
+      profSessao = JSON.parse(raw);
+      abrirPainelProfessorLogado(profSessao);
+    }
+  } catch (e) {}
+}
+
+function toggleCadastroProfessor(e) {
+  document.getElementById('cardCadastroNovoProfessor').style.display = e ? 'block' : 'none';
+  document.getElementById('cardProfLogin').style.display = e ? 'none' : 'block';
+}
+
+function realizarCadastroNovoProfessor() {
+  const nome = document.getElementById('cadProfNome').value.trim() || "Anderson dos Santos Ferreira";
+  const apelido = document.getElementById('cadProfApelido').value.trim() || "Dyno";
+  const sen = document.getElementById('cadProfSenha').value || "2803";
+  const grad = document.getElementById('cadProfGraduacaoSelect').value || "Instrutor - Corda Roxa";
+  const localNome = document.getElementById('cadProfNomeLocal').value.trim() || "Instituto Central do Povo";
+  const localEnd = document.getElementById('cadProfEnderecoLocal').value.trim() || "https://maps.app.goo.gl/ya24kSkg7LvKroSU6";
+
+  const dadosProf = { nome, apelido, senha: sen, graduacao: grad, localNome, localEnd };
+
+  if (db && firebaseOnline) {
+    const docId = getAlunoDocId(apelido);
+    db.collection("professores").doc(docId).set({
+      nome, apelido, senha: sen, graduacao: grad,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
+
+    if (localNome && localEnd) {
+      db.collection("locais_professores").add({
+        nomeLocal: localNome, enderecoOuLink: localEnd,
+        professorResponsavel: apelido,
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(() => {});
+
+      db.collection("configuracoes").doc("local_aula_ativo").set({
+        nomeLocal: localNome, enderecoOuLink: localEnd, ativo: true
+      }).catch(() => {});
+    }
+  }
+
+  profSessao = dadosProf;
+  exhibirToast("✅ Professor Registrado!");
+  salvarSessaoProfessorLocal(dadosProf);
+  abrirPainelProfessorLogado(dadosProf);
+}
+
+function abrirPainelProfessorLogado(p) {
+  document.getElementById('painelProfConteudo').style.display = 'block';
+  document.getElementById('cardProfLogin').style.display = 'none';
+  document.getElementById('cardCadastroNovoProfessor').style.display = 'none';
+  
+  const nomeDisplay = document.getElementById('profPerfilNomeDisplay');
+  const poloDisplay = document.getElementById('profPerfilPoloDisplay');
+  if (nomeDisplay) nomeDisplay.innerHTML = `<strong>${p.apelido || p.nome}</strong> (${p.graduacao || 'Instrutor'})`;
+  if (poloDisplay && p.localNome) poloDisplay.innerHTML = `Polo Principal: ${p.localNome}`;
+
+  carregarAlunosParaProfessor();
+  carregarCheckinsPendentesProf();
+  carregarConfirmacoesAvisoProf();
+}
+
+function deslogarProfessor() {
+  profSessao = null;
+  limparSessaoProfessorLocal();
+  document.getElementById('painelProfConteudo').style.display = 'none';
+  document.getElementById('cardProfLogin').style.display = 'block';
+}
+
+function carregarAlunosParaProfessor() {
+  if (!db || !firebaseOnline) return;
+  db.collection("alunos").onSnapshot(s => {
+    const sel = document.getElementById('selectAlunoParaAvaliarProf');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Selecione o Aluno...</option>';
+    s.forEach(d => {
+      const data = d.data();
+      sel.innerHTML += `<option value="${d.id}">${data.nome} (${data.apelido || ''})</option>`;
+    });
+  }, () => {});
+}
+
+function salvarAvaliacaoCompletaProfessor() {
+  const sel = document.getElementById('selectAlunoParaAvaliarProf');
+  const alunoId = sel ? sel.value : "";
+  if (!alunoId) return exhibirToast("Selecione um aluno para avaliar.");
+
+  const nomeProfAvaliador = document.getElementById('profNomeAvaliadorInput').value.trim() || (profSessao ? profSessao.apelido : "Professor");
+  const etapa = document.getElementById('profAvalEtapaSelect').value;
+  const proximaCorda = document.getElementById('profAvalProximaCordaSelect').value;
+  const obs = document.getElementById('profAvalObsGerais').value.trim();
+
+  const notas = {
+    queixadaDir: Number(document.getElementById('notaQueixadaDir').value) || 0,
+    queixadaEsq: Number(document.getElementById('notaQueixadaEsq').value) || 0,
+    armadaDir: Number(document.getElementById('notaArmadaDir').value) || 0,
+    armadaEsq: Number(document.getElementById('notaArmadaEsq').value) || 0,
+    meiaLuaDir: Number(document.getElementById('notaMeiaLuaDir').value) || 0,
+    meiaLuaEsq: Number(document.getElementById('notaMeiaLuaEsq').value) || 0,
+    meiaLuaFrenteDir: Number(document.getElementById('notaMeiaLuaFrenteDir').value) || 0,
+    meiaLuaFrenteEsq: Number(document.getElementById('notaMeiaLuaFrenteEsq').value) || 0,
+    esquivaFrenteDir: Number(document.getElementById('notaEsquivaFrenteDir').value) || 0,
+    esquivaFrenteEsq: Number(document.getElementById('notaEsquivaFrenteEsq').value) || 0,
+    esquivaLateralDir: Number(document.getElementById('notaEsquivaLateralDir').value) || 0,
+    esquivaLateralEsq: Number(document.getElementById('notaEsquivaLateralEsq').value) || 0,
+    esquivaDiagonalDir: Number(document.getElementById('notaEsquivaDiagonalDir').value) || 0,
+    esquivaDiagonalEsq: Number(document.getElementById('notaEsquivaDiagonalEsq').value) || 0,
+    descidaBasicaDir: Number(document.getElementById('notaDescidaBasicaDir').value) || 0,
+    descidaBasicaEsq: Number(document.getElementById('notaDescidaBasicaEsq').value) || 0,
+    seqNegativaRole: Number(document.getElementById('notaSeqNegativaRole').value) || 0,
+    seqSobeTras: Number(document.getElementById('notaSeqSobeTras').value) || 0,
+    seqSobeLateral: Number(document.getElementById('notaSeqSobeLateral').value) || 0,
+    jogoAngola: Number(document.getElementById('notaJogoAngola').value) || 0,
+    jogoBenguela: Number(document.getElementById('notaJogoBenguela').value) || 0,
+    jogoSaoBento: Number(document.getElementById('notaJogoSaoBento').value) || 0,
+    berimbau: Number(document.getElementById('notaBerimbau').value) || 0,
+    atabaquePandeiro: Number(document.getElementById('notaAtabaquePandeiro').value) || 0,
+    faltasAtrasos: Number(document.getElementById('notaFaltasAtrasos').value) || 0
+  };
+
+  const dificuldades = [];
+  const rotulos = {
+    queixadaDir: "Queixada (Direita)", queixadaEsq: "Queixada (Esquerda)",
+    armadaDir: "Armada (Direita)", armadaEsq: "Armada (Esquerda)",
+    meiaLuaDir: "Meia Lua (Direita)", meiaLuaEsq: "Meia Lua (Esquerda)",
+    meiaLuaFrenteDir: "Meia Lua Frente (Direita)", meiaLuaFrenteEsq: "Meia Lua Frente (Esquerda)",
+    esquivaFrenteDir: "Esquiva Frente (Direita)", esquivaFrenteEsq: "Esquiva Frente (Esquerda)",
+    esquivaLateralDir: "Esquiva Lateral (Direita)", esquivaLateralEsq: "Esquiva Lateral (Esquerda)",
+    esquivaDiagonalDir: "Esquiva Diagonal (Direita)", esquivaDiagonalEsq: "Esquiva Diagonal (Esquerda)",
+    descidaBasicaDir: "Descida Básica (Direita)", descidaBasicaEsq: "Descida Básica (Esquerda)",
+    seqNegativaRole: "Seq. Negativa e Rolê", seqSobeTras: "Seq. Sobe por Trás", seqSobeLateral: "Seq. Sobe pela Lateral",
+    jogoAngola: "Jogo de Angola", jogoBenguela: "Jogo de Benguela", jogoSaoBento: "Jogo de São Bento Grande",
+    berimbau: "Toques de Berimbau", atabaquePandeiro: "Atabaque e Pandeiro", faltasAtrasos: "Assiduidade e Compromisso"
+  };
+
+  for (let key in notas) {
+    if (notas[key] <= 85) {
+      dificuldades.push(`${rotulos[key]} (${notas[key]} pts)`);
+    }
+  }
+
+  const registroAvaliacao = {
+    alunoId, etapa, notas, dificuldades,
+    proximaCorda: proximaCorda || "Manter Graduação Atual",
+    obs, avaliadoPor: nomeProfAvaliador,
+    atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (db && firebaseOnline) {
+    db.collection("historico_avaliacoes").add(registroAvaliacao).catch(() => {});
+    db.collection("boletins").doc(alunoId).set(registroAvaliacao).then(() => {
+      exhibirToast("✅ Avaliação gravada na Nuvem!");
+    }).catch(err => exhibirToast("Erro: " + err.message));
+  } else {
+    exhibirToast("✅ Avaliação salva localmente (Firebase offline)");
+  }
+}
+
+function obterGpsEPreencherLocalProfessor() {
+  if (!navigator.geolocation) return exhibirToast("GPS não suportado.");
+  exhibirToast("📡 Obtendo localização...");
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      document.getElementById('profEnderecoOUGoogleMaps').value = `https://www.google.com/maps?q=${lat},${lng}`;
+      exhibirToast("📍 Localização capturada!");
+    },
+    (err) => exhibirToast("Erro GPS: " + err.message)
+  );
+}
+
+function professorSalvarLocalComEndereco() {
+  const tipo = document.getElementById('profTipoAulaEventoSelect').value;
+  const localNome = document.getElementById('profNomeLocalTexto').value.trim();
+  const endOuLink = document.getElementById('profEnderecoOUGoogleMaps').value.trim();
+  if (!localNome || !endOuLink) return exhibirToast("Preencha o nome e a localização.");
+
+  if (db && firebaseOnline) {
+    db.collection("locais_professores").add({
+      tipo, nomeLocal: localNome, enderecoOuLink: endOuLink,
+      professorResponsavel: "Dyno",
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
+
+    db.collection("configuracoes").doc("local_aula_ativo").set({
+      tipo, nomeLocal: localNome, enderecoOuLink: endOuLink, ativo: true
+    }).then(() => exhibirToast(`📍 ${tipo} Notificado!`));
+  } else {
+    exhibirToast("📍 Local salvo localmente (Firebase offline)");
+  }
+}
+
+function carregarCheckinsPendentesProf() {
+  if (!db || !firebaseOnline) return;
+  db.collection("presencas").where("status", "==", "PENDENTE").onSnapshot(snapshot => {
+    const box = document.getElementById('listaCheckinsPendentesProf');
+    if (!box) return;
+    box.innerHTML = "";
+    if (snapshot.empty) {
+      box.innerHTML = "<p style='color:var(--text-sub); font-size:0.72rem;'>Nenhum check-in pendente.</p>";
+      return;
+    }
+    snapshot.forEach(docSnap => {
+      const p = docSnap.data();
+      box.innerHTML += `<div style="border:1px solid var(--card-border); padding:6px; border-radius:6px; margin-bottom:6px; background:#0e191e; display:flex; justify-content:space-between; align-items:center;">
+        <span><strong style="color:var(--accent-blue); font-size:0.78rem;">${p.alunoNome}</strong></span>
+        <button class="btn" style="width:auto; padding:4px 8px; margin:0; font-size:0.68rem;" onclick="aprovarPresencaAluno('${docSnap.id}')">Aprovar</button>
+      </div>`;
+    });
+  }, () => {});
+}
+
+function aprovarPresencaAluno(id) {
+  if (db && firebaseOnline) {
+    db.collection("presencas").doc(id).update({ status: "APROVADO" })
+      .then(() => exhibirToast("Presença aprovada!"));
+  }
+}
+
+function publicarAvisoProfessor() {
+  const titulo = document.getElementById('avisoTituloInput').value.trim();
+  const descricao = document.getElementById('avisoDescricaoInput').value.trim();
+  if (!titulo) return exhibirToast("Preencha ao menos o título.");
+
+  if (db && firebaseOnline) {
+    db.collection("avisos").add({
+      titulo, descricao,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      exhibirToast("📢 Aviso publicado!");
+      document.getElementById('avisoTituloInput').value = '';
+      document.getElementById('avisoDescricaoInput').value = '';
+    });
+  } else {
+    exhibirToast("📢 Aviso salvo localmente");
+  }
+}
+
+function carregarConfirmacoesAvisoProf() {
+  if (!db || !firebaseOnline) return;
+  db.collection("avisos").orderBy("criadoEm", "desc").limit(1).onSnapshot(snap => {
+    const resumoBox = document.getElementById('resumoConfirmacoesAviso');
+    const listaBox = document.getElementById('listaConfirmacoesAviso');
+    if (!resumoBox || !listaBox) return;
+
+    if (snap.empty) {
+      resumoBox.textContent = "Nenhum aviso publicado ainda.";
+      listaBox.innerHTML = '';
+      return;
+    }
+
+    const avisoDoc = snap.docs[0];
+    const avisoId = avisoDoc.id;
+    const aviso = avisoDoc.data();
+    resumoBox.innerHTML = `<strong style="color:#fff;">${aviso.titulo}</strong>`;
+
+    db.collection("confirmacoes_presenca").where("avisoId", "==", avisoId).onSnapshot(s => {
+      let vao = 0, naoVao = 0;
+      listaBox.innerHTML = '';
+      s.forEach(d => {
+        const c = d.data();
+        if (c.resposta === 'vou') vao++; else naoVao++;
+        const cor = c.resposta === 'vou' ? 'var(--primary-green)' : 'var(--danger)';
+        const label = c.resposta === 'vou' ? 'Vai' : 'Não vai';
+        listaBox.innerHTML += `<div style="font-size:0.72rem; padding:3px 0; border-bottom:1px solid #2c434e;"><strong>${c.alunoNome}</strong> — <span style="color:${cor};">${label}</span></div>`;
+      });
+      resumoBox.innerHTML = `<strong style="color:#fff;">${aviso.titulo}</strong> — <span style="color:var(--primary-green);">${vao} vão</span> / <span style="color:var(--danger);">${naoVao} não vão</span>`;
+    });
+  }, () => {});
+}
+
+/* ==================== CHECK-IN ==================== */
+function alunoCheckinLocalFixoSimples() {
+  const nome = document.getElementById('checkinFixoNomeAluno').value.trim();
+  const polo = document.getElementById('selectPoloFixoTreino').value;
+  if (!nome || !polo) return exhibirToast("Preencha seu nome e escolha o local.");
+
+  if (db && firebaseOnline) {
+    db.collection("presencas").add({
+      alunoNome: nome, poloLocal: polo, status: "PENDENTE",
+      data: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => exhibirToast("Check-in enviado!"));
+  } else {
+    exhibirToast("Check-in salvo localmente");
+  }
+}
+
+function validarCheckinGympassNuvem() {
+  const nome = document.getElementById('gympassAlunoNome').value.trim();
+  const token = document.getElementById('gympassTokenVal').value.trim();
+  if (!nome || !token) return exhibirToast("Informe seu nome e o token.");
+
+  if (db && firebaseOnline) {
+    db.collection("presencas_gympass").add({
+      unidade: "Capoeira na Pequena África",
+      alunoNome: nome, token, status: "VALIDADO",
+      data: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      document.getElementById('gympassAlunoNome').value = "";
+      document.getElementById('gympassTokenVal').value = "";
+      exhibirToast("Check-in Wellhub Registrado!");
+    });
+  } else {
+    document.getElementById('gympassAlunoNome').value = "";
+    document.getElementById('gympassTokenVal').value = "";
+    exhibirToast("Check-in Wellhub Registrado (offline)");
+  }
+}
+
+function escutarLocais() {
+  if (!db || !firebaseOnline) return;
+  db.collection("locais_professores").onSnapshot(s => {
+    const sel = document.getElementById('selectPoloFixoTreino');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Selecione o local do treino...</option>';
+    s.forEach(d => {
+      sel.innerHTML += `<option value="${d.data().nomeLocal}">${d.data().nomeLocal}</option>`;
+    });
+  }, () => {});
+}
+
+/* ==================== MURAL / CHAT ==================== */
+function enviarMensagemNuvem() {
+  const txt = document.getElementById('chatInput').value.trim();
+  if (!txt) return;
+  const autor = alunoSessao ? (alunoSessao.apelido || alunoSessao.nome) :
+                (profSessao ? (profSessao.apelido || profSessao.nome) : "Capoeirista");
+
+  if (db && firebaseOnline) {
+    db.collection("mural").add({
+      autor, texto: txt,
+      data: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      document.getElementById('chatInput').value = '';
+    });
+  } else {
+    document.getElementById('chatInput').value = '';
+    exhibirToast("Mensagem salva localmente");
+  }
+}
+
+function uploadFotoChat(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  if (!storage || !firebaseOnline) {
+    exhibirToast("Firebase Storage indisponível.");
+    return;
+  }
+
+  exhibirToast("📤 Enviando foto...");
+  const nomeArquivo = 'chat_fotos/' + Date.now() + '_' + file.name;
+  const storageRef = storage.ref().child(nomeArquivo);
+
+  storageRef.put(file)
+    .then(snapshot => snapshot.ref.getDownloadURL())
+    .then(url => {
+      const autor = alunoSessao ? (alunoSessao.apelido || alunoSessao.nome) :
+                    (profSessao ? (profSessao.apelido || profSessao.nome) : "Capoeirista");
+      return db.collection("mural").add({
+        autor, texto: "", imagem: url,
+        data: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    })
+    .then(() => {
+      exhibirToast("✅ Foto enviada!");
+      input.value = '';
+    })
+    .catch(err => exhibirToast("Erro ao enviar foto: " + err.message));
+}
+
+function iniciarListenerMural() {
+  if (!db || !firebaseOnline) return;
+  db.collection("mural").orderBy("data", "desc").limit(10).onSnapshot(s => {
+    const box = document.getElementById('chatMessages');
+    if (!box) return;
+    box.innerHTML = '';
+    s.forEach(d => {
+      const m = d.data();
+      const conteudo = m.texto ? m.texto : '';
+      const imgHtml = m.imagem ? `<br><img src="${m.imagem}" style="max-width:100%; border-radius:6px; margin-top:4px;">` : '';
+      box.innerHTML += `<div style="margin-bottom:4px; border-bottom:1px solid #2c434e; padding-bottom:2px;"><strong style="color:var(--primary-green);">${m.autor}:</strong> ${conteudo}${imgHtml}</div>`;
+    });
+  }, () => {});
+}
+
+/* ==================== ADM ==================== */
+let alunosCacheAdm = {};
+
+function preencherListaAlunosAdm(s) {
+  const sel = document.getElementById('selectAlunoRelatorioAdm');
+  const badgeCount = document.getElementById('totalAlunosBadge');
+  if (badgeCount) badgeCount.textContent = s.size;
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecione o Aluno...</option>';
+  alunosCacheAdm = {};
+  s.forEach(d => {
+    const data = d.data();
+    alunosCacheAdm[data.nome] = { id: d.id, ...data };
+    sel.innerHTML += `<option value="${data.nome}">${data.nome}</option>`;
+  });
+}
+
+function carregarAlunosParaADM() {
+  if (!db || !firebaseOnline) return;
+  db.collection("alunos").onSnapshot(
+    s => preencherListaAlunosAdm(s),
+    err => exhibirToast("Erro ao carregar alunos: " + err.message)
+  );
+}
+
+function atualizarListaAlunosManual() {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível atualizar agora.");
+  db.collection("alunos").get()
+    .then(s => {
+      preencherListaAlunosAdm(s);
+      exhibirToast("✅ Lista de alunos atualizada! (" + s.size + " encontrados)");
+    })
+    .catch(err => exhibirToast("Erro ao atualizar: " + err.message));
+}
+
+function carregarDetalhesAlunoAdm() {
+  const sel = document.getElementById('selectAlunoRelatorioAdm');
+  const nome = sel ? sel.value : "";
+  const box = document.getElementById('boxDetalhesAlunoAdm');
+  if (!nome || !alunosCacheAdm[nome]) {
+    if (box) box.style.display = 'none';
+    return;
+  }
+
+  const al = alunosCacheAdm[nome];
+  document.getElementById('admAlunoGradTxt').textContent = al.graduacao || "Iniciante - Corda Crua";
+  document.getElementById('admAlunoInstaTxt').textContent = al.instagram || "Não informado";
+  document.getElementById('admAlunoAnosTxt').textContent = al.anosTreino || 0;
+  document.getElementById('admAlunoFaltasTxt').textContent = al.faltas || 0;
+  box.style.display = 'block';
+}
+
+function admAtualizarAnosEFaltas() {
+  const sel = document.getElementById('selectAlunoRelatorioAdm');
+  const nome = sel ? sel.value : "";
+  if (!nome || !alunosCacheAdm[nome]) return exhibirToast("Selecione um aluno.");
+
+  const anos = document.getElementById('admAnoTreinoInput').value.trim();
+  const faltas = document.getElementById('admFaltasInput').value.trim();
+  const docId = alunosCacheAdm[nome].id;
+
+  const atualizacoes = {};
+  if (anos !== '') atualizacoes.anosTreino = Number(anos);
+  if (faltas !== '') atualizacoes.faltas = Number(faltas);
+
+  if (db && firebaseOnline) {
+    db.collection("alunos").doc(docId).update(atualizacoes).then(() => {
+      exhibirToast("✅ Dados atualizados!");
+      document.getElementById('admAnoTreinoInput').value = '';
+      document.getElementById('admFaltasInput').value = '';
+    });
+  }
+}
+
+function carregarHistoricoGympassADM() {
+  if (!db || !firebaseOnline) return;
+  db.collection("presencas_gympass").orderBy("data", "desc").limit(10).onSnapshot(s => {
+    const box = document.getElementById('listaHistoricoGympass');
+    if (!box) return;
+    box.innerHTML = '';
+    s.forEach(d => {
+      const data = d.data();
+      box.innerHTML += `<div style="border-bottom:1px solid #2c434e; padding:2px 0;"><strong>${data.alunoNome}</strong> - Token: ${data.token}</div>`;
+    });
+  }, () => {});
+}
+
+function gerarAvisoWhatsApp(tipo) {
+  const sel = document.getElementById('selectAlunoRelatorioAdm');
+  const alunoNome = sel ? sel.value : "";
+  if (!alunoNome) return exhibirToast("Selecione um aluno primeiro.");
+  const msg = tipo === 'presenca'
+    ? `Olá ${alunoNome}, sua presença foi confirmada no treino!`
+    : `Olá ${alunoNome}, sentimos sua falta no treino hoje!`;
+  window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(msg), '_blank');
+}
+
+/* ==================== AVISOS ==================== */
+function carregarAvisoAtivoParaAluno(alunoNome) {
+  if (!db || !firebaseOnline) return;
+  db.collection("avisos").orderBy("criadoEm", "desc").limit(1).onSnapshot(snap => {
+    const card = document.getElementById('cardAvisoEventoAluno');
+    const txt = document.getElementById('txtAvisoEventoAluno');
+    const boxResposta = document.getElementById('boxRespostaAvisoAluno');
+    const txtJaRespondeu = document.getElementById('txtRespostaJaEnviadaAluno');
+    if (!card || snap.empty) {
+      if (card) card.style.display = 'none';
+      return;
+    }
+
+    const avisoDoc = snap.docs[0];
+    const avisoId = avisoDoc.id;
+    const aviso = avisoDoc.data();
+
+    card.style.display = 'block';
+    card.dataset.avisoId = avisoId;
+    txt.innerHTML = `<strong>${aviso.titulo}</strong>${aviso.descricao ? '<br>' + aviso.descricao : ''}`;
+
+    const idResposta = avisoId + '_' + getAlunoDocId(alunoNome);
+    db.collection("confirmacoes_presenca").doc(idResposta).get().then(doc => {
+      if (doc.exists) {
+        boxResposta.style.display = 'none';
+        txtJaRespondeu.style.display = 'block';
+        txtJaRespondeu.textContent = doc.data().resposta === 'vou'
+          ? "✅ Você confirmou presença!"
+          : "❌ Você marcou que não vai.";
+      } else {
+        boxResposta.style.display = 'block';
+        txtJaRespondeu.style.display = 'none';
+      }
+    });
+  }, () => {});
+}
+
+function responderAvisoAluno(resposta) {
+  if (!alunoSessao) return exhibirToast("Faça login para responder.");
+  const card = document.getElementById('cardAvisoEventoAluno');
+  const avisoId = card ? card.dataset.avisoId : null;
+  if (!avisoId) return;
+
+  const alunoNome = alunoSessao.apelido || alunoSessao.nome;
+  const idResposta = avisoId + '_' + getAlunoDocId(alunoNome);
+
+  if (db && firebaseOnline) {
+    db.collection("confirmacoes_presenca").doc(idResposta).set({
+      avisoId, alunoNome, resposta,
+      data: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      document.getElementById('boxRespostaAvisoAluno').style.display = 'none';
+      const txtJaRespondeu = document.getElementById('txtRespostaJaEnviadaAluno');
+      txtJaRespondeu.style.display = 'block';
+      txtJaRespondeu.textContent = resposta === 'vou'
+        ? "✅ Você confirmou presença!"
+        : "❌ Você marcou que não vai.";
+      exhibirToast("Resposta enviada!");
+    });
+  }
+}
+
+/* ==================== DEV ==================== */
+function executarVarreduraFirebaseDev() {
+  const resBox = document.getElementById('resultadoVarreduraDev');
+  if (resBox) resBox.innerHTML = "🔍 Testando conexão Firebase...";
+
+  if (db) {
+    db.collection("configuracoes").doc("ping_teste").set({
+      ultimoPing: firebase.firestore.FieldValue.serverTimestamp(),
+      ambiente: "Teste Dev",
+      status: "OK"
+    }).then(() => {
+      atualizarStatusFirebase(true);
+      if (resBox) {
+        resBox.innerHTML = "🟢 <strong>Firestore OK!</strong> Conexão e gravação testadas com sucesso.<br>🟢 Status: ONLINE";
+      }
+      exhibirToast("🟢 Firebase Online!");
+    }).catch(err => {
+      atualizarStatusFirebase(false);
+      if (resBox) {
+        resBox.innerHTML = "🔴 Erro: " + err.message + "<br><br>Ative a API em:<br>https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=project-10dd7ec8-159b-4351-90a";
+      }
+      exhibirToast("🔴 Firebase Offline / API desabilitada");
+    });
+  } else {
+    if (resBox) resBox.innerHTML = "⚠️ Firebase não inicializado.";
+  }
+}
+
+function devPublicarAtualizacaoHtml() {
+  const htmlConteudo = document.getElementById('devHtmlInput').value.trim();
+  if (!htmlConteudo) return exhibirToast("Cole o código HTML.");
+
+  if (db && firebaseOnline) {
+    db.collection("configuracoes").doc("atualizacao_app").set({
+      conteudo: htmlConteudo,
+      publicadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      exhibirToast("🚀 Atualização publicada!");
+      document.getElementById('devHtmlInput').value = "";
+    });
+  } else {
+    exhibirToast("Firebase offline. Não foi possível publicar.");
+  }
+}
+
+/* ==================== INICIALIZAÇÃO ==================== */
+let listenersFirebaseIniciados = false;
+function sincronizarConfiguracoesAoAbrir() {
+  if (listenersFirebaseIniciados) return;
+  if (db && firebaseOnline) {
+    listenersFirebaseIniciados = true;
+    db.collection("configuracoes").doc("local_aula_ativo").get().then(doc => {
+      const boxNotif = document.getElementById('boxNotificacaoAluno');
+      const txtNotif = document.getElementById('textoNotificacaoLocal');
+      const linkGmaps = document.getElementById('linkGmapsNotificacao');
+
+      if (doc.exists && doc.data().ativo && boxNotif) {
+        const d = doc.data();
+        boxNotif.style.display = 'block';
+        txtNotif.innerHTML = `<strong>${d.tipo || 'Aula/Evento'} - ${d.nomeLocal}</strong>: ${d.enderecoOuLink}`;
+        if (linkGmaps && d.enderecoOuLink && d.enderecoOuLink.includes("http")) {
+          linkGmaps.href = d.enderecoOuLink;
+          linkGmaps.style.display = 'inline-block';
+        }
+      }
+    }).catch(() => {});
+
+    iniciarListenerMural();
+  }
+}
+
+/* Carregamento sob demanda por aba — cada aba busca seus próprios dados
+   na nuvem só quando é aberta pela primeira vez, em vez de tudo de uma
+   vez ao abrir o app. Deixa a abertura inicial mais rápida. */
+let checkinDadosCarregados = false;
+function carregarDadosAbaCheckin() {
+  if (checkinDadosCarregados || !db || !firebaseOnline) return;
+  checkinDadosCarregados = true;
+  escutarLocais();
+}
+
+let admDadosCarregados = false;
+function carregarDadosAbaAdm() {
+  if (admDadosCarregados || !db || !firebaseOnline) return;
+  admDadosCarregados = true;
+  carregarAlunosParaADM();
+  carregarHistoricoGympassADM();
+}
+
+restaurarSessaoProfessorSalva();
+restaurarSessaoAlunoSalva();
+
+setTimeout(() => {
+  sincronizarConfiguracoesAoAbrir();
+}, 1500);
+
+/* ==================== PWA - SERVICE WORKER ==================== */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then((registration) => {
+        console.log('[PWA] Service Worker registrado com sucesso:', registration.scope);
+      })
+      .catch((err) => {
+        console.warn('[PWA] Falha ao registrar Service Worker:', err);
+      });
+  });
+}
+</script>
+</body>
+</html>
