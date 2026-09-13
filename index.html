@@ -192,6 +192,21 @@
       <a id="linkGmapsNotificacao" href="#" target="_blank" style="display:none; color:var(--primary-green); font-size:0.7rem; text-decoration:underline; margin-top:4px;">Ver no Google Maps</a>
     </div>
 
+    <div class="card" style="border:1px solid var(--accent-blue);">
+      <h3 style="color:var(--accent-blue);"><i class="fas fa-dumbbell"></i> Treinos para Fazer em Casa</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Vídeos de aulas, alongamento, aquecimento e treinos por estilo:</p>
+      <select id="filtroCategoriaTreino" onchange="filtrarTreinosCasa()">
+        <option value="todos">Todas as categorias</option>
+        <option value="aulas">Aulas</option>
+        <option value="alongamento">Alongamento em Casa</option>
+        <option value="aquecimento">Aquecimento</option>
+        <option value="angola">Treino de Angola</option>
+        <option value="benguela">Treino de Benguela</option>
+        <option value="saoBento">Treino de São Bento Grande de Bimba</option>
+      </select>
+      <div id="listaTreinosCasa" style="margin-top:8px;"><p style="color:var(--text-sub); font-size:0.75rem;">Nenhum treino publicado ainda.</p></div>
+    </div>
+
     <div class="card">
       <h3><i class="fas fa-comments"></i> Mural & Bate-Papo da Academia</h3>
       <div id="chatMessages" style="max-height:160px; overflow-y:auto; margin-bottom:6px; font-size:0.75rem;"></div>
@@ -505,6 +520,23 @@
       <h3><i class="fas fa-share-nodes" style="color:var(--primary-green);"></i> Compartilhar App com os Alunos</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Envie o link oficial para os seus alunos acessarem diretamente no celular:</p>
       <button class="btn btn-whatsapp" onclick="compartilharAplicativo()"><i class="fab fa-whatsapp"></i> Enviar Link para Alunos (WhatsApp)</button>
+    </div>
+
+    <div class="card" style="border:1px solid var(--accent-blue);">
+      <h3 style="color:var(--accent-blue);"><i class="fas fa-dumbbell"></i> Gerenciar Treinos para Casa (Início)</h3>
+      <select id="admCategoriaTreino">
+        <option value="aulas">Aulas</option>
+        <option value="alongamento">Alongamento em Casa</option>
+        <option value="aquecimento">Aquecimento</option>
+        <option value="angola">Treino de Angola</option>
+        <option value="benguela">Treino de Benguela</option>
+        <option value="saoBento">Treino de São Bento Grande de Bimba</option>
+      </select>
+      <input id="admTituloTreino" placeholder="Título do treino/vídeo">
+      <input id="admLinkVideoTreino" placeholder="Link do vídeo (YouTube)">
+      <textarea id="admDescricaoTreino" placeholder="Descrição do treino..." style="min-height:60px;"></textarea>
+      <button class="btn btn-secondary" onclick="adicionarTreinoCasaAdm()"><i class="fas fa-plus"></i> Adicionar Treino</button>
+      <div id="admListaTreinosCasa" style="margin-top:8px; font-size:0.72rem;"></div>
     </div>
 
     <div class="card" style="border:1px solid #e6683c;">
@@ -1436,7 +1468,99 @@ function iniciarListenerMural() {
   }, () => {});
 }
 
-/* ==================== FEED INSTAGRAM ==================== */
+/* ==================== TREINOS PARA CASA ==================== */
+const NOMES_CATEGORIAS_TREINO = {
+  aulas: "Aulas", alongamento: "Alongamento em Casa", aquecimento: "Aquecimento",
+  angola: "Treino de Angola", benguela: "Treino de Benguela", saoBento: "Treino de São Bento Grande de Bimba"
+};
+let treinosCasaCache = [];
+
+function extrairIdYoutube(url) {
+  const m = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function iniciarListenerTreinosCasa() {
+  if (!db || !firebaseOnline) return;
+  db.collection("configuracoes").doc("treinos_casa").onSnapshot(doc => {
+    treinosCasaCache = (doc.exists && doc.data().lista) ? doc.data().lista : [];
+    filtrarTreinosCasa();
+    renderizarListaTreinosCasaAdm();
+  }, () => {});
+}
+
+function filtrarTreinosCasa() {
+  const box = document.getElementById('listaTreinosCasa');
+  if (!box) return;
+  const filtroEl = document.getElementById('filtroCategoriaTreino');
+  const filtro = filtroEl ? filtroEl.value : 'todos';
+  const lista = filtro === 'todos' ? treinosCasaCache : treinosCasaCache.filter(t => t.categoria === filtro);
+
+  if (lista.length === 0) {
+    box.innerHTML = '<p style="color:var(--text-sub); font-size:0.75rem;">Nenhum treino publicado ainda.</p>';
+    return;
+  }
+  box.innerHTML = lista.map(t => {
+    const idYt = extrairIdYoutube(t.video || '');
+    const videoHtml = idYt
+      ? `<div style="position:relative; padding-bottom:56%; height:0; margin:6px 0;"><iframe src="https://www.youtube.com/embed/${idYt}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:8px;" allowfullscreen></iframe></div>`
+      : (t.video ? `<a href="${t.video}" target="_blank" style="color:var(--accent-blue); font-size:0.75rem;">Ver vídeo ↗</a>` : '');
+    return `<div style="background:#081217; border-radius:8px; padding:8px; margin-bottom:8px;">
+      <p style="font-size:0.7rem; color:var(--gold); margin-bottom:2px;">${NOMES_CATEGORIAS_TREINO[t.categoria] || t.categoria}</p>
+      <p style="font-weight:bold; font-size:0.8rem; color:#fff;">${t.titulo || ''}</p>
+      ${videoHtml}
+      <p style="font-size:0.75rem; color:var(--text-sub); margin-top:4px;">${t.descricao || ''}</p>
+    </div>`;
+  }).join('');
+}
+
+function renderizarListaTreinosCasaAdm() {
+  const box = document.getElementById('admListaTreinosCasa');
+  if (!box) return;
+  if (treinosCasaCache.length === 0) {
+    box.innerHTML = '<p style="color:var(--text-sub);">Nenhum treino adicionado ainda.</p>';
+    return;
+  }
+  box.innerHTML = treinosCasaCache.map((t, i) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#081217; padding:6px; border-radius:6px; margin-bottom:4px;">
+      <span>${NOMES_CATEGORIAS_TREINO[t.categoria] || t.categoria}: ${t.titulo || ''}</span>
+      <button class="btn btn-secondary" style="padding:4px 8px; margin:0;" onclick="removerTreinoCasaAdm(${i})"><i class="fas fa-trash"></i></button>
+    </div>
+  `).join('');
+}
+
+function adicionarTreinoCasaAdm() {
+  const categoria = document.getElementById('admCategoriaTreino').value;
+  const titulo = document.getElementById('admTituloTreino').value.trim();
+  const video = document.getElementById('admLinkVideoTreino').value.trim();
+  const descricao = document.getElementById('admDescricaoTreino').value.trim();
+  if (!titulo) return exhibirToast("Digite um título para o treino.");
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível salvar agora.");
+
+  const ref = db.collection("configuracoes").doc("treinos_casa");
+  ref.get().then(doc => {
+    const lista = (doc.exists && doc.data().lista) ? doc.data().lista : [];
+    lista.push({ categoria, titulo, video, descricao });
+    ref.set({ lista }, { merge: true }).then(() => {
+      document.getElementById('admTituloTreino').value = '';
+      document.getElementById('admLinkVideoTreino').value = '';
+      document.getElementById('admDescricaoTreino').value = '';
+      exhibirToast("✅ Treino adicionado!");
+    }).catch(err => exhibirToast("Erro: " + err.message));
+  });
+}
+
+function removerTreinoCasaAdm(indice) {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível remover agora.");
+  const ref = db.collection("configuracoes").doc("treinos_casa");
+  ref.get().then(doc => {
+    const lista = (doc.exists && doc.data().lista) ? doc.data().lista : [];
+    lista.splice(indice, 1);
+    ref.set({ lista }, { merge: true }).then(() => exhibirToast("✅ Treino removido!")).catch(err => exhibirToast("Erro: " + err.message));
+  });
+}
+
+
 function carregarScriptEmbedInstagram(callback) {
   if (window.instgrm) return callback();
   const script = document.createElement('script');
@@ -1766,6 +1890,7 @@ function sincronizarConfiguracoesAoAbrir() {
 
     iniciarListenerMural();
     iniciarListenerFeedInstagram();
+    iniciarListenerTreinosCasa();
   }
 }
 
