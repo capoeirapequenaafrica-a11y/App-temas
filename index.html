@@ -178,17 +178,12 @@
 
   <!-- 1. ABA INÍCIO -->
   <div id="tab1" class="tab-content active">
-    <div class="card" style="border: 1px solid var(--primary-green);">
-      <h3><i class="fas fa-share-nodes" style="color:var(--primary-green);"></i> Compartilhar App com os Alunos</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Envie o link oficial para os seus alunos acessarem diretamente no celular:</p>
-      <button class="btn btn-whatsapp" onclick="compartilharAplicativo()"><i class="fab fa-whatsapp"></i> Enviar Link para Alunos (WhatsApp)</button>
-    </div>
-
     <div class="card" style="border: 1px solid #e6683c;">
       <h3 style="color:#f09433;"><i class="fab fa-instagram"></i> Instagram da Academia</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe as fotos, vídeos e novidades no nosso perfil oficial:</p>
-      <p style="font-size:0.8rem; font-weight:bold; color:#fff; margin-bottom:8px;">@capoeiranapequenaafrica</p>
+      <p style="font-size:0.8rem; font-weight:bold; color:#fff; margin-bottom:8px;" id="handleInstagramAcademiaTxt">@capoeiranapequenaafrica</p>
       <button class="btn btn-instagram" onclick="abrirInstagramOficial()"><i class="fab fa-instagram"></i> Acessar Instagram Oficial</button>
+      <div id="feedInstagramInicio" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
@@ -286,6 +281,8 @@
         <h3><i class="fab fa-instagram" style="color:#dc2743;"></i> Perfil no Instagram</h3>
         <p style="font-size:0.75rem; color:#fff;" id="displayInstaAlunoTexto">@NãoInformado</p>
         <button class="btn btn-instagram" id="btnAbrirInstaAluno" style="margin-top:6px;"><i class="fab fa-instagram"></i> Ver Instagram</button>
+        <input id="editarInstaAlunoInput" placeholder="@SeuInstagram" style="margin-top:8px;">
+        <button class="btn btn-secondary" onclick="salvarInstagramAluno()" style="margin-top:6px;"><i class="fas fa-save"></i> Salvar Instagram</button>
       </div>
 
       <div class="card">
@@ -435,11 +432,15 @@
         <input type="number" id="notaJogoSaoBento" placeholder="Jogo de São Bento Grande de Bimba (0 - 100)" min="0" max="100">
 
         <h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Ritmo & Instrumentos:</h4>
-        <input type="number" id="notaBerimbau" placeholder="Toques de Berimbau (Angola, Benguela, São Bento) (0 - 100)" min="0" max="100">
+        <input type="number" id="notaBerimbauAngola" placeholder="Toque de Berimbau - Angola (0 - 100)" min="0" max="100">
+        <input type="number" id="notaBerimbauBenguela" placeholder="Toque de Berimbau - Benguela (0 - 100)" min="0" max="100">
+        <input type="number" id="notaBerimbauSaoBento" placeholder="Toque de Berimbau - São Bento (0 - 100)" min="0" max="100">
         <input type="number" id="notaAtabaquePandeiro" placeholder="Atabaque e Pandeiro (0 - 100)" min="0" max="100">
 
         <h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Assiduidade & Compromisso:</h4>
-        <input type="number" id="notaFaltasAtrasos" placeholder="Faltas, Atrasos & Compromisso (0 - 100)" min="0" max="100">
+        <input type="number" id="notaFaltas" placeholder="Faltas (0 - 100)" min="0" max="100">
+        <input type="number" id="notaAtrasos" placeholder="Atrasos (0 - 100)" min="0" max="100">
+        <input type="number" id="notaCompromisso" placeholder="Compromisso (0 - 100)" min="0" max="100">
 
         <h4 style="color:var(--primary-green); font-size:0.78rem; margin-top:6px;">Graduação Anunciada para o Próximo Ano:</h4>
         <select id="profAvalProximaCordaSelect">
@@ -499,6 +500,23 @@
   <!-- 5. ABA ADM -->
   <div id="tab5" class="tab-content">
     <button class="btn btn-back" onclick="abrirAba('tab1', null)"><i class="fas fa-arrow-left"></i> Sair do Painel ADM</button>
+
+    <div class="card" style="border: 1px solid var(--primary-green);">
+      <h3><i class="fas fa-share-nodes" style="color:var(--primary-green);"></i> Compartilhar App com os Alunos</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Envie o link oficial para os seus alunos acessarem diretamente no celular:</p>
+      <button class="btn btn-whatsapp" onclick="compartilharAplicativo()"><i class="fab fa-whatsapp"></i> Enviar Link para Alunos (WhatsApp)</button>
+    </div>
+
+    <div class="card" style="border:1px solid #e6683c;">
+      <h3 style="color:#f09433;"><i class="fab fa-instagram"></i> Gerenciar Feed do Instagram (Início)</h3>
+      <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Perfil oficial da academia (sem @, ex: capoeiranapequenaafrica):</p>
+      <input id="admHandleInstagramAcademia" placeholder="capoeiranapequenaafrica">
+      <button class="btn btn-secondary" onclick="salvarHandleInstagramAcademia()"><i class="fas fa-save"></i> Salvar Perfil da Academia</button>
+      <p style="font-size:0.7rem; color:var(--text-sub); margin-top:10px; margin-bottom:6px;">Cole o link de uma publicação pública do Instagram (foto ou vídeo) para exibir no Início dos alunos:</p>
+      <input id="admNovoLinkInstagram" placeholder="https://www.instagram.com/p/XXXXXXX/">
+      <button class="btn btn-secondary" onclick="adicionarPostInstagramAdm()"><i class="fas fa-plus"></i> Adicionar Publicação</button>
+      <div id="admListaPostsInstagram" style="margin-top:8px; font-size:0.72rem;"></div>
+    </div>
 
     <div class="card" style="border:1px solid var(--primary-green);">
       <h3><i class="fas fa-users-cog"></i> Gestão Global & Contagem de Alunos <span id="totalAlunosBadge" class="badge-count">0</span></h3>
@@ -677,8 +695,9 @@ function abrirLinkWebDirecto() {
   window.open("https://project-10dd7ec8-159b-4351-90a.web.app", "_blank");
 }
 
+let handleInstagramAcademiaAtual = "capoeiranapequenaafrica";
 function abrirInstagramOficial() {
-  window.open("https://instagram.com/capoeiranapequenaafrica", '_blank');
+  window.open("https://instagram.com/" + handleInstagramAcademiaAtual, '_blank');
 }
 
 function compartilharAplicativo() {
@@ -898,6 +917,7 @@ function abrirPainelAlunoLogado(a) {
 
   document.getElementById('displayGraduacaoAlunoTexto').textContent = a.graduacao || "Iniciante - Corda Crua";
   document.getElementById('displayInstaAlunoTexto').textContent = a.instagram || "@NãoInformado";
+  document.getElementById('editarInstaAlunoInput').value = a.instagram || "";
   
   const btnInsta = document.getElementById('btnAbrirInstaAluno');
   if (btnInsta && a.instagram) {
@@ -934,6 +954,27 @@ function abrirPainelAlunoLogado(a) {
         `;
       }
     });
+  }
+}
+
+function salvarInstagramAluno() {
+  if (!alunoSessao) return;
+  const novoInsta = document.getElementById('editarInstaAlunoInput').value.trim();
+  const alunoId = getAlunoDocId(alunoSessao.apelido || alunoSessao.nome);
+  alunoSessao.instagram = novoInsta;
+  salvarSessaoAlunoLocal(alunoSessao);
+  document.getElementById('displayInstaAlunoTexto').textContent = novoInsta || "@NãoInformado";
+  const btnInsta = document.getElementById('btnAbrirInstaAluno');
+  if (btnInsta && novoInsta) {
+    const user = novoInsta.replace('@', '');
+    btnInsta.onclick = () => window.open(`https://instagram.com/${user}`, '_blank');
+  }
+  if (db && firebaseOnline) {
+    db.collection("alunos").doc(alunoId).update({ instagram: novoInsta })
+      .then(() => exhibirToast("✅ Instagram atualizado!"))
+      .catch(err => exhibirToast("Erro ao salvar: " + err.message));
+  } else {
+    exhibirToast("✅ Salvo localmente (Firebase offline)");
   }
 }
 
@@ -1089,9 +1130,13 @@ function salvarAvaliacaoCompletaProfessor() {
     jogoAngola: Number(document.getElementById('notaJogoAngola').value) || 0,
     jogoBenguela: Number(document.getElementById('notaJogoBenguela').value) || 0,
     jogoSaoBento: Number(document.getElementById('notaJogoSaoBento').value) || 0,
-    berimbau: Number(document.getElementById('notaBerimbau').value) || 0,
+    berimbauAngola: Number(document.getElementById('notaBerimbauAngola').value) || 0,
+    berimbauBenguela: Number(document.getElementById('notaBerimbauBenguela').value) || 0,
+    berimbauSaoBento: Number(document.getElementById('notaBerimbauSaoBento').value) || 0,
     atabaquePandeiro: Number(document.getElementById('notaAtabaquePandeiro').value) || 0,
-    faltasAtrasos: Number(document.getElementById('notaFaltasAtrasos').value) || 0
+    faltas: Number(document.getElementById('notaFaltas').value) || 0,
+    atrasos: Number(document.getElementById('notaAtrasos').value) || 0,
+    compromisso: Number(document.getElementById('notaCompromisso').value) || 0
   };
 
   const dificuldades = [];
@@ -1106,7 +1151,8 @@ function salvarAvaliacaoCompletaProfessor() {
     descidaBasicaDir: "Descida Básica (Direita)", descidaBasicaEsq: "Descida Básica (Esquerda)",
     seqNegativaRole: "Seq. Negativa e Rolê", seqSobeTras: "Seq. Sobe por Trás", seqSobeLateral: "Seq. Sobe pela Lateral",
     jogoAngola: "Jogo de Angola", jogoBenguela: "Jogo de Benguela", jogoSaoBento: "Jogo de São Bento Grande",
-    berimbau: "Toques de Berimbau", atabaquePandeiro: "Atabaque e Pandeiro", faltasAtrasos: "Assiduidade e Compromisso"
+    berimbauAngola: "Toque de Berimbau - Angola", berimbauBenguela: "Toque de Berimbau - Benguela", berimbauSaoBento: "Toque de Berimbau - São Bento",
+    atabaquePandeiro: "Atabaque e Pandeiro", faltas: "Faltas", atrasos: "Atrasos", compromisso: "Compromisso"
   };
 
   for (let key in notas) {
@@ -1297,12 +1343,23 @@ function escutarLocais() {
   }, () => {});
 }
 
+function obterNomeAutorMural() {
+  if (alunoSessao) return alunoSessao.apelido || alunoSessao.nome;
+  if (profSessao) return profSessao.apelido || profSessao.nome;
+  let nomeSalvo = '';
+  try { nomeSalvo = localStorage.getItem('nomeMuralVisitante') || ''; } catch (e) {}
+  if (nomeSalvo) return nomeSalvo;
+  const digitado = prompt("Digite seu nome para aparecer no mural:");
+  const nomeFinal = (digitado && digitado.trim()) ? digitado.trim() : "Capoeirista";
+  try { localStorage.setItem('nomeMuralVisitante', nomeFinal); } catch (e) {}
+  return nomeFinal;
+}
+
 /* ==================== MURAL / CHAT ==================== */
 function enviarMensagemNuvem() {
   const txt = document.getElementById('chatInput').value.trim();
   if (!txt) return;
-  const autor = alunoSessao ? (alunoSessao.apelido || alunoSessao.nome) :
-                (profSessao ? (profSessao.apelido || profSessao.nome) : "Capoeirista");
+  const autor = obterNomeAutorMural();
 
   if (db && firebaseOnline) {
     db.collection("mural").add({
@@ -1333,8 +1390,7 @@ function uploadFotoChat(input) {
   storageRef.put(file)
     .then(snapshot => snapshot.ref.getDownloadURL())
     .then(url => {
-      const autor = alunoSessao ? (alunoSessao.apelido || alunoSessao.nome) :
-                    (profSessao ? (profSessao.apelido || profSessao.nome) : "Capoeirista");
+      const autor = obterNomeAutorMural();
       return db.collection("mural").add({
         autor, texto: "", imagem: url,
         data: firebase.firestore.FieldValue.serverTimestamp()
@@ -1362,7 +1418,96 @@ function iniciarListenerMural() {
   }, () => {});
 }
 
-/* ==================== ADM ==================== */
+/* ==================== FEED INSTAGRAM ==================== */
+function carregarScriptEmbedInstagram(callback) {
+  if (window.instgrm) return callback();
+  const script = document.createElement('script');
+  script.src = "https://www.instagram.com/embed.js";
+  script.onload = callback;
+  document.body.appendChild(script);
+}
+
+function renderizarFeedInstagram(urls) {
+  const box = document.getElementById('feedInstagramInicio');
+  if (!box) return;
+  if (!urls || urls.length === 0) {
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = urls.map(u => `<blockquote class="instagram-media" data-instgrm-permalink="${u}" style="margin:10px auto; max-width:100%;"></blockquote>`).join('');
+  carregarScriptEmbedInstagram(() => { if (window.instgrm) window.instgrm.Embeds.process(); });
+}
+
+function iniciarListenerFeedInstagram() {
+  if (!db || !firebaseOnline) return;
+  db.collection("configuracoes").doc("instagram_posts").onSnapshot(doc => {
+    const dados = doc.exists ? doc.data() : {};
+    const urls = dados.urls || [];
+    renderizarFeedInstagram(urls);
+    renderizarListaPostsInstagramAdm(urls);
+
+    if (dados.handle) {
+      handleInstagramAcademiaAtual = dados.handle;
+      const txt = document.getElementById('handleInstagramAcademiaTxt');
+      if (txt) txt.textContent = "@" + dados.handle;
+      const inputAdm = document.getElementById('admHandleInstagramAcademia');
+      if (inputAdm && document.activeElement !== inputAdm) inputAdm.value = dados.handle;
+    }
+  }, () => {});
+}
+
+function salvarHandleInstagramAcademia() {
+  const input = document.getElementById('admHandleInstagramAcademia');
+  const handle = input.value.trim().replace('@', '');
+  if (!handle) return exhibirToast("Digite o usuário do Instagram da academia.");
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível salvar agora.");
+  db.collection("configuracoes").doc("instagram_posts").set({ handle }, { merge: true })
+    .then(() => exhibirToast("✅ Instagram da academia atualizado!"))
+    .catch(err => exhibirToast("Erro: " + err.message));
+}
+
+function renderizarListaPostsInstagramAdm(urls) {
+  const box = document.getElementById('admListaPostsInstagram');
+  if (!box) return;
+  if (!urls || urls.length === 0) {
+    box.innerHTML = '<p style="color:var(--text-sub);">Nenhuma publicação adicionada ainda.</p>';
+    return;
+  }
+  box.innerHTML = urls.map((u, i) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:#081217; padding:6px; border-radius:6px; margin-bottom:4px;">
+      <span style="word-break:break-all; margin-right:6px;">${u}</span>
+      <button class="btn btn-secondary" style="padding:4px 8px; margin:0;" onclick="removerPostInstagramAdm(${i})"><i class="fas fa-trash"></i></button>
+    </div>
+  `).join('');
+}
+
+function adicionarPostInstagramAdm() {
+  const input = document.getElementById('admNovoLinkInstagram');
+  const url = input.value.trim();
+  if (!url.includes('instagram.com')) return exhibirToast("Cole um link válido do Instagram.");
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível salvar agora.");
+  const ref = db.collection("configuracoes").doc("instagram_posts");
+  ref.get().then(doc => {
+    const urls = (doc.exists && doc.data().urls) ? doc.data().urls : [];
+    urls.push(url);
+    ref.set({ urls }, { merge: true }).then(() => {
+      input.value = '';
+      exhibirToast("✅ Publicação adicionada!");
+    }).catch(err => exhibirToast("Erro: " + err.message));
+  });
+}
+
+function removerPostInstagramAdm(indice) {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível remover agora.");
+  const ref = db.collection("configuracoes").doc("instagram_posts");
+  ref.get().then(doc => {
+    const urls = (doc.exists && doc.data().urls) ? doc.data().urls : [];
+    urls.splice(indice, 1);
+    ref.set({ urls }, { merge: true }).then(() => exhibirToast("✅ Publicação removida!")).catch(err => exhibirToast("Erro: " + err.message));
+  });
+}
+
+
 let alunosCacheAdm = {};
 
 function preencherListaAlunosAdm(s) {
@@ -1589,6 +1734,7 @@ function sincronizarConfiguracoesAoAbrir() {
     }).catch(() => {});
 
     iniciarListenerMural();
+    iniciarListenerFeedInstagram();
   }
 }
 
