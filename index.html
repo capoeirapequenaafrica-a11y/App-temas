@@ -1414,25 +1414,44 @@ function enviarMensagemNuvem() {
   }
 }
 
+/* ==================== COMPACTAÇÃO DE IMAGEM (sem Storage) ==================== */
+function comprimirImagemParaBase64(file, larguraMaxima, qualidade) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const escala = Math.min(1, larguraMaxima / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * escala;
+        canvas.height = img.height * escala;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', qualidade));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function uploadFotoChat(input) {
   const file = input.files && input.files[0];
   if (!file) return;
 
-  if (!storage || !firebaseOnline) {
-    exhibirToast("Firebase Storage indisponível.");
+  if (!db || !firebaseOnline) {
+    exhibirToast("Firebase offline. Não é possível enviar foto agora.");
     return;
   }
 
   exhibirToast("📤 Enviando foto...");
-  const nomeArquivo = 'chat_fotos/' + Date.now() + '_' + file.name;
-  const storageRef = storage.ref().child(nomeArquivo);
-
-  storageRef.put(file)
-    .then(snapshot => snapshot.ref.getDownloadURL())
-    .then(url => {
+  comprimirImagemParaBase64(file, 700, 0.6)
+    .then(base64 => {
       const autor = obterNomeAutorMural();
       return db.collection("mural").add({
-        autor, texto: "", imagem: url,
+        autor, texto: "", imagem: base64,
         data: firebase.firestore.FieldValue.serverTimestamp()
       });
     })
@@ -1440,7 +1459,7 @@ function uploadFotoChat(input) {
       exhibirToast("✅ Foto enviada!");
       input.value = '';
     })
-    .catch(err => exhibirToast("Erro ao enviar foto: " + err.message));
+    .catch(err => exhibirToast("Erro ao enviar foto: " + (err.message || err)));
 }
 
 function iniciarListenerMural() {
@@ -1481,18 +1500,16 @@ function enviarLogoAppAdm() {
   const input = document.getElementById('admLogoAppInput');
   const file = input.files && input.files[0];
   if (!file) return exhibirToast("Escolha uma imagem primeiro.");
-  if (!storage || !firebaseOnline) return exhibirToast("Firebase Storage indisponível.");
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível enviar agora.");
 
   exhibirToast("📤 Enviando logotipo...");
-  const storageRef = storage.ref().child('app_logo/logo_' + Date.now() + '_' + file.name);
-  storageRef.put(file)
-    .then(snapshot => snapshot.ref.getDownloadURL())
-    .then(url => db.collection("configuracoes").doc("app_visual").set({ logoUrl: url }, { merge: true }))
+  comprimirImagemParaBase64(file, 300, 0.8)
+    .then(base64 => db.collection("configuracoes").doc("app_visual").set({ logoUrl: base64 }, { merge: true }))
     .then(() => {
       exhibirToast("✅ Logotipo atualizado!");
       input.value = '';
     })
-    .catch(err => exhibirToast("Erro ao enviar: " + err.message));
+    .catch(err => exhibirToast("Erro ao enviar: " + (err.message || err)));
 }
 
 function removerLogoAppAdm() {
