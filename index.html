@@ -522,6 +522,14 @@
       <button class="btn btn-whatsapp" onclick="compartilharAplicativo()"><i class="fab fa-whatsapp"></i> Enviar Link para Alunos (WhatsApp)</button>
     </div>
 
+    <div class="card" style="border:1px solid var(--gold);">
+      <h3 style="color:var(--gold);"><i class="fas fa-image"></i> Logotipo do App (Cabeçalho)</h3>
+      <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Envie uma imagem para aparecer no topo do app, ao lado do nome:</p>
+      <input type="file" id="admLogoAppInput" accept="image/*">
+      <button class="btn btn-secondary" onclick="enviarLogoAppAdm()"><i class="fas fa-upload"></i> Enviar Logotipo</button>
+      <button class="btn btn-back" onclick="removerLogoAppAdm()" style="margin-top:6px;"><i class="fas fa-trash"></i> Remover Logotipo</button>
+    </div>
+
     <div class="card" style="border:1px solid var(--accent-blue);">
       <h3 style="color:var(--accent-blue);"><i class="fas fa-dumbbell"></i> Gerenciar Treinos para Casa (Início)</h3>
       <select id="admCategoriaTreino">
@@ -1468,7 +1476,49 @@ function iniciarListenerMural() {
   }, () => {});
 }
 
-/* ==================== TREINOS PARA CASA ==================== */
+/* ==================== LOGOTIPO DO APP ==================== */
+function enviarLogoAppAdm() {
+  const input = document.getElementById('admLogoAppInput');
+  const file = input.files && input.files[0];
+  if (!file) return exhibirToast("Escolha uma imagem primeiro.");
+  if (!storage || !firebaseOnline) return exhibirToast("Firebase Storage indisponível.");
+
+  exhibirToast("📤 Enviando logotipo...");
+  const storageRef = storage.ref().child('app_logo/logo_' + Date.now() + '_' + file.name);
+  storageRef.put(file)
+    .then(snapshot => snapshot.ref.getDownloadURL())
+    .then(url => db.collection("configuracoes").doc("app_visual").set({ logoUrl: url }, { merge: true }))
+    .then(() => {
+      exhibirToast("✅ Logotipo atualizado!");
+      input.value = '';
+    })
+    .catch(err => exhibirToast("Erro ao enviar: " + err.message));
+}
+
+function removerLogoAppAdm() {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline.");
+  db.collection("configuracoes").doc("app_visual").set({ logoUrl: "" }, { merge: true })
+    .then(() => exhibirToast("✅ Logotipo removido!"))
+    .catch(err => exhibirToast("Erro: " + err.message));
+}
+
+function iniciarListenerLogoApp() {
+  if (!db || !firebaseOnline) return;
+  db.collection("configuracoes").doc("app_visual").onSnapshot(doc => {
+    const url = (doc.exists && doc.data().logoUrl) ? doc.data().logoUrl : '';
+    const img = document.getElementById('headerLogo1');
+    if (!img) return;
+    if (url) {
+      img.src = url;
+      img.style.display = 'inline-block';
+    } else {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+  }, () => {});
+}
+
+
 const NOMES_CATEGORIAS_TREINO = {
   aulas: "Aulas", alongamento: "Alongamento em Casa", aquecimento: "Aquecimento",
   angola: "Treino de Angola", benguela: "Treino de Benguela", saoBento: "Treino de São Bento Grande de Bimba"
@@ -1891,6 +1941,7 @@ function sincronizarConfiguracoesAoAbrir() {
     iniciarListenerMural();
     iniciarListenerFeedInstagram();
     iniciarListenerTreinosCasa();
+    iniciarListenerLogoApp();
   }
 }
 
