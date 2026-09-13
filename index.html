@@ -184,6 +184,11 @@
       <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
     </div>
 
+    <div class="card" id="cardHorarioFixoInicio" style="border:1px solid var(--primary-green); display:none;">
+      <h3><i class="fas fa-calendar-week"></i> Horário Fixo da Semana</h3>
+      <div id="listaHorarioFixoInicio"></div>
+    </div>
+
     <div class="card" style="border: 1px solid #e6683c;">
       <h3 style="color:#f09433;"><i class="fab fa-instagram"></i> Instagram da Academia</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe as fotos, vídeos e novidades no nosso perfil oficial:</p>
@@ -304,6 +309,11 @@
         <button class="btn btn-instagram" id="btnAbrirInstaAluno" style="margin-top:6px;"><i class="fab fa-instagram"></i> Ver Instagram</button>
         <input id="editarInstaAlunoInput" placeholder="@SeuInstagram" style="margin-top:8px;">
         <button class="btn btn-secondary" onclick="salvarInstagramAluno()" style="margin-top:6px;"><i class="fas fa-save"></i> Salvar Instagram</button>
+      </div>
+
+      <div class="card" id="cardCertificadosAluno" style="border:1px solid var(--gold); display:none;">
+        <h3 style="color:var(--gold);"><i class="fas fa-award"></i> Meus Certificados</h3>
+        <div id="listaCertificadosAluno"></div>
       </div>
 
       <div class="card">
@@ -483,12 +493,23 @@
         <button class="btn" style="margin-top:8px;" onclick="salvarAvaliacaoCompletaProfessor()"><i class="fas fa-save"></i> Salvar Avaliação na Nuvem</button>
       </div>
 
+      <div class="card" style="border:1px solid var(--primary-green);">
+        <h3><i class="fas fa-calendar-week"></i> Horário Fixo Semanal (Segunda a Sexta)</h3>
+        <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Preencha o horário/local de cada dia (deixe em branco os dias sem aula):</p>
+        <input id="horarioFixoSeg" placeholder="Segunda-feira: ex. 19h - Instituto Central do Povo">
+        <input id="horarioFixoTer" placeholder="Terça-feira">
+        <input id="horarioFixoQua" placeholder="Quarta-feira">
+        <input id="horarioFixoQui" placeholder="Quinta-feira">
+        <input id="horarioFixoSex" placeholder="Sexta-feira">
+        <button class="btn btn-secondary" onclick="salvarHorarioFixoSemanal()"><i class="fas fa-save"></i> Salvar Horário Fixo</button>
+      </div>
+
       <div class="card" style="border:1px solid var(--accent-blue);">
-        <h3><i class="fas fa-map-marked-alt"></i> Publicar Aula ou Evento para Alunos</h3>
+        <h3><i class="fas fa-map-marked-alt"></i> Publicar Aula Extra ou Evento para Alunos</h3>
         
         <label style="font-size:0.75rem; color:var(--gold);">Tipo de Notificação:</label>
         <select id="profTipoAulaEventoSelect">
-          <option value="Aula Normal">Aula Normal</option>
+          <option value="Aula Extra">Aula Extra</option>
           <option value="Evento / Roda / Batizado">Evento / Roda / Batizado</option>
         </select>
 
@@ -1020,6 +1041,7 @@ function abrirPainelAlunoLogado(a) {
   }
 
   carregarAvisoAtivoParaAluno(a.apelido || a.nome);
+  iniciarListenerCertificadosAluno(a.nome);
 
   if (db && firebaseOnline) {
     const alunoId = getAlunoDocId(a.apelido || a.nome);
@@ -1320,18 +1342,21 @@ function carregarCheckinsPendentesProf() {
     }
     snapshot.forEach(docSnap => {
       const p = docSnap.data();
-      box.innerHTML += `<div style="border:1px solid var(--card-border); padding:6px; border-radius:6px; margin-bottom:6px; background:#0e191e; display:flex; justify-content:space-between; align-items:center;">
+      box.innerHTML += `<div style="border:1px solid var(--card-border); padding:6px; border-radius:6px; margin-bottom:6px; background:#0e191e;">
         <span><strong style="color:var(--accent-blue); font-size:0.78rem;">${p.alunoNome}</strong></span>
-        <button class="btn" style="width:auto; padding:4px 8px; margin:0; font-size:0.68rem;" onclick="aprovarPresencaAluno('${docSnap.id}')">Aprovar</button>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <button class="btn" style="width:auto; padding:4px 8px; margin:0; font-size:0.68rem;" onclick="aprovarPresencaAluno('${docSnap.id}', false)">Aprovar</button>
+          <button class="btn btn-secondary" style="width:auto; padding:4px 8px; margin:0; font-size:0.68rem;" onclick="aprovarPresencaAluno('${docSnap.id}', true)"><i class="fas fa-award"></i> Aprovar + Certificado</button>
+        </div>
       </div>`;
     });
   }, () => {});
 }
 
-function aprovarPresencaAluno(id) {
+function aprovarPresencaAluno(id, comCertificado) {
   if (db && firebaseOnline) {
-    db.collection("presencas").doc(id).update({ status: "APROVADO" })
-      .then(() => exhibirToast("Presença aprovada!"));
+    db.collection("presencas").doc(id).update({ status: "APROVADO", certificado: !!comCertificado })
+      .then(() => exhibirToast(comCertificado ? "Presença aprovada com certificado!" : "Presença aprovada!"));
   }
 }
 
@@ -1714,6 +1739,145 @@ function renderizarFeedInstagram(urls) {
   });
 }
 
+/* ==================== CERTIFICADOS ==================== */
+function iniciarListenerCertificadosAluno(alunoNome) {
+  if (!db || !firebaseOnline || !alunoNome) return;
+  db.collection("presencas")
+    .where("alunoNome", "==", alunoNome)
+    .where("certificado", "==", true)
+    .where("status", "==", "APROVADO")
+    .onSnapshot(snap => {
+      const card = document.getElementById('cardCertificadosAluno');
+      const lista = document.getElementById('listaCertificadosAluno');
+      if (!card || !lista) return;
+      if (snap.empty) { card.style.display = 'none'; return; }
+
+      card.style.display = 'block';
+      lista.innerHTML = '';
+      let idsAtuais = [];
+      snap.forEach(d => {
+        idsAtuais.push(d.id);
+        const p = d.data();
+        const dataTxt = p.data && p.data.toDate ? p.data.toDate().toLocaleDateString('pt-BR') : '';
+        lista.innerHTML += `<div style="background:#081217; border-radius:8px; padding:8px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.78rem; color:#fff;">${p.poloLocal || 'Apresentação'} ${dataTxt ? '- ' + dataTxt : ''}</span>
+          <button class="btn btn-secondary" style="width:auto; padding:5px 10px; margin:0;" onclick="baixarCertificadoAluno('${dataTxt}', '${(p.poloLocal || 'Apresentação').replace(/'/g, "")}')"><i class="fas fa-download"></i> Baixar</button>
+        </div>`;
+      });
+
+      let vistos = [];
+      try { vistos = JSON.parse(localStorage.getItem('certificadosVistos') || '[]'); } catch (e) {}
+      const novos = idsAtuais.filter(id => !vistos.includes(id));
+      if (vistos.length > 0 && novos.length > 0) {
+        dispararNotificacaoAviso("🏆 Novo certificado disponível!", "Você recebeu um certificado de apresentação. Confira no seu perfil.");
+      }
+      try { localStorage.setItem('certificadosVistos', JSON.stringify(idsAtuais)); } catch (e) {}
+    }, () => {});
+}
+
+function baixarCertificadoAluno(dataTxt, ocasiao) {
+  const nomeAluno = alunoSessao ? (alunoSessao.apelido || alunoSessao.nome) : 'Capoeirista';
+  const logoUrl = document.getElementById('headerLogo1') ? document.getElementById('headerLogo1').src : '';
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1000;
+  canvas.height = 700;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0b1a1f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#d4af37';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+  ctx.strokeStyle = '#00e676';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(35, 35, canvas.width - 70, canvas.height - 70);
+
+  function desenharTexto() {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#d4af37';
+    ctx.font = 'bold 34px Georgia, serif';
+    ctx.fillText('CERTIFICADO DE APRESENTAÇÃO', canvas.width / 2, 230);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px Georgia, serif';
+    ctx.fillText('Universo Capoeira - Capoeira na Pequena África', canvas.width / 2, 270);
+
+    ctx.font = '22px Georgia, serif';
+    ctx.fillText('certifica que', canvas.width / 2, 330);
+
+    ctx.fillStyle = '#00e676';
+    ctx.font = 'bold 42px Georgia, serif';
+    ctx.fillText(nomeAluno, canvas.width / 2, 390);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px Georgia, serif';
+    ctx.fillText(`participou e se apresentou em: ${ocasiao}`, canvas.width / 2, 440);
+    if (dataTxt) ctx.fillText(`Data: ${dataTxt}`, canvas.width / 2, 475);
+
+    ctx.font = 'italic 18px Georgia, serif';
+    ctx.fillStyle = '#9fb3ba';
+    ctx.fillText('Parabéns pela dedicação e pela apresentação!', canvas.width / 2, 540);
+
+    const link = document.createElement('a');
+    link.download = `certificado_${nomeAluno.replace(/\s+/g, '_')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  if (logoUrl && logoUrl.startsWith('data:')) {
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, canvas.width / 2 - 50, 70, 100, 100);
+      desenharTexto();
+    };
+    img.onerror = desenharTexto;
+    img.src = logoUrl;
+  } else {
+    desenharTexto();
+  }
+}
+
+/* ==================== HORÁRIO FIXO SEMANAL ==================== */
+const DIAS_HORARIO_FIXO = [
+  { chave: 'seg', label: 'Segunda-feira' },
+  { chave: 'ter', label: 'Terça-feira' },
+  { chave: 'qua', label: 'Quarta-feira' },
+  { chave: 'qui', label: 'Quinta-feira' },
+  { chave: 'sex', label: 'Sexta-feira' }
+];
+
+function salvarHorarioFixoSemanal() {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível salvar agora.");
+  const dados = {};
+  DIAS_HORARIO_FIXO.forEach(d => {
+    dados[d.chave] = document.getElementById('horarioFixo' + d.chave.charAt(0).toUpperCase() + d.chave.slice(1)).value.trim();
+  });
+  db.collection("configuracoes").doc("horario_fixo").set(dados)
+    .then(() => exhibirToast("✅ Horário fixo atualizado!"))
+    .catch(err => exhibirToast("Erro: " + err.message));
+}
+
+function iniciarListenerHorarioFixo() {
+  if (!db || !firebaseOnline) return;
+  db.collection("configuracoes").doc("horario_fixo").onSnapshot(doc => {
+    const dados = doc.exists ? doc.data() : {};
+    const card = document.getElementById('cardHorarioFixoInicio');
+    const lista = document.getElementById('listaHorarioFixoInicio');
+    if (!card || !lista) return;
+
+    const linhas = DIAS_HORARIO_FIXO.filter(d => dados[d.chave]);
+    if (linhas.length === 0) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+    lista.innerHTML = linhas.map(d => `<p style="font-size:0.8rem; color:#fff; margin-bottom:4px;"><strong style="color:var(--primary-green);">${d.label}:</strong> ${dados[d.chave]}</p>`).join('');
+
+    DIAS_HORARIO_FIXO.forEach(d => {
+      const input = document.getElementById('horarioFixo' + d.chave.charAt(0).toUpperCase() + d.chave.slice(1));
+      if (input && document.activeElement !== input) input.value = dados[d.chave] || '';
+    });
+  }, () => {});
+}
+
 function iniciarListenerFeedInstagram() {
   if (!db || !firebaseOnline) return;
   db.collection("configuracoes").doc("instagram_posts").onSnapshot(doc => {
@@ -2021,6 +2185,7 @@ function sincronizarConfiguracoesAoAbrir() {
     iniciarListenerFeedInstagram();
     iniciarListenerTreinosCasa();
     iniciarListenerLogoApp();
+    iniciarListenerHorarioFixo();
   }
 }
 
