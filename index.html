@@ -1405,15 +1405,33 @@ function uploadFotoChat(input) {
 
 function iniciarListenerMural() {
   if (!db || !firebaseOnline) return;
-  db.collection("mural").orderBy("data", "desc").limit(10).onSnapshot(s => {
+  const LIMITE_HORAS_MURAL = 24;
+  db.collection("mural").orderBy("data", "desc").limit(30).onSnapshot(s => {
     const box = document.getElementById('chatMessages');
     if (!box) return;
     box.innerHTML = '';
+    const agora = Date.now();
     s.forEach(d => {
       const m = d.data();
+      if (m.data && m.data.toMillis) {
+        const idadeHoras = (agora - m.data.toMillis()) / (1000 * 60 * 60);
+        if (idadeHoras > LIMITE_HORAS_MURAL) {
+          db.collection("mural").doc(d.id).delete().catch(() => {});
+          return;
+        }
+      }
       const conteudo = m.texto ? m.texto : '';
-      const imgHtml = m.imagem ? `<br><img src="${m.imagem}" style="max-width:100%; border-radius:6px; margin-top:4px;">` : '';
-      box.innerHTML += `<div style="margin-bottom:4px; border-bottom:1px solid #2c434e; padding-bottom:2px;"><strong style="color:var(--primary-green);">${m.autor}:</strong> ${conteudo}${imgHtml}</div>`;
+      const imgHtml = m.imagem ? `<img src="${m.imagem}" style="max-width:100%; border-radius:10px; margin-top:6px; display:block;">` : '';
+      const inicial = (m.autor || '?').trim().charAt(0).toUpperCase();
+      box.innerHTML += `
+        <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:10px;">
+          <div style="flex-shrink:0; width:32px; height:32px; border-radius:50%; background:var(--insta-gradient); display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; font-size:0.8rem;">${inicial}</div>
+          <div style="background:#1c2b32; border-radius:14px; padding:7px 12px; max-width:80%;">
+            <div style="font-weight:bold; font-size:0.72rem; color:var(--primary-green); margin-bottom:2px;">${m.autor}</div>
+            <div style="font-size:0.8rem; color:#fff; word-break:break-word;">${conteudo}</div>
+            ${imgHtml}
+          </div>
+        </div>`;
     });
   }, () => {});
 }
@@ -1427,6 +1445,12 @@ function carregarScriptEmbedInstagram(callback) {
   document.body.appendChild(script);
 }
 
+function limparLinkInstagram(url) {
+  const match = url.match(/instagram\.com\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
+  if (match) return `https://www.instagram.com/${match[1]}/${match[2]}/`;
+  return url.split('?')[0];
+}
+
 function renderizarFeedInstagram(urls) {
   const box = document.getElementById('feedInstagramInicio');
   if (!box) return;
@@ -1434,8 +1458,15 @@ function renderizarFeedInstagram(urls) {
     box.innerHTML = '';
     return;
   }
-  box.innerHTML = urls.map(u => `<blockquote class="instagram-media" data-instgrm-permalink="${u}" style="margin:10px auto; max-width:100%;"></blockquote>`).join('');
-  carregarScriptEmbedInstagram(() => { if (window.instgrm) window.instgrm.Embeds.process(); });
+  box.innerHTML = urls.map(u => {
+    const limpo = limparLinkInstagram(u);
+    return `<blockquote class="instagram-media" data-instgrm-permalink="${limpo}" data-instgrm-version="14" style="margin:10px auto; max-width:100%; min-width:280px;">
+      <a href="${limpo}" target="_blank" style="color:#f09433;">Ver publicação no Instagram ↗</a>
+    </blockquote>`;
+  }).join('');
+  carregarScriptEmbedInstagram(() => {
+    if (window.instgrm) window.instgrm.Embeds.process();
+  });
 }
 
 function iniciarListenerFeedInstagram() {
