@@ -178,6 +178,12 @@
 
   <!-- 1. ABA INÍCIO -->
   <div id="tab1" class="tab-content active">
+    <div class="card" style="border:1px solid var(--gold);">
+      <h3 style="color:var(--gold);"><i class="fas fa-bell"></i> Avisos do Professor</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
+      <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
+    </div>
+
     <div class="card" style="border: 1px solid #e6683c;">
       <h3 style="color:#f09433;"><i class="fab fa-instagram"></i> Instagram da Academia</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe as fotos, vídeos e novidades no nosso perfil oficial:</p>
@@ -760,6 +766,54 @@ function formatarTempoTimer(seg) {
   const m = Math.floor(seg / 60).toString().padStart(2, '0');
   const s = (seg % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
+}
+
+function tocarSomNotificacao() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [880, 660].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.18);
+      osc.stop(ctx.currentTime + i * 0.18 + 0.16);
+    });
+  } catch (e) {}
+}
+
+function pedirPermissaoNotificacao() {
+  if (!('Notification' in window)) return exhibirToast("Seu navegador não suporta notificações.");
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') exhibirToast("🔔 Notificações ativadas!");
+    else exhibirToast("Notificações não permitidas.");
+    atualizarBotaoNotificacao();
+  });
+}
+
+function atualizarBotaoNotificacao() {
+  const btn = document.getElementById('btnAtivarNotificacao');
+  if (!btn) return;
+  if (!('Notification' in window)) { btn.style.display = 'none'; return; }
+  if (Notification.permission === 'granted') {
+    btn.innerHTML = '<i class="fas fa-bell"></i> Notificações Ativadas';
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = '<i class="fas fa-bell"></i> Ativar Notificações';
+    btn.disabled = false;
+  }
+}
+
+function dispararNotificacaoAviso(titulo, corpo) {
+  tocarSomNotificacao();
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try { new Notification(titulo, { body: corpo, icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg' }); } catch (e) {}
+  } else {
+    exhibirToast("🔔 " + titulo + ": " + corpo);
+  }
 }
 
 function tocarApitoTimer() {
@@ -1939,7 +1993,7 @@ function sincronizarConfiguracoesAoAbrir() {
   if (listenersFirebaseIniciados) return;
   if (db && firebaseOnline) {
     listenersFirebaseIniciados = true;
-    db.collection("configuracoes").doc("local_aula_ativo").get().then(doc => {
+    db.collection("configuracoes").doc("local_aula_ativo").onSnapshot(doc => {
       const boxNotif = document.getElementById('boxNotificacaoAluno');
       const txtNotif = document.getElementById('textoNotificacaoLocal');
       const linkGmaps = document.getElementById('linkGmapsNotificacao');
@@ -1952,8 +2006,16 @@ function sincronizarConfiguracoesAoAbrir() {
           linkGmaps.href = d.enderecoOuLink;
           linkGmaps.style.display = 'inline-block';
         }
+
+        const assinatura = `${d.tipo || ''}|${d.nomeLocal || ''}|${d.enderecoOuLink || ''}`;
+        let assinaturaAnterior = '';
+        try { assinaturaAnterior = localStorage.getItem('ultimoAvisoAssinatura') || ''; } catch (e) {}
+        if (assinaturaAnterior && assinaturaAnterior !== assinatura) {
+          dispararNotificacaoAviso("Novo aviso do professor", `${d.tipo || 'Aula/Evento'} - ${d.nomeLocal}`);
+        }
+        try { localStorage.setItem('ultimoAvisoAssinatura', assinatura); } catch (e) {}
       }
-    }).catch(() => {});
+    }, () => {});
 
     iniciarListenerMural();
     iniciarListenerFeedInstagram();
@@ -1982,6 +2044,7 @@ function carregarDadosAbaAdm() {
 
 restaurarSessaoProfessorSalva();
 restaurarSessaoAlunoSalva();
+atualizarBotaoNotificacao();
 
 setTimeout(() => {
   sincronizarConfiguracoesAoAbrir();
