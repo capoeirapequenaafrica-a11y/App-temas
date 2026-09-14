@@ -203,6 +203,11 @@
       <a id="linkGmapsNotificacao" href="#" target="_blank" style="display:none; color:var(--primary-green); font-size:0.7rem; text-decoration:underline; margin-top:4px;">Ver no Google Maps</a>
     </div>
 
+    <div class="card" id="cardRankingInicio" style="border:1px solid var(--gold); display:none;">
+      <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos</h3>
+      <div id="conteudoRankingInicio"></div>
+    </div>
+
     <div class="card" id="cardCertificadosAluno" style="border:1px solid var(--gold); display:none;">
       <h3 style="color:var(--gold);"><i class="fas fa-award"></i> Certificados de Apresentação</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Disponível para quem fez check-in aprovado pelo professor:</p>
@@ -576,6 +581,28 @@
       <div class="flex-btn" style="margin-top:6px;">
         <button class="btn btn-whatsapp" onclick="gerarAvisoWhatsApp('presenca')">Aviso Presença</button>
         <button class="btn btn-danger" onclick="gerarAvisoWhatsApp('falta')">Aviso Falta</button>
+      </div>
+    </div>
+
+    <div class="card" style="border:1px solid var(--gold);">
+      <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos (Início)</h3>
+      <button class="btn btn-secondary" onclick="calcularFrequenciaAlunosAdm()"><i class="fas fa-chart-bar"></i> Ver Frequência dos Alunos</button>
+      <div id="admFrequenciaAlunos" style="margin-top:6px; font-size:0.72rem;"></div>
+
+      <div style="margin-top:10px; border-top:1px solid var(--card-border); padding-top:8px;">
+        <label style="font-size:0.75rem; color:var(--gold);">🏆 Aluno Nota 10:</label>
+        <select id="rankingNota10"><option value="">Selecione...</option></select>
+
+        <label style="font-size:0.75rem; color:var(--gold);">⭐ Aluno Destaque 1:</label>
+        <select id="rankingDestaque1"><option value="">Selecione...</option></select>
+
+        <label style="font-size:0.75rem; color:var(--gold);">⭐ Aluno Destaque 2:</label>
+        <select id="rankingDestaque2"><option value="">Selecione...</option></select>
+
+        <label style="font-size:0.75rem; color:var(--gold);">💪 Aluno Superação:</label>
+        <select id="rankingSuperacao"><option value="">Selecione...</option></select>
+
+        <button class="btn btn-secondary" onclick="salvarRankingAlunos()" style="margin-top:8px;"><i class="fas fa-save"></i> Salvar Ranking</button>
       </div>
     </div>
 
@@ -1736,6 +1763,80 @@ function salvarHorarioFixoSemanal() {
     .catch(err => exhibirToast("Erro: " + err.message));
 }
 
+/* ==================== RANKING DOS ALUNOS ==================== */
+function calcularFrequenciaAlunosAdm() {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline.");
+  const box = document.getElementById('admFrequenciaAlunos');
+  box.innerHTML = 'Calculando...';
+  db.collection("presencas").where("status", "==", "APROVADO").get().then(snap => {
+    const contagem = {};
+    snap.forEach(d => {
+      const nome = d.data().alunoNome;
+      contagem[nome] = (contagem[nome] || 0) + 1;
+    });
+    const lista = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+    if (lista.length === 0) {
+      box.innerHTML = '<p style="color:var(--text-sub);">Nenhuma presença aprovada ainda.</p>';
+      return;
+    }
+    box.innerHTML = lista.map(([nome, qtd]) => `
+      <div style="display:flex; justify-content:space-between; background:#081217; padding:5px 8px; border-radius:6px; margin-bottom:3px;">
+        <span>${nome}</span><strong style="color:var(--primary-green);">${qtd}x</strong>
+      </div>`).join('');
+  }).catch(err => box.innerHTML = 'Erro: ' + err.message);
+}
+
+function preencherSelectsRanking(nomesAlunos) {
+  ['rankingNota10', 'rankingDestaque1', 'rankingDestaque2', 'rankingSuperacao'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const valorAtual = sel.value;
+    sel.innerHTML = '<option value="">Selecione...</option>' + nomesAlunos.map(n => `<option value="${n}">${n}</option>`).join('');
+    sel.value = valorAtual;
+  });
+}
+
+function salvarRankingAlunos() {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível salvar agora.");
+  const dados = {
+    nota10: document.getElementById('rankingNota10').value,
+    destaque1: document.getElementById('rankingDestaque1').value,
+    destaque2: document.getElementById('rankingDestaque2').value,
+    superacao: document.getElementById('rankingSuperacao').value
+  };
+  db.collection("configuracoes").doc("ranking_alunos").set(dados)
+    .then(() => exhibirToast("✅ Ranking atualizado!"))
+    .catch(err => exhibirToast("Erro: " + err.message));
+}
+
+function iniciarListenerRanking() {
+  if (!db || !firebaseOnline) return;
+  db.collection("configuracoes").doc("ranking_alunos").onSnapshot(doc => {
+    const card = document.getElementById('cardRankingInicio');
+    const conteudo = document.getElementById('conteudoRankingInicio');
+    if (!card || !conteudo) return;
+    const d = doc.exists ? doc.data() : {};
+
+    if (!d.nota10 && !d.destaque1 && !d.destaque2 && !d.superacao) {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = 'block';
+    let html = '';
+    if (d.nota10) html += `<p style="font-size:0.85rem; color:#fff; margin-bottom:6px;">🏆 <strong style="color:var(--gold);">Aluno Nota 10:</strong> ${d.nota10}</p>`;
+    if (d.destaque1) html += `<p style="font-size:0.85rem; color:#fff; margin-bottom:6px;">⭐ <strong style="color:var(--gold);">Destaque:</strong> ${d.destaque1}</p>`;
+    if (d.destaque2) html += `<p style="font-size:0.85rem; color:#fff; margin-bottom:6px;">⭐ <strong style="color:var(--gold);">Destaque:</strong> ${d.destaque2}</p>`;
+    if (d.superacao) html += `<p style="font-size:0.85rem; color:#fff;">💪 <strong style="color:var(--gold);">Superação:</strong> ${d.superacao}</p>`;
+    conteudo.innerHTML = html;
+
+    ['rankingNota10', 'rankingDestaque1', 'rankingDestaque2', 'rankingSuperacao'].forEach((id, i) => {
+      const chave = ['nota10', 'destaque1', 'destaque2', 'superacao'][i];
+      const sel = document.getElementById(id);
+      if (sel && document.activeElement !== sel) sel.value = d[chave] || '';
+    });
+  }, () => {});
+}
+
 function iniciarListenerHorarioFixo() {
   if (!db || !firebaseOnline) return;
   db.collection("configuracoes").doc("horario_fixo").onSnapshot(doc => {
@@ -1835,11 +1936,14 @@ function preencherListaAlunosAdm(s) {
   if (!sel) return;
   sel.innerHTML = '<option value="">Selecione o Aluno...</option>';
   alunosCacheAdm = {};
+  const nomes = [];
   s.forEach(d => {
     const data = d.data();
     alunosCacheAdm[data.nome] = { id: d.id, ...data };
+    nomes.push(data.nome);
     sel.innerHTML += `<option value="${data.nome}">${data.nome}</option>`;
   });
+  preencherSelectsRanking(nomes);
 }
 
 function carregarAlunosParaADM() {
@@ -2063,6 +2167,7 @@ function sincronizarConfiguracoesAoAbrir() {
     iniciarListenerFeedInstagram();
     iniciarListenerLogoApp();
     iniciarListenerHorarioFixo();
+    iniciarListenerRanking();
   }
 }
 
