@@ -187,6 +187,8 @@
     <div class="card" id="cardHorarioFixoInicio" style="border:1px solid var(--primary-green); display:none;">
       <h3><i class="fas fa-calendar-week"></i> Horário Fixo da Semana</h3>
       <div id="listaHorarioFixoInicio"></div>
+      <button class="btn" id="btnConfirmarPresencaHoje" style="margin-top:8px; display:none;" onclick="confirmarPresencaHoje()"><i class="fas fa-hand-point-up"></i> Vou Comparecer Hoje</button>
+      <p id="txtJaConfirmouHoje" style="display:none; font-size:0.75rem; color:var(--primary-green); margin-top:6px;"><i class="fas fa-check-circle"></i> Presença confirmada para hoje!</p>
     </div>
 
     <div class="card" style="border: 1px solid #e6683c;">
@@ -241,6 +243,11 @@
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Selecione o polo cadastrado pelo professor:</p>
       <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo">
       <select id="selectPoloFixoTreino"><option value="">Aguardando professor cadastrar local...</option></select>
+      <div id="boxJustificativaAtraso" style="display:none; margin-top:8px; border:1px solid var(--danger); border-radius:8px; padding:8px;">
+        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo (o professor irá avaliar):</p>
+        <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto no trabalho..." style="min-height:50px;"></textarea>
+      </div>
+      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação.</p>
       <button class="btn" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
     </div>
   </div>
@@ -486,12 +493,12 @@
 
       <div class="card" style="border:1px solid var(--primary-green);">
         <h3><i class="fas fa-calendar-week"></i> Horário Fixo Semanal (Segunda a Sexta)</h3>
-        <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Preencha o horário/local de cada dia (deixe em branco os dias sem aula):</p>
-        <input id="horarioFixoSeg" placeholder="Segunda-feira: ex. 19h - Instituto Central do Povo">
-        <input id="horarioFixoTer" placeholder="Terça-feira">
-        <input id="horarioFixoQua" placeholder="Quarta-feira">
-        <input id="horarioFixoQui" placeholder="Quinta-feira">
-        <input id="horarioFixoSex" placeholder="Sexta-feira">
+        <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Preencha o local/descrição e o horário de início de cada dia (deixe em branco os dias sem aula). O horário é usado para detectar atraso no check-in:</p>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoSeg" placeholder="Segunda-feira: ex. Instituto Central do Povo" style="flex:2;"><input type="time" id="horarioFixoHoraSeg" style="flex:1;"></div>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoTer" placeholder="Terça-feira" style="flex:2;"><input type="time" id="horarioFixoHoraTer" style="flex:1;"></div>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoQua" placeholder="Quarta-feira" style="flex:2;"><input type="time" id="horarioFixoHoraQua" style="flex:1;"></div>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoQui" placeholder="Quinta-feira" style="flex:2;"><input type="time" id="horarioFixoHoraQui" style="flex:1;"></div>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoSex" placeholder="Sexta-feira" style="flex:2;"><input type="time" id="horarioFixoHoraSex" style="flex:1;"></div>
         <button class="btn btn-secondary" onclick="salvarHorarioFixoSemanal()"><i class="fas fa-save"></i> Salvar Horário Fixo</button>
       </div>
 
@@ -588,6 +595,9 @@
       <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos (Início)</h3>
       <button class="btn btn-secondary" onclick="calcularFrequenciaAlunosAdm()"><i class="fas fa-chart-bar"></i> Ver Frequência dos Alunos</button>
       <div id="admFrequenciaAlunos" style="margin-top:6px; font-size:0.72rem;"></div>
+
+      <button class="btn btn-danger" onclick="verificarFaltasSemConfirmacaoAdm()" style="margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> Ver Confirmaram e Faltaram Hoje</button>
+      <div id="admConfirmacoesXCheckins" style="margin-top:6px; font-size:0.72rem;"></div>
 
       <div style="margin-top:10px; border-top:1px solid var(--card-border); padding-top:8px;">
         <label style="font-size:0.75rem; color:var(--gold);">🏆 Aluno Nota 10:</label>
@@ -1021,6 +1031,13 @@ function autenticarAlunoNuvem() {
   }
 }
 
+function aguardarFirebaseEDepois(fn, tentativasRestantes) {
+  if (tentativasRestantes === undefined) tentativasRestantes = 20;
+  if (db && firebaseOnline) { fn(); return; }
+  if (tentativasRestantes <= 0) return;
+  setTimeout(() => aguardarFirebaseEDepois(fn, tentativasRestantes - 1), 300);
+}
+
 function abrirPainelAlunoLogado(a) {
   document.getElementById('painelAlunoConteudo').style.display = 'block';
   document.getElementById('cardAlunoLogin').style.display = 'none';
@@ -1036,10 +1053,11 @@ function abrirPainelAlunoLogado(a) {
     btnInsta.onclick = () => window.open(`https://instagram.com/${user}`, '_blank');
   }
 
-  carregarAvisoAtivoParaAluno(a.apelido || a.nome);
-  iniciarListenerCertificadosAluno(a.nome);
+  aguardarFirebaseEDepois(() => {
+    carregarAvisoAtivoParaAluno(a.apelido || a.nome);
+    iniciarListenerCertificadosAluno(a.nome);
+    atualizarBotaoConfirmarPresenca();
 
-  if (db && firebaseOnline) {
     const alunoId = getAlunoDocId(a.apelido || a.nome);
     db.collection("boletins").doc(alunoId).onSnapshot(doc => {
       const box = document.getElementById('boletimAlunoDinamico');
@@ -1066,7 +1084,7 @@ function abrirPainelAlunoLogado(a) {
         `;
       }
     });
-  }
+  });
 }
 
 function salvarInstagramAluno() {
@@ -1184,9 +1202,11 @@ function abrirPainelProfessorLogado(p) {
   if (nomeDisplay) nomeDisplay.innerHTML = `<strong>${p.apelido || p.nome}</strong> (${p.graduacao || 'Instrutor'})`;
   if (poloDisplay && p.localNome) poloDisplay.innerHTML = `Polo Principal: ${p.localNome}`;
 
-  carregarAlunosParaProfessor();
-  carregarCheckinsPendentesProf();
-  carregarConfirmacoesAvisoProf();
+  aguardarFirebaseEDepois(() => {
+    carregarAlunosParaProfessor();
+    carregarCheckinsPendentesProf();
+    carregarConfirmacoesAvisoProf();
+  });
 }
 
 function deslogarProfessor() {
@@ -1338,8 +1358,10 @@ function carregarCheckinsPendentesProf() {
     }
     snapshot.forEach(docSnap => {
       const p = docSnap.data();
+      const avisoAtraso = p.atrasoMinutos ? `<p style="font-size:0.68rem; color:var(--danger); margin-top:4px;"><i class="fas fa-exclamation-triangle"></i> Atraso de ${p.atrasoMinutos} min — Justificativa: "${p.justificativaAtraso || 'Sem justificativa'}"</p>` : '';
       box.innerHTML += `<div style="border:1px solid var(--card-border); padding:6px; border-radius:6px; margin-bottom:6px; background:#0e191e;">
         <span><strong style="color:var(--accent-blue); font-size:0.78rem;">${p.alunoNome}</strong></span>
+        ${avisoAtraso}
         <div style="display:flex; gap:6px; margin-top:6px;">
           <button class="btn" style="width:auto; padding:4px 8px; margin:0; font-size:0.68rem;" onclick="aprovarPresencaAluno('${docSnap.id}', false)">Aprovar</button>
           <button class="btn btn-secondary" style="width:auto; padding:4px 8px; margin:0; font-size:0.68rem;" onclick="aprovarPresencaAluno('${docSnap.id}', true)"><i class="fas fa-award"></i> Aprovar + Certificado</button>
@@ -1409,16 +1431,55 @@ function carregarConfirmacoesAvisoProf() {
 }
 
 /* ==================== CHECK-IN ==================== */
+function calcularMinutosAtraso() {
+  if (!window.horarioFixoCache) return 0;
+  const diasSemana = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+  const agora = new Date();
+  const chaveDia = diasSemana[agora.getDay()];
+  const chaveHora = 'hora' + chaveDia.charAt(0).toUpperCase() + chaveDia.slice(1);
+  const horaAula = window.horarioFixoCache[chaveHora];
+  if (!horaAula) return 0;
+
+  const [h, m] = horaAula.split(':').map(Number);
+  const horarioAula = new Date(agora);
+  horarioAula.setHours(h, m, 0, 0);
+  const diffMin = Math.round((agora - horarioAula) / 60000);
+  return diffMin;
+}
+
+function verificarAtrasoCheckin() {
+  const box = document.getElementById('boxJustificativaAtraso');
+  if (!box) return;
+  const atrasoMin = calcularMinutosAtraso();
+  box.style.display = atrasoMin >= 10 ? 'block' : 'none';
+}
+
 function alunoCheckinLocalFixoSimples() {
   const nome = document.getElementById('checkinFixoNomeAluno').value.trim();
   const polo = document.getElementById('selectPoloFixoTreino').value;
   if (!nome || !polo) return exhibirToast("Preencha seu nome e escolha o local.");
 
+  const atrasoMin = calcularMinutosAtraso();
+  const justificativa = document.getElementById('justificativaAtrasoInput') ? document.getElementById('justificativaAtrasoInput').value.trim() : '';
+  if (atrasoMin >= 10 && !justificativa) {
+    return exhibirToast("Você está atrasado(a) — escreva uma justificativa antes de confirmar.");
+  }
+
+  const dadosCheckin = {
+    alunoNome: nome, poloLocal: polo, status: "PENDENTE",
+    data: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (atrasoMin >= 10) {
+    dadosCheckin.atrasoMinutos = atrasoMin;
+    dadosCheckin.justificativaAtraso = justificativa;
+  }
+
   if (db && firebaseOnline) {
-    db.collection("presencas").add({
-      alunoNome: nome, poloLocal: polo, status: "PENDENTE",
-      data: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => exhibirToast("Check-in enviado!"));
+    db.collection("presencas").add(dadosCheckin).then(() => {
+      exhibirToast("Check-in enviado!");
+      const jInput = document.getElementById('justificativaAtrasoInput');
+      if (jInput) jInput.value = '';
+    });
   } else {
     exhibirToast("Check-in salvo localmente");
   }
@@ -1743,6 +1804,76 @@ function baixarCertificadoAluno(dataTxt, ocasiao) {
   }
 }
 
+function chaveDataHoje() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function temAulaHoje() {
+  if (!window.horarioFixoCache) return false;
+  const diasSemana = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+  const chaveDia = diasSemana[new Date().getDay()];
+  return !!window.horarioFixoCache[chaveDia];
+}
+
+function atualizarBotaoConfirmarPresenca() {
+  const btn = document.getElementById('btnConfirmarPresencaHoje');
+  const txt = document.getElementById('txtJaConfirmouHoje');
+  if (!btn || !txt) return;
+  if (!alunoSessao || !temAulaHoje()) { btn.style.display = 'none'; txt.style.display = 'none'; return; }
+
+  let jaConfirmou = false;
+  try { jaConfirmou = localStorage.getItem('confirmouPresenca_' + chaveDataHoje()) === '1'; } catch (e) {}
+  btn.style.display = jaConfirmou ? 'none' : 'inline-block';
+  txt.style.display = jaConfirmou ? 'block' : 'none';
+}
+
+function confirmarPresencaHoje() {
+  if (!alunoSessao || !db || !firebaseOnline) return exhibirToast("Faça login e fique online pra confirmar.");
+  const nome = alunoSessao.apelido || alunoSessao.nome;
+  db.collection("confirmacoes_presenca").add({
+    alunoNome: nome, diaChave: chaveDataHoje(),
+    data: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    try { localStorage.setItem('confirmouPresenca_' + chaveDataHoje(), '1'); } catch (e) {}
+    exhibirToast("✅ Presença confirmada! Não esqueça de comparecer.");
+    atualizarBotaoConfirmarPresenca();
+  }).catch(err => exhibirToast("Erro: " + err.message));
+}
+
+function verificarFaltasSemConfirmacaoAdm() {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline.");
+  const box = document.getElementById('admConfirmacoesXCheckins');
+  box.innerHTML = 'Verificando...';
+  const hoje = chaveDataHoje();
+
+  Promise.all([
+    db.collection("confirmacoes_presenca").where("diaChave", "==", hoje).get(),
+    db.collection("presencas").get()
+  ]).then(([confirmSnap, presSnap]) => {
+    const confirmaram = [];
+    confirmSnap.forEach(d => confirmaram.push(d.data().alunoNome));
+
+    const compareceram = new Set();
+    presSnap.forEach(d => {
+      const p = d.data();
+      if (p.data && p.data.toDate) {
+        const dataPresenca = p.data.toDate();
+        const chave = `${dataPresenca.getFullYear()}-${dataPresenca.getMonth() + 1}-${dataPresenca.getDate()}`;
+        if (chave === hoje) compareceram.add(p.alunoNome);
+      }
+    });
+
+    const faltaram = confirmaram.filter(n => !compareceram.has(n));
+    if (confirmaram.length === 0) {
+      box.innerHTML = '<p style="color:var(--text-sub);">Ninguém confirmou presença hoje ainda.</p>';
+      return;
+    }
+    box.innerHTML = `<p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">${confirmaram.length} confirmaram hoje, ${compareceram.size} compareceram.</p>` +
+      faltaram.map(n => `<div style="background:#2a1010; border:1px solid var(--danger); border-radius:6px; padding:5px 8px; margin-bottom:3px; color:var(--danger); font-size:0.75rem;"><i class="fas fa-exclamation-triangle"></i> ${n} confirmou mas não compareceu</div>`).join('');
+  }).catch(err => box.innerHTML = 'Erro: ' + err.message);
+}
+
 /* ==================== HORÁRIO FIXO SEMANAL ==================== */
 const DIAS_HORARIO_FIXO = [
   { chave: 'seg', label: 'Segunda-feira' },
@@ -1756,7 +1887,9 @@ function salvarHorarioFixoSemanal() {
   if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível salvar agora.");
   const dados = {};
   DIAS_HORARIO_FIXO.forEach(d => {
-    dados[d.chave] = document.getElementById('horarioFixo' + d.chave.charAt(0).toUpperCase() + d.chave.slice(1)).value.trim();
+    const sufixo = d.chave.charAt(0).toUpperCase() + d.chave.slice(1);
+    dados[d.chave] = document.getElementById('horarioFixo' + sufixo).value.trim();
+    dados['hora' + sufixo] = document.getElementById('horarioFixoHora' + sufixo).value || '';
   });
   db.collection("configuracoes").doc("horario_fixo").set(dados)
     .then(() => exhibirToast("✅ Horário fixo atualizado!"))
@@ -1841,6 +1974,7 @@ function iniciarListenerHorarioFixo() {
   if (!db || !firebaseOnline) return;
   db.collection("configuracoes").doc("horario_fixo").onSnapshot(doc => {
     const dados = doc.exists ? doc.data() : {};
+    window.horarioFixoCache = dados;
     const card = document.getElementById('cardHorarioFixoInicio');
     const lista = document.getElementById('listaHorarioFixoInicio');
     if (!card || !lista) return;
@@ -1848,12 +1982,20 @@ function iniciarListenerHorarioFixo() {
     const linhas = DIAS_HORARIO_FIXO.filter(d => dados[d.chave]);
     if (linhas.length === 0) { card.style.display = 'none'; return; }
     card.style.display = 'block';
-    lista.innerHTML = linhas.map(d => `<p style="font-size:0.8rem; color:#fff; margin-bottom:4px;"><strong style="color:var(--primary-green);">${d.label}:</strong> ${dados[d.chave]}</p>`).join('');
+    lista.innerHTML = linhas.map(d => {
+      const sufixo = d.chave.charAt(0).toUpperCase() + d.chave.slice(1);
+      const hora = dados['hora' + sufixo] ? ` às ${dados['hora' + sufixo]}` : '';
+      return `<p style="font-size:0.8rem; color:#fff; margin-bottom:4px;"><strong style="color:var(--primary-green);">${d.label}${hora}:</strong> ${dados[d.chave]}</p>`;
+    }).join('');
 
     DIAS_HORARIO_FIXO.forEach(d => {
-      const input = document.getElementById('horarioFixo' + d.chave.charAt(0).toUpperCase() + d.chave.slice(1));
+      const sufixo = d.chave.charAt(0).toUpperCase() + d.chave.slice(1);
+      const input = document.getElementById('horarioFixo' + sufixo);
+      const inputHora = document.getElementById('horarioFixoHora' + sufixo);
       if (input && document.activeElement !== input) input.value = dados[d.chave] || '';
+      if (inputHora && document.activeElement !== inputHora) inputHora.value = dados['hora' + sufixo] || '';
     });
+    atualizarBotaoConfirmarPresenca();
   }, () => {});
 }
 
@@ -2176,6 +2318,7 @@ function sincronizarConfiguracoesAoAbrir() {
    vez ao abrir o app. Deixa a abertura inicial mais rápida. */
 let checkinDadosCarregados = false;
 function carregarDadosAbaCheckin() {
+  verificarAtrasoCheckin();
   if (checkinDadosCarregados || !db || !firebaseOnline) return;
   checkinDadosCarregados = true;
   escutarLocais();
