@@ -157,13 +157,23 @@
     </div>
 
     <div class="cronometro-box">
-      <div class="cronometro-display" id="timerDisplay">01:30</div>
+      <div class="cronometro-display" id="timerDisplay" onclick="abrirTimerTelaCheia()" style="cursor:pointer;">01:30</div>
       <div class="cronometro-controls">
         <button class="cronometro-btn" onclick="iniciarPausarTimer()" id="btnStartTimer"><i class="fas fa-play"></i></button>
         <button class="cronometro-btn" onclick="resetarTimer()"><i class="fas fa-undo"></i></button>
+        <button class="cronometro-btn" onclick="abrirTimerTelaCheia()"><i class="fas fa-expand"></i></button>
       </div>
     </div>
   </header>
+
+  <div id="overlayTimerGrande" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+    <div id="timerDisplayGrande" style="font-family:monospace; font-size:22vw; font-weight:800; color:var(--accent-blue);">01:30</div>
+    <div style="display:flex; gap:16px; margin-top:20px;">
+      <button class="cronometro-btn" style="width:60px; height:60px; font-size:1.4rem;" onclick="iniciarPausarTimer()" id="btnStartTimerGrande"><i class="fas fa-play"></i></button>
+      <button class="cronometro-btn" style="width:60px; height:60px; font-size:1.4rem;" onclick="resetarTimer()"><i class="fas fa-undo"></i></button>
+      <button class="cronometro-btn" style="width:60px; height:60px; font-size:1.4rem;" onclick="fecharTimerTelaCheia()"><i class="fas fa-compress"></i></button>
+    </div>
+  </div>
 
   <div class="tabs-container">
     <div class="tabs" id="protectedSystemTabs">
@@ -860,12 +870,15 @@ function tocarApitoTimer() {
 
 function iniciarPausarTimer() {
   const btn = document.getElementById('btnStartTimer');
+  const btnGrande = document.getElementById('btnStartTimerGrande');
   const display = document.getElementById('timerDisplay');
+  const displayGrande = document.getElementById('timerDisplayGrande');
 
   if (timerRodando) {
     clearInterval(timerInterval);
     timerRodando = false;
     if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
+    if (btnGrande) btnGrande.innerHTML = '<i class="fas fa-play"></i>';
     return;
   }
 
@@ -877,10 +890,12 @@ function iniciarPausarTimer() {
   tocarApitoTimer();
   timerRodando = true;
   if (btn) btn.innerHTML = '<i class="fas fa-pause"></i>';
+  if (btnGrande) btnGrande.innerHTML = '<i class="fas fa-pause"></i>';
 
   timerInterval = setInterval(() => {
     timerSegundos--;
     if (display) display.textContent = formatarTempoTimer(timerSegundos);
+    if (displayGrande) displayGrande.textContent = formatarTempoTimer(timerSegundos);
 
     if (timerSegundos <= 60 && !apito60Disparado) {
       tocarApitoTimer();
@@ -892,6 +907,7 @@ function iniciarPausarTimer() {
       timerRodando = false;
       tocarApitoTimer();
       if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
+      if (btnGrande) btnGrande.innerHTML = '<i class="fas fa-play"></i>';
     }
   }, 1000);
 }
@@ -902,9 +918,25 @@ function resetarTimer() {
   timerSegundos = 90;
   apito60Disparado = false;
   const display = document.getElementById('timerDisplay');
+  const displayGrande = document.getElementById('timerDisplayGrande');
   if (display) display.textContent = formatarTempoTimer(timerSegundos);
+  if (displayGrande) displayGrande.textContent = formatarTempoTimer(timerSegundos);
   const btn = document.getElementById('btnStartTimer');
+  const btnGrande = document.getElementById('btnStartTimerGrande');
   if (btn) btn.innerHTML = '<i class="fas fa-play"></i>';
+  if (btnGrande) btnGrande.innerHTML = '<i class="fas fa-play"></i>';
+}
+
+function abrirTimerTelaCheia() {
+  const overlay = document.getElementById('overlayTimerGrande');
+  const displayGrande = document.getElementById('timerDisplayGrande');
+  if (displayGrande) displayGrande.textContent = formatarTempoTimer(timerSegundos);
+  if (overlay) overlay.style.display = 'flex';
+}
+
+function fecharTimerTelaCheia() {
+  const overlay = document.getElementById('overlayTimerGrande');
+  if (overlay) overlay.style.display = 'none';
 }
 
 /* ==================== SESSÃO ==================== */
