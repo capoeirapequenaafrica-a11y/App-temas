@@ -258,6 +258,7 @@
         <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto no trabalho..." style="min-height:50px;"></textarea>
       </div>
       <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação.</p>
+      <div id="avisoCheckinsPendentesOffline" style="display:none; margin-top:8px; padding:6px 8px; border-radius:6px; background:#3a2c0e; color:var(--gold); font-size:0.72rem;"></div>
       <button class="btn" onclick="alunoCheckinLocalFixoSimples(this)"><i class="fas fa-check"></i> Confirmar Presença Local</button>
     </div>
   </div>
@@ -529,6 +530,12 @@
       </div>
 
       <div class="card">
+        <h3><i class="fas fa-list-ul"></i> Locais e Eventos Cadastrados</h3>
+        <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Esses são os locais/eventos que aparecem pro aluno escolher no Check-in. Remova os que já passaram ou estiverem duplicados:</p>
+        <div id="listaLocaisGerenciarProf" style="max-height:180px; overflow-y:auto;"><p style="color:var(--text-sub); font-size:0.72rem;">Carregando...</p></div>
+      </div>
+
+      <div class="card">
         <h3><i class="fas fa-tasks"></i> Confirmar Presenças Pendentes</h3>
         <div id="listaCheckinsPendentesProf" style="max-height:140px; overflow-y:auto;"></div>
       </div>
@@ -726,13 +733,25 @@ let storage = null;
 let firebaseOnline = false;
 
 function atualizarStatusFirebase(online) {
+  const voltouAFicarOnline = online && !firebaseOnline;
   firebaseOnline = online;
   const el = document.getElementById('firebaseStatus');
   if (el) {
     el.textContent = online ? 'ONLINE' : 'OFFLINE';
     el.className = 'status-firebase ' + (online ? 'status-online' : 'status-offline');
   }
+  if (voltouAFicarOnline) {
+    sincronizarCheckinsPendentesOffline();
+  }
 }
+
+function tentarReconectarFirebaseAoVoltarOnline() {
+  if (!db) return;
+  db.collection("configuracoes").doc("ping").set({
+    ts: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => atualizarStatusFirebase(true)).catch(() => atualizarStatusFirebase(false));
+}
+window.addEventListener('online', tentarReconectarFirebaseAoVoltarOnline);
 
 function inicializarFirebaseSeguro() {
   try {
@@ -1238,6 +1257,7 @@ function abrirPainelProfessorLogado(p) {
     carregarAlunosParaProfessor();
     carregarCheckinsPendentesProf();
     carregarConfirmacoesAvisoProf();
+    carregarGerenciarLocaisProf();
   });
 }
 
@@ -1529,12 +1549,82 @@ function alunoCheckinLocalFixoSimples(botao) {
       }
     });
   } else {
-    exhibirToast("Check-in salvo localmente");
+    salvarCheckinPendenteOffline({
+      alunoNome: nome, poloLocal: polo,
+      atrasoMinutos: atrasoMin >= 10 ? atrasoMin : null,
+      justificativaAtraso: atrasoMin >= 10 ? justificativa : null,
+      horarioReal: Date.now()
+    });
+    exhibirToast("📴 Sem internet — check-in guardado no aparelho, será enviado assim que a conexão voltar.");
+    const jInput = document.getElementById('justificativaAtrasoInput');
+    if (jInput) jInput.value = '';
     if (botao) {
       botao.disabled = false;
       botao.innerHTML = textoOriginalBotao;
     }
   }
+}
+
+/* ===== Fila de check-ins feitos sem internet (localStorage) ===== */
+function obterCheckinsPendentesOffline() {
+  try {
+    return JSON.parse(localStorage.getItem('checkinsPendentesOffline') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function salvarListaCheckinsPendentesOffline(lista) {
+  try {
+    localStorage.setItem('checkinsPendentesOffline', JSON.stringify(lista));
+  } catch (e) {}
+  atualizarIndicadorCheckinsPendentes();
+}
+
+function salvarCheckinPendenteOffline(item) {
+  const lista = obterCheckinsPendentesOffline();
+  lista.push(item);
+  salvarListaCheckinsPendentesOffline(lista);
+}
+
+function atualizarIndicadorCheckinsPendentes() {
+  const box = document.getElementById('avisoCheckinsPendentesOffline');
+  if (!box) return;
+  const lista = obterCheckinsPendentesOffline();
+  if (lista.length === 0) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+  box.style.display = 'block';
+  box.innerHTML = `<i class="fas fa-clock"></i> ${lista.length} check-in(s) guardado(s) no aparelho, aguardando internet pra enviar.`;
+}
+
+function sincronizarCheckinsPendentesOffline() {
+  if (!db || !firebaseOnline) return;
+  const lista = obterCheckinsPendentesOffline();
+  if (lista.length === 0) return;
+
+  const restantes = [];
+  let enviados = 0;
+  const promessas = lista.map(item => {
+    const dados = {
+      alunoNome: item.alunoNome, poloLocal: item.poloLocal, status: "PENDENTE",
+      dataCheckinReal: firebase.firestore.Timestamp.fromMillis(item.horarioReal),
+      enviadoOffline: true,
+      data: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (item.atrasoMinutos) {
+      dados.atrasoMinutos = item.atrasoMinutos;
+      dados.justificativaAtraso = item.justificativaAtraso;
+    }
+    return db.collection("presencas").add(dados).then(() => { enviados++; }).catch(() => { restantes.push(item); });
+  });
+
+  Promise.all(promessas).then(() => {
+    salvarListaCheckinsPendentesOffline(restantes);
+    if (enviados > 0) exhibirToast(`✅ ${enviados} check-in(s) offline sincronizado(s) com sucesso!`);
+  });
 }
 
 function validarCheckinGympassNuvem(botao) {
@@ -1589,6 +1679,34 @@ function escutarLocais() {
       sel.innerHTML += `<option value="${d.data().nomeLocal}">${d.data().nomeLocal}</option>`;
     });
   }, () => {});
+}
+
+function carregarGerenciarLocaisProf() {
+  if (!db || !firebaseOnline) return;
+  db.collection("locais_professores").orderBy("criadoEm", "desc").onSnapshot(s => {
+    const box = document.getElementById('listaLocaisGerenciarProf');
+    if (!box) return;
+    box.innerHTML = "";
+    if (s.empty) {
+      box.innerHTML = "<p style='color:var(--text-sub); font-size:0.72rem;'>Nenhum local cadastrado ainda.</p>";
+      return;
+    }
+    s.forEach(docSnap => {
+      const d = docSnap.data();
+      box.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; border:1px solid var(--card-border); padding:6px 8px; border-radius:6px; margin-bottom:6px; background:#0e191e;">
+        <span style="font-size:0.75rem;">${d.nomeLocal || '(sem nome)'}${d.tipo ? ' <span style=\"color:var(--text-sub); font-size:0.65rem;\">('+d.tipo+')</span>' : ''}</span>
+        <button class="btn btn-danger" style="width:auto; padding:4px 8px; margin:0; font-size:0.68rem;" onclick="removerLocalProfessor('${docSnap.id}')"><i class="fas fa-trash"></i> Remover</button>
+      </div>`;
+    });
+  }, () => {});
+}
+
+function removerLocalProfessor(id) {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline.");
+  if (!confirm("Remover este local/evento da lista? Os alunos não vão mais vê-lo pra check-in.")) return;
+  db.collection("locais_professores").doc(id).delete()
+    .then(() => exhibirToast("Local removido."))
+    .catch(() => exhibirToast("Erro ao remover local."));
 }
 
 function obterNomeAutorMural() {
@@ -2391,9 +2509,11 @@ function sincronizarConfiguracoesAoAbrir() {
 let checkinDadosCarregados = false;
 function carregarDadosAbaCheckin() {
   verificarAtrasoCheckin();
+  atualizarIndicadorCheckinsPendentes();
   if (checkinDadosCarregados || !db || !firebaseOnline) return;
   checkinDadosCarregados = true;
   escutarLocais();
+  sincronizarCheckinsPendentesOffline();
 }
 
 let admDadosCarregados = false;
