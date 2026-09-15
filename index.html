@@ -701,11 +701,21 @@
     </div>
 
     <div class="card" style="border:1px solid var(--accent-blue);">
-      <h3><i class="fas fa-upload"></i> Atualização do App via HTML / Firebase</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Envie o código HTML ou confirme a versão no Firestore para atualizar a aplicação nos dispositivos dos usuários.</p>
-      <textarea id="devHtmlInput" rows="4" placeholder="Cole aqui o código HTML atualizado..."></textarea>
-      <button class="btn btn-secondary" onclick="devPublicarAtualizacaoHtml()"><i class="fas fa-cloud-upload-alt"></i> Confirmar e Publicar Versão no Firebase</button>
+      <h3><i class="fas fa-cloud-upload-alt"></i> Publicar Nova Versão do App</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">
+        <i class="fas fa-info-circle"></i> Importante: primeiro suba o arquivo atualizado no seu site/hospedagem. Isto aqui só avisa os dispositivos pra recarregarem e buscarem essa versão nova — não substitui o código sozinho.
+      </p>
+      <label class="campo-label">Notas da atualização (o que mudou)</label>
+      <textarea id="devNotasVersaoInput" rows="2" placeholder="Ex: Correção no ranking, novo card de conduta..."></textarea>
+
+      <button class="btn btn-secondary" onclick="devPublicarVersaoPreview()"><i class="fas fa-flask"></i> 1. Publicar Só Para Equipe (Testar Primeiro)</button>
+      <button class="btn" style="margin-top:6px;" onclick="devLiberarVersaoParaAlunos()"><i class="fas fa-users"></i> 2. Liberar Atualização Para Todos os Alunos</button>
     </div>
+  </div>
+
+  <div id="bannerAtualizacaoDisponivel" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:var(--primary-green-dark); color:#fff; padding:10px 12px; text-align:center; z-index:9998; font-size:0.76rem; box-shadow:0 -2px 10px rgba(0,0,0,0.4);">
+    <span id="textoBannerAtualizacao">🚀 Nova atualização disponível!</span>
+    <button class="btn" style="width:auto; display:inline-block; padding:6px 14px; margin:6px auto 0; max-width:220px;" onclick="aplicarAtualizacaoAgora()"><i class="fas fa-sync"></i> Atualizar Agora</button>
   </div>
 
   <footer>
@@ -1048,6 +1058,14 @@ function confirmarSenhaAcesso() {
     acessoRestritoLiberado = true;
     document.getElementById('authGateOverlay').style.display = 'none';
     if (tabPendente) abrirAba(tabPendente, null);
+    if (db && firebaseOnline) {
+      db.collection("configuracoes").doc("versao_preview_equipe").get().then(doc => {
+        if (doc.exists) {
+          const d = doc.data();
+          compararEexibirBannerAtualizacao(d.versao, d.notas, CHAVE_VERSAO_PREVIEW, true);
+        }
+      }).catch(() => {});
+    }
   } else {
     exhibirToast("Senha incorreta!");
   }
@@ -2563,21 +2581,75 @@ function executarVarreduraFirebaseDev() {
   }
 }
 
-function devPublicarAtualizacaoHtml() {
-  const htmlConteudo = document.getElementById('devHtmlInput').value.trim();
-  if (!htmlConteudo) return exhibirToast("Cole o código HTML.");
+const CHAVE_VERSAO_PUBLICA = 'versaoAppInstaladaPublica';
+const CHAVE_VERSAO_PREVIEW = 'versaoAppInstaladaPreview';
+let chaveVersaoPendente = null;
+let versaoRemotaPendente = null;
 
-  if (db && firebaseOnline) {
-    db.collection("configuracoes").doc("atualizacao_app").set({
-      conteudo: htmlConteudo,
-      publicadoEm: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      exhibirToast("🚀 Atualização publicada!");
-      document.getElementById('devHtmlInput').value = "";
-    });
-  } else {
-    exhibirToast("Firebase offline. Não foi possível publicar.");
+function compararEexibirBannerAtualizacao(versaoRemota, notas, chaveLocal, rotuloPreview) {
+  if (!versaoRemota) return;
+  const versaoLocal = localStorage.getItem(chaveLocal);
+
+  if (versaoLocal === null) {
+    localStorage.setItem(chaveLocal, String(versaoRemota));
+    return;
   }
+  if (versaoLocal === String(versaoRemota)) return;
+
+  chaveVersaoPendente = chaveLocal;
+  versaoRemotaPendente = String(versaoRemota);
+  const banner = document.getElementById('bannerAtualizacaoDisponivel');
+  const texto = document.getElementById('textoBannerAtualizacao');
+  if (!banner || !texto) return;
+  const prefixoTexto = rotuloPreview ? '🧪 Atualização de teste disponível' : '🚀 Nova atualização disponível';
+  texto.textContent = notas ? `${prefixoTexto}: ${notas}` : prefixoTexto;
+  banner.style.display = 'block';
+}
+
+function aplicarAtualizacaoAgora() {
+  if (chaveVersaoPendente && versaoRemotaPendente) {
+    localStorage.setItem(chaveVersaoPendente, versaoRemotaPendente);
+  }
+  window.location.reload(true);
+}
+
+function iniciarListenerVersaoApp() {
+  if (!db || !firebaseOnline) return;
+
+  db.collection("configuracoes").doc("versao_app").onSnapshot(doc => {
+    if (!doc.exists) return;
+    const d = doc.data();
+    compararEexibirBannerAtualizacao(d.versao, d.notas, CHAVE_VERSAO_PUBLICA, false);
+  }, () => {});
+
+  db.collection("configuracoes").doc("versao_preview_equipe").onSnapshot(doc => {
+    if (!doc.exists || !acessoRestritoLiberado) return;
+    const d = doc.data();
+    compararEexibirBannerAtualizacao(d.versao, d.notas, CHAVE_VERSAO_PREVIEW, true);
+  }, () => {});
+}
+
+function devPublicarVersaoPreview() {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não foi possível publicar.");
+  const notas = document.getElementById('devNotasVersaoInput').value.trim();
+  const versao = String(Date.now());
+  db.collection("configuracoes").doc("versao_preview_equipe").set({
+    versao, notas, publicadoEm: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    exhibirToast("🧪 Publicado só pra Equipe. Confira no seu aparelho antes de liberar geral.");
+  }).catch(err => exhibirToast("Erro: " + err.message));
+}
+
+function devLiberarVersaoParaAlunos() {
+  if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não foi possível publicar.");
+  const notas = document.getElementById('devNotasVersaoInput').value.trim();
+  const versao = String(Date.now());
+  db.collection("configuracoes").doc("versao_app").set({
+    versao, notas, publicadoEm: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    exhibirToast("🚀 Atualização liberada para todos os alunos!");
+    document.getElementById('devNotasVersaoInput').value = "";
+  }).catch(err => exhibirToast("Erro: " + err.message));
 }
 
 /* ==================== INICIALIZAÇÃO ==================== */
@@ -2616,6 +2688,7 @@ function sincronizarConfiguracoesAoAbrir() {
     iniciarListenerHorarioFixo();
     iniciarListenerRanking();
     iniciarListenerRankingCompletoInicio();
+    iniciarListenerVersaoApp();
   }
 }
 
