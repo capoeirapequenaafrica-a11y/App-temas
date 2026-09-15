@@ -245,7 +245,7 @@
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Insira o código gerado no app do Wellhub para validar na unidade <strong>Capoeira na Pequena África</strong>.</p>
       <input id="gympassAlunoNome" placeholder="Nome do Aluno">
       <input id="gympassTokenVal" placeholder="Token Wellhub / Gympass (6 dígitos)">
-      <button class="btn btn-gympass" onclick="validarCheckinGympassNuvem()"><i class="fas fa-check-circle"></i> Confirmar Token Gympass</button>
+      <button class="btn btn-gympass" onclick="validarCheckinGympassNuvem(this)"><i class="fas fa-check-circle"></i> Confirmar Token Gympass</button>
     </div>
 
     <div class="card">
@@ -258,7 +258,7 @@
         <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto no trabalho..." style="min-height:50px;"></textarea>
       </div>
       <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação.</p>
-      <button class="btn" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
+      <button class="btn" onclick="alunoCheckinLocalFixoSimples(this)"><i class="fas fa-check"></i> Confirmar Presença Local</button>
     </div>
   </div>
 
@@ -1486,7 +1486,8 @@ function verificarAtrasoCheckin() {
   box.style.display = atrasoMin >= 10 ? 'block' : 'none';
 }
 
-function alunoCheckinLocalFixoSimples() {
+function alunoCheckinLocalFixoSimples(botao) {
+  if (botao && botao.disabled) return; // trava contra clique duplo/repetido
   const nome = document.getElementById('checkinFixoNomeAluno').value.trim();
   const polo = document.getElementById('selectPoloFixoTreino').value;
   if (!nome || !polo) return exhibirToast("Preencha seu nome e escolha o local.");
@@ -1506,21 +1507,47 @@ function alunoCheckinLocalFixoSimples() {
     dadosCheckin.justificativaAtraso = justificativa;
   }
 
+  const textoOriginalBotao = botao ? botao.innerHTML : null;
+  if (botao) {
+    botao.disabled = true;
+    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+  }
+
   if (db && firebaseOnline) {
     db.collection("presencas").add(dadosCheckin).then(() => {
       exhibirToast("Check-in enviado!");
       const jInput = document.getElementById('justificativaAtrasoInput');
       if (jInput) jInput.value = '';
+    }).catch(() => {
+      exhibirToast("Erro ao enviar check-in. Tente novamente.");
+    }).finally(() => {
+      if (botao) {
+        setTimeout(() => {
+          botao.disabled = false;
+          botao.innerHTML = textoOriginalBotao;
+        }, 3000); // trava por 3s pra impedir reenvio acidental logo em seguida
+      }
     });
   } else {
     exhibirToast("Check-in salvo localmente");
+    if (botao) {
+      botao.disabled = false;
+      botao.innerHTML = textoOriginalBotao;
+    }
   }
 }
 
-function validarCheckinGympassNuvem() {
+function validarCheckinGympassNuvem(botao) {
+  if (botao && botao.disabled) return; // trava contra clique duplo/repetido
   const nome = document.getElementById('gympassAlunoNome').value.trim();
   const token = document.getElementById('gympassTokenVal').value.trim();
   if (!nome || !token) return exhibirToast("Informe seu nome e o token.");
+
+  const textoOriginalBotao = botao ? botao.innerHTML : null;
+  if (botao) {
+    botao.disabled = true;
+    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+  }
 
   if (db && firebaseOnline) {
     db.collection("presencas_gympass").add({
@@ -1531,11 +1558,24 @@ function validarCheckinGympassNuvem() {
       document.getElementById('gympassAlunoNome').value = "";
       document.getElementById('gympassTokenVal').value = "";
       exhibirToast("Check-in Wellhub Registrado!");
+    }).catch(() => {
+      exhibirToast("Erro ao validar token. Tente novamente.");
+    }).finally(() => {
+      if (botao) {
+        setTimeout(() => {
+          botao.disabled = false;
+          botao.innerHTML = textoOriginalBotao;
+        }, 3000);
+      }
     });
   } else {
     document.getElementById('gympassAlunoNome').value = "";
     document.getElementById('gympassTokenVal').value = "";
     exhibirToast("Check-in Wellhub Registrado (offline)");
+    if (botao) {
+      botao.disabled = false;
+      botao.innerHTML = textoOriginalBotao;
+    }
   }
 }
 
