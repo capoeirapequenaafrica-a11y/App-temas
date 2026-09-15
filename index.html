@@ -1401,7 +1401,8 @@ function carregarAlunosParaProfessor() {
       const data = d.data();
       const status = getStatusConduta(data.faltas);
       const prefixo = status.emAtencao ? '⚠️ ' : '';
-      sel.innerHTML += `<option value="${d.id}">${prefixo}${data.nome} (${data.apelido || ''})</option>`;
+      const apelidoTxt = (data.apelido && data.apelido !== data.nome) ? ` (${data.apelido})` : '';
+      sel.innerHTML += `<option value="${d.id}">${prefixo}${data.nome}${apelidoTxt}</option>`;
     });
   }, () => {});
 }
