@@ -90,6 +90,8 @@
       flex: 1; min-width: 58px; padding: 6px 2px; background: transparent; border: none; color: var(--text-sub); font-weight: 600; font-size: 0.68rem; border-radius: 6px; cursor: pointer; white-space: nowrap; display: flex; flex-direction: column; align-items: center; gap: 2px;
     }
     .tabs button.active { color: #fff; background: var(--primary-green-dark); }
+    .tabs-equipe { margin-top: 6px; }
+    #btnToggleEquipe.active { background: var(--accent-blue-dark); }
 
     .tab-content { display: none; padding: 10px; flex: 1; width: 100% !important; max-width: 100% !important; overflow-y: auto; }
     .tab-content.active { display: block; }
@@ -109,6 +111,10 @@
     .btn-gympass { background: linear-gradient(135deg, var(--gympass-red), #b30037); color: #fff; }
     .btn-back { background: #37474f; margin-bottom: 8px; }
 
+    .btn.carregando { opacity: 0.7; pointer-events: none; }
+    .spinner-btn { display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation:girarSpinner 0.6s linear infinite; }
+    @keyframes girarSpinner { to { transform: rotate(360deg); } }
+
     .flex-btn { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; }
     .flex-btn .btn { flex: 1 1 110px; min-width: 0; }
 
@@ -118,6 +124,7 @@
 
     .lado-flex { display: flex; gap: 4px; margin: 2px 0; }
     .lado-flex input { flex: 1; }
+    .campo-label { font-size: 0.72rem; color: var(--text-sub); margin: 6px 0 2px; display: block; font-weight: 600; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; }
     .modal-card { background: #11222a; border: 1px solid var(--accent-blue); border-radius: 14px; padding: 16px; max-width: 320px; width: 100%; color: #fff; }
@@ -180,6 +187,9 @@
       <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-home"></i>Início</button>
       <button onclick="abrirAba('tab2', this)"><i class="fas fa-map-marker-alt"></i>Check-in</button>
       <button onclick="abrirAba('tab3', this)"><i class="fas fa-user-graduate"></i>Aluno</button>
+      <button onclick="toggleMenuEquipe()" id="btnToggleEquipe"><i class="fas fa-users-cog"></i>Equipe</button>
+    </div>
+    <div class="tabs tabs-equipe" id="tabsEquipe" style="display:none;">
       <button onclick="abrirAba('tab4', this)"><i class="fas fa-chalkboard-teacher"></i>Professor</button>
       <button onclick="abrirAba('tab5', this)"><i class="fas fa-sliders-h"></i>ADM</button>
       <button onclick="abrirAba('tab6', this)"><i class="fas fa-code"></i>Dev</button>
@@ -188,6 +198,7 @@
 
   <!-- 1. ABA INÍCIO -->
   <div id="tab1" class="tab-content active">
+
     <div class="card" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-bell"></i> Avisos do Professor</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
@@ -220,6 +231,12 @@
       <div id="conteudoRankingInicio"></div>
     </div>
 
+    <div class="card" id="cardRankingCompletoInicio" style="border:1px solid var(--gold); display:none;">
+      <h3 style="color:var(--gold);"><i class="fas fa-list-ol"></i> Ranking Geral de Avaliações</h3>
+      <p style="font-size:0.68rem; color:var(--text-sub); margin-bottom:6px;">Ordenado pela média da avaliação completa mais recente de cada aluno.</p>
+      <div id="listaRankingCompletoInicio"></div>
+    </div>
+
     <div class="card" id="cardCertificadosAluno" style="border:1px solid var(--gold); display:none;">
       <h3 style="color:var(--gold);"><i class="fas fa-award"></i> Certificados de Apresentação</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Disponível para quem fez check-in aprovado pelo professor:</p>
@@ -240,6 +257,7 @@
 
   <!-- 2. ABA CHECK-IN -->
   <div id="tab2" class="tab-content">
+
     <div class="card" style="border:1px solid var(--gympass-red);">
       <h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-in Gympass / Wellhub</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Insira o código gerado no app do Wellhub para validar na unidade <strong>Capoeira na Pequena África</strong>.</p>
@@ -250,6 +268,7 @@
 
     <div class="card">
       <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
+      <div id="horarioAulaHojeBox" style="font-size:0.75rem; background:#081217; border:1px solid var(--card-border); border-radius:8px; padding:6px 8px; margin-bottom:8px;"><i class="fas fa-clock"></i> Carregando horário da aula de hoje...</div>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Selecione o polo cadastrado pelo professor:</p>
       <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo">
       <select id="selectPoloFixoTreino"><option value="">Aguardando professor cadastrar local...</option></select>
@@ -264,11 +283,14 @@
 
   <!-- 3. ABA ALUNO -->
   <div id="tab3" class="tab-content">
+
     <div class="card" id="cardAlunoLogin">
       <h3><i class="fas fa-user-lock"></i> Área do Aluno (Login)</h3>
-      <input id="alunoLoginNome" placeholder="Nome Completo ou Apelido">
-      <input id="alunoLoginSenha" type="password" placeholder="Senha">
-      <button class="btn" onclick="autenticarAlunoNuvem()"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</button>
+      <label class="campo-label">Nome completo ou apelido</label>
+      <input id="alunoLoginNome" placeholder="Ex: João da Silva">
+      <label class="campo-label">Senha</label>
+      <input id="alunoLoginSenha" type="password" placeholder="Sua senha">
+      <button class="btn" onclick="autenticarAlunoNuvem(this)"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</button>
       <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:6px;">
         <button class="btn btn-secondary" onclick="toggleAutoCadastroAluno(true)"><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</button>
       </div>
@@ -277,10 +299,12 @@
     <div class="card" id="cardAlunoPrimeiroCadastro" style="display:none;">
       <button class="btn btn-back" onclick="toggleAutoCadastroAluno(false)"><i class="fas fa-arrow-left"></i> Voltar</button>
       <h3><i class="fas fa-user-plus"></i> Cadastro de Aluno</h3>
-      <input id="autoCadNome" placeholder="Seu Nome Completo">
-      <input id="autoCadApelido" placeholder="Apelido na Capoeira">
+      <label class="campo-label">Nome completo</label>
+      <input id="autoCadNome" placeholder="Seu nome completo">
+      <label class="campo-label">Apelido na capoeira</label>
+      <input id="autoCadApelido" placeholder="Ex: Formiga">
       
-      <label style="font-size:0.7rem; color:var(--gold); margin-top:4px; display:block;">Sua Corda / Graduação Atual:</label>
+      <label class="campo-label" style="color:var(--gold);">Sua Corda / Graduação Atual:</label>
       <select id="autoCadGraduacaoSelect">
         <option value="Iniciante - Corda Crua">Iniciante - Corda Crua</option>
         <option value="Aluno - Crua e Amarela">Aluno - Crua e Amarela</option>
@@ -299,13 +323,15 @@
         <option value="Mestre - Corda Vermelha">Mestre - Corda Vermelha</option>
       </select>
 
+      <label class="campo-label">Instagram</label>
       <input id="autoCadInstagram" placeholder="@SeuInstagram (Ex: @joao_capoeira)">
-      <input id="autoCadSenha" type="password" placeholder="Crie sua Senha">
+      <label class="campo-label">Crie sua senha</label>
+      <input id="autoCadSenha" type="password" placeholder="Crie uma senha">
       
-      <label style="font-size:0.7rem; color:var(--accent-blue); margin-top:4px; display:block;">Selecione seu Professor:</label>
+      <label class="campo-label" style="color:var(--accent-blue);">Selecione seu Professor:</label>
       <select id="selectProfessorVinculoAluno"><option value="Dyno">Instrutor Dyno</option></select>
       
-      <button class="btn" style="margin-top:8px;" onclick="realizarAutoCadastroAlunoComProfessor()"><i class="fas fa-check"></i> Concluir Cadastro</button>
+      <button class="btn" style="margin-top:8px;" onclick="realizarAutoCadastroAlunoComProfessor(this)"><i class="fas fa-check"></i> Concluir Cadastro</button>
     </div>
 
     <div id="painelAlunoConteudo" style="display:none;">
@@ -314,6 +340,11 @@
       <div class="card" style="border:1px solid var(--gold);">
         <h3><i class="fas fa-ribbon" style="color:var(--gold);"></i> Minha Graduação</h3>
         <p style="font-size:0.85rem; color:#fff; font-weight:bold;" id="displayGraduacaoAlunoTexto">Iniciante - Corda Crua</p>
+      </div>
+
+      <div class="card" id="cardCondutaAluno" style="border:1px solid var(--danger); display:none;">
+        <h3 id="tituloCondutaAluno" style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Atenção à Conduta</h3>
+        <p style="font-size:0.8rem; color:#fff;" id="textoCondutaAluno"></p>
       </div>
 
       <div class="card" style="border:1px solid #dc2743;">
@@ -347,10 +378,12 @@
 
   <!-- 4. ABA PROFESSOR -->
   <div id="tab4" class="tab-content">
+
     <div class="card" id="cardProfLogin">
       <h3><i class="fas fa-chalkboard-teacher"></i> Área do Professor / Mestre</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Digite seu Apelido / Nome e sua senha:</p>
-      <input id="profLoginNomeInput" value="Dyno" placeholder="Nome Completo ou Apelido">
+      <label class="campo-label">Nome completo ou apelido</label>
+      <input id="profLoginNomeInput" value="Dyno" placeholder="Nome completo ou apelido">
+      <label class="campo-label">Senha</label>
       <input id="profLoginSenha" type="password" value="2803" placeholder="Senha">
       <button class="btn" onclick="autenticarProfNuvem()"><i class="fas fa-key"></i> Acessar Painel Docente</button>
       
@@ -362,10 +395,12 @@
     <div class="card" id="cardCadastroNovoProfessor" style="display:none;">
       <button class="btn btn-back" onclick="toggleCadastroProfessor(false)"><i class="fas fa-arrow-left"></i> Voltar</button>
       <h3><i class="fas fa-id-card"></i> Inscrição de Novo Professor</h3>
-      <input id="cadProfNome" value="Anderson dos Santos Ferreira" placeholder="Nome Completo">
-      <input id="cadProfApelido" value="Dyno" placeholder="Apelido na Capoeira">
+      <label class="campo-label">Nome completo</label>
+      <input id="cadProfNome" value="Anderson dos Santos Ferreira" placeholder="Nome completo">
+      <label class="campo-label">Apelido na capoeira</label>
+      <input id="cadProfApelido" value="Dyno" placeholder="Apelido na capoeira">
       
-      <label style="font-size:0.7rem; color:var(--gold); margin-top:4px; display:block;">Sua Graduação / Título:</label>
+      <label class="campo-label" style="color:var(--gold);">Sua Graduação / Título:</label>
       <select id="cadProfGraduacaoSelect">
         <option value="Instrutor - Corda Roxa" selected>Instrutor - Corda Roxa</option>
         <option value="Instrutor - Roxa e Marrom">Instrutor - Roxa e Marrom</option>
@@ -374,11 +409,13 @@
         <option value="Mestre - Corda Vermelha">Mestre - Corda Vermelha</option>
       </select>
 
-      <label style="font-size:0.7rem; color:var(--accent-blue); margin-top:4px; display:block;">Seu Polo / Local Principal de Aula:</label>
-      <input id="cadProfNomeLocal" value="Instituto Central do Povo" placeholder="Nome do Espaço / Polo">
-      <input id="cadProfEnderecoLocal" value="https://maps.app.goo.gl/ya24kSkg7LvKroSU6" placeholder="Endereço ou Link do Google Maps">
+      <label class="campo-label" style="color:var(--accent-blue);">Seu Polo / Local Principal de Aula:</label>
+      <input id="cadProfNomeLocal" value="Instituto Central do Povo" placeholder="Nome do espaço / polo">
+      <label class="campo-label">Endereço ou link do Google Maps</label>
+      <input id="cadProfEnderecoLocal" value="https://maps.app.goo.gl/ya24kSkg7LvKroSU6" placeholder="Endereço ou link do Google Maps">
 
-      <input id="cadProfSenha" type="password" value="2803" placeholder="Senha de Acesso">
+      <label class="campo-label">Senha de acesso</label>
+      <input id="cadProfSenha" type="password" value="2803" placeholder="Senha de acesso">
       <button class="btn btn-secondary" style="margin-top:8px;" onclick="realizarCadastroNovoProfessor()"><i class="fas fa-check-circle"></i> Cadastrar e Abrir Painel</button>
     </div>
 
@@ -394,13 +431,13 @@
       <div class="card" style="border:1px solid var(--primary-green);">
         <h3><i class="fas fa-clipboard-check"></i> Avaliação Oficial de Capoeira (0 a 100 pts)</h3>
         
-        <label style="font-size:0.75rem; color:var(--accent-blue);">Nome do Professor Avaliador:</label>
+        <label class="campo-label" style="color:var(--accent-blue);">Nome do Professor Avaliador:</label>
         <input id="profNomeAvaliadorInput" value="Dyno" placeholder="Seu Nome / Apelido de Professor">
 
-        <label style="font-size:0.75rem; color:var(--accent-blue); margin-top:4px; display:block;">Selecione o Aluno:</label>
+        <label class="campo-label" style="color:var(--accent-blue);">Selecione o Aluno:</label>
         <select id="selectAlunoParaAvaliarProf"><option value="">Selecione o Aluno...</option></select>
 
-        <label style="font-size:0.75rem; color:var(--gold); margin-top:6px; display:block;">Etapa da Avaliação:</label>
+        <label class="campo-label" style="color:var(--gold);">Etapa da Avaliação:</label>
         <select id="profAvalEtapaSelect">
           <option value="1a_avaliacao">1ª Avaliação (Parcial / Boletim de Notas)</option>
           <option value="2a_avaliacao">2ª Avaliação (Anual + Anúncio de Corda do Próximo Ano)</option>
@@ -410,25 +447,25 @@
 
         <h4 style="color:var(--gold); font-size:0.78rem;">Chutes (Avaliação Direita e Esquerda):</h4>
         
-        <label style="font-size:0.7rem; color:var(--text-sub);">Queixada:</label>
+        <label class="campo-label">Queixada:</label>
         <div class="lado-flex">
           <input type="number" id="notaQueixadaDir" placeholder="Direita (0-100)" min="0" max="100">
           <input type="number" id="notaQueixadaEsq" placeholder="Esquerda (0-100)" min="0" max="100">
         </div>
 
-        <label style="font-size:0.7rem; color:var(--text-sub);">Armada:</label>
+        <label class="campo-label">Armada:</label>
         <div class="lado-flex">
           <input type="number" id="notaArmadaDir" placeholder="Direita (0-100)" min="0" max="100">
           <input type="number" id="notaArmadaEsq" placeholder="Esquerda (0-100)" min="0" max="100">
         </div>
 
-        <label style="font-size:0.7rem; color:var(--text-sub);">Meia Lua de Compasso:</label>
+        <label class="campo-label">Meia Lua de Compasso:</label>
         <div class="lado-flex">
           <input type="number" id="notaMeiaLuaDir" placeholder="Direita (0-100)" min="0" max="100">
           <input type="number" id="notaMeiaLuaEsq" placeholder="Esquerda (0-100)" min="0" max="100">
         </div>
 
-        <label style="font-size:0.7rem; color:var(--text-sub);">Meia Lua de Frente:</label>
+        <label class="campo-label">Meia Lua de Frente:</label>
         <div class="lado-flex">
           <input type="number" id="notaMeiaLuaFrenteDir" placeholder="Direita (0-100)" min="0" max="100">
           <input type="number" id="notaMeiaLuaFrenteEsq" placeholder="Esquerda (0-100)" min="0" max="100">
@@ -436,25 +473,25 @@
 
         <h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Esquivas (Avaliação Direita e Esquerda):</h4>
         
-        <label style="font-size:0.7rem; color:var(--text-sub);">Esquiva de Frente:</label>
+        <label class="campo-label">Esquiva de Frente:</label>
         <div class="lado-flex">
           <input type="number" id="notaEsquivaFrenteDir" placeholder="Direita (0-100)" min="0" max="100">
           <input type="number" id="notaEsquivaFrenteEsq" placeholder="Esquerda (0-100)" min="0" max="100">
         </div>
 
-        <label style="font-size:0.7rem; color:var(--text-sub);">Esquiva Lateral:</label>
+        <label class="campo-label">Esquiva Lateral:</label>
         <div class="lado-flex">
           <input type="number" id="notaEsquivaLateralDir" placeholder="Direita (0-100)" min="0" max="100">
           <input type="number" id="notaEsquivaLateralEsq" placeholder="Esquerda (0-100)" min="0" max="100">
         </div>
 
-        <label style="font-size:0.7rem; color:var(--text-sub);">Esquiva Diagonal:</label>
+        <label class="campo-label">Esquiva Diagonal:</label>
         <div class="lado-flex">
           <input type="number" id="notaEsquivaDiagonalDir" placeholder="Direita (0-100)" min="0" max="100">
           <input type="number" id="notaEsquivaDiagonalEsq" placeholder="Esquerda (0-100)" min="0" max="100">
         </div>
 
-        <label style="font-size:0.7rem; color:var(--text-sub);">Descida Básica:</label>
+        <label class="campo-label">Descida Básica:</label>
         <div class="lado-flex">
           <input type="number" id="notaDescidaBasicaDir" placeholder="Direita (0-100)" min="0" max="100">
           <input type="number" id="notaDescidaBasicaEsq" placeholder="Esquerda (0-100)" min="0" max="100">
@@ -498,12 +535,13 @@
 
         <textarea id="profAvalObsGerais" placeholder="Observações e Recomendações do Professor..." rows="2" style="margin-top:6px;"></textarea>
 
-        <button class="btn" style="margin-top:8px;" onclick="salvarAvaliacaoCompletaProfessor()"><i class="fas fa-save"></i> Salvar Avaliação na Nuvem</button>
+        <button class="btn" style="margin-top:8px;" onclick="salvarAvaliacaoCompletaProfessor(this)"><i class="fas fa-save"></i> Salvar Avaliação na Nuvem</button>
       </div>
 
       <div class="card" style="border:1px solid var(--primary-green);">
         <h3><i class="fas fa-calendar-week"></i> Horário Fixo Semanal (Segunda a Sexta)</h3>
-        <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Preencha o local/descrição e o horário de início de cada dia (deixe em branco os dias sem aula). O horário é usado para detectar atraso no check-in:</p>
+        <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Preencha o local/descrição e o horário de início de cada dia (deixe em branco os dias sem aula). <strong style="color:var(--gold);">O campo de horário é obrigatório para detectar atraso no check-in.</strong></p>
+        <p style="font-size:0.62rem; color:var(--text-sub); display:flex; margin-bottom:2px;"><span style="flex:2;">Local / descrição</span><span style="flex:1; text-align:center;">Horário</span></p>
         <div style="display:flex; gap:6px;"><input id="horarioFixoSeg" placeholder="Segunda-feira: ex. Instituto Central do Povo" style="flex:2;"><input type="time" id="horarioFixoHoraSeg" style="flex:1;"></div>
         <div style="display:flex; gap:6px;"><input id="horarioFixoTer" placeholder="Terça-feira" style="flex:2;"><input type="time" id="horarioFixoHoraTer" style="flex:1;"></div>
         <div style="display:flex; gap:6px;"><input id="horarioFixoQua" placeholder="Quarta-feira" style="flex:2;"><input type="time" id="horarioFixoHoraQua" style="flex:1;"></div>
@@ -515,7 +553,7 @@
       <div class="card" style="border:1px solid var(--accent-blue);">
         <h3><i class="fas fa-map-marked-alt"></i> Publicar Aula Extra ou Evento para Alunos</h3>
         
-        <label style="font-size:0.75rem; color:var(--gold);">Tipo de Notificação:</label>
+        <label class="campo-label" style="color:var(--gold);">Tipo de Notificação:</label>
         <select id="profTipoAulaEventoSelect">
           <option value="Aula Extra">Aula Extra</option>
           <option value="Evento / Roda / Batizado">Evento / Roda / Batizado</option>
@@ -549,6 +587,7 @@
 
   <!-- 5. ABA ADM -->
   <div id="tab5" class="tab-content">
+
     <button class="btn btn-back" onclick="abrirAba('tab1', null)"><i class="fas fa-arrow-left"></i> Sair do Painel ADM</button>
 
     <div class="card" style="border: 1px solid var(--primary-green);">
@@ -590,8 +629,10 @@
 
       <div style="margin-top:6px; border-top:1px solid var(--card-border); padding-top:6px;">
         <h4 style="font-size:0.75rem; color:var(--gold);">Atualizar Anos de Treino e Faltas:</h4>
-        <input id="admAnoTreinoInput" type="number" placeholder="Anos de Treino / Experiência">
-        <input id="admFaltasInput" type="number" placeholder="Quantidade de Faltas">
+        <label class="campo-label">Anos de treino / experiência</label>
+        <input id="admAnoTreinoInput" type="number" placeholder="Ex: 2">
+        <label class="campo-label">Quantidade de faltas</label>
+        <input id="admFaltasInput" type="number" placeholder="Ex: 3">
         <button class="btn btn-secondary" onclick="admAtualizarAnosEFaltas()"><i class="fas fa-user-edit"></i> Atualizar Dados do Aluno</button>
       </div>
 
@@ -609,17 +650,22 @@
       <button class="btn btn-danger" onclick="verificarFaltasSemConfirmacaoAdm()" style="margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> Ver Confirmaram e Faltaram Hoje</button>
       <div id="admConfirmacoesXCheckins" style="margin-top:6px; font-size:0.72rem;"></div>
 
+      <div id="blocoAlunosAtencaoAdm" style="margin-top:10px; border-top:1px solid var(--card-border); padding-top:8px; display:none;">
+        <label class="campo-label" style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i> Alunos em Atenção (faltas):</label>
+        <div id="listaAlunosAtencaoAdm" style="font-size:0.72rem; color:#fff; margin-top:4px;"></div>
+      </div>
+
       <div style="margin-top:10px; border-top:1px solid var(--card-border); padding-top:8px;">
-        <label style="font-size:0.75rem; color:var(--gold);">🏆 Aluno Nota 10:</label>
+        <label class="campo-label" style="color:var(--gold);">🏆 Aluno Nota 10:</label>
         <select id="rankingNota10"><option value="">Selecione...</option></select>
 
-        <label style="font-size:0.75rem; color:var(--gold);">⭐ Aluno Destaque 1:</label>
+        <label class="campo-label" style="color:var(--gold);">⭐ Aluno Destaque 1:</label>
         <select id="rankingDestaque1"><option value="">Selecione...</option></select>
 
-        <label style="font-size:0.75rem; color:var(--gold);">⭐ Aluno Destaque 2:</label>
+        <label class="campo-label" style="color:var(--gold);">⭐ Aluno Destaque 2:</label>
         <select id="rankingDestaque2"><option value="">Selecione...</option></select>
 
-        <label style="font-size:0.75rem; color:var(--gold);">💪 Aluno Superação:</label>
+        <label class="campo-label" style="color:var(--gold);">💪 Aluno Superação:</label>
         <select id="rankingSuperacao"><option value="">Selecione...</option></select>
 
         <button class="btn btn-secondary" onclick="salvarRankingAlunos()" style="margin-top:8px;"><i class="fas fa-save"></i> Salvar Ranking</button>
@@ -638,6 +684,7 @@
 
   <!-- 6. ABA DEV -->
   <div id="tab6" class="tab-content">
+
     <button class="btn btn-back" onclick="abrirAba('tab1', null)"><i class="fas fa-arrow-left"></i> Sair da Área Dev</button>
     
     <div class="card">
@@ -670,7 +717,8 @@
 <div id="authGateOverlay" class="modal-overlay">
   <div class="modal-card">
     <h3 style="color:var(--accent-blue);"><i class="fas fa-lock"></i> Área Restrita ADM / DEV</h3>
-    <input id="authGateSenha" type="password" placeholder="Senha de Acesso" autocomplete="off">
+    <label class="campo-label">Senha de acesso</label>
+    <input id="authGateSenha" type="password" placeholder="Digite a senha" autocomplete="off">
     <div class="flex-btn" style="margin-top:8px;">
       <button class="btn" onclick="confirmarSenhaAcesso()">Entrar</button>
       <button class="btn btn-danger" onclick="cancelarSenhaAcesso()">Cancelar</button>
@@ -948,6 +996,21 @@ const SENHA_ACESSO_RESTRITO = '2803';
 let acessoRestritoLiberado = false;
 let tabPendente = null;
 
+const ROTULOS_AVALIACAO = {
+  queixadaDir: "Queixada (Direita)", queixadaEsq: "Queixada (Esquerda)",
+  armadaDir: "Armada (Direita)", armadaEsq: "Armada (Esquerda)",
+  meiaLuaDir: "Meia Lua (Direita)", meiaLuaEsq: "Meia Lua (Esquerda)",
+  meiaLuaFrenteDir: "Meia Lua Frente (Direita)", meiaLuaFrenteEsq: "Meia Lua Frente (Esquerda)",
+  esquivaFrenteDir: "Esquiva Frente (Direita)", esquivaFrenteEsq: "Esquiva Frente (Esquerda)",
+  esquivaLateralDir: "Esquiva Lateral (Direita)", esquivaLateralEsq: "Esquiva Lateral (Esquerda)",
+  esquivaDiagonalDir: "Esquiva Diagonal (Direita)", esquivaDiagonalEsq: "Esquiva Diagonal (Esquerda)",
+  descidaBasicaDir: "Descida Básica (Direita)", descidaBasicaEsq: "Descida Básica (Esquerda)",
+  seqNegativaRole: "Seq. Negativa e Rolê", seqSobeTras: "Seq. Sobe por Trás", seqSobeLateral: "Seq. Sobe pela Lateral",
+  jogoAngola: "Jogo de Angola", jogoBenguela: "Jogo de Benguela", jogoSaoBento: "Jogo de São Bento Grande",
+  berimbauAngola: "Toque de Berimbau - Angola", berimbauBenguela: "Toque de Berimbau - Benguela", berimbauSaoBento: "Toque de Berimbau - São Bento",
+  atabaquePandeiro: "Atabaque e Pandeiro", faltas: "Faltas", atrasos: "Atrasos", compromisso: "Compromisso"
+};
+
 function abrirAba(tabId, btn) {
   if ((tabId === 'tab5' || tabId === 'tab6') && !acessoRestritoLiberado) {
     tabPendente = tabId;
@@ -960,8 +1023,24 @@ function abrirAba(tabId, btn) {
   document.getElementById(tabId).classList.add('active');
   if (btn) btn.classList.add('active');
 
+  const ehAbaEquipe = ['tab4', 'tab5', 'tab6'].includes(tabId);
+  const btnEquipe = document.getElementById('btnToggleEquipe');
+  const tabsEquipe = document.getElementById('tabsEquipe');
+  if (ehAbaEquipe) {
+    if (tabsEquipe) tabsEquipe.style.display = 'flex';
+    if (btnEquipe) btnEquipe.classList.add('active');
+  } else if (tabsEquipe) {
+    tabsEquipe.style.display = 'none';
+  }
+
   if (tabId === 'tab2') carregarDadosAbaCheckin();
   if (tabId === 'tab5') carregarDadosAbaAdm();
+}
+
+function toggleMenuEquipe() {
+  const el = document.getElementById('tabsEquipe');
+  if (!el) return;
+  el.style.display = (el.style.display === 'none' || !el.style.display) ? 'flex' : 'none';
 }
 
 function confirmarSenhaAcesso() {
@@ -1002,7 +1081,21 @@ function toggleAutoCadastroAluno(e) {
   document.getElementById('cardAlunoLogin').style.display = e ? 'none' : 'block';
 }
 
-function realizarAutoCadastroAlunoComProfessor() {
+function iniciarCarregamentoBotao(btn, textoCarregando) {
+  if (!btn) return null;
+  const original = btn.innerHTML;
+  btn.classList.add('carregando');
+  btn.innerHTML = `<span class="spinner-btn"></span> ${textoCarregando || 'Aguarde...'}`;
+  return original;
+}
+
+function finalizarCarregamentoBotao(btn, original) {
+  if (!btn || original === null || original === undefined) return;
+  btn.classList.remove('carregando');
+  btn.innerHTML = original;
+}
+
+function realizarAutoCadastroAlunoComProfessor(btn) {
   const nome = document.getElementById('autoCadNome').value.trim();
   const apelido = document.getElementById('autoCadApelido').value.trim();
   const sen = document.getElementById('autoCadSenha').value;
@@ -1013,6 +1106,7 @@ function realizarAutoCadastroAlunoComProfessor() {
   if (!nome || !sen) return exhibirToast("Preencha nome e senha!");
   if (insta && !insta.startsWith('@')) insta = '@' + insta;
 
+  const original = iniciarCarregamentoBotao(btn, 'Cadastrando...');
   const docId = getAlunoDocId(apelido || nome);
   const dadosAluno = {
     nome, apelido: apelido || nome, senha: sen,
@@ -1028,22 +1122,25 @@ function realizarAutoCadastroAlunoComProfessor() {
       salvarSessaoAlunoLocal(dadosAluno);
       toggleAutoCadastroAluno(false);
       abrirPainelAlunoLogado(dadosAluno);
-    }).catch(err => exhibirToast("Erro ao cadastrar: " + err.message));
+    }).catch(err => exhibirToast("Erro ao cadastrar: " + err.message))
+      .finally(() => finalizarCarregamentoBotao(btn, original));
   } else {
     alunoSessao = dadosAluno;
     salvarSessaoAlunoLocal(dadosAluno);
     toggleAutoCadastroAluno(false);
     abrirPainelAlunoLogado(dadosAluno);
     exhibirToast("✅ Cadastro local (Firebase offline)");
+    finalizarCarregamentoBotao(btn, original);
   }
 }
 
-function autenticarAlunoNuvem() {
+function autenticarAlunoNuvem(btn) {
   const nomeInput = document.getElementById('alunoLoginNome').value.trim().toLowerCase();
   const sen = document.getElementById('alunoLoginSenha').value;
   if (!nomeInput || !sen) return exhibirToast("Informe login e senha.");
 
   if (db && firebaseOnline) {
+    const original = iniciarCarregamentoBotao(btn, 'Entrando...');
     db.collection("alunos").get().then(snapshot => {
       let achou = false;
       snapshot.forEach(doc => {
@@ -1057,7 +1154,8 @@ function autenticarAlunoNuvem() {
         }
       });
       if (!achou) exhibirToast("Aluno não encontrado ou senha incorreta.");
-    }).catch(() => exhibirToast("Erro de conexão com a nuvem."));
+    }).catch(() => exhibirToast("Erro de conexão com a nuvem."))
+      .finally(() => finalizarCarregamentoBotao(btn, original));
   } else {
     exhibirToast("Firebase offline. Cadastre-se primeiro.");
   }
@@ -1085,12 +1183,19 @@ function abrirPainelAlunoLogado(a) {
     btnInsta.onclick = () => window.open(`https://instagram.com/${user}`, '_blank');
   }
 
+  atualizarCardCondutaAluno(a.faltas);
+
   aguardarFirebaseEDepois(() => {
     carregarAvisoAtivoParaAluno(a.apelido || a.nome);
     iniciarListenerCertificadosAluno(a.nome);
     atualizarBotaoConfirmarPresenca();
 
     const alunoId = getAlunoDocId(a.apelido || a.nome);
+
+    db.collection("alunos").doc(alunoId).onSnapshot(doc => {
+      if (doc.exists) atualizarCardCondutaAluno(doc.data().faltas);
+    }, () => {});
+
     db.collection("boletins").doc(alunoId).onSnapshot(doc => {
       const box = document.getElementById('boletimAlunoDinamico');
       if (doc.exists && box) {
@@ -1117,6 +1222,23 @@ function abrirPainelAlunoLogado(a) {
       }
     });
   });
+}
+
+function atualizarCardCondutaAluno(faltas) {
+  const card = document.getElementById('cardCondutaAluno');
+  const texto = document.getElementById('textoCondutaAluno');
+  if (!card || !texto) return;
+  const status = getStatusConduta(faltas);
+  const titulo = document.getElementById('tituloCondutaAluno');
+  if (status.emAtencao) {
+    card.style.display = 'block';
+    card.style.borderColor = status.nivel === 'grave' ? 'var(--danger)' : 'var(--gold)';
+    if (titulo) titulo.style.color = status.nivel === 'grave' ? 'var(--danger)' : 'var(--gold)';
+    texto.textContent = status.texto;
+  } else {
+    card.style.display = 'none';
+    texto.textContent = '';
+  }
 }
 
 function salvarInstagramAluno() {
@@ -1248,6 +1370,27 @@ function deslogarProfessor() {
   document.getElementById('cardProfLogin').style.display = 'block';
 }
 
+function getStatusConduta(faltas) {
+  faltas = Number(faltas) || 0;
+  if (faltas >= 6) {
+    return {
+      emAtencao: true,
+      simbolo: '⚠️',
+      nivel: 'grave',
+      texto: `Você acumula ${faltas} faltas registradas. Esse número está bem acima do recomendado e pode comprometer sua evolução na graduação. Procure conversar com seu professor para reorganizar sua frequência nos treinos.`
+    };
+  }
+  if (faltas >= 3) {
+    return {
+      emAtencao: true,
+      simbolo: '⚠️',
+      nivel: 'moderado',
+      texto: `Você já tem ${faltas} faltas registradas. Fique atento à sua frequência para não prejudicar seu desempenho e sua próxima avaliação.`
+    };
+  }
+  return { emAtencao: false, simbolo: '', nivel: 'ok', texto: '' };
+}
+
 function carregarAlunosParaProfessor() {
   if (!db || !firebaseOnline) return;
   db.collection("alunos").onSnapshot(s => {
@@ -1256,12 +1399,14 @@ function carregarAlunosParaProfessor() {
     sel.innerHTML = '<option value="">Selecione o Aluno...</option>';
     s.forEach(d => {
       const data = d.data();
-      sel.innerHTML += `<option value="${d.id}">${data.nome} (${data.apelido || ''})</option>`;
+      const status = getStatusConduta(data.faltas);
+      const prefixo = status.emAtencao ? '⚠️ ' : '';
+      sel.innerHTML += `<option value="${d.id}">${prefixo}${data.nome} (${data.apelido || ''})</option>`;
     });
   }, () => {});
 }
 
-function salvarAvaliacaoCompletaProfessor() {
+function salvarAvaliacaoCompletaProfessor(btn) {
   const sel = document.getElementById('selectAlunoParaAvaliarProf');
   const alunoId = sel ? sel.value : "";
   if (!alunoId) return exhibirToast("Selecione um aluno para avaliar.");
@@ -1304,24 +1449,10 @@ function salvarAvaliacaoCompletaProfessor() {
   };
 
   const dificuldades = [];
-  const rotulos = {
-    queixadaDir: "Queixada (Direita)", queixadaEsq: "Queixada (Esquerda)",
-    armadaDir: "Armada (Direita)", armadaEsq: "Armada (Esquerda)",
-    meiaLuaDir: "Meia Lua (Direita)", meiaLuaEsq: "Meia Lua (Esquerda)",
-    meiaLuaFrenteDir: "Meia Lua Frente (Direita)", meiaLuaFrenteEsq: "Meia Lua Frente (Esquerda)",
-    esquivaFrenteDir: "Esquiva Frente (Direita)", esquivaFrenteEsq: "Esquiva Frente (Esquerda)",
-    esquivaLateralDir: "Esquiva Lateral (Direita)", esquivaLateralEsq: "Esquiva Lateral (Esquerda)",
-    esquivaDiagonalDir: "Esquiva Diagonal (Direita)", esquivaDiagonalEsq: "Esquiva Diagonal (Esquerda)",
-    descidaBasicaDir: "Descida Básica (Direita)", descidaBasicaEsq: "Descida Básica (Esquerda)",
-    seqNegativaRole: "Seq. Negativa e Rolê", seqSobeTras: "Seq. Sobe por Trás", seqSobeLateral: "Seq. Sobe pela Lateral",
-    jogoAngola: "Jogo de Angola", jogoBenguela: "Jogo de Benguela", jogoSaoBento: "Jogo de São Bento Grande",
-    berimbauAngola: "Toque de Berimbau - Angola", berimbauBenguela: "Toque de Berimbau - Benguela", berimbauSaoBento: "Toque de Berimbau - São Bento",
-    atabaquePandeiro: "Atabaque e Pandeiro", faltas: "Faltas", atrasos: "Atrasos", compromisso: "Compromisso"
-  };
 
   for (let key in notas) {
     if (notas[key] <= 85) {
-      dificuldades.push(`${rotulos[key]} (${notas[key]} pts)`);
+      dificuldades.push(`${ROTULOS_AVALIACAO[key]} (${notas[key]} pts)`);
     }
   }
 
@@ -1333,10 +1464,12 @@ function salvarAvaliacaoCompletaProfessor() {
   };
 
   if (db && firebaseOnline) {
+    const original = iniciarCarregamentoBotao(btn, 'Salvando...');
     db.collection("historico_avaliacoes").add(registroAvaliacao).catch(() => {});
     db.collection("boletins").doc(alunoId).set(registroAvaliacao).then(() => {
       exhibirToast("✅ Avaliação gravada na Nuvem!");
-    }).catch(err => exhibirToast("Erro: " + err.message));
+    }).catch(err => exhibirToast("Erro: " + err.message))
+      .finally(() => finalizarCarregamentoBotao(btn, original));
   } else {
     exhibirToast("✅ Avaliação salva localmente (Firebase offline)");
   }
@@ -1481,9 +1614,35 @@ function calcularMinutosAtraso() {
 
 function verificarAtrasoCheckin() {
   const box = document.getElementById('boxJustificativaAtraso');
+  atualizarHorarioAulaHojeCheckin();
   if (!box) return;
   const atrasoMin = calcularMinutosAtraso();
   box.style.display = atrasoMin >= 10 ? 'block' : 'none';
+}
+
+function atualizarHorarioAulaHojeCheckin() {
+  const box = document.getElementById('horarioAulaHojeBox');
+  if (!box) return;
+  const diasSemana = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'];
+  const nomesDias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  const hoje = new Date();
+  const chaveDia = diasSemana[hoje.getDay()];
+  const nomeDia = nomesDias[hoje.getDay()];
+  const sufixo = chaveDia.charAt(0).toUpperCase() + chaveDia.slice(1);
+  const dados = window.horarioFixoCache || {};
+  const local = dados[chaveDia];
+  const hora = dados['hora' + sufixo];
+
+  if (!local) {
+    box.style.borderColor = 'var(--card-border)';
+    box.innerHTML = `<i class="fas fa-calendar-times"></i> Sem aula fixa cadastrada hoje (${nomeDia}).`;
+  } else if (!hora) {
+    box.style.borderColor = 'var(--gold)';
+    box.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:var(--gold);"></i> Aula hoje em <strong>${local}</strong>, mas o horário ainda não foi definido pelo professor — atrasos não podem ser calculados sem ele.`;
+  } else {
+    box.style.borderColor = 'var(--primary-green)';
+    box.innerHTML = `<i class="fas fa-clock" style="color:var(--primary-green);"></i> Aula hoje (${nomeDia}) às <strong>${hora}</strong> em ${local}. Check-in feito 10min ou mais depois desse horário é marcado como atraso.`;
+  }
 }
 
 function alunoCheckinLocalFixoSimples() {
@@ -1918,13 +2077,21 @@ const DIAS_HORARIO_FIXO = [
 function salvarHorarioFixoSemanal() {
   if (!db || !firebaseOnline) return exhibirToast("Firebase offline. Não é possível salvar agora.");
   const dados = {};
+  const diasSemHorario = [];
   DIAS_HORARIO_FIXO.forEach(d => {
     const sufixo = d.chave.charAt(0).toUpperCase() + d.chave.slice(1);
     dados[d.chave] = document.getElementById('horarioFixo' + sufixo).value.trim();
     dados['hora' + sufixo] = document.getElementById('horarioFixoHora' + sufixo).value || '';
+    if (dados[d.chave] && !dados['hora' + sufixo]) diasSemHorario.push(d.label);
   });
   db.collection("configuracoes").doc("horario_fixo").set(dados)
-    .then(() => exhibirToast("✅ Horário fixo atualizado!"))
+    .then(() => {
+      if (diasSemHorario.length) {
+        exhibirToast("⚠️ Salvo, mas falta o horário de: " + diasSemHorario.join(", "));
+      } else {
+        exhibirToast("✅ Horário fixo atualizado!");
+      }
+    })
     .catch(err => exhibirToast("Erro: " + err.message));
 }
 
@@ -2002,6 +2169,91 @@ function iniciarListenerRanking() {
   }, () => {});
 }
 
+let alunosCacheRankingCompleto = {};
+let boletinsCacheRankingCompleto = {};
+
+function calcularMediaNotas(notas) {
+  if (!notas) return 0;
+  const valores = Object.values(notas).filter(v => typeof v === 'number');
+  if (valores.length === 0) return 0;
+  const soma = valores.reduce((a, b) => a + b, 0);
+  return soma / valores.length;
+}
+
+function toggleDetalheRankingCompleto(idLinha) {
+  const el = document.getElementById(idLinha);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderizarRankingCompletoInicio() {
+  const card = document.getElementById('cardRankingCompletoInicio');
+  const lista = document.getElementById('listaRankingCompletoInicio');
+  if (!card || !lista) return;
+
+  const linhas = Object.keys(boletinsCacheRankingCompleto).map(id => {
+    const b = boletinsCacheRankingCompleto[id];
+    const aluno = alunosCacheRankingCompleto[id];
+    const status = aluno ? getStatusConduta(aluno.faltas) : { emAtencao: false };
+    return {
+      id,
+      nome: aluno ? aluno.nome : 'Aluno',
+      emAtencao: status.emAtencao,
+      graduacaoPretendida: b.proximaCorda || (aluno ? aluno.graduacao : 'Não definida'),
+      media: calcularMediaNotas(b.notas),
+      notas: b.notas || {}
+    };
+  }).filter(l => alunosCacheRankingCompleto[l.id]);
+
+  if (linhas.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+
+  linhas.sort((a, b) => b.media - a.media);
+  card.style.display = 'block';
+
+  lista.innerHTML = linhas.map((l, i) => {
+    const idDetalhe = `detalheRanking_${l.id}`;
+    const detalheHtml = Object.keys(l.notas).map(k =>
+      `<span style="display:inline-block; margin:2px 6px 2px 0; font-size:0.66rem; color:var(--text-sub);">${ROTULOS_AVALIACAO[k] || k}: <strong style="color:#fff;">${l.notas[k]}</strong></span>`
+    ).join('');
+
+    return `
+      <div style="padding:6px 0; border-bottom:1px solid var(--card-border);">
+        <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleDetalheRankingCompleto('${idDetalhe}')">
+          <div>
+            <p style="font-size:0.8rem; font-weight:bold; color:#fff;">${i + 1}º ${l.emAtencao ? '⚠️ ' : ''}${l.nome}</p>
+            <p style="font-size:0.68rem; color:var(--text-sub);">Graduação pretendida: <span style="color:var(--gold);">${l.graduacaoPretendida}</span></p>
+          </div>
+          <div style="text-align:right;">
+            <p style="font-size:0.85rem; font-weight:bold; color:var(--accent-blue);">${l.media.toFixed(1)} pts</p>
+            <p style="font-size:0.6rem; color:var(--text-sub);"><i class="fas fa-chevron-down"></i> avaliação completa</p>
+          </div>
+        </div>
+        <div id="${idDetalhe}" style="display:none; margin-top:6px; background:#081217; padding:6px; border-radius:6px;">
+          ${detalheHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function iniciarListenerRankingCompletoInicio() {
+  if (!db || !firebaseOnline) return;
+  db.collection("alunos").onSnapshot(s => {
+    alunosCacheRankingCompleto = {};
+    s.forEach(d => { alunosCacheRankingCompleto[d.id] = d.data(); });
+    renderizarRankingCompletoInicio();
+  }, () => {});
+
+  db.collection("boletins").onSnapshot(s => {
+    boletinsCacheRankingCompleto = {};
+    s.forEach(d => { boletinsCacheRankingCompleto[d.id] = d.data(); });
+    renderizarRankingCompletoInicio();
+  }, () => {});
+}
+
 function iniciarListenerHorarioFixo() {
   if (!db || !firebaseOnline) return;
   db.collection("configuracoes").doc("horario_fixo").onSnapshot(doc => {
@@ -2028,6 +2280,7 @@ function iniciarListenerHorarioFixo() {
       if (inputHora && document.activeElement !== inputHora) inputHora.value = dados['hora' + sufixo] || '';
     });
     atualizarBotaoConfirmarPresenca();
+    atualizarHorarioAulaHojeCheckin();
   }, () => {});
 }
 
@@ -2111,13 +2364,32 @@ function preencherListaAlunosAdm(s) {
   sel.innerHTML = '<option value="">Selecione o Aluno...</option>';
   alunosCacheAdm = {};
   const nomes = [];
+  const alunosEmAtencao = [];
   s.forEach(d => {
     const data = d.data();
     alunosCacheAdm[data.nome] = { id: d.id, ...data };
     nomes.push(data.nome);
-    sel.innerHTML += `<option value="${data.nome}">${data.nome}</option>`;
+    const status = getStatusConduta(data.faltas);
+    const prefixo = status.emAtencao ? '⚠️ ' : '';
+    sel.innerHTML += `<option value="${data.nome}">${prefixo}${data.nome}</option>`;
+    if (status.emAtencao) alunosEmAtencao.push({ nome: data.nome, faltas: Number(data.faltas) || 0, nivel: status.nivel });
   });
   preencherSelectsRanking(nomes);
+
+  const bloco = document.getElementById('blocoAlunosAtencaoAdm');
+  const lista = document.getElementById('listaAlunosAtencaoAdm');
+  if (bloco && lista) {
+    if (alunosEmAtencao.length === 0) {
+      bloco.style.display = 'none';
+      lista.innerHTML = '';
+    } else {
+      bloco.style.display = 'block';
+      alunosEmAtencao.sort((a, b) => b.faltas - a.faltas);
+      lista.innerHTML = alunosEmAtencao.map(a =>
+        `<div style="margin-bottom:3px;">⚠️ <strong>${a.nome}</strong> — ${a.faltas} falta(s)${a.nivel === 'grave' ? ' <span style="color:var(--danger);">(grave)</span>' : ''}</div>`
+      ).join('');
+    }
+  }
 }
 
 function carregarAlunosParaADM() {
@@ -2342,6 +2614,7 @@ function sincronizarConfiguracoesAoAbrir() {
     iniciarListenerLogoApp();
     iniciarListenerHorarioFixo();
     iniciarListenerRanking();
+    iniciarListenerRankingCompletoInicio();
   }
 }
 
@@ -2351,9 +2624,23 @@ function sincronizarConfiguracoesAoAbrir() {
 let checkinDadosCarregados = false;
 function carregarDadosAbaCheckin() {
   verificarAtrasoCheckin();
+  preencherNomeCheckinComSessao();
   if (checkinDadosCarregados || !db || !firebaseOnline) return;
   checkinDadosCarregados = true;
   escutarLocais();
+}
+
+function preencherNomeCheckinComSessao() {
+  const input = document.getElementById('checkinFixoNomeAluno');
+  if (!input) return;
+  if (alunoSessao) {
+    input.value = alunoSessao.apelido || alunoSessao.nome;
+    input.readOnly = true;
+    input.style.opacity = '0.75';
+  } else {
+    input.readOnly = false;
+    input.style.opacity = '1';
+  }
 }
 
 let admDadosCarregados = false;
