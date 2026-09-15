@@ -117,7 +117,7 @@
     }
 
     .lado-flex { display: flex; gap: 4px; margin: 2px 0; }
-    .lado-flex input { flex: 1; }
+    .lado-flex input { flex: 1; min-width: 0; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; }
     .modal-card { background: #11222a; border: 1px solid var(--accent-blue); border-radius: 14px; padding: 16px; max-width: 320px; width: 100%; color: #fff; }
@@ -505,11 +505,16 @@
       <div class="card" style="border:1px solid var(--primary-green);">
         <h3><i class="fas fa-calendar-week"></i> Horário Fixo Semanal (Segunda a Sexta)</h3>
         <p style="font-size:0.7rem; color:var(--text-sub); margin-bottom:6px;">Preencha o local/descrição e o horário de início de cada dia (deixe em branco os dias sem aula). O horário é usado para detectar atraso no check-in:</p>
-        <div style="display:flex; gap:6px;"><input id="horarioFixoSeg" placeholder="Segunda-feira: ex. Instituto Central do Povo" style="flex:2;"><input type="time" id="horarioFixoHoraSeg" style="flex:1;"></div>
-        <div style="display:flex; gap:6px;"><input id="horarioFixoTer" placeholder="Terça-feira" style="flex:2;"><input type="time" id="horarioFixoHoraTer" style="flex:1;"></div>
-        <div style="display:flex; gap:6px;"><input id="horarioFixoQua" placeholder="Quarta-feira" style="flex:2;"><input type="time" id="horarioFixoHoraQua" style="flex:1;"></div>
-        <div style="display:flex; gap:6px;"><input id="horarioFixoQui" placeholder="Quinta-feira" style="flex:2;"><input type="time" id="horarioFixoHoraQui" style="flex:1;"></div>
-        <div style="display:flex; gap:6px;"><input id="horarioFixoSex" placeholder="Sexta-feira" style="flex:2;"><input type="time" id="horarioFixoHoraSex" style="flex:1;"></div>
+        <label style="font-size:0.7rem; color:var(--text-sub);">Segunda-feira:</label>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoSeg" placeholder="Local ex: Instituto Central do Povo" style="flex:2; min-width:0;"><input type="time" id="horarioFixoHoraSeg" style="flex:1; min-width:0;"></div>
+        <label style="font-size:0.7rem; color:var(--text-sub);">Terça-feira:</label>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoTer" placeholder="Local" style="flex:2; min-width:0;"><input type="time" id="horarioFixoHoraTer" style="flex:1; min-width:0;"></div>
+        <label style="font-size:0.7rem; color:var(--text-sub);">Quarta-feira:</label>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoQua" placeholder="Local" style="flex:2; min-width:0;"><input type="time" id="horarioFixoHoraQua" style="flex:1; min-width:0;"></div>
+        <label style="font-size:0.7rem; color:var(--text-sub);">Quinta-feira:</label>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoQui" placeholder="Local" style="flex:2; min-width:0;"><input type="time" id="horarioFixoHoraQui" style="flex:1; min-width:0;"></div>
+        <label style="font-size:0.7rem; color:var(--text-sub);">Sexta-feira:</label>
+        <div style="display:flex; gap:6px;"><input id="horarioFixoSex" placeholder="Local" style="flex:2; min-width:0;"><input type="time" id="horarioFixoHoraSex" style="flex:1; min-width:0;"></div>
         <button class="btn btn-secondary" onclick="salvarHorarioFixoSemanal()"><i class="fas fa-save"></i> Salvar Horário Fixo</button>
       </div>
 
