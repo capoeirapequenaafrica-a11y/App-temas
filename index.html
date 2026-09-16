@@ -1465,6 +1465,12 @@ function renderTitulosAlunos() {
 }
 
 function mediaAvaliacao(av) {
+  if (av && av.notas && typeof av.notas === 'object') {
+    var vals = Object.keys(av.notas).map(function (k) { return Number(av.notas[k]); }).filter(function (v) { return !isNaN(v); });
+    if (!vals.length) return 0;
+    var soma100 = vals.reduce(function (s, v) { return s + v; }, 0);
+    return (soma100 / vals.length) / 10;
+  }
   var campos = ['tecnica', 'disciplina', 'ritmo', 'musicalidade', 'compromisso'];
   var soma = 0, n = 0;
   campos.forEach(function (c) {
@@ -1877,8 +1883,12 @@ function renderAluno() {
     (avals.length
       ? avals.map(function (a) {
           return '<div class="lista-item"><div class="linha"><span><b>' + esc(a.data || '-') + '</b>' + (a.etapa ? ' <span class="mini" style="color:var(--gold);">• ' + esc(a.etapa) + '</span>' : '') + '</span><span class="badge-count">' + mediaAvaliacao(a).toFixed(1) + '</span></div>' +
-            '<span class="mini">Técnica ' + esc(a.tecnica || '-') + ' • Disciplina ' + esc(a.disciplina || '-') + ' • Ritmo ' + esc(a.ritmo || '-') +
-            ' • Musicalidade ' + esc(a.musicalidade || '-') + ' • Compromisso ' + esc(a.compromisso || '-') + '</span>' +
+            (a.notas && typeof a.notas === 'object'
+              ? '<span class="mini">' + Object.keys(a.notas).map(function (k) { return (ROTULOS_AVALIACAO[k] || k) + ' ' + a.notas[k]; }).join(' • ') + '</span>'
+              : '<span class="mini">Técnica ' + esc(a.tecnica || '-') + ' • Disciplina ' + esc(a.disciplina || '-') + ' • Ritmo ' + esc(a.ritmo || '-') +
+                ' • Musicalidade ' + esc(a.musicalidade || '-') + ' • Compromisso ' + esc(a.compromisso || '-') + '</span>') +
+            (a.dificuldades && a.dificuldades.length ? '<div class="alerta-dificuldade">Pontos de atenção: ' + esc(a.dificuldades.join(', ')) + '</div>' : '') +
+            (a.proximaCorda ? '<div class="mini" style="color:var(--gold);">Graduação anunciada: ' + esc(a.proximaCorda) + '</div>' : '') +
             (a.observacao ? '<div class="mini">' + esc(a.observacao) + '</div>' : '') + '</div>';
         }).join('')
       : '<p class="sem-dados">Nenhuma avaliação lançada ainda.</p>') +
@@ -2054,13 +2064,45 @@ function renderAbaProfessor() {
       '<option value="2ª Avaliação do Ano">2ª Avaliação do Ano</option>' +
       '<option value="Avaliação Extra">Avaliação Extra</option>' +
     '</select>' +
-    '<div class="grade-2">' +
-      '<div><label class="campo-label">Técnica (0-10)</label><input id="avalTecnica" type="number" min="0" max="10" step="0.5" value="8"></div>' +
-      '<div><label class="campo-label">Disciplina (0-10)</label><input id="avalDisciplina" type="number" min="0" max="10" step="0.5" value="8"></div>' +
-      '<div><label class="campo-label">Ritmo (0-10)</label><input id="avalRitmo" type="number" min="0" max="10" step="0.5" value="8"></div>' +
-      '<div><label class="campo-label">Musicalidade (0-10)</label><input id="avalMusicalidade" type="number" min="0" max="10" step="0.5" value="8"></div>' +
-    '</div>' +
-    '<label class="campo-label">Compromisso (0-10)</label><input id="avalCompromisso" type="number" min="0" max="10" step="0.5" value="8">' +
+
+    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Chutes (Direita e Esquerda):</h4>' +
+    '<label class="campo-label">Queixada</label><div class="lado-flex"><input type="number" id="notaQueixadaDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaQueixadaEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
+    '<label class="campo-label">Armada</label><div class="lado-flex"><input type="number" id="notaArmadaDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaArmadaEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
+    '<label class="campo-label">Meia Lua de Compasso</label><div class="lado-flex"><input type="number" id="notaMeiaLuaDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaMeiaLuaEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
+    '<label class="campo-label">Meia Lua de Frente</label><div class="lado-flex"><input type="number" id="notaMeiaLuaFrenteDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaMeiaLuaFrenteEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
+
+    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Esquivas (Direita e Esquerda):</h4>' +
+    '<label class="campo-label">Esquiva de Frente</label><div class="lado-flex"><input type="number" id="notaEsquivaFrenteDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaEsquivaFrenteEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
+    '<label class="campo-label">Esquiva Lateral</label><div class="lado-flex"><input type="number" id="notaEsquivaLateralDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaEsquivaLateralEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
+    '<label class="campo-label">Esquiva Diagonal</label><div class="lado-flex"><input type="number" id="notaEsquivaDiagonalDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaEsquivaDiagonalEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
+    '<label class="campo-label">Descida Básica</label><div class="lado-flex"><input type="number" id="notaDescidaBasicaDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaDescidaBasicaEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
+
+    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Sequências Básicas:</h4>' +
+    '<label class="campo-label">Descida básica → negativa e rolê</label><input type="number" id="notaSeqNegativaRole" min="0" max="100" value="85">' +
+    '<label class="campo-label">Descida básica → negativa e sobe por trás</label><input type="number" id="notaSeqSobeTras" min="0" max="100" value="85">' +
+    '<label class="campo-label">Descida básica → negativa e sobe pela lateral</label><input type="number" id="notaSeqSobeLateral" min="0" max="100" value="85">' +
+
+    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Jogo nos Toques da Academia:</h4>' +
+    '<label class="campo-label">Jogo de Angola</label><input type="number" id="notaJogoAngola" min="0" max="100" value="85">' +
+    '<label class="campo-label">Jogo de Benguela</label><input type="number" id="notaJogoBenguela" min="0" max="100" value="85">' +
+    '<label class="campo-label">Jogo de São Bento Grande de Bimba</label><input type="number" id="notaJogoSaoBento" min="0" max="100" value="85">' +
+
+    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Ritmo & Instrumentos:</h4>' +
+    '<label class="campo-label">Toque de Berimbau - Angola</label><input type="number" id="notaBerimbauAngola" min="0" max="100" value="85">' +
+    '<label class="campo-label">Toque de Berimbau - Benguela</label><input type="number" id="notaBerimbauBenguela" min="0" max="100" value="85">' +
+    '<label class="campo-label">Toque de Berimbau - São Bento</label><input type="number" id="notaBerimbauSaoBento" min="0" max="100" value="85">' +
+    '<label class="campo-label">Atabaque e Pandeiro</label><input type="number" id="notaAtabaquePandeiro" min="0" max="100" value="85">' +
+
+    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Assiduidade & Compromisso:</h4>' +
+    '<label class="campo-label">Faltas</label><input type="number" id="notaFaltas" min="0" max="100" value="85">' +
+    '<label class="campo-label">Atrasos</label><input type="number" id="notaAtrasos" min="0" max="100" value="85">' +
+    '<label class="campo-label">Compromisso</label><input type="number" id="notaCompromisso" min="0" max="100" value="85">' +
+
+    '<h4 style="color:var(--primary-green); font-size:0.78rem; margin-top:6px;">Graduação Anunciada (opcional):</h4>' +
+    '<select id="avalProximaCorda"><option value="">Manter Graduação Atual</option>' +
+    CONFIG.graduacoes.map(function (g) { return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('') +
+    '</select>' +
+
     '<label class="campo-label">Observação</label><textarea id="avalObservacao" placeholder="Pontos fortes e o que melhorar"></textarea>' +
     '<button class="btn" onclick="salvarAvaliacao()"><i class="fas fa-save"></i> Salvar Avaliação</button></div>';
 
@@ -2170,21 +2212,46 @@ function notificarLocalAlunos() {
   mostrarToast('Notificação enviada para este dispositivo.');
 }
 
+var ROTULOS_AVALIACAO = {
+  queixadaDir: "Queixada (Direita)", queixadaEsq: "Queixada (Esquerda)",
+  armadaDir: "Armada (Direita)", armadaEsq: "Armada (Esquerda)",
+  meiaLuaDir: "Meia Lua (Direita)", meiaLuaEsq: "Meia Lua (Esquerda)",
+  meiaLuaFrenteDir: "Meia Lua Frente (Direita)", meiaLuaFrenteEsq: "Meia Lua Frente (Esquerda)",
+  esquivaFrenteDir: "Esquiva Frente (Direita)", esquivaFrenteEsq: "Esquiva Frente (Esquerda)",
+  esquivaLateralDir: "Esquiva Lateral (Direita)", esquivaLateralEsq: "Esquiva Lateral (Esquerda)",
+  esquivaDiagonalDir: "Esquiva Diagonal (Direita)", esquivaDiagonalEsq: "Esquiva Diagonal (Esquerda)",
+  descidaBasicaDir: "Descida Básica (Direita)", descidaBasicaEsq: "Descida Básica (Esquerda)",
+  seqNegativaRole: "Seq. Negativa e Rolê", seqSobeTras: "Seq. Sobe por Trás", seqSobeLateral: "Seq. Sobe pela Lateral",
+  jogoAngola: "Jogo de Angola", jogoBenguela: "Jogo de Benguela", jogoSaoBento: "Jogo de São Bento Grande",
+  berimbauAngola: "Toque de Berimbau - Angola", berimbauBenguela: "Toque de Berimbau - Benguela", berimbauSaoBento: "Toque de Berimbau - São Bento",
+  atabaquePandeiro: "Atabaque e Pandeiro", faltas: "Faltas", atrasos: "Atrasos", compromisso: "Compromisso"
+};
+
 function salvarAvaliacao() {
   var alunoId = $('avalAluno').value;
   var aluno = DB.buscar('alunos', alunoId);
   if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
+
+  var notas = {};
+  Object.keys(ROTULOS_AVALIACAO).forEach(function (campo) {
+    var el = $('nota' + campo.charAt(0).toUpperCase() + campo.slice(1));
+    notas[campo] = el ? (Number(el.value) || 0) : 0;
+  });
+
+  var dificuldades = [];
+  Object.keys(notas).forEach(function (campo) {
+    if (notas[campo] <= 85) dificuldades.push(ROTULOS_AVALIACAO[campo] + ' (' + notas[campo] + ' pts)');
+  });
+
   DB.salvar('avaliacoes', {
     alunoId: aluno.id,
     alunoNome: aluno.nome,
     alunoApelido: aluno.apelido || '',
     graduacao: aluno.graduacao || '',
     etapa: $('avalEtapa') ? $('avalEtapa').value : '',
-    tecnica: $('avalTecnica').value,
-    disciplina: $('avalDisciplina').value,
-    ritmo: $('avalRitmo').value,
-    musicalidade: $('avalMusicalidade').value,
-    compromisso: $('avalCompromisso').value,
+    notas: notas,
+    dificuldades: dificuldades,
+    proximaCorda: ($('avalProximaCorda') && $('avalProximaCorda').value) || '',
     observacao: ($('avalObservacao').value || '').trim(),
     data: dataLocalISO(),
     professor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
@@ -2579,24 +2646,23 @@ function migrarAvaliacoesAntigas(btn) {
       if (!aluno) { ignorados++; return; }
 
       var notas = b.notas || {};
-      var valores = Object.keys(notas).map(function (k) { return Number(notas[k]); }).filter(function (v) { return !isNaN(v); });
-      var mediaAntiga = valores.length ? (valores.reduce(function (s, v) { return s + v; }, 0) / valores.length) : 0;
-      var notaConvertida = Math.round((mediaAntiga / 10) * 10) / 10;
 
       var dataConvertida = '';
       try { if (b.atualizadoEm && b.atualizadoEm.toDate) dataConvertida = dataLocalISO(b.atualizadoEm.toDate()); } catch (e) {}
 
-      var observacao = (b.obs || '');
-      if (b.dificuldades && b.dificuldades.length) observacao += (observacao ? ' | ' : '') + 'Pontos de atenção: ' + b.dificuldades.join(', ');
+      var mapaEtapa = { '1a_avaliacao': '1ª Avaliação do Ano', '2a_avaliacao': '2ª Avaliação do Ano' };
+      var etapaConvertida = mapaEtapa[b.etapa] || b.etapa || 'Avaliação importada da v86';
 
       promessas.push(DB.salvar('avaliacoes', {
         alunoId: aluno.id,
         alunoNome: aluno.nome,
         alunoApelido: aluno.apelido || '',
         graduacao: b.proximaCorda || aluno.graduacao || '',
-        etapa: (b.etapa || 'Avaliação importada da v86'),
-        tecnica: notaConvertida,
-        observacao: observacao,
+        etapa: etapaConvertida,
+        notas: notas,
+        dificuldades: b.dificuldades || [],
+        proximaCorda: b.proximaCorda || '',
+        observacao: (b.obs || ''),
         professor: b.avaliadoPor || 'Professor (importado)',
         data: dataConvertida || dataLocalISO(),
         criadoEm: agoraISO(),
