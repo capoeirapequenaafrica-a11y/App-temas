@@ -525,6 +525,30 @@ footer a { color: var(--accent-blue); }
         <button class="btn" style="width:auto; padding:8px 12px; margin:3px 0;" onclick="enviarMensagemChatAlunos()"><i class="fas fa-paper-plane"></i></button>
       </div>
     </div>
+
+    <div class="card" id="cardSugestoesAluno" style="display:none;">
+      <h3><i class="fas fa-lightbulb"></i> Sugestões para o Próximo Treino</h3>
+      <p class="mini" style="margin-bottom:6px;">Peça um movimento, música, tema de roda ou dê uma ideia — o professor vê tudo por aqui.</p>
+      <textarea id="sugestaoTexto" rows="2" placeholder="Ex: Podemos treinar mais ladainha na próxima roda?"></textarea>
+      <button class="btn btn-secondary" onclick="enviarSugestao()"><i class="fas fa-paper-plane"></i> Enviar Sugestão</button>
+      <div id="listaSugestoesAluno" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" id="cardAssistenteIA" style="display:none;">
+      <h3><i class="fas fa-robot"></i> Assistente Virtual</h3>
+      <p class="mini" style="margin-bottom:6px;">Tire dúvidas sobre capoeira, ritmos e movimentos. Não substitui o professor.</p>
+      <div id="mensagensIA" style="max-height:280px; overflow-y:auto; margin-bottom:8px;"></div>
+      <div class="lado-flex">
+        <input id="iaInput" placeholder="Pergunte algo..." onkeydown="if(event.key==='Enter'){enviarMensagemIA();}">
+        <button class="btn" id="btnEnviarIA" style="width:auto; padding:8px 12px; margin:3px 0;" onclick="enviarMensagemIA()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+
+    <div class="card" id="cardTesteConhecimento" style="display:none;">
+      <h3><i class="fas fa-graduation-cap"></i> Teste de Conhecimentos Gerais</h3>
+      <p class="mini" style="margin-bottom:6px;">Um teste rápido por semana, gerado pela IA, pra você chegar afiado na próxima avaliação.</p>
+      <div id="areaTesteConhecimento"></div>
+    </div>
   </div>
 
   <!-- ================= ABA 4 - PROFESSOR ================= -->
@@ -601,12 +625,14 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'chatAlunos', 'certificados', 'equipe', 'config', 'logs'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'chatAlunos', 'sugestoes', 'testesConhecimento', 'certificados', 'equipe', 'config', 'logs'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
   instagram: '@capoeiranapequenaafrica',
   whatsappSuporte: '',
+  iaProxyUrl: '',
+  baseConhecimento: '',
   logo1: '',
   logo2: '',
   tempoTimerSegundos: 90,
@@ -1526,28 +1552,53 @@ function renderCertificadosAluno() {
   $('listaCertificadosAluno').innerHTML = html;
 }
 
-function baixarCertificado(id) {
-  var c = DB.buscar('certificados', id);
-  if (!c) { mostrarToast('Certificado não encontrado.', 'erro'); return; }
-  var html = '<!DOCTYPE html><html lang="pt-br"><head><meta charset="utf-8"><title>Certificado</title>' +
+function montarHtmlCertificado(c, comLogo) {
+  var logoHtml = (comLogo && CONFIG.logo1) ? '<img src="' + esc(CONFIG.logo1) + '" alt="Símbolo" style="max-width:90px; max-height:90px; margin-bottom:8px;">' : '';
+  return '<!DOCTYPE html><html lang="pt-br"><head><meta charset="utf-8"><title>Certificado</title>' +
     '<style>body{font-family:Georgia,serif;background:#f4f4f4;padding:24px;}' +
     '.c{background:#fffdf5;border:8px double #b8860b;border-radius:10px;padding:36px;max-width:720px;margin:auto;text-align:center;color:#222;}' +
     'h1{font-size:26px;color:#1b5e20;margin-bottom:6px;}h2{font-size:18px;color:#8d6e00;margin:18px 0 6px;}' +
     '.nome{font-size:30px;font-weight:bold;color:#0b3d0b;margin:14px 0;}' +
     'p{font-size:15px;line-height:1.6;} .rodape{margin-top:28px;font-size:13px;color:#555;}' +
-    '@media print{body{background:#fff;padding:0;}}</style></head><body>' +
-    '<div class="c"><h1>' + esc(CONFIG.tituloApp) + '</h1>' +
+    '.aviso-preview{background:#fff3cd;color:#7a5b00;border:1px solid #e0c46c;border-radius:8px;padding:10px;max-width:720px;margin:0 auto 14px;font-family:Arial,sans-serif;font-size:13px;}' +
+    '@media print{body{background:#fff;padding:0;} .aviso-preview{display:none;}}</style></head><body>' +
+    (c.preview ? '<div class="aviso-preview"><strong>Pré-visualização</strong> — este certificado ainda não foi emitido nem salvo. Feche esta aba pra ajustar, ou confirme no app pra emitir de verdade.</div>' : '') +
+    '<div class="c">' + logoHtml + '<h1>' + esc(CONFIG.tituloApp) + '</h1>' +
     '<p>Capoeira na Pequena África</p><h2>CERTIFICADO DE PARTICIPAÇÃO</h2>' +
     '<p>Certificamos que</p><div class="nome">' + esc(c.alunoNome || '-') + '</div>' +
     '<p>participou de <strong>' + esc(c.evento || 'apresentação da academia') + '</strong>, ' +
     'realizada em <strong>' + dataBR(c.data) + '</strong>' + (c.cargaHoraria ? ', com carga horária de ' + esc(c.cargaHoraria) : '') + '.</p>' +
-    '<div class="rodape">Código de autenticidade: <strong>' + esc(c.codigo || '-') + '</strong><br>' +
-    'Emitido em ' + esc(c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + esc(c.emitidoPor || 'Equipe') + '<br><br>' +
+    '<div class="rodape">Código de autenticidade: <strong>' + esc(c.codigo || (c.preview ? 'Gerado ao emitir' : '-')) + '</strong><br>' +
+    'Emitido em ' + esc(c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : dataBR(dataLocalISO())) + ' por ' + esc(c.emitidoPor || 'Equipe') + '<br><br>' +
     '_______________________________<br>' + esc(c.assinatura || 'Professor responsável') + '</div></div>' +
-    '<script>setTimeout(function(){window.print();},600);<\/script></body></html>';
+    (c.preview ? '' : '<script>setTimeout(function(){window.print();},600);<\/script>') + '</body></html>';
+}
+
+function visualizarCertificado() {
+  var aluno = DB.buscar('alunos', $('certAluno').value);
+  if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
+  var c = {
+    alunoNome: aluno.nome,
+    evento: ($('certEvento').value || '').trim() || 'Apresentação da academia',
+    data: $('certData').value || dataLocalISO(),
+    cargaHoraria: ($('certCarga').value || '').trim(),
+    assinatura: ($('certAssinatura').value || '').trim(),
+    emitidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Equipe',
+    preview: true
+  };
+  var comLogo = $('certComLogo') ? $('certComLogo').checked : true;
+  var w = window.open('', '_blank');
+  if (!w) { mostrarToast('Permita pop-ups para visualizar o certificado.', 'erro'); return; }
+  w.document.write(montarHtmlCertificado(c, comLogo));
+  w.document.close();
+}
+
+function baixarCertificado(id) {
+  var c = DB.buscar('certificados', id);
+  if (!c) { mostrarToast('Certificado não encontrado.', 'erro'); return; }
   var w = window.open('', '_blank');
   if (!w) { mostrarToast('Permita pop-ups para abrir o certificado.', 'erro'); return; }
-  w.document.write(html);
+  w.document.write(montarHtmlCertificado(c, c.comLogo !== false));
   w.document.close();
 }
 
@@ -1615,6 +1666,230 @@ function enviarMensagemChatAlunos() {
     texto: texto,
     criadoEm: agoraISO()
   }).then(function () { renderChatAlunos(); });
+}
+
+function enviarSugestao() {
+  var texto = ($('sugestaoTexto').value || '').trim();
+  var aluno = alunoLogado();
+  if (!aluno) { mostrarToast('Entre no painel do aluno para enviar sugestões.', 'erro'); return; }
+  if (!texto) { mostrarToast('Escreva sua sugestão.', 'erro'); return; }
+  $('sugestaoTexto').value = '';
+  DB.salvar('sugestoes', {
+    autor: aluno.apelido || aluno.nome,
+    autorId: aluno.id,
+    texto: texto,
+    criadoEm: agoraISO()
+  }).then(function () {
+    mostrarToast('Sugestão enviada! Obrigado pela participação.');
+    renderListaSugestoesAluno();
+  });
+}
+
+function renderListaSugestoesAluno() {
+  var box = $('listaSugestoesAluno');
+  if (!box) return;
+  var lista = DB.listar('sugestoes').slice().sort(function (a, b) {
+    return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
+  }).slice(0, 20);
+  if (!lista.length) { box.innerHTML = '<p class="sem-dados">Nenhuma sugestão enviada ainda.</p>'; return; }
+  box.innerHTML = lista.map(function (s) {
+    return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.72rem;">' + esc(s.autor || 'Aluno') + '</b>' +
+      '<span class="mini">' + dataHoraBR(s.criadoEm) + '</span></div><div>' + esc(s.texto) + '</div></div>';
+  }).join('');
+}
+
+var historicoIA = [];
+
+function renderizarChatIA() {
+  var box = $('mensagensIA');
+  if (!box) return;
+  if (!historicoIA.length) { box.innerHTML = '<p class="sem-dados">Pergunte algo sobre capoeira, ritmos, movimentos ou o app.</p>'; return; }
+  box.innerHTML = historicoIA.map(function (m) {
+    var cor = m.role === 'user' ? 'var(--primary-green)' : 'var(--accent-blue)';
+    var quem = m.role === 'user' ? 'Você' : 'Assistente';
+    return '<div class="chat-msg"><div class="linha"><b style="color:' + cor + '; font-size:0.72rem;">' + quem + '</b></div><div>' + esc(m.content) + '</div></div>';
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function montarContextoAluno() {
+  var aluno = alunoLogado();
+  if (!aluno) return null;
+
+  var avaliacoes = DB.listar('avaliacoes').filter(function (a) { return a.alunoId === aluno.id; })
+    .slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+  var ultima = avaliacoes[0];
+
+  var diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+  var polos = DB.listar('polos');
+  var horariosTexto = DB.listar('horarios').slice()
+    .sort(function (a, b) { return Number(a.diaSemana) - Number(b.diaSemana); })
+    .map(function (h) {
+      var polo = polos.filter(function (p) { return p.id === h.poloId; })[0];
+      return diasSemana[Number(h.diaSemana)] + (polo ? ' - ' + polo.nome : '');
+    }).join('; ') || 'Nenhum horário fixo cadastrado.';
+
+  var contexto = {
+    nome: aluno.apelido || aluno.nome,
+    graduacaoAtual: aluno.graduacao || 'não informada',
+    horariosFixos: horariosTexto,
+    ultimaAvaliacao: null
+  };
+
+  if (ultima) {
+    contexto.ultimaAvaliacao = {
+      etapa: ultima.etapa || '',
+      data: ultima.data || '',
+      graduacaoAnunciada: ultima.proximaCorda || '',
+      pontosFracos: (ultima.dificuldades && ultima.dificuldades.length) ? ultima.dificuldades : []
+    };
+  }
+
+  return contexto;
+}
+
+function enviarMensagemIA() {
+  var input = $('iaInput');
+  var texto = (input.value || '').trim();
+  if (!texto) { mostrarToast('Escreva uma pergunta.', 'erro'); return; }
+  if (!CONFIG.iaProxyUrl) { mostrarToast('Assistente ainda não configurado. Peça ao ADM para configurar a URL do assistente.', 'erro'); return; }
+
+  input.value = '';
+  historicoIA.push({ role: 'user', content: texto });
+  renderizarChatIA();
+
+  var btn = $('btnEnviarIA');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-btn"></span>'; }
+
+  fetch(CONFIG.iaProxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mensagens: historicoIA.slice(-12), contexto: montarContextoAluno() })
+  }).then(function (r) { return r.json(); })
+    .then(function (data) {
+      var resposta = data && data.resposta ? data.resposta : (data && data.erro ? ('Erro: ' + data.erro) : 'Não consegui responder agora.');
+      historicoIA.push({ role: 'assistant', content: resposta });
+      renderizarChatIA();
+    })
+    .catch(function () {
+      historicoIA.push({ role: 'assistant', content: 'Não consegui falar com o assistente agora. Tente de novo daqui a pouco.' });
+      renderizarChatIA();
+    })
+    .finally(function () {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
+    });
+}
+
+function semanaAtualISO(d) {
+  d = d ? new Date(d) : new Date();
+  var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var diaSemanaISO = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - diaSemanaISO);
+  var inicioAno = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  var numSemana = Math.ceil((((date - inicioAno) / 86400000) + 1) / 7);
+  return date.getUTCFullYear() + '-S' + String(numSemana).padStart(2, '0');
+}
+
+var quizAtual = null;
+
+function renderAreaTesteConhecimento() {
+  var area = $('areaTesteConhecimento');
+  var aluno = alunoLogado();
+  if (!area || !aluno) return;
+
+  var semana = semanaAtualISO();
+  var testes = DB.listar('testesConhecimento').filter(function (t) { return t.alunoId === aluno.id; })
+    .slice().sort(function (a, b) { return String(b.semana || '').localeCompare(String(a.semana || '')); });
+  var jaFezEstaSemana = testes.some(function (t) { return t.semana === semana; });
+
+  var evolucaoHtml = '';
+  if (testes.length) {
+    evolucaoHtml = '<h4 style="font-size:0.78rem; color:var(--gold); margin-top:10px;">Sua Evolução</h4>' +
+      testes.slice(0, 8).map(function (t) {
+        return '<div class="lista-item"><div class="linha"><span class="mini">' + esc(t.semana) + ' • ' + dataBR(t.data) + '</span>' +
+          '<span class="badge-count">' + t.acertos + '/' + t.total + '</span></div></div>';
+      }).join('');
+  }
+
+  if (jaFezEstaSemana) {
+    area.innerHTML = '<p class="sem-dados">Você já fez o teste desta semana (' + semana + '). Volte semana que vem!</p>' + evolucaoHtml;
+    return;
+  }
+
+  if (!CONFIG.iaProxyUrl) {
+    area.innerHTML = '<p class="sem-dados">Assistente de IA ainda não configurado pelo ADM.</p>';
+    return;
+  }
+
+  area.innerHTML = '<button class="btn" onclick="gerarTesteConhecimento()"><i class="fas fa-magic"></i> Fazer Teste desta Semana</button>' + evolucaoHtml;
+}
+
+function gerarTesteConhecimento() {
+  var area = $('areaTesteConhecimento');
+  area.innerHTML = '<p class="sem-dados"><span class="spinner-btn"></span> Gerando seu teste...</p>';
+
+  fetch(CONFIG.iaProxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      gerarQuiz: true,
+      contexto: montarContextoAluno(),
+      baseConhecimento: CONFIG.baseConhecimento || ''
+    })
+  }).then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data || !data.perguntas || !data.perguntas.length) {
+        area.innerHTML = '<p class="sem-dados">Não consegui gerar o teste agora. Tente de novo em instantes.</p><button class="btn" onclick="gerarTesteConhecimento()">Tentar de novo</button>';
+        return;
+      }
+      quizAtual = data.perguntas;
+      renderizarQuizConhecimento();
+    })
+    .catch(function () {
+      area.innerHTML = '<p class="sem-dados">Erro ao gerar o teste. Tente de novo.</p><button class="btn" onclick="gerarTesteConhecimento()">Tentar de novo</button>';
+    });
+}
+
+function renderizarQuizConhecimento() {
+  var area = $('areaTesteConhecimento');
+  if (!area || !quizAtual) return;
+  area.innerHTML = quizAtual.map(function (p, i) {
+    return '<div class="lista-item"><p style="font-weight:bold; margin-bottom:6px;">' + (i + 1) + '. ' + esc(p.pergunta) + '</p>' +
+      p.opcoes.map(function (op, j) {
+        return '<label style="display:flex; align-items:center; gap:6px; font-size:0.78rem; margin-bottom:4px;"><input type="radio" name="quizP' + i + '" value="' + j + '" style="width:auto;">' + esc(op) + '</label>';
+      }).join('') + '</div>';
+  }).join('') + '<button class="btn" onclick="enviarRespostasQuiz()"><i class="fas fa-check"></i> Enviar Respostas</button>';
+}
+
+function enviarRespostasQuiz() {
+  if (!quizAtual) return;
+  var aluno = alunoLogado();
+  var acertos = 0;
+  var semResposta = false;
+
+  quizAtual.forEach(function (p, i) {
+    var marcado = document.querySelector('input[name="quizP' + i + '"]:checked');
+    if (!marcado) { semResposta = true; return; }
+    if (Number(marcado.value) === Number(p.correta)) acertos++;
+  });
+
+  if (semResposta) { mostrarToast('Responda todas as perguntas antes de enviar.', 'erro'); return; }
+
+  var total = quizAtual.length;
+  DB.salvar('testesConhecimento', {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    semana: semanaAtualISO(),
+    data: dataLocalISO(),
+    acertos: acertos,
+    total: total,
+    criadoEm: agoraISO()
+  }).then(function () {
+    mostrarToast('Teste enviado! Você acertou ' + acertos + ' de ' + total + '.');
+    quizAtual = null;
+    renderAreaTesteConhecimento();
+  });
 }
 
 function uploadFotoChat(input) {
@@ -1827,17 +2102,26 @@ function renderAluno() {
   } catch (e) {}
   var logado = alunoLogado();
   var chatCard = $('cardChatAlunos');
+  var sugestoesCard = $('cardSugestoesAluno');
+  var iaCard = $('cardAssistenteIA');
+  var testeCard = $('cardTesteConhecimento');
   if (!logado) {
     $('cardAlunoLogin').style.display = 'block';
     $('cardAlunoPrimeiroCadastro').style.display = 'none';
     $('cardAlunoPainel').style.display = 'none';
     if (chatCard) chatCard.style.display = 'none';
+    if (sugestoesCard) sugestoesCard.style.display = 'none';
+    if (iaCard) iaCard.style.display = 'none';
+    if (testeCard) testeCard.style.display = 'none';
     return;
   }
   $('cardAlunoLogin').style.display = 'none';
   $('cardAlunoPrimeiroCadastro').style.display = 'none';
   $('cardAlunoPainel').style.display = 'block';
   if (chatCard) { chatCard.style.display = 'block'; renderChatAlunos(); }
+  if (sugestoesCard) { sugestoesCard.style.display = 'block'; renderListaSugestoesAluno(); }
+  if (iaCard) { iaCard.style.display = 'block'; renderizarChatIA(); }
+  if (testeCard) { testeCard.style.display = CONFIG.iaProxyUrl ? 'block' : 'none'; renderAreaTesteConhecimento(); }
 
   var presencas = DB.listar('presencas').filter(function (p) {
     return p.alunoId === logado.id || normalizar(p.alunoNome) === normalizar(logado.nome);
@@ -1994,6 +2278,35 @@ function renderAbaProfessor() {
     '<h3><i class="fas fa-user-shield"></i> Sessão: ' + esc(sessaoEquipe.nome) + ' <span class="pill pill-info">' + esc(sessaoEquipe.papel) + '</span></h3>' +
     '<button class="btn btn-back" style="margin:0;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button></div>';
 
+  /* --- sugestões dos alunos --- */
+  var sugestoes = DB.listar('sugestoes').slice().sort(function (a, b) {
+    return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
+  }).slice(0, 15);
+  html += '<div class="card"><h3><i class="fas fa-lightbulb"></i> Sugestões dos Alunos <span class="badge-count">' + DB.listar('sugestoes').length + '</span></h3>';
+  if (!sugestoes.length) { html += '<p class="sem-dados">Nenhuma sugestão enviada ainda.</p>'; }
+  else {
+    html += sugestoes.map(function (s) {
+      return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.72rem;">' + esc(s.autor || 'Aluno') + '</b>' +
+        '<span class="mini">' + dataHoraBR(s.criadoEm) + '</span></div><div>' + esc(s.texto) + '</div></div>';
+    }).join('');
+  }
+  html += '</div>';
+
+  /* --- testes de conhecimento --- */
+  var testesConh = DB.listar('testesConhecimento').slice().sort(function (a, b) {
+    return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
+  }).slice(0, 15);
+  html += '<div class="card"><h3><i class="fas fa-graduation-cap"></i> Testes de Conhecimento <span class="badge-count">' + DB.listar('testesConhecimento').length + '</span></h3>';
+  if (!testesConh.length) { html += '<p class="sem-dados">Nenhum teste feito ainda.</p>'; }
+  else {
+    html += testesConh.map(function (t) {
+      return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.72rem;">' + esc(t.alunoApelido || t.alunoNome) + '</b>' +
+        '<span class="badge-count">' + t.acertos + '/' + t.total + '</span></div>' +
+        '<span class="mini">' + esc(t.semana) + ' • ' + dataBR(t.data) + '</span></div>';
+    }).join('');
+  }
+  html += '</div>';
+
   /* --- check-ins pendentes --- */
   html += '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Check-ins Pendentes <span class="badge-count">' + pendentes.length + '</span></h3>';
   if (!pendentes.length) { html += '<p class="sem-dados">Nenhum check-in aguardando aprovação.</p>'; }
@@ -2112,10 +2425,15 @@ function renderAbaProfessor() {
     (alunos.length ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + '</option>'; }).join('') : '<option value="">Nenhum aluno cadastrado</option>') +
     '</select>' +
     '<label class="campo-label">Evento</label><input id="certEvento" placeholder="Ex: Roda de Capoeira - Pedra do Sal">' +
+    '<button type="button" class="btn btn-secondary" style="margin:4px 0 8px;" onclick="preencherCertConhecimentosGerais()"><i class="fas fa-graduation-cap"></i> Preencher como Avaliação de Conhecimentos Gerais</button>' +
     '<label class="campo-label">Data</label><input id="certData" type="date" value="' + dataLocalISO() + '">' +
     '<label class="campo-label">Carga horária (opcional)</label><input id="certCarga" placeholder="Ex: 4 horas">' +
     '<label class="campo-label">Assinatura</label><input id="certAssinatura" placeholder="Ex: Mestre Formiga">' +
-    '<button class="btn btn-gold" onclick="emitirCertificado()"><i class="fas fa-award"></i> Emitir Certificado</button>' +
+    '<label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--text-sub); margin-top:6px;"><input type="checkbox" id="certComLogo" ' + (CONFIG.logo1 ? 'checked' : '') + ' style="width:auto;"> Incluir símbolo da academia no cabeçalho</label>' +
+    '<div class="lado-flex" style="margin-top:6px;">' +
+      '<button class="btn btn-secondary" onclick="visualizarCertificado()"><i class="fas fa-eye"></i> Visualizar</button>' +
+      '<button class="btn btn-gold" onclick="emitirCertificado()"><i class="fas fa-award"></i> Emitir Certificado</button>' +
+    '</div>' +
     '<p class="mini" style="margin-top:6px;">Só emita para alunos com check-in aprovado em evento/roda.</p></div>';
 
   box.innerHTML = html;
@@ -2263,6 +2581,21 @@ function salvarAvaliacao() {
   });
 }
 
+function preencherCertConhecimentosGerais() {
+  var alunoId = $('certAluno').value;
+  var aluno = DB.buscar('alunos', alunoId);
+  $('certEvento').value = 'Avaliação de Conhecimentos Gerais de Capoeira';
+  if (aluno) {
+    var testes = DB.listar('testesConhecimento').filter(function (t) { return t.alunoId === aluno.id; });
+    if (testes.length) {
+      var media = testes.reduce(function (s, t) { return s + (t.acertos / t.total); }, 0) / testes.length;
+      mostrarToast('Aproveitamento médio nos testes semanais: ' + Math.round(media * 100) + '% (' + testes.length + ' teste(s)).');
+    } else {
+      mostrarToast('Este aluno ainda não fez nenhum teste de conhecimentos.', 'erro');
+    }
+  }
+}
+
 function emitirCertificado() {
   var aluno = DB.buscar('alunos', $('certAluno').value);
   if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
@@ -2294,6 +2627,7 @@ function confirmarEmissaoCertificado() {
     data: data,
     cargaHoraria: ($('certCarga').value || '').trim(),
     assinatura: ($('certAssinatura').value || '').trim(),
+    comLogo: $('certComLogo') ? $('certComLogo').checked : true,
     codigo: codigo,
     emitidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Equipe',
     emitidoEm: agoraISO()
@@ -2362,6 +2696,8 @@ function renderAbaAdm() {
     '<label class="campo-label">Título do app</label><input id="cfgTitulo" value="' + esc(CONFIG.tituloApp) + '">' +
     '<label class="campo-label">Instagram (com @)</label><input id="cfgInstagram" value="' + esc(CONFIG.instagram) + '">' +
     '<label class="campo-label">WhatsApp de suporte (com DDI e DDD, só números — ex: 5521900000000)</label><input id="cfgWhatsappSuporte" value="' + esc(CONFIG.whatsappSuporte || '') + '" placeholder="5521900000000">' +
+    '<label class="campo-label">URL do Assistente IA (Cloudflare Worker)</label><input id="cfgIaProxyUrl" value="' + esc(CONFIG.iaProxyUrl || '') + '" placeholder="https://seu-worker.workers.dev">' +
+    '<label class="campo-label">Base de conhecimento para a IA (história, currículo, termos da sua academia)</label><textarea id="cfgBaseConhecimento" rows="4" placeholder="Cole aqui o que a IA deve saber: história da academia, ritmos que vocês ensinam, termos específicos, etc.">' + esc(CONFIG.baseConhecimento || '') + '</textarea>' +
     '<label class="campo-label">URL do Logo 1</label><input id="cfgLogo1" value="' + esc(CONFIG.logo1 || '') + '" placeholder="https://...">' +
     '<label class="campo-label">URL do Logo 2</label><input id="cfgLogo2" value="' + esc(CONFIG.logo2 || '') + '" placeholder="https://...">' +
     '<label class="campo-label">Tempo padrão do cronômetro (segundos)</label><input id="cfgTimer" type="number" min="10" max="3600" value="' + esc(CONFIG.tempoTimerSegundos) + '">' +
@@ -2465,6 +2801,8 @@ function salvarConfiguracaoAdm() {
     tituloApp: ($('cfgTitulo').value || 'Universo Capoeira').trim(),
     instagram: ($('cfgInstagram').value || '').trim(),
     whatsappSuporte: ($('cfgWhatsappSuporte').value || '').replace(/\D/g, ''),
+    iaProxyUrl: ($('cfgIaProxyUrl').value || '').trim(),
+    baseConhecimento: ($('cfgBaseConhecimento').value || '').trim(),
     logo1: ($('cfgLogo1').value || '').trim(),
     logo2: ($('cfgLogo2').value || '').trim(),
     tempoTimerSegundos: Math.max(10, parseInt($('cfgTimer').value, 10) || 90),
@@ -2553,7 +2891,7 @@ function confirmarLimparTudo() {
 
 function limparTudoDefinitivo() {
   fecharModal();
-  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'chatAlunos', 'certificados', 'logs'];
+  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'chatAlunos', 'sugestoes', 'testesConhecimento', 'certificados', 'logs'];
   Promise.all(alvos.map(function (c) { return DB.limparColecao(c); })).then(function () {
     sessaoAlunoId = null;
     mostrarToast('Todos os dados foram apagados.');
