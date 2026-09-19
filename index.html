@@ -1181,9 +1181,22 @@ function renderGraduacoes() {
 }
 
 /* --- configuração do Firebase (persistida localmente no navegador) --- */
+var FIREBASE_CONFIG_PADRAO = {
+  apiKey: "AIzaSyDlmXcUACxQZ3QMjaQIXsJb_gUnv10P85A",
+  authDomain: "project-10dd7ec8-159b-4351-90a.firebaseapp.com",
+  projectId: "project-10dd7ec8-159b-4351-90a",
+  storageBucket: "project-10dd7ec8-159b-4351-90a.firebasestorage.app",
+  messagingSenderId: "944397472361",
+  appId: "1:944397472361:web:f66ba584699859727b08f8",
+  measurementId: "G-F8PW3VL58H"
+};
+
 function carregarConfigFirebase() {
-  try { return JSON.parse(localStorage.getItem(CHAVE_CONFIG_LOCAL) || 'null'); }
-  catch (e) { return null; }
+  try {
+    var salvo = JSON.parse(localStorage.getItem(CHAVE_CONFIG_LOCAL) || 'null');
+    return salvo || FIREBASE_CONFIG_PADRAO;
+  }
+  catch (e) { return FIREBASE_CONFIG_PADRAO; }
 }
 
 function salvarConfigFirebase(cfg) {
@@ -4223,6 +4236,14 @@ function iniciarApp() {
 
 /* persiste a sessão do aluno para conveniência */
 iniciarApp();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (err) {
+      console.warn('[PWA] Falha ao registrar Service Worker:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
