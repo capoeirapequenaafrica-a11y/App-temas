@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Universo Capoeira">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="description" content="App completo da academia Capoeira na Pequena África - check-in, avaliacoes, mural e mais">
+<meta name="description" content="App completo da academia Capoeira na Pequena África - check-in, avaliações, mural, pedidos de treino e mais">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg">
 <title>Universo Capoeira v87 - Web &amp; Mobile Edition</title>
@@ -24,17 +24,19 @@
 }
 :root {
   --primary-green: #00e676;
-  --primary-green-dark: #1b5e20;
+  --primary-green-dark: #00c853;
   --accent-blue: #00d2ff;
-  --accent-blue-dark: #0083b0;
-  --card-bg: #1a2a32;
-  --card-border: #2c434e;
-  --text-main: #ffffff;
-  --text-sub: #b0bec5;
-  --danger: #c62828;
-  --gold: #ffb300;
+  --accent-blue-dark: #0091ea;
+  --card-bg: #16232b;
+  --card-border: #2a3f4a;
+  --text-main: #f5f7fa;
+  --text-sub: #90a4ae;
+  --danger: #ef5350;
+  --gold: #ffc107;
   --gympass-red: #ff004f;
   --insta-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  --shadow-soft: 0 4px 16px rgba(0,0,0,0.35);
+  --radius: 14px;
 }
 html, body {
   background-color: #050b0e !important;
@@ -78,7 +80,7 @@ header {
   gap: 6px;
 }
 .logos-header-box { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.app-logo-img { height: 32px; max-height: 60px; object-fit: contain; border-radius: 4px; display: none; }
+.app-logo-img { height: 36px; max-height: 48px; max-width: 90px; object-fit: contain; border-radius: 6px; display: none; background: rgba(255,255,255,0.06); padding: 2px; }
 .app-title {
   font-weight: 700;
   font-size: 0.85rem;
@@ -127,61 +129,68 @@ header {
 .tabs button {
   flex: 1;
   min-width: 58px;
-  padding: 6px 2px;
+  padding: 7px 3px;
   background: transparent;
   border: none;
   color: var(--text-sub);
   font-weight: 600;
   font-size: 0.68rem;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   white-space: nowrap;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.tabs button.active { color: #fff; background: var(--primary-green-dark); }
+.tabs button.active { color: #fff; background: linear-gradient(135deg, var(--primary-green-dark), #009624); box-shadow: 0 2px 6px rgba(0, 200, 83, 0.3); }
 .tabs-equipe { margin-top: 6px; }
-#btnToggleEquipe.active { background: var(--accent-blue-dark); }
+#btnToggleEquipe.active { background: linear-gradient(135deg, var(--accent-blue-dark), #0277bd); }
 .tab-content { display: none; padding: 10px; flex: 1; width: 100% !important; max-width: 100% !important; overflow-y: auto; }
 .tab-content.active { display: block; }
 .card {
   background: var(--card-bg) !important;
-  border-radius: 12px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  border-radius: var(--radius);
+  padding: 14px 14px;
+  margin-bottom: 12px;
   border: 1px solid var(--card-border);
   width: 100% !important;
   max-width: 100% !important;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.2s ease, transform 0.15s ease;
 }
-.card h3 { margin-bottom: 6px; color: var(--primary-green); font-size: 0.88rem; display: flex; align-items: center; gap: 6px; }
+.card:hover { border-color: rgba(0, 230, 118, 0.25); }
+.card h3 { margin-bottom: 8px; color: var(--primary-green); font-size: 0.9rem; display: flex; align-items: center; gap: 7px; letter-spacing: 0.2px; }
 .btn {
-  background: var(--primary-green-dark);
+  background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
   border: none;
   color: #fff;
-  padding: 10px 8px;
-  border-radius: 8px;
+  padding: 11px 10px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  margin: 4px 0;
+  margin: 5px 0;
   width: 100%;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   text-decoration: none;
+  transition: transform 0.12s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 200, 83, 0.25);
 }
-.btn-secondary { background: var(--accent-blue-dark); }
-.btn-danger { background: var(--danger); }
-.btn-whatsapp { background: #128c7e; }
-.btn-instagram { background: var(--insta-gradient); color: #fff; }
+.btn:active { transform: scale(0.97); }
+.btn-secondary { background: linear-gradient(135deg, var(--accent-blue-dark), #0277bd); box-shadow: 0 2px 8px rgba(0, 145, 234, 0.25); }
+.btn-danger { background: linear-gradient(135deg, #e53935, #c62828); box-shadow: 0 2px 8px rgba(239, 83, 80, 0.25); }
+.btn-whatsapp { background: linear-gradient(135deg, #25d366, #128c7e); }
+.btn-instagram { background: var(--insta-gradient); color: #fff; box-shadow: 0 2px 8px rgba(220, 39, 67, 0.3); }
 .btn-gympass { background: linear-gradient(135deg, var(--gympass-red), #b30037); color: #fff; }
-.btn-gold { background: #8d6e00; }
-.btn-back { background: #37474f; margin-bottom: 8px; }
+.btn-gold { background: linear-gradient(135deg, #ffb300, #ff8f00); color: #1a1a1a; box-shadow: 0 2px 8px rgba(255, 179, 0, 0.3); }
+.btn-back { background: #37474f; margin-bottom: 8px; box-shadow: none; }
 .btn.carregando { opacity: 0.7; pointer-events: none; }
-.btn-mini { width: auto; padding: 6px 10px; font-size: 0.7rem; margin: 0; }
+.btn-mini { width: auto; padding: 7px 12px; font-size: 0.72rem; margin: 0; border-radius: 8px; }
 .spinner-btn {
   display: inline-block;
   width: 12px;
@@ -291,17 +300,19 @@ footer a { color: var(--accent-blue); }
 .status-online { background: #1b5e20; color: #a5d6a7; }
 .status-offline { background: #b71c1c; color: #ffcdd2; }
 .lista-item {
-  background: #0a1419;
+  background: #0c151a;
   border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 8px 10px;
-  margin: 6px 0;
-  font-size: 0.75rem;
+  border-radius: 11px;
+  padding: 10px 12px;
+  margin: 7px 0;
+  font-size: 0.76rem;
+  transition: border-color 0.15s ease;
 }
+.lista-item:hover { border-color: rgba(0, 210, 255, 0.25); }
 .lista-item b { color: var(--primary-green); }
 .linha { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
 .mini { font-size: 0.68rem; color: var(--text-sub); }
-.pill { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.62rem; font-weight: 700; }
+.pill { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.3px; }
 .pill-ok { background: #1b5e20; color: #a5d6a7; }
 .pill-pend { background: #5d4037; color: #ffe0b2; }
 .pill-no { background: #b71c1c; color: #ffcdd2; }
@@ -324,6 +335,123 @@ footer a { color: var(--accent-blue); }
 }
 .certificado-area h2 { color: #8d6e00; font-size: 1rem; margin-bottom: 6px; }
 .certificado-area .nome { font-size: 1rem; font-weight: 800; color: #1b5e20; margin: 6px 0; }
+
+/* ===== Assistente Virtual ===== */
+#assistenteFab {
+  position: fixed;
+  right: 14px;
+  bottom: 18px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
+  color: #fff;
+  font-size: 1.35rem;
+  box-shadow: 0 4px 18px rgba(0, 200, 83, 0.45);
+  z-index: 9500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+#assistenteFab:active { transform: scale(0.94); }
+#assistentePainel {
+  display: none;
+  position: fixed;
+  right: 12px;
+  bottom: 80px;
+  width: min(340px, calc(100vw - 24px));
+  max-height: min(70vh, 520px);
+  background: #11222a;
+  border: 1px solid var(--accent-blue);
+  border-radius: 16px;
+  z-index: 9501;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+}
+#assistentePainel.aberto { display: flex; }
+.assistente-header {
+  background: linear-gradient(135deg, #0d3d1f, #0a2a38);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--card-border);
+}
+.assistente-header h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--primary-green);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.assistente-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  font-size: 0.78rem;
+  background: #0a1419;
+}
+.assistente-bolha {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  max-width: 92%;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+.assistente-bolha.bot {
+  background: #1a2a32;
+  border: 1px solid var(--card-border);
+  color: #e0f2f1;
+  border-bottom-left-radius: 4px;
+}
+.assistente-bolha.user {
+  background: linear-gradient(135deg, #1b5e20, #00a844);
+  color: #fff;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+.assistente-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--card-border);
+  background: #0d1a20;
+}
+.assistente-atalho {
+  background: #1a2a32;
+  border: 1px solid var(--card-border);
+  color: var(--text-sub);
+  border-radius: 14px;
+  padding: 4px 9px;
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+.assistente-atalho:active { background: var(--primary-green-dark); color: #fff; }
+.assistente-input-row {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-top: 1px solid var(--card-border);
+  background: #11222a;
+}
+.assistente-input-row input {
+  flex: 1;
+  margin: 0;
+  font-size: 0.78rem;
+}
+.assistente-input-row button {
+  width: auto;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -420,11 +548,6 @@ footer a { color: var(--accent-blue); }
       <div id="listaRankingCompletoInicio"></div>
     </div>
 
-    <div class="card" id="cardTitulosAlunos" style="border:1px solid var(--gold); display:none;">
-      <h3 style="color:var(--gold);"><i class="fas fa-crown"></i> Títulos da Turma</h3>
-      <div id="conteudoTitulosAlunos"></div>
-    </div>
-
     <div class="card" id="cardCertificadosAluno" style="border:1px solid var(--gold); display:none;">
       <h3 style="color:var(--gold);"><i class="fas fa-award"></i> Certificados de Apresentação</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Disponível para quem fez check-in aprovado pelo professor:</p>
@@ -460,7 +583,7 @@ footer a { color: var(--accent-blue); }
         <i class="fas fa-clock"></i> Carregando horário da aula de hoje...
       </div>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Selecione o polo cadastrado pelo professor:</p>
-      <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo">
+      <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo" oninput="atualizarEstadoBotaoCheckin()">
       <select id="selectPoloFixoTreino" onchange="avaliarAtrasoHoje()">
         <option value="">Aguardando professor cadastrar local...</option>
       </select>
@@ -468,13 +591,15 @@ footer a { color: var(--accent-blue); }
         <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo (o professor irá avaliar):</p>
         <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto no trabalho..."></textarea>
       </div>
-      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação.</p>
-      <button class="btn" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
+      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação. <strong>Só é permitido 1 check-in por aula/dia.</strong></p>
+      <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
+      <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
       <button class="btn btn-secondary" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
     </div>
 
     <div class="card" id="cardMinhasPresencasCheckin" style="display:none;">
-      <h3><i class="fas fa-history"></i> Meus Check-ins Recentes</h3>
+      <h3><i class="fas fa-calendar-check"></i> Minhas Aulas e Check-ins</h3>
+      <p class="mini" style="margin-bottom:6px;">Aqui você vê as aulas confirmadas pelo professor e os check-ins ainda pendentes.</p>
       <div id="listaMinhasPresencasCheckin"></div>
     </div>
   </div>
@@ -489,7 +614,6 @@ footer a { color: var(--accent-blue); }
       <label class="campo-label">Senha</label>
       <input id="alunoLoginSenha" type="password" placeholder="Sua senha">
       <button class="btn" onclick="autenticarAlunoNuvem(this)"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</button>
-      <button class="btn btn-secondary" onclick="pedirRedefinicaoSenha()"><i class="fas fa-key"></i> Esqueci minha senha</button>
       <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:6px;">
         <button class="btn btn-secondary" onclick="toggleAutoCadastroAluno(true)"><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</button>
       </div>
@@ -516,37 +640,9 @@ footer a { color: var(--accent-blue); }
 
     <div class="card" id="cardAlunoPainel" style="display:none;"></div>
 
-    <div class="card" id="cardChatAlunos" style="display:none;">
-      <h3><i class="fas fa-comments"></i> Bate-Papo dos Alunos</h3>
-      <p class="mini" style="margin-bottom:6px;">Espaço só para alunos da academia conversarem entre si.</p>
-      <div id="chatAlunosMessages" style="max-height:280px; overflow-y:auto; margin-bottom:8px;"></div>
-      <div class="lado-flex">
-        <input id="chatAlunosInput" placeholder="Digite uma mensagem..." onkeydown="if(event.key==='Enter'){enviarMensagemChatAlunos();}">
-        <button class="btn" style="width:auto; padding:8px 12px; margin:3px 0;" onclick="enviarMensagemChatAlunos()"><i class="fas fa-paper-plane"></i></button>
-      </div>
-    </div>
-
-    <div class="card" id="cardSugestoesAluno" style="display:none;">
-      <h3><i class="fas fa-lightbulb"></i> Sugestões para o Próximo Treino</h3>
-      <p class="mini" style="margin-bottom:6px;">Peça um movimento, música, tema de roda ou dê uma ideia — o professor vê tudo por aqui.</p>
-      <textarea id="sugestaoTexto" rows="2" placeholder="Ex: Podemos treinar mais ladainha na próxima roda?"></textarea>
-      <button class="btn btn-secondary" onclick="enviarSugestao()"><i class="fas fa-paper-plane"></i> Enviar Sugestão</button>
-      <div id="listaSugestoesAluno" style="margin-top:10px;"></div>
-    </div>
-
-    <div class="card" id="cardAssistenteIA" style="display:none;">
-      <h3><i class="fas fa-robot"></i> Assistente Virtual</h3>
-      <p class="mini" style="margin-bottom:6px;">Tire dúvidas sobre capoeira, ritmos e movimentos. Não substitui o professor.</p>
-      <div id="mensagensIA" style="max-height:280px; overflow-y:auto; margin-bottom:8px;"></div>
-      <div class="lado-flex">
-        <input id="iaInput" placeholder="Pergunte algo..." onkeydown="if(event.key==='Enter'){enviarMensagemIA();}">
-        <button class="btn" id="btnEnviarIA" style="width:auto; padding:8px 12px; margin:3px 0;" onclick="enviarMensagemIA()"><i class="fas fa-paper-plane"></i></button>
-      </div>
-    </div>
-
     <div class="card" id="cardTesteConhecimento" style="display:none;">
       <h3><i class="fas fa-graduation-cap"></i> Teste de Conhecimentos Gerais</h3>
-      <p class="mini" style="margin-bottom:6px;">Um teste rápido por semana, gerado pela IA, pra você chegar afiado na próxima avaliação.</p>
+      <p class="mini" style="margin-bottom:6px;">Um teste rápido por semana, gerado pela IA, pra chegar afiado na próxima avaliação.</p>
       <div id="areaTesteConhecimento"></div>
     </div>
   </div>
@@ -582,9 +678,40 @@ footer a { color: var(--accent-blue); }
 
 <div class="toast" id="toastBox"></div>
 
+<div id="bannerAtualizacaoApp" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:linear-gradient(135deg, var(--primary-green-dark), #00a844); color:#fff; padding:10px 12px; text-align:center; z-index:9998; font-size:0.78rem; box-shadow:0 -2px 10px rgba(0,0,0,0.4); align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
+  <span>🚀 Tem uma versão nova do app disponível!</span>
+  <button class="btn" style="width:auto; padding:6px 14px; margin:0;" onclick="aplicarAtualizacaoAppAgora()"><i class="fas fa-sync"></i> Atualizar Agora</button>
+</div>
+
+<!-- Assistente Virtual -->
+<button id="assistenteFab" onclick="toggleAssistente()" title="Assistente Capoeira" aria-label="Abrir assistente">
+  <i class="fas fa-robot"></i>
+</button>
+<div id="assistentePainel">
+  <div class="assistente-header">
+    <h4><i class="fas fa-robot"></i> Assistente Capoeira</h4>
+    <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="assistente-msgs" id="assistenteMsgs"></div>
+  <div class="assistente-atalhos" id="assistenteAtalhos">
+    <button class="assistente-atalho" onclick="assistentePerguntar('próxima aula')">Próxima aula</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('meu check-in')">Meu check-in</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('como fazer check-in')">Como fazer check-in</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('pedir treino')">Pedir treino</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('minha graduação')">Minha graduação</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('meu desempenho')">Desempenho</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('horários')">Horários</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('ajuda')">Ajuda</button>
+  </div>
+  <div class="assistente-input-row">
+    <input id="assistenteInput" placeholder="Pergunte algo..." onkeypress="if(event.key==='Enter') assistenteEnviar()">
+    <button class="btn btn-secondary" onclick="assistenteEnviar()"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
 <script>
 /* =====================================================================
-   UNIVERSO CAPOEIRA v87 - Web & Mobile Edition
+   UNIVERSO CAPOEIRA v87 - Web & Mobile Edition (atualização)
    Arquivo único (HTML + CSS + JS) com camada de dados híbrida:
    Firestore (nuvem) quando configurado, localStorage (local) como reserva.
    ===================================================================== */
@@ -625,29 +752,97 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'chatAlunos', 'sugestoes', 'testesConhecimento', 'certificados', 'equipe', 'config', 'logs'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
   instagram: '@capoeiranapequenaafrica',
-  whatsappSuporte: '',
-  iaProxyUrl: '',
-  baseConhecimento: '',
   logo1: '',
   logo2: '',
   tempoTimerSegundos: 90,
   toleranciaAtrasoMin: 15,
   graduacoes: GRADUACOES_PADRAO.slice(),
-  tituloNota10: '',
-  tituloDestaque1: '',
-  tituloDestaque2: '',
-  tituloSuperacao: ''
+  iaProxyUrl: '',
+  baseConhecimento: '',
+  versaoPublicada: ''
 };
 
 /* ---------------------------------------------------------------
    1. UTILITÁRIOS
    --------------------------------------------------------------- */
 function $(id) { return document.getElementById(id); }
+
+/* ---------------------------------------------------------------
+   1.1 TELEMETRIA DE ERROS
+   --------------------------------------------------------------- */
+window.telemetriaErros = [];
+
+function registrarTelemetriaErro(mensagem, origem, linha) {
+  var detalhe = {
+    hora: new Date().toLocaleTimeString(),
+    mensagem: String(mensagem || '').slice(0, 300),
+    origem: origem || 'script',
+    linha: linha || 'N/A'
+  };
+  window.telemetriaErros.unshift(detalhe);
+  if (window.telemetriaErros.length > 30) window.telemetriaErros.pop();
+  atualizarPainelTelemetria();
+}
+
+function atualizarPainelTelemetria() {
+  var box = $('boxTelemetriaErrosLog');
+  if (!box) return;
+  if (!window.telemetriaErros.length) {
+    box.textContent = 'Nenhum erro registrado até o momento (sistema estável).';
+    return;
+  }
+  box.innerHTML = window.telemetriaErros.map(function (e) {
+    return '<div style="border-bottom:1px solid #2c434e; padding:3px 0; color:#ff5252;">[' + e.hora + '] ' + esc(e.mensagem) + ' (linha ' + esc(String(e.linha)) + ')</div>';
+  }).join('');
+}
+
+function limparTelemetriaErros() {
+  window.telemetriaErros = [];
+  atualizarPainelTelemetria();
+  mostrarToast('Registro de erros limpo.');
+}
+
+window.onerror = function (msg, url, linha) {
+  registrarTelemetriaErro(msg, 'window.onerror', linha);
+  return false;
+};
+window.addEventListener('unhandledrejection', function (event) {
+  var motivo = event.reason ? (event.reason.message || event.reason) : 'Promessa rejeitada';
+  registrarTelemetriaErro(motivo, 'Promise', 0);
+});
+
+function perguntarIASobreErros(btn) {
+  if (!CONFIG.iaProxyUrl) { mostrarToast('Configure a URL do Assistente IA antes (ADM > Configurações).', 'erro'); return; }
+  var saida = $('diagnosticoIAErros');
+  if (!window.telemetriaErros.length) { saida.textContent = 'Nenhum erro registrado pra analisar — bom sinal!'; return; }
+
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Analisando...'; }
+  saida.textContent = '';
+
+  fetch(CONFIG.iaProxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      analisarErros: true,
+      erros: window.telemetriaErros.slice(0, 15),
+      versaoApp: VERSAO_APP
+    })
+  }).then(function (r) { return r.json(); })
+    .then(function (data) {
+      saida.textContent = (data && data.diagnostico) ? data.diagnostico : ('Erro: ' + ((data && data.erro) || 'não foi possível analisar.'));
+    })
+    .catch(function () {
+      saida.textContent = 'Não consegui falar com a IA agora. Tente de novo.';
+    })
+    .finally(function () {
+      if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-robot"></i> Perguntar à IA'; }
+    });
+}
 
 function esc(v) {
   return String(v === undefined || v === null ? '' : v)
@@ -926,7 +1121,6 @@ function aplicarConfig() {
   timerDuracaoPadrao = CONFIG.tempoTimerSegundos || 90;
   if (!timerRodando) { timerSegundos = timerDuracaoPadrao; atualizarTimerUI(); }
   renderGraduacoes();
-  renderTitulosAlunos();
 }
 
 function carregarConfigApp(lista) {
@@ -936,6 +1130,37 @@ function carregarConfigApp(lista) {
   if (!Array.isArray(CONFIG.graduacoes) || !CONFIG.graduacoes.length) CONFIG.graduacoes = GRADUACOES_PADRAO.slice();
   configCarregada = true;
   aplicarConfig();
+  verificarNovaVersaoPublicada();
+}
+
+function verificarNovaVersaoPublicada() {
+  var remota = CONFIG.versaoPublicada;
+  if (!remota) return;
+  var chave = 'uc_versao_publicada_vista';
+  var vista = null;
+  try { vista = localStorage.getItem(chave); } catch (e) {}
+  if (vista === null) {
+    try { localStorage.setItem(chave, remota); } catch (e) {}
+    return;
+  }
+  if (vista === remota) return;
+  var banner = $('bannerAtualizacaoApp');
+  if (banner) banner.style.display = 'flex';
+}
+
+function aplicarAtualizacaoAppAgora() {
+  try { localStorage.setItem('uc_versao_publicada_vista', CONFIG.versaoPublicada || ''); } catch (e) {}
+  location.reload();
+}
+
+function publicarNovaVersaoDev(btn) {
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Publicando...'; }
+  salvarConfigApp({ versaoPublicada: String(Date.now()) }).then(function () {
+    mostrarToast('✅ Aviso de atualização enviado para todos os dispositivos!');
+    registroLog('dev', 'Nova versão publicada/avisada para os alunos.');
+  }).finally(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-bullhorn"></i> Avisar Todos os Dispositivos'; }
+  });
 }
 
 function salvarConfigApp(parcial) {
@@ -956,22 +1181,9 @@ function renderGraduacoes() {
 }
 
 /* --- configuração do Firebase (persistida localmente no navegador) --- */
-var FIREBASE_CONFIG_PADRAO = {
-  apiKey: "AIzaSyDlmXcUACxQZ3QMjaQIXsJb_gUnv10P85A",
-  authDomain: "project-10dd7ec8-159b-4351-90a.firebaseapp.com",
-  projectId: "project-10dd7ec8-159b-4351-90a",
-  storageBucket: "project-10dd7ec8-159b-4351-90a.firebasestorage.app",
-  messagingSenderId: "944397472361",
-  appId: "1:944397472361:web:f66ba584699859727b08f8",
-  measurementId: "G-F8PW3VL58H"
-};
-
 function carregarConfigFirebase() {
-  try {
-    var salvo = JSON.parse(localStorage.getItem(CHAVE_CONFIG_LOCAL) || 'null');
-    return salvo || FIREBASE_CONFIG_PADRAO;
-  }
-  catch (e) { return FIREBASE_CONFIG_PADRAO; }
+  try { return JSON.parse(localStorage.getItem(CHAVE_CONFIG_LOCAL) || 'null'); }
+  catch (e) { return null; }
 }
 
 function salvarConfigFirebase(cfg) {
@@ -1121,17 +1333,6 @@ function renderizarAba(id) {
 /* ---------------------------------------------------------------
    7. AUTENTICAÇÃO
    --------------------------------------------------------------- */
-function pedirRedefinicaoSenha() {
-  var nome = ($('alunoLoginNome').value || '').trim();
-  var numero = (CONFIG.whatsappSuporte || '').replace(/\D/g, '');
-  var mensagem = 'Oi! Esqueci minha senha do app Universo Capoeira' + (nome ? (' — meu nome de cadastro é: ' + nome) : '') + '. Pode redefinir pra mim?';
-  if (numero) {
-    window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(mensagem), '_blank');
-  } else {
-    mostrarToast('Fale diretamente com seu professor para redefinir sua senha.');
-  }
-}
-
 function autenticarAlunoNuvem(btn) {
   var nome = ($('alunoLoginNome').value || '').trim();
   var senha = $('alunoLoginSenha').value || '';
@@ -1182,7 +1383,7 @@ function cadastrarAlunoNuvem(btn) {
   if (s1 !== s2) { mostrarToast('As senhas não conferem.', 'erro'); return; }
 
   var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome) === normalizar(nome); });
-  if (duplicado) { mostrarToast('Já existe um cadastro com esse nome. Toque em "Esqueci minha senha" para pedir ao professor.', 'erro'); return; }
+  if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
 
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Salvando...'; }
 
@@ -1329,7 +1530,6 @@ function renderInicio() {
   renderAvisoLocal();
   renderRanking();
   renderRankingCompleto();
-  renderTitulosAlunos();
   renderCertificadosAluno();
   renderMural();
   renderFeedInstagramNota();
@@ -1398,7 +1598,12 @@ function confirmarPresencaHoje() {
   var nome = alunoLogado() ? alunoLogado().nome : nomeCheckinAtual();
   if (!nome) { mostrarToast('Faça login ou preencha seu nome no Check-in.', 'erro'); return; }
   if (!aula) { mostrarToast('Nenhuma aula cadastrada para hoje.', 'erro'); return; }
-  var aluno = encontrarAlunoPorNome(nome);
+  var aluno = alunoLogado() || encontrarAlunoPorNome(nome);
+  if (jaFezCheckinHoje(aluno || nome)) {
+    mostrarToast('Você já registrou presença para hoje. Só é permitido um check-in por aula.', 'erro');
+    renderHorarioFixoInicio();
+    return;
+  }
   DB.salvar('presencas', {
     alunoId: aluno ? aluno.id : '',
     alunoNome: aluno ? aluno.nome : nome,
@@ -1416,6 +1621,7 @@ function confirmarPresencaHoje() {
   }).then(function () {
     mostrarToast('Presença de hoje registrada. Bom treino!');
     renderHorarioFixoInicio();
+    renderCheckin();
   });
 }
 
@@ -1426,6 +1632,36 @@ function encontrarAlunoPorNome(nome) {
     if (!achado && (normalizar(a.nome) === n || normalizar(a.apelido) === n)) achado = a;
   });
   return achado;
+}
+
+/* Retorna o check-in do aluno na data (ignora rejeitados). Um por aluno/dia. */
+function obterCheckinDoDia(nomeOuAluno, dataISO) {
+  dataISO = dataISO || dataLocalISO();
+  var aluno = null;
+  var nomeNorm = '';
+  if (typeof nomeOuAluno === 'object' && nomeOuAluno) {
+    aluno = nomeOuAluno;
+    nomeNorm = normalizar(aluno.nome);
+  } else {
+    nomeNorm = normalizar(nomeOuAluno);
+    aluno = encontrarAlunoPorNome(nomeOuAluno);
+  }
+  if (!nomeNorm && !aluno) return null;
+  var lista = DB.listar('presencas');
+  for (var i = 0; i < lista.length; i++) {
+    var p = lista[i];
+    if (p.data !== dataISO) continue;
+    if (p.status === 'rejeitado') continue;
+    if (aluno && p.alunoId && p.alunoId === aluno.id) return p;
+    if (nomeNorm && normalizar(p.alunoNome) === nomeNorm) return p;
+    if (aluno && aluno.apelido && normalizar(p.alunoNome) === normalizar(aluno.apelido)) return p;
+    if (aluno && aluno.apelido && normalizar(p.alunoApelido || '') === normalizar(aluno.apelido)) return p;
+  }
+  return null;
+}
+
+function jaFezCheckinHoje(nomeOuAluno) {
+  return !!obterCheckinDoDia(nomeOuAluno);
 }
 
 function renderAvisoLocal() {
@@ -1473,30 +1709,7 @@ function renderRanking() {
   $('conteudoRankingInicio').innerHTML = html;
 }
 
-function renderTitulosAlunos() {
-  var card = $('cardTitulosAlunos');
-  if (!card) return;
-  var c = CONFIG;
-  if (!c.tituloNota10 && !c.tituloDestaque1 && !c.tituloDestaque2 && !c.tituloSuperacao) {
-    card.style.display = 'none';
-    return;
-  }
-  card.style.display = 'block';
-  var html = '';
-  if (c.tituloNota10) html += '<p style="font-size:0.85rem; color:#fff; margin-bottom:6px;">🏆 <strong style="color:var(--gold);">Aluno Nota 10:</strong> ' + esc(c.tituloNota10) + '</p>';
-  if (c.tituloDestaque1) html += '<p style="font-size:0.85rem; color:#fff; margin-bottom:6px;">⭐ <strong style="color:var(--gold);">Destaque:</strong> ' + esc(c.tituloDestaque1) + '</p>';
-  if (c.tituloDestaque2) html += '<p style="font-size:0.85rem; color:#fff; margin-bottom:6px;">⭐ <strong style="color:var(--gold);">Destaque:</strong> ' + esc(c.tituloDestaque2) + '</p>';
-  if (c.tituloSuperacao) html += '<p style="font-size:0.85rem; color:#fff;">💪 <strong style="color:var(--gold);">Superação:</strong> ' + esc(c.tituloSuperacao) + '</p>';
-  $('conteudoTitulosAlunos').innerHTML = html;
-}
-
 function mediaAvaliacao(av) {
-  if (av && av.notas && typeof av.notas === 'object') {
-    var vals = Object.keys(av.notas).map(function (k) { return Number(av.notas[k]); }).filter(function (v) { return !isNaN(v); });
-    if (!vals.length) return 0;
-    var soma100 = vals.reduce(function (s, v) { return s + v; }, 0);
-    return (soma100 / vals.length) / 10;
-  }
   var campos = ['tecnica', 'disciplina', 'ritmo', 'musicalidade', 'compromisso'];
   var soma = 0, n = 0;
   campos.forEach(function (c) {
@@ -1504,6 +1717,188 @@ function mediaAvaliacao(av) {
     if (!isNaN(v)) { soma += v; n++; }
   });
   return n ? soma / n : 0;
+}
+
+/* Análise de desempenho atlético com base em presenças, avaliações e engajamento */
+function analisarDesempenhoAtletico(aluno) {
+  if (!aluno) return null;
+  var campos = ['tecnica', 'disciplina', 'ritmo', 'musicalidade', 'compromisso'];
+  var labels = {
+    tecnica: 'Técnica',
+    disciplina: 'Disciplina',
+    ritmo: 'Ritmo',
+    musicalidade: 'Musicalidade',
+    compromisso: 'Compromisso'
+  };
+
+  var presencas = DB.listar('presencas').filter(function (p) {
+    return p.alunoId === aluno.id || normalizar(p.alunoNome) === normalizar(aluno.nome);
+  });
+  var aprovadas = presencas.filter(function (p) { return p.status === 'aprovado'; });
+  var pendentes = presencas.filter(function (p) { return p.status === 'pendente'; });
+  var rejeitadas = presencas.filter(function (p) { return p.status === 'rejeitado'; });
+  var comAtraso = aprovadas.filter(function (p) { return (p.atrasoMin || 0) > 0; });
+  var atrasoMedio = comAtraso.length
+    ? Math.round(comAtraso.reduce(function (s, p) { return s + (p.atrasoMin || 0); }, 0) / comAtraso.length)
+    : 0;
+
+  /* frequência últimos 30 dias */
+  var agora = Date.now();
+  var trintaDias = 30 * 24 * 60 * 60 * 1000;
+  var aprovadas30 = aprovadas.filter(function (p) {
+    var t = new Date(p.data || p.criadoEm || 0).getTime();
+    return !isNaN(t) && (agora - t) <= trintaDias;
+  }).length;
+
+  var avals = DB.listar('avaliacoes').filter(function (a) {
+    return a.alunoId === aluno.id || normalizar(a.alunoNome) === normalizar(aluno.nome);
+  }).sort(function (a, b) { return String(a.data || '').localeCompare(String(b.data || '')); });
+
+  var mediasPorCampo = {};
+  campos.forEach(function (c) { mediasPorCampo[c] = { soma: 0, n: 0 }; });
+  avals.forEach(function (av) {
+    campos.forEach(function (c) {
+      var v = parseFloat(av[c]);
+      if (!isNaN(v)) { mediasPorCampo[c].soma += v; mediasPorCampo[c].n++; }
+    });
+  });
+  var habilidades = campos.map(function (c) {
+    var m = mediasPorCampo[c].n ? mediasPorCampo[c].soma / mediasPorCampo[c].n : null;
+    return { id: c, nome: labels[c], media: m };
+  });
+  var mediaGeral = null;
+  if (avals.length) {
+    var s = 0;
+    avals.forEach(function (av) { s += mediaAvaliacao(av); });
+    mediaGeral = s / avals.length;
+  }
+
+  /* tendência: última vs penúltima avaliação */
+  var tendencia = null;
+  if (avals.length >= 2) {
+    var ult = mediaAvaliacao(avals[avals.length - 1]);
+    var pen = mediaAvaliacao(avals[avals.length - 2]);
+    var diff = ult - pen;
+    if (diff > 0.3) tendencia = 'evoluindo';
+    else if (diff < -0.3) tendencia = 'precisa_atencao';
+    else tendencia = 'estavel';
+  } else if (avals.length === 1) {
+    tendencia = 'primeira_avaliacao';
+  }
+
+  var pontoForte = null;
+  var pontoFraco = null;
+  habilidades.forEach(function (h) {
+    if (h.media === null) return;
+    if (!pontoForte || h.media > pontoForte.media) pontoForte = h;
+    if (!pontoFraco || h.media < pontoFraco.media) pontoFraco = h;
+  });
+
+  /* score composto 0-100 */
+  var scoreFreq = Math.min(100, aprovadas30 * 20); /* ~5 aulas/mês = 100 */
+  var scoreNota = mediaGeral !== null ? (mediaGeral / 10) * 100 : 50;
+  var scorePontual = aprovadas.length
+    ? Math.max(0, 100 - (comAtraso.length / Math.max(1, aprovadas.length)) * 100)
+    : 50;
+  var scoreConsist = rejeitadas.length === 0 ? 100 : Math.max(0, 100 - rejeitadas.length * 15);
+  var score = Math.round(scoreFreq * 0.3 + scoreNota * 0.4 + scorePontual * 0.15 + scoreConsist * 0.15);
+
+  var nivel = 'Iniciante em evolução';
+  if (score >= 85) nivel = 'Excelente desempenho';
+  else if (score >= 70) nivel = 'Bom desempenho';
+  else if (score >= 55) nivel = 'Desempenho regular';
+  else if (score >= 40) nivel = 'Em desenvolvimento';
+
+  var recomendacoes = [];
+  if (aprovadas30 < 2) recomendacoes.push('Aumente a frequência de treinos nas próximas semanas para consolidar a evolução.');
+  if (pontoFraco && pontoFraco.media !== null && pontoFraco.media < 7) {
+    recomendacoes.push('Foque em treinos de ' + pontoFraco.nome.toLowerCase() + ' — use "Pedir Treino Específico" na aba Aluno.');
+  }
+  if (comAtraso.length >= 2) recomendacoes.push('Trabalhe a pontualidade: atrasos frequentes afetam o compromisso e a graduação.');
+  if (mediaGeral !== null && mediaGeral >= 8) recomendacoes.push('Ótimo nível técnico — participe de rodas e apresentações para consolidar.');
+  if (!avals.length) recomendacoes.push('Aguarde a primeira avaliação do professor para um diagnóstico mais preciso.');
+  if (!recomendacoes.length) recomendacoes.push('Mantenha a constância nos treinos e peça feedback ao professor após as rodas.');
+
+  return {
+    score: score,
+    nivel: nivel,
+    aprovadas: aprovadas.length,
+    pendentes: pendentes.length,
+    rejeitadas: rejeitadas.length,
+    aprovadas30: aprovadas30,
+    comAtraso: comAtraso.length,
+    atrasoMedio: atrasoMedio,
+    mediaGeral: mediaGeral,
+    habilidades: habilidades,
+    pontoForte: pontoForte,
+    pontoFraco: pontoFraco,
+    tendencia: tendencia,
+    totalAvals: avals.length,
+    recomendacoes: recomendacoes
+  };
+}
+
+function htmlBarraHabilidade(nome, media) {
+  if (media === null) return '<div class="mini" style="margin:3px 0;">' + esc(nome) + ': sem dados</div>';
+  var pct = Math.max(0, Math.min(100, (media / 10) * 100));
+  var cor = pct >= 80 ? 'var(--primary-green)' : (pct >= 60 ? 'var(--gold)' : 'var(--danger)');
+  return '<div style="margin:5px 0;">' +
+    '<div class="linha"><span class="mini">' + esc(nome) + '</span><span class="mini" style="color:' + cor + ';">' + media.toFixed(1) + '</span></div>' +
+    '<div style="height:7px; background:#0a1419; border-radius:6px; overflow:hidden; border:1px solid var(--card-border);">' +
+    '<div style="height:100%; width:' + pct + '%; background:' + cor + '; border-radius:6px;"></div></div></div>';
+}
+
+function htmlAnaliseDesempenho(aluno) {
+  var a = analisarDesempenhoAtletico(aluno);
+  if (!a) return '';
+  var corScore = a.score >= 70 ? 'var(--primary-green)' : (a.score >= 50 ? 'var(--gold)' : 'var(--danger)');
+  var tendenciaTxt = {
+    evoluindo: '📈 Em evolução',
+    precisa_atencao: '📉 Precisa de atenção',
+    estavel: '➡️ Estável',
+    primeira_avaliacao: '🆕 Primeira avaliação'
+  };
+  var html = '<div class="card" style="margin-top:12px; border:1px solid var(--accent-blue);">' +
+    '<h3 style="color:var(--accent-blue);"><i class="fas fa-chart-line"></i> Análise de Desempenho Atlético</h3>' +
+    '<div style="text-align:center; margin:8px 0 10px;">' +
+      '<div style="font-size:2rem; font-weight:800; color:' + corScore + ';">' + a.score + '</div>' +
+      '<div class="mini">Índice geral (0–100)</div>' +
+      '<div style="margin-top:4px; font-size:0.82rem; color:var(--gold);"><b>' + esc(a.nivel) + '</b></div>' +
+      (a.tendencia ? '<div class="mini" style="margin-top:3px;">' + (tendenciaTxt[a.tendencia] || '') + '</div>' : '') +
+    '</div>' +
+    '<div class="grade-3">' +
+      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + a.aprovadas + '</div><div class="mini">aulas ok</div></div>' +
+      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + a.aprovadas30 + '</div><div class="mini">últimos 30d</div></div>' +
+      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + (a.mediaGeral !== null ? a.mediaGeral.toFixed(1) : '-') + '</div><div class="mini">média notas</div></div>' +
+    '</div>';
+
+  if (a.totalAvals) {
+    html += '<h3 style="margin-top:10px; font-size:0.82rem;"><i class="fas fa-dumbbell"></i> Habilidades</h3>';
+    a.habilidades.forEach(function (h) {
+      html += htmlBarraHabilidade(h.nome, h.media);
+    });
+    if (a.pontoForte && a.pontoForte.media !== null) {
+      html += '<p class="mini" style="margin-top:8px; color:var(--primary-green);"><i class="fas fa-star"></i> Ponto forte: <b>' + esc(a.pontoForte.nome) + '</b> (' + a.pontoForte.media.toFixed(1) + ')</p>';
+    }
+    if (a.pontoFraco && a.pontoFraco.media !== null && a.pontoForte && a.pontoFraco.id !== a.pontoForte.id) {
+      html += '<p class="mini" style="color:var(--gold);"><i class="fas fa-bullseye"></i> Priorizar: <b>' + esc(a.pontoFraco.nome) + '</b> (' + a.pontoFraco.media.toFixed(1) + ')</p>';
+    }
+  } else {
+    html += '<p class="sem-dados" style="margin-top:8px;">Ainda sem avaliações — o índice usa principalmente frequência e pontualidade.</p>';
+  }
+
+  html += '<div class="grade-2" style="margin-top:8px;">' +
+    '<div class="lista-item"><span class="mini">Atrasos em aulas aprovadas</span><br><b>' + a.comAtraso + '</b>' +
+    (a.atrasoMedio ? ' <span class="mini">(média ' + a.atrasoMedio + ' min)</span>' : '') + '</div>' +
+    '<div class="lista-item"><span class="mini">Check-ins rejeitados</span><br><b>' + a.rejeitadas + '</b></div>' +
+  '</div>';
+
+  html += '<h3 style="margin-top:10px; font-size:0.82rem;"><i class="fas fa-lightbulb"></i> Recomendações</h3>';
+  a.recomendacoes.forEach(function (r) {
+    html += '<div class="aviso-info" style="margin:4px 0;">' + esc(r) + '</div>';
+  });
+  html += '</div>';
+  return html;
 }
 
 function renderRankingCompleto() {
@@ -1524,7 +1919,7 @@ function renderRankingCompleto() {
   lista.forEach(function (it, i) {
     html += '<div class="lista-item"><div class="linha"><span>' + (i + 1) + 'º <b>' + esc(it.av.alunoNome || 'Aluno') + '</b></span>' +
       '<span class="badge-count">' + it.media.toFixed(1) + '</span></div>' +
-      '<span class="mini">' + esc(it.av.graduacao || '') + (it.av.etapa ? ' • ' + esc(it.av.etapa) : '') + ' • avaliação de ' + esc(it.av.data || '-') + '</span></div>';
+      '<span class="mini">' + esc(it.av.graduacao || '') + ' • avaliação de ' + esc(it.av.data || '-') + '</span></div>';
   });
   $('listaRankingCompletoInicio').innerHTML = html;
 }
@@ -1552,53 +1947,38 @@ function renderCertificadosAluno() {
   $('listaCertificadosAluno').innerHTML = html;
 }
 
-function montarHtmlCertificado(c, comLogo) {
-  var logoHtml = (comLogo && CONFIG.logo1) ? '<img src="' + esc(CONFIG.logo1) + '" alt="Símbolo" style="max-width:90px; max-height:90px; margin-bottom:8px;">' : '';
-  return '<!DOCTYPE html><html lang="pt-br"><head><meta charset="utf-8"><title>Certificado</title>' +
+function baixarCertificado(id) {
+  var c = DB.buscar('certificados', id);
+  if (!c) { mostrarToast('Certificado não encontrado.', 'erro'); return; }
+  var logo1 = urlSegura(CONFIG.logo1);
+  var logo2 = urlSegura(CONFIG.logo2);
+  var logosHtml = '';
+  if (logo1 || logo2) {
+    logosHtml = '<div style="display:flex;justify-content:center;align-items:center;gap:18px;margin-bottom:12px;flex-wrap:wrap;">' +
+      (logo1 ? '<img src="' + logo1 + '" alt="Logo" style="max-height:80px;max-width:160px;object-fit:contain;">' : '') +
+      (logo2 ? '<img src="' + logo2 + '" alt="Logo 2" style="max-height:80px;max-width:160px;object-fit:contain;">' : '') +
+      '</div>';
+  }
+  var html = '<!DOCTYPE html><html lang="pt-br"><head><meta charset="utf-8"><title>Certificado</title>' +
     '<style>body{font-family:Georgia,serif;background:#f4f4f4;padding:24px;}' +
     '.c{background:#fffdf5;border:8px double #b8860b;border-radius:10px;padding:36px;max-width:720px;margin:auto;text-align:center;color:#222;}' +
     'h1{font-size:26px;color:#1b5e20;margin-bottom:6px;}h2{font-size:18px;color:#8d6e00;margin:18px 0 6px;}' +
     '.nome{font-size:30px;font-weight:bold;color:#0b3d0b;margin:14px 0;}' +
     'p{font-size:15px;line-height:1.6;} .rodape{margin-top:28px;font-size:13px;color:#555;}' +
-    '.aviso-preview{background:#fff3cd;color:#7a5b00;border:1px solid #e0c46c;border-radius:8px;padding:10px;max-width:720px;margin:0 auto 14px;font-family:Arial,sans-serif;font-size:13px;}' +
-    '@media print{body{background:#fff;padding:0;} .aviso-preview{display:none;}}</style></head><body>' +
-    (c.preview ? '<div class="aviso-preview"><strong>Pré-visualização</strong> — este certificado ainda não foi emitido nem salvo. Feche esta aba pra ajustar, ou confirme no app pra emitir de verdade.</div>' : '') +
-    '<div class="c">' + logoHtml + '<h1>' + esc(CONFIG.tituloApp) + '</h1>' +
+    '@media print{body{background:#fff;padding:0;}}</style></head><body>' +
+    '<div class="c">' + logosHtml +
+    '<h1>' + esc(CONFIG.tituloApp) + '</h1>' +
     '<p>Capoeira na Pequena África</p><h2>CERTIFICADO DE PARTICIPAÇÃO</h2>' +
     '<p>Certificamos que</p><div class="nome">' + esc(c.alunoNome || '-') + '</div>' +
     '<p>participou de <strong>' + esc(c.evento || 'apresentação da academia') + '</strong>, ' +
     'realizada em <strong>' + dataBR(c.data) + '</strong>' + (c.cargaHoraria ? ', com carga horária de ' + esc(c.cargaHoraria) : '') + '.</p>' +
-    '<div class="rodape">Código de autenticidade: <strong>' + esc(c.codigo || (c.preview ? 'Gerado ao emitir' : '-')) + '</strong><br>' +
-    'Emitido em ' + esc(c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : dataBR(dataLocalISO())) + ' por ' + esc(c.emitidoPor || 'Equipe') + '<br><br>' +
+    '<div class="rodape">Código de autenticidade: <strong>' + esc(c.codigo || '-') + '</strong><br>' +
+    'Emitido em ' + esc(c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + esc(c.emitidoPor || 'Equipe') + '<br><br>' +
     '_______________________________<br>' + esc(c.assinatura || 'Professor responsável') + '</div></div>' +
-    (c.preview ? '' : '<script>setTimeout(function(){window.print();},600);<\/script>') + '</body></html>';
-}
-
-function visualizarCertificado() {
-  var aluno = DB.buscar('alunos', $('certAluno').value);
-  if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
-  var c = {
-    alunoNome: aluno.nome,
-    evento: ($('certEvento').value || '').trim() || 'Apresentação da academia',
-    data: $('certData').value || dataLocalISO(),
-    cargaHoraria: ($('certCarga').value || '').trim(),
-    assinatura: ($('certAssinatura').value || '').trim(),
-    emitidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Equipe',
-    preview: true
-  };
-  var comLogo = $('certComLogo') ? $('certComLogo').checked : true;
-  var w = window.open('', '_blank');
-  if (!w) { mostrarToast('Permita pop-ups para visualizar o certificado.', 'erro'); return; }
-  w.document.write(montarHtmlCertificado(c, comLogo));
-  w.document.close();
-}
-
-function baixarCertificado(id) {
-  var c = DB.buscar('certificados', id);
-  if (!c) { mostrarToast('Certificado não encontrado.', 'erro'); return; }
+    '<script>setTimeout(function(){window.print();},600);<\/script></body></html>';
   var w = window.open('', '_blank');
   if (!w) { mostrarToast('Permita pop-ups para abrir o certificado.', 'erro'); return; }
-  w.document.write(montarHtmlCertificado(c, c.comLogo !== false));
+  w.document.write(html);
   w.document.close();
 }
 
@@ -1634,262 +2014,6 @@ function enviarMensagemNuvem(textoImagem) {
     imagem: textoImagem || '',
     criadoEm: agoraISO()
   }).then(function () { renderMural(); });
-}
-
-function renderChatAlunos() {
-  var box = $('chatAlunosMessages');
-  if (!box) return;
-  var msgs = DB.listar('chatAlunos').slice().sort(function (a, b) {
-    return String(a.criadoEm || '').localeCompare(String(b.criadoEm || ''));
-  }).slice(-60);
-  if (!msgs.length) { box.innerHTML = '<p class="sem-dados">Nenhuma mensagem ainda. Seja o primeiro a puxar assunto!</p>'; return; }
-  var html = '';
-  msgs.forEach(function (m) {
-    html += '<div class="chat-msg"><div class="linha"><b style="color:var(--primary-green); font-size:0.72rem;">' + esc(m.autor || 'Aluno') + '</b>' +
-      '<span class="mini">' + dataHoraBR(m.criadoEm) + '</span></div>' +
-      (m.texto ? '<div>' + esc(m.texto) + '</div>' : '') + '</div>';
-  });
-  box.innerHTML = html;
-  box.scrollTop = box.scrollHeight;
-}
-
-function enviarMensagemChatAlunos() {
-  var input = $('chatAlunosInput');
-  var texto = (input.value || '').trim();
-  var aluno = alunoLogado();
-  if (!aluno) { mostrarToast('Entre no painel do aluno para conversar.', 'erro'); return; }
-  if (!texto) { mostrarToast('Escreva uma mensagem.', 'erro'); return; }
-  input.value = '';
-  DB.salvar('chatAlunos', {
-    autor: aluno.apelido || aluno.nome,
-    autorId: aluno.id,
-    texto: texto,
-    criadoEm: agoraISO()
-  }).then(function () { renderChatAlunos(); });
-}
-
-function enviarSugestao() {
-  var texto = ($('sugestaoTexto').value || '').trim();
-  var aluno = alunoLogado();
-  if (!aluno) { mostrarToast('Entre no painel do aluno para enviar sugestões.', 'erro'); return; }
-  if (!texto) { mostrarToast('Escreva sua sugestão.', 'erro'); return; }
-  $('sugestaoTexto').value = '';
-  DB.salvar('sugestoes', {
-    autor: aluno.apelido || aluno.nome,
-    autorId: aluno.id,
-    texto: texto,
-    criadoEm: agoraISO()
-  }).then(function () {
-    mostrarToast('Sugestão enviada! Obrigado pela participação.');
-    renderListaSugestoesAluno();
-  });
-}
-
-function renderListaSugestoesAluno() {
-  var box = $('listaSugestoesAluno');
-  if (!box) return;
-  var lista = DB.listar('sugestoes').slice().sort(function (a, b) {
-    return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
-  }).slice(0, 20);
-  if (!lista.length) { box.innerHTML = '<p class="sem-dados">Nenhuma sugestão enviada ainda.</p>'; return; }
-  box.innerHTML = lista.map(function (s) {
-    return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.72rem;">' + esc(s.autor || 'Aluno') + '</b>' +
-      '<span class="mini">' + dataHoraBR(s.criadoEm) + '</span></div><div>' + esc(s.texto) + '</div></div>';
-  }).join('');
-}
-
-var historicoIA = [];
-
-function renderizarChatIA() {
-  var box = $('mensagensIA');
-  if (!box) return;
-  if (!historicoIA.length) { box.innerHTML = '<p class="sem-dados">Pergunte algo sobre capoeira, ritmos, movimentos ou o app.</p>'; return; }
-  box.innerHTML = historicoIA.map(function (m) {
-    var cor = m.role === 'user' ? 'var(--primary-green)' : 'var(--accent-blue)';
-    var quem = m.role === 'user' ? 'Você' : 'Assistente';
-    return '<div class="chat-msg"><div class="linha"><b style="color:' + cor + '; font-size:0.72rem;">' + quem + '</b></div><div>' + esc(m.content) + '</div></div>';
-  }).join('');
-  box.scrollTop = box.scrollHeight;
-}
-
-function montarContextoAluno() {
-  var aluno = alunoLogado();
-  if (!aluno) return null;
-
-  var avaliacoes = DB.listar('avaliacoes').filter(function (a) { return a.alunoId === aluno.id; })
-    .slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
-  var ultima = avaliacoes[0];
-
-  var diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-  var polos = DB.listar('polos');
-  var horariosTexto = DB.listar('horarios').slice()
-    .sort(function (a, b) { return Number(a.diaSemana) - Number(b.diaSemana); })
-    .map(function (h) {
-      var polo = polos.filter(function (p) { return p.id === h.poloId; })[0];
-      return diasSemana[Number(h.diaSemana)] + (polo ? ' - ' + polo.nome : '');
-    }).join('; ') || 'Nenhum horário fixo cadastrado.';
-
-  var contexto = {
-    nome: aluno.apelido || aluno.nome,
-    graduacaoAtual: aluno.graduacao || 'não informada',
-    horariosFixos: horariosTexto,
-    ultimaAvaliacao: null
-  };
-
-  if (ultima) {
-    contexto.ultimaAvaliacao = {
-      etapa: ultima.etapa || '',
-      data: ultima.data || '',
-      graduacaoAnunciada: ultima.proximaCorda || '',
-      pontosFracos: (ultima.dificuldades && ultima.dificuldades.length) ? ultima.dificuldades : []
-    };
-  }
-
-  return contexto;
-}
-
-function enviarMensagemIA() {
-  var input = $('iaInput');
-  var texto = (input.value || '').trim();
-  if (!texto) { mostrarToast('Escreva uma pergunta.', 'erro'); return; }
-  if (!CONFIG.iaProxyUrl) { mostrarToast('Assistente ainda não configurado. Peça ao ADM para configurar a URL do assistente.', 'erro'); return; }
-
-  input.value = '';
-  historicoIA.push({ role: 'user', content: texto });
-  renderizarChatIA();
-
-  var btn = $('btnEnviarIA');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-btn"></span>'; }
-
-  fetch(CONFIG.iaProxyUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mensagens: historicoIA.slice(-12), contexto: montarContextoAluno() })
-  }).then(function (r) { return r.json(); })
-    .then(function (data) {
-      var resposta = data && data.resposta ? data.resposta : (data && data.erro ? ('Erro: ' + data.erro) : 'Não consegui responder agora.');
-      historicoIA.push({ role: 'assistant', content: resposta });
-      renderizarChatIA();
-    })
-    .catch(function () {
-      historicoIA.push({ role: 'assistant', content: 'Não consegui falar com o assistente agora. Tente de novo daqui a pouco.' });
-      renderizarChatIA();
-    })
-    .finally(function () {
-      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>'; }
-    });
-}
-
-function semanaAtualISO(d) {
-  d = d ? new Date(d) : new Date();
-  var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  var diaSemanaISO = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - diaSemanaISO);
-  var inicioAno = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  var numSemana = Math.ceil((((date - inicioAno) / 86400000) + 1) / 7);
-  return date.getUTCFullYear() + '-S' + String(numSemana).padStart(2, '0');
-}
-
-var quizAtual = null;
-
-function renderAreaTesteConhecimento() {
-  var area = $('areaTesteConhecimento');
-  var aluno = alunoLogado();
-  if (!area || !aluno) return;
-
-  var semana = semanaAtualISO();
-  var testes = DB.listar('testesConhecimento').filter(function (t) { return t.alunoId === aluno.id; })
-    .slice().sort(function (a, b) { return String(b.semana || '').localeCompare(String(a.semana || '')); });
-  var jaFezEstaSemana = testes.some(function (t) { return t.semana === semana; });
-
-  var evolucaoHtml = '';
-  if (testes.length) {
-    evolucaoHtml = '<h4 style="font-size:0.78rem; color:var(--gold); margin-top:10px;">Sua Evolução</h4>' +
-      testes.slice(0, 8).map(function (t) {
-        return '<div class="lista-item"><div class="linha"><span class="mini">' + esc(t.semana) + ' • ' + dataBR(t.data) + '</span>' +
-          '<span class="badge-count">' + t.acertos + '/' + t.total + '</span></div></div>';
-      }).join('');
-  }
-
-  if (jaFezEstaSemana) {
-    area.innerHTML = '<p class="sem-dados">Você já fez o teste desta semana (' + semana + '). Volte semana que vem!</p>' + evolucaoHtml;
-    return;
-  }
-
-  if (!CONFIG.iaProxyUrl) {
-    area.innerHTML = '<p class="sem-dados">Assistente de IA ainda não configurado pelo ADM.</p>';
-    return;
-  }
-
-  area.innerHTML = '<button class="btn" onclick="gerarTesteConhecimento()"><i class="fas fa-magic"></i> Fazer Teste desta Semana</button>' + evolucaoHtml;
-}
-
-function gerarTesteConhecimento() {
-  var area = $('areaTesteConhecimento');
-  area.innerHTML = '<p class="sem-dados"><span class="spinner-btn"></span> Gerando seu teste...</p>';
-
-  fetch(CONFIG.iaProxyUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      gerarQuiz: true,
-      contexto: montarContextoAluno(),
-      baseConhecimento: CONFIG.baseConhecimento || ''
-    })
-  }).then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (!data || !data.perguntas || !data.perguntas.length) {
-        area.innerHTML = '<p class="sem-dados">Não consegui gerar o teste agora. Tente de novo em instantes.</p><button class="btn" onclick="gerarTesteConhecimento()">Tentar de novo</button>';
-        return;
-      }
-      quizAtual = data.perguntas;
-      renderizarQuizConhecimento();
-    })
-    .catch(function () {
-      area.innerHTML = '<p class="sem-dados">Erro ao gerar o teste. Tente de novo.</p><button class="btn" onclick="gerarTesteConhecimento()">Tentar de novo</button>';
-    });
-}
-
-function renderizarQuizConhecimento() {
-  var area = $('areaTesteConhecimento');
-  if (!area || !quizAtual) return;
-  area.innerHTML = quizAtual.map(function (p, i) {
-    return '<div class="lista-item"><p style="font-weight:bold; margin-bottom:6px;">' + (i + 1) + '. ' + esc(p.pergunta) + '</p>' +
-      p.opcoes.map(function (op, j) {
-        return '<label style="display:flex; align-items:center; gap:6px; font-size:0.78rem; margin-bottom:4px;"><input type="radio" name="quizP' + i + '" value="' + j + '" style="width:auto;">' + esc(op) + '</label>';
-      }).join('') + '</div>';
-  }).join('') + '<button class="btn" onclick="enviarRespostasQuiz()"><i class="fas fa-check"></i> Enviar Respostas</button>';
-}
-
-function enviarRespostasQuiz() {
-  if (!quizAtual) return;
-  var aluno = alunoLogado();
-  var acertos = 0;
-  var semResposta = false;
-
-  quizAtual.forEach(function (p, i) {
-    var marcado = document.querySelector('input[name="quizP' + i + '"]:checked');
-    if (!marcado) { semResposta = true; return; }
-    if (Number(marcado.value) === Number(p.correta)) acertos++;
-  });
-
-  if (semResposta) { mostrarToast('Responda todas as perguntas antes de enviar.', 'erro'); return; }
-
-  var total = quizAtual.length;
-  DB.salvar('testesConhecimento', {
-    alunoId: aluno.id,
-    alunoNome: aluno.nome,
-    alunoApelido: aluno.apelido || '',
-    semana: semanaAtualISO(),
-    data: dataLocalISO(),
-    acertos: acertos,
-    total: total,
-    criadoEm: agoraISO()
-  }).then(function () {
-    mostrarToast('Teste enviado! Você acertou ' + acertos + ' de ' + total + '.');
-    quizAtual = null;
-    renderAreaTesteConhecimento();
-  });
 }
 
 function uploadFotoChat(input) {
@@ -1934,10 +2058,44 @@ function abrirInstagramOficial() {
    10. MÓDULO CHECK-IN
    --------------------------------------------------------------- */
 function renderCheckin() {
+  var logado = alunoLogado();
+  var campoNome = $('checkinFixoNomeAluno');
+  if (campoNome && logado && !(campoNome.value || '').trim()) {
+    campoNome.value = logado.nome;
+  }
   renderHorarioAulaHoje();
   renderSelectPolos();
   renderMinhasPresencasCheckin();
   avaliarAtrasoHoje();
+  atualizarEstadoBotaoCheckin();
+}
+
+function atualizarEstadoBotaoCheckin() {
+  var btn = $('btnConfirmarCheckinLocal');
+  var box = $('boxJaCheckinHoje');
+  if (!btn || !box) return;
+
+  var nome = alunoLogado() ? alunoLogado().nome : nomeCheckinAtual();
+  var checkin = nome ? obterCheckinDoDia(alunoLogado() || nome) : null;
+
+  if (checkin) {
+    var statusTxt = checkin.status === 'aprovado' ? 'APROVADO' : (checkin.status === 'pendente' ? 'PENDENTE' : String(checkin.status).toUpperCase());
+    box.style.display = 'block';
+    box.innerHTML = '<i class="fas fa-check-circle" style="color:var(--primary-green);"></i> <strong>Check-in de hoje já registrado</strong> (' + statusTxt + ')' +
+      '<br><span class="mini">' + esc(checkin.poloNome || checkin.tipo || '') + ' • ' + esc(checkin.hora || '') +
+      ' — só é permitido um por aula.</span>';
+    btn.disabled = true;
+    btn.classList.add('carregando');
+    btn.innerHTML = '<i class="fas fa-lock"></i> Já fez check-in hoje';
+    btn.style.opacity = '0.65';
+  } else {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    btn.disabled = false;
+    btn.classList.remove('carregando');
+    btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Presença Local';
+    btn.style.opacity = '1';
+  }
 }
 
 function renderHorarioAulaHoje() {
@@ -1991,19 +2149,45 @@ function renderMinhasPresencasCheckin() {
   var card = $('cardMinhasPresencasCheckin');
   var nome = alunoLogado() ? alunoLogado().nome : nomeCheckinAtual();
   if (!nome) { card.style.display = 'none'; return; }
+  var aluno = alunoLogado() || encontrarAlunoPorNome(nome);
   var lista = DB.listar('presencas').filter(function (p) {
+    if (aluno && p.alunoId && p.alunoId === aluno.id) return true;
     return normalizar(p.alunoNome) === normalizar(nome);
-  }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); }).slice(0, 8);
+  }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
   if (!lista.length) { card.style.display = 'none'; return; }
   card.style.display = 'block';
+
+  var aprovadas = lista.filter(function (p) { return p.status === 'aprovado'; });
+  var pendentes = lista.filter(function (p) { return p.status === 'pendente'; });
+  var outras = lista.filter(function (p) { return p.status !== 'aprovado' && p.status !== 'pendente'; });
+
   var html = '';
-  lista.forEach(function (p) {
-    html += '<div class="lista-item"><div class="linha"><span>' + dataBR(p.data) + ' ' + esc(p.hora || '') + '</span>' +
-      pillStatus(p.status) + '</div>' +
-      '<span class="mini">' + esc(p.poloNome || p.tipo) + (p.atrasoMin ? ' • atraso de ' + p.atrasoMin + ' min' : '') + '</span>' +
-      (p.observacaoProfessor ? '<div class="mini" style="color:var(--gold);">Prof.: ' + esc(p.observacaoProfessor) + '</div>' : '') + '</div>';
-  });
-  $('listaMinhasPresencasCheckin').innerHTML = html;
+  if (aprovadas.length) {
+    html += '<p class="mini" style="color:var(--primary-green); margin-bottom:4px;"><i class="fas fa-check-circle"></i> Aulas confirmadas (' + aprovadas.length + ')</p>';
+    aprovadas.slice(0, 10).forEach(function (p) {
+      html += '<div class="lista-item" style="border-color:rgba(0,230,118,0.35);">' +
+        '<div class="linha"><span><b>' + dataBR(p.data) + '</b> ' + esc(p.hora || '') + '</span>' + pillStatus(p.status) + '</div>' +
+        '<span class="mini">' + esc(p.poloNome || p.tipo || '') + (p.atrasoMin ? ' • atraso ' + p.atrasoMin + ' min' : '') + '</span>' +
+        (p.observacaoProfessor ? '<div class="mini" style="color:var(--gold);">Prof.: ' + esc(p.observacaoProfessor) + '</div>' : '') +
+        '</div>';
+    });
+  }
+  if (pendentes.length) {
+    html += '<p class="mini" style="color:var(--gold); margin:8px 0 4px;"><i class="fas fa-hourglass-half"></i> Aguardando aprovação (' + pendentes.length + ')</p>';
+    pendentes.forEach(function (p) {
+      html += '<div class="lista-item">' +
+        '<div class="linha"><span>' + dataBR(p.data) + ' ' + esc(p.hora || '') + '</span>' + pillStatus(p.status) + '</div>' +
+        '<span class="mini">' + esc(p.poloNome || p.tipo || '') + '</span></div>';
+    });
+  }
+  if (outras.length) {
+    html += '<p class="mini" style="margin:8px 0 4px;">Outros registros</p>';
+    outras.slice(0, 5).forEach(function (p) {
+      html += '<div class="lista-item"><div class="linha"><span>' + dataBR(p.data) + '</span>' + pillStatus(p.status) + '</div>' +
+        '<span class="mini">' + esc(p.poloNome || p.tipo || '') + '</span></div>';
+    });
+  }
+  $('listaMinhasPresencasCheckin').innerHTML = html || '<p class="sem-dados">Nenhum check-in ainda.</p>';
 }
 
 function pillStatus(status) {
@@ -2023,6 +2207,14 @@ function alunoCheckinLocalFixoSimples() {
   if (atrasado && just.length < 4) { mostrarToast('Justifique o atraso para concluir o check-in.', 'erro'); return; }
 
   var aluno = encontrarAlunoPorNome(nome);
+  var jaExiste = obterCheckinDoDia(aluno || nome);
+  if (jaExiste) {
+    var statusTxt = jaExiste.status === 'aprovado' ? 'aprovado' : (jaExiste.status === 'pendente' ? 'pendente de aprovação' : jaExiste.status);
+    mostrarToast('Você já fez check-in hoje (' + statusTxt + '). Só é permitido um por aula.', 'erro');
+    renderCheckin();
+    return;
+  }
+
   var aula = aulaDeHoje();
   var polo = DB.buscar('polos', poloId);
   var atrasoMin = 0;
@@ -2030,11 +2222,11 @@ function alunoCheckinLocalFixoSimples() {
     atrasoMin = Math.max(0, agoraEmMinutos() - minutosDoHM(aula.horaInicio));
   }
 
-  var jaTem = DB.listar('presencas').some(function (p) {
-    return p.data === dataLocalISO() && p.poloId === poloId && normalizar(p.alunoNome) === normalizar(nome) && p.status !== 'rejeitado';
-  });
-  if (jaTem) { mostrarToast('Você já fez check-in nesse polo hoje.', 'erro'); return; }
+  var btn = $('btnConfirmarCheckinLocal');
+  if (btn) { btn.classList.add('carregando'); btn.disabled = true; btn.innerHTML = '<span class="spinner-btn"></span> Enviando...'; }
 
+  var horaAgora = horaLocalHM();
+  var dataAgora = dataLocalISO();
   DB.salvar('presencas', {
     alunoId: aluno ? aluno.id : '',
     alunoNome: aluno ? aluno.nome : nome,
@@ -2042,8 +2234,8 @@ function alunoCheckinLocalFixoSimples() {
     poloId: poloId,
     poloNome: polo ? polo.nome : '',
     horarioId: aula ? aula.id : '',
-    data: dataLocalISO(),
-    hora: horaLocalHM(),
+    data: dataAgora,
+    hora: horaAgora,
     tipo: 'local',
     status: 'pendente',
     atrasoMin: atrasado ? atrasoMin : 0,
@@ -2051,9 +2243,21 @@ function alunoCheckinLocalFixoSimples() {
     criadoEm: agoraISO()
   }).then(function () {
     $('justificativaAtrasoInput').value = '';
-    mostrarToast('Check-in enviado! Aguarde a aprovação do professor.');
+    mostrarToast('Check-in enviado com sucesso!');
+    abrirModal('Check-in registrado',
+      '<div style="text-align:center; padding:6px 0;">' +
+        '<div style="font-size:2rem; color:var(--primary-green); margin-bottom:8px;"><i class="fas fa-check-circle"></i></div>' +
+        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Presença enviada!</strong></p>' +
+        '<p class="mini">Aluno: <b>' + esc(aluno ? aluno.nome : nome) + '</b></p>' +
+        '<p class="mini">Data: <b>' + dataBR(dataAgora) + '</b> às <b>' + esc(horaAgora) + '</b></p>' +
+        '<p class="mini">Local: <b>' + esc(polo ? polo.nome : '-') + '</b></p>' +
+        '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — aguarde a aprovação do professor.</p>' +
+        '<p class="mini" style="margin-top:6px;">Você pode acompanhar em “Meus Check-ins Recentes” e na aba Aluno.</p>' +
+      '</div>');
     renderMinhasPresencasCheckin();
     renderCheckin();
+  }).catch(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Presença Local'; }
   });
 }
 
@@ -2063,13 +2267,19 @@ function validarCheckinGympassNuvem() {
   if (nome.length < 3) { mostrarToast('Informe o nome do aluno.', 'erro'); return; }
   if (!/^\d{6}$/.test(token)) { mostrarToast('O token Wellhub deve ter 6 dígitos.', 'erro'); return; }
 
+  var aluno = encontrarAlunoPorNome(nome);
+  var jaExiste = obterCheckinDoDia(aluno || nome);
+  if (jaExiste) {
+    mostrarToast('Este aluno já possui check-in hoje. Só é permitido um por aula.', 'erro');
+    return;
+  }
+
   var limite = Date.now() - 24 * 60 * 60 * 1000;
   var reutilizado = DB.listar('presencas').some(function (p) {
     return p.token === token && new Date(p.criadoEm || 0).getTime() > limite;
   });
   if (reutilizado) { mostrarToast('Este token já foi utilizado nas últimas 24 horas.', 'erro'); return; }
 
-  var aluno = encontrarAlunoPorNome(nome);
   var polo = (DB.listar('polos')[0] || null);
 
   DB.salvar('presencas', {
@@ -2088,7 +2298,16 @@ function validarCheckinGympassNuvem() {
     criadoEm: agoraISO()
   }).then(function () {
     $('gympassTokenVal').value = '';
-    mostrarToast('Token Gympass validado! Check-in aguardando aprovação.');
+    mostrarToast('Token Gympass validado!');
+    abrirModal('Check-in Gympass registrado',
+      '<div style="text-align:center; padding:6px 0;">' +
+        '<div style="font-size:2rem; color:var(--gympass-red); margin-bottom:8px;"><i class="fas fa-ticket-alt"></i></div>' +
+        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Token validado com sucesso!</strong></p>' +
+        '<p class="mini">Aluno: <b>' + esc(aluno ? aluno.nome : nome) + '</b></p>' +
+        '<p class="mini">Data: <b>' + dataBR(dataLocalISO()) + '</b></p>' +
+        '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — aguarde aprovação do professor.</p>' +
+      '</div>');
+    renderCheckin();
   });
 }
 
@@ -2101,26 +2320,17 @@ function renderAluno() {
     else localStorage.removeItem('uc_sessao_aluno_v87');
   } catch (e) {}
   var logado = alunoLogado();
-  var chatCard = $('cardChatAlunos');
-  var sugestoesCard = $('cardSugestoesAluno');
-  var iaCard = $('cardAssistenteIA');
   var testeCard = $('cardTesteConhecimento');
   if (!logado) {
     $('cardAlunoLogin').style.display = 'block';
     $('cardAlunoPrimeiroCadastro').style.display = 'none';
     $('cardAlunoPainel').style.display = 'none';
-    if (chatCard) chatCard.style.display = 'none';
-    if (sugestoesCard) sugestoesCard.style.display = 'none';
-    if (iaCard) iaCard.style.display = 'none';
     if (testeCard) testeCard.style.display = 'none';
     return;
   }
   $('cardAlunoLogin').style.display = 'none';
   $('cardAlunoPrimeiroCadastro').style.display = 'none';
   $('cardAlunoPainel').style.display = 'block';
-  if (chatCard) { chatCard.style.display = 'block'; renderChatAlunos(); }
-  if (sugestoesCard) { sugestoesCard.style.display = 'block'; renderListaSugestoesAluno(); }
-  if (iaCard) { iaCard.style.display = 'block'; renderizarChatIA(); }
   if (testeCard) { testeCard.style.display = CONFIG.iaProxyUrl ? 'block' : 'none'; renderAreaTesteConhecimento(); }
 
   var presencas = DB.listar('presencas').filter(function (p) {
@@ -2134,28 +2344,102 @@ function renderAluno() {
   }).sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
   var certs = certificadosDoAluno(logado);
   var falhas = presencas.filter(function (p) { return p.status === 'rejeitado'; }).length;
+  var solicitacoes = DB.listar('solicitacoes').filter(function (s) {
+    return s.alunoId === logado.id || normalizar(s.alunoNome) === normalizar(logado.nome);
+  }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+  var solPendentes = solicitacoes.filter(function (s) { return s.status === 'pendente'; }).length;
+  var mediaGeral = avals.length ? (avals.reduce(function (acc, a) { return acc + mediaAvaliacao(a); }, 0) / avals.length).toFixed(1) : '-';
+  var aulaHoje = aulaDeHoje();
+  var poloHoje = aulaHoje ? DB.buscar('polos', aulaHoje.poloId) : null;
+
+  var tiposTreino = [
+    'Ginga e base',
+    'Esquivas e defesas',
+    'Ataques e golpes',
+    'Sequências e combinações',
+    'Floreios e acrobacias',
+    'Musicalidade (berimbau, atabaque, pandeiro)',
+    'Canto e coro',
+    'Roda de capoeira',
+    'Treino de condicionamento',
+    'Preparação para batizado / troca de corda',
+    'Treino particular / individual',
+    'Outro (descrever na observação)'
+  ];
 
   var html =
     '<button class="btn btn-back" onclick="sairAluno()"><i class="fas fa-sign-out-alt"></i> Sair</button>' +
-    '<h3><i class="fas fa-id-card"></i> ' + esc(logado.apelido || logado.nome) + '</h3>' +
-    (logado.foto && urlSegura(logado.foto) ? '<img class="preview-foto" src="' + urlSegura(logado.foto) + '" alt="Foto do aluno">' : '') +
-    '<p class="mini">' + esc(logado.nome) + '</p>' +
-    '<p class="mini" style="color:var(--gold);"><i class="fas fa-medal"></i> ' + esc(logado.graduacao || 'Sem graduação registrada') + '</p>' +
-    (logado.contato ? '<p class="mini"><i class="fab fa-whatsapp"></i> ' + esc(logado.contato) + '</p>' : '') +
 
-    '<div class="grade-3" style="margin-top:8px;">' +
-      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + aprovadas + '</div><div class="mini">aprovadas</div></div>' +
-      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + pendentes + '</div><div class="mini">pendentes</div></div>' +
+    /* ===== CABEÇALHO DO ALUNO ===== */
+    '<div style="text-align:center; margin-bottom:10px;">' +
+      (logado.foto && urlSegura(logado.foto) ? '<img class="preview-foto" src="' + urlSegura(logado.foto) + '" alt="Foto do aluno">' : '<div style="width:72px;height:72px;border-radius:50%;background:#0a1419;border:2px solid var(--primary-green);margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:var(--primary-green);"><i class="fas fa-user"></i></div>') +
+      '<h3 style="justify-content:center; margin:4px 0;"><i class="fas fa-id-card"></i> ' + esc(logado.apelido || logado.nome) + '</h3>' +
+      '<p class="mini">' + esc(logado.nome) + '</p>' +
+      '<p class="mini" style="color:var(--gold); font-size:0.8rem;"><i class="fas fa-medal"></i> ' + esc(logado.graduacao || 'Sem graduação registrada') + '</p>' +
+      (logado.contato ? '<p class="mini"><i class="fab fa-whatsapp"></i> ' + esc(logado.contato) + '</p>' : '') +
+    '</div>' +
+
+    /* ===== ESTATÍSTICAS ===== */
+    '<div class="grade-3" style="margin-top:4px;">' +
+      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + aprovadas + '</div><div class="mini">presenças</div></div>' +
+      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + mediaGeral + '</div><div class="mini">média</div></div>' +
       '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + certs.length + '</div><div class="mini">certificados</div></div>' +
+    '</div>' +
+    '<div class="grade-3" style="margin-top:6px;">' +
+      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + pendentes + '</div><div class="mini">check-ins pend.</div></div>' +
+      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + solPendentes + '</div><div class="mini">pedidos pend.</div></div>' +
+      '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + avals.length + '</div><div class="mini">avaliações</div></div>' +
     '</div>' +
 
     (falhas
-      ? '<div class="alerta-dificuldade"><i class="fas fa-exclamation-triangle"></i> ' + falhas + ' presença(s) rejeitada(s) pelo professor — isso afeta o resultado da sua graduação.</div>'
+      ? '<div class="alerta-dificuldade" style="margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> ' + falhas + ' presença(s) rejeitada(s) — isso pode afetar sua graduação.</div>'
       : '') +
 
-    '<h3 style="margin-top:10px;"><i class="fas fa-history"></i> Minhas Presenças</h3>' +
+    /* ===== PRÓXIMA AULA ===== */
+    '<div class="card" style="margin-top:12px; border-color: var(--primary-green); padding:10px 12px;">' +
+      '<h3 style="margin-bottom:4px;"><i class="fas fa-calendar-check"></i> Próxima Aula</h3>' +
+      (aulaHoje
+        ? '<p style="font-size:0.8rem;"><strong>Hoje</strong> • ' + esc(aulaHoje.horaInicio) + ' - ' + esc(aulaHoje.horaFim) +
+          '<br><span class="mini">' + esc(aulaHoje.modalidade || 'Treino') + (poloHoje ? ' • ' + esc(poloHoje.nome) : '') + '</span></p>' +
+          '<button class="btn btn-mini" style="margin-top:6px;" onclick="abrirAba(\'tab2\')"><i class="fas fa-map-marker-alt"></i> Ir para Check-in</button>'
+        : '<p class="sem-dados">Nenhuma aula cadastrada para hoje. Confira o horário fixo na aba Início.</p>') +
+    '</div>' +
+
+    /* ===== ANÁLISE DE DESEMPENHO ATLÉTICO ===== */
+    htmlAnaliseDesempenho(logado) +
+
+    /* ===== PEDIR TREINO ESPECÍFICO (NOVO) ===== */
+    '<div class="card" style="margin-top:4px; border:1px solid var(--accent-blue);">' +
+      '<h3 style="color:var(--accent-blue);"><i class="fas fa-hand-point-up"></i> Pedir Treino Específico</h3>' +
+      '<p class="mini" style="margin-bottom:8px;">Solicite ao professor um treino focado no que você mais precisa evoluir.</p>' +
+      '<label class="campo-label">Tipo de treino desejado</label>' +
+      '<select id="solicitacaoTipo">' +
+        tiposTreino.map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + '</option>'; }).join('') +
+      '</select>' +
+      '<label class="campo-label">Preferência de data (opcional)</label>' +
+      '<input id="solicitacaoData" type="date" min="' + dataLocalISO() + '">' +
+      '<label class="campo-label">Observação / o que você quer trabalhar</label>' +
+      '<textarea id="solicitacaoObs" placeholder="Ex: Quero reforçar esquivas e entradas de rasteira..."></textarea>' +
+      '<button class="btn btn-secondary" onclick="enviarSolicitacaoTreino(this)"><i class="fas fa-paper-plane"></i> Enviar pedido ao professor</button>' +
+    '</div>' +
+
+    /* ===== MEUS PEDIDOS DE TREINO ===== */
+    '<h3 style="margin-top:12px;"><i class="fas fa-list-check"></i> Meus Pedidos de Treino</h3>' +
+    (solicitacoes.length
+      ? solicitacoes.slice(0, 8).map(function (s) {
+          return '<div class="lista-item">' +
+            '<div class="linha"><b>' + esc(s.tipo || '-') + '</b>' + pillStatusSolicitacao(s.status) + '</div>' +
+            '<span class="mini">' + dataHoraBR(s.criadoEm) + (s.dataPreferida ? ' • preferência: ' + dataBR(s.dataPreferida) : '') + '</span>' +
+            (s.observacao ? '<div class="mini">' + esc(s.observacao) + '</div>' : '') +
+            (s.respostaProfessor ? '<div class="mini" style="color:var(--gold); margin-top:3px;"><i class="fas fa-comment"></i> Prof.: ' + esc(s.respostaProfessor) + '</div>' : '') +
+            '</div>';
+        }).join('')
+      : '<p class="sem-dados">Você ainda não pediu nenhum treino específico.</p>') +
+
+    /* ===== PRESENÇAS ===== */
+    '<h3 style="margin-top:14px;"><i class="fas fa-history"></i> Minhas Presenças</h3>' +
     (presencas.length
-      ? presencas.slice(0, 10).map(function (p) {
+      ? presencas.slice(0, 8).map(function (p) {
           return '<div class="lista-item"><div class="linha"><span>' + dataBR(p.data) + ' ' + esc(p.hora || '') + '</span>' + pillStatus(p.status) + '</div>' +
             '<span class="mini">' + esc(p.poloNome || p.tipo || '') + (p.atrasoMin ? ' • atraso ' + p.atrasoMin + ' min' : '') + '</span>' +
             (p.justificativa ? '<div class="mini">Justificativa: ' + esc(p.justificativa) + '</div>' : '') +
@@ -2163,21 +2447,20 @@ function renderAluno() {
         }).join('')
       : '<p class="sem-dados">Nenhuma presença registrada.</p>') +
 
-    '<h3 style="margin-top:10px;"><i class="fas fa-star-half-alt"></i> Minhas Avaliações</h3>' +
+    /* ===== AVALIAÇÕES ===== */
+    '<h3 style="margin-top:14px;"><i class="fas fa-star-half-alt"></i> Minhas Avaliações Semanais</h3>' +
     (avals.length
       ? avals.map(function (a) {
-          return '<div class="lista-item"><div class="linha"><span><b>' + esc(a.data || '-') + '</b>' + (a.etapa ? ' <span class="mini" style="color:var(--gold);">• ' + esc(a.etapa) + '</span>' : '') + '</span><span class="badge-count">' + mediaAvaliacao(a).toFixed(1) + '</span></div>' +
-            (a.notas && typeof a.notas === 'object'
-              ? '<span class="mini">' + Object.keys(a.notas).map(function (k) { return (ROTULOS_AVALIACAO[k] || k) + ' ' + a.notas[k]; }).join(' • ') + '</span>'
-              : '<span class="mini">Técnica ' + esc(a.tecnica || '-') + ' • Disciplina ' + esc(a.disciplina || '-') + ' • Ritmo ' + esc(a.ritmo || '-') +
-                ' • Musicalidade ' + esc(a.musicalidade || '-') + ' • Compromisso ' + esc(a.compromisso || '-') + '</span>') +
-            (a.dificuldades && a.dificuldades.length ? '<div class="alerta-dificuldade">Pontos de atenção: ' + esc(a.dificuldades.join(', ')) + '</div>' : '') +
-            (a.proximaCorda ? '<div class="mini" style="color:var(--gold);">Graduação anunciada: ' + esc(a.proximaCorda) + '</div>' : '') +
-            (a.observacao ? '<div class="mini">' + esc(a.observacao) + '</div>' : '') + '</div>';
+          return '<div class="lista-item"><div class="linha"><span><b>' + esc(a.semana || dataBR(a.data) || '-') + '</b></span><span class="badge-count">' + mediaAvaliacao(a).toFixed(1) + '</span></div>' +
+            '<span class="mini">Técnica ' + esc(a.tecnica || '-') + ' • Disciplina ' + esc(a.disciplina || '-') + ' • Ritmo ' + esc(a.ritmo || '-') +
+            ' • Musicalidade ' + esc(a.musicalidade || '-') + ' • Compromisso ' + esc(a.compromisso || '-') + '</span>' +
+            (a.desenvolvimento ? '<div class="mini" style="margin-top:3px; color:var(--accent-blue);"><i class="fas fa-seedling"></i> Desenvolvimento: ' + esc(a.desenvolvimento) + '</div>' : '') +
+            (a.observacao ? '<div class="mini" style="color:var(--gold);">Feedback: ' + esc(a.observacao) + '</div>' : '') + '</div>';
         }).join('')
-      : '<p class="sem-dados">Nenhuma avaliação lançada ainda.</p>') +
+      : '<p class="sem-dados">Nenhuma avaliação semanal lançada ainda.</p>') +
 
-    '<h3 style="margin-top:10px;"><i class="fas fa-award"></i> Meus Certificados</h3>' +
+    /* ===== CERTIFICADOS ===== */
+    '<h3 style="margin-top:14px;"><i class="fas fa-award"></i> Meus Certificados</h3>' +
     (certs.length
       ? certs.map(function (c) {
           return '<div class="lista-item"><div class="linha"><span>' + esc(c.evento || '-') + '</span><span class="mini">' + dataBR(c.data) + '</span></div>' +
@@ -2185,7 +2468,8 @@ function renderAluno() {
         }).join('')
       : '<p class="sem-dados">Nenhum certificado emitido.</p>') +
 
-    '<h3 style="margin-top:10px;"><i class="fas fa-user-edit"></i> Meu Perfil</h3>' +
+    /* ===== PERFIL ===== */
+    '<h3 style="margin-top:14px;"><i class="fas fa-user-edit"></i> Meu Perfil</h3>' +
     '<label class="campo-label">Nome completo</label><input id="perfilNome" value="' + esc(logado.nome) + '">' +
     '<label class="campo-label">Apelido</label><input id="perfilApelido" value="' + esc(logado.apelido || '') + '">' +
     '<label class="campo-label">Contato (WhatsApp)</label><input id="perfilContato" value="' + esc(logado.contato || '') + '">' +
@@ -2259,6 +2543,46 @@ function baixarMeusDados() {
   baixarArquivo('meus-dados-' + normalizar(logado.nome).replace(/\s+/g, '-') + '.json', JSON.stringify(pacote, null, 2), 'application/json');
 }
 
+function pillStatusSolicitacao(status) {
+  if (status === 'aprovado') return '<span class="pill pill-ok">APROVADO</span>';
+  if (status === 'rejeitado') return '<span class="pill pill-no">RECUSADO</span>';
+  if (status === 'realizado') return '<span class="pill pill-info">REALIZADO</span>';
+  return '<span class="pill pill-pend">PENDENTE</span>';
+}
+
+function enviarSolicitacaoTreino(btn) {
+  var logado = alunoLogado();
+  if (!logado) { mostrarToast('Faça login para solicitar treino.', 'erro'); return; }
+  var tipo = ($('solicitacaoTipo').value || '').trim();
+  var dataPref = ($('solicitacaoData').value || '').trim();
+  var obs = ($('solicitacaoObs').value || '').trim();
+  if (!tipo) { mostrarToast('Escolha o tipo de treino.', 'erro'); return; }
+
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Enviando...'; }
+
+  DB.salvar('solicitacoes', {
+    alunoId: logado.id,
+    alunoNome: logado.nome,
+    alunoApelido: logado.apelido || '',
+    graduacao: logado.graduacao || '',
+    tipo: tipo,
+    dataPreferida: dataPref,
+    observacao: obs,
+    status: 'pendente',
+    respostaProfessor: '',
+    criadoEm: agoraISO()
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar pedido ao professor'; }
+    if ($('solicitacaoObs')) $('solicitacaoObs').value = '';
+    if ($('solicitacaoData')) $('solicitacaoData').value = '';
+    mostrarToast('Pedido enviado! O professor vai avaliar.');
+    registroLog('aluno', 'Solicitação de treino: ' + tipo + ' por ' + logado.nome);
+    renderAluno();
+  }).catch(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar pedido ao professor'; }
+  });
+}
+
 /* ---------------------------------------------------------------
    12. ABA PROFESSOR
    --------------------------------------------------------------- */
@@ -2268,6 +2592,10 @@ function renderAbaProfessor() {
 
   var pendentes = DB.listar('presencas').filter(function (p) { return p.status === 'pendente'; })
     .sort(function (a, b) { return String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); });
+  var solicitacoesPend = DB.listar('solicitacoes').filter(function (s) { return s.status === 'pendente'; })
+    .sort(function (a, b) { return String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); });
+  var solicitacoesRecentes = DB.listar('solicitacoes').filter(function (s) { return s.status !== 'pendente'; })
+    .sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); }).slice(0, 10);
   var polos = DB.listar('polos');
   var horarios = DB.listar('horarios').slice().sort(function (a, b) { return Number(a.diaSemana) - Number(b.diaSemana); });
   var alunos = DB.listar('alunos').slice().sort(function (a, b) { return normalizar(a.nome).localeCompare(normalizar(b.nome)); });
@@ -2277,35 +2605,6 @@ function renderAbaProfessor() {
   html += '<div class="card" style="border:1px solid var(--accent-blue);">' +
     '<h3><i class="fas fa-user-shield"></i> Sessão: ' + esc(sessaoEquipe.nome) + ' <span class="pill pill-info">' + esc(sessaoEquipe.papel) + '</span></h3>' +
     '<button class="btn btn-back" style="margin:0;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button></div>';
-
-  /* --- sugestões dos alunos --- */
-  var sugestoes = DB.listar('sugestoes').slice().sort(function (a, b) {
-    return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
-  }).slice(0, 15);
-  html += '<div class="card"><h3><i class="fas fa-lightbulb"></i> Sugestões dos Alunos <span class="badge-count">' + DB.listar('sugestoes').length + '</span></h3>';
-  if (!sugestoes.length) { html += '<p class="sem-dados">Nenhuma sugestão enviada ainda.</p>'; }
-  else {
-    html += sugestoes.map(function (s) {
-      return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.72rem;">' + esc(s.autor || 'Aluno') + '</b>' +
-        '<span class="mini">' + dataHoraBR(s.criadoEm) + '</span></div><div>' + esc(s.texto) + '</div></div>';
-    }).join('');
-  }
-  html += '</div>';
-
-  /* --- testes de conhecimento --- */
-  var testesConh = DB.listar('testesConhecimento').slice().sort(function (a, b) {
-    return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
-  }).slice(0, 15);
-  html += '<div class="card"><h3><i class="fas fa-graduation-cap"></i> Testes de Conhecimento <span class="badge-count">' + DB.listar('testesConhecimento').length + '</span></h3>';
-  if (!testesConh.length) { html += '<p class="sem-dados">Nenhum teste feito ainda.</p>'; }
-  else {
-    html += testesConh.map(function (t) {
-      return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.72rem;">' + esc(t.alunoApelido || t.alunoNome) + '</b>' +
-        '<span class="badge-count">' + t.acertos + '/' + t.total + '</span></div>' +
-        '<span class="mini">' + esc(t.semana) + ' • ' + dataBR(t.data) + '</span></div>';
-    }).join('');
-  }
-  html += '</div>';
 
   /* --- check-ins pendentes --- */
   html += '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Check-ins Pendentes <span class="badge-count">' + pendentes.length + '</span></h3>';
@@ -2322,6 +2621,109 @@ function renderAbaProfessor() {
         '<button class="btn btn-danger btn-mini" onclick="decidirPresenca(\'' + p.id + '\',\'rejeitado\')"><i class="fas fa-xmark"></i> Rejeitar</button>' +
       '</div></div>';
   });
+  html += '</div>';
+
+  /* --- lançamento manual de presença (caso o check-in do aluno dê erro) --- */
+  html += '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-user-check"></i> Lançar/Corrigir Presença Manualmente</h3>' +
+    '<p class="mini" style="margin-bottom:6px;">Use isso se o check-in do aluno não aparecer aqui por algum erro — você registra a presença na hora.</p>' +
+    '<label class="campo-label">Aluno</label><select id="manualPresencaAluno">' +
+    '<option value="">Selecione...</option>' +
+    alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</option>'; }).join('') +
+    '</select>' +
+    '<label class="campo-label">Data</label><input type="date" id="manualPresencaData" value="' + dataLocalISO() + '">' +
+    '<label class="campo-label">Polo (opcional)</label><select id="manualPresencaPolo"><option value="">— Não informado —</option>' +
+    polos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + '</option>'; }).join('') + '</select>' +
+    '<label class="campo-label">Observação (opcional)</label><input id="manualPresencaObs" placeholder="Ex: check-in deu erro, lançado manualmente">' +
+    '<button class="btn btn-gold" onclick="lancarPresencaManual()"><i class="fas fa-check-circle"></i> Registrar Presença Aprovada</button></div>';
+
+  /* --- check-in manual pelo professor (ajuda em caso de erro) --- */
+  html += '<div class="card" style="border:1px solid var(--gold);">' +
+    '<h3 style="color:var(--gold);"><i class="fas fa-user-plus"></i> Registrar Check-in Manual</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Use quando o aluno teve problema no app, esqueceu o celular ou houve erro no check-in.</p>' +
+    '<label class="campo-label">Aluno</label>' +
+    '<select id="profCheckinAluno">' +
+      (alunos.length
+        ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</option>'; }).join('')
+        : '<option value="">Nenhum aluno cadastrado</option>') +
+    '</select>' +
+    '<label class="campo-label">Polo / local</label>' +
+    '<select id="profCheckinPolo">' +
+      (polos.length
+        ? polos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + '</option>'; }).join('')
+        : '<option value="">Cadastre um polo primeiro</option>') +
+    '</select>' +
+    '<label class="campo-label">Status</label>' +
+    '<select id="profCheckinStatus">' +
+      '<option value="aprovado">Aprovado (já confirma presença)</option>' +
+      '<option value="pendente">Pendente (vai para lista de aprovação)</option>' +
+    '</select>' +
+    '<label class="campo-label">Observação (opcional)</label>' +
+    '<input id="profCheckinObs" placeholder="Ex: aluno sem celular / correção de erro">' +
+    '<button class="btn btn-gold" onclick="professorRegistrarCheckinManual()"><i class="fas fa-plus"></i> Registrar check-in do aluno</button>' +
+  '</div>';
+
+  /* --- pedidos de treino específico (NOVO) --- */
+  /* --- painel de avaliação de conhecimentos (IA) --- */
+  var todosTestes = DB.listar('testesConhecimento');
+  var porAlunoTeste = {};
+  todosTestes.forEach(function (t) {
+    if (!porAlunoTeste[t.alunoId]) porAlunoTeste[t.alunoId] = { nome: t.alunoApelido || t.alunoNome, testes: [] };
+    porAlunoTeste[t.alunoId].testes.push(t);
+  });
+  var listaPorAlunoTeste = Object.keys(porAlunoTeste).map(function (id) {
+    var item = porAlunoTeste[id];
+    item.testes.sort(function (a, b) { return String(b.semana || '').localeCompare(String(a.semana || '')); });
+    var soma = item.testes.reduce(function (s, t) { return s + (t.acertos / t.total); }, 0);
+    item.mediaPct = Math.round((soma / item.testes.length) * 100);
+    item.id = id;
+    return item;
+  }).sort(function (a, b) { return b.mediaPct - a.mediaPct; });
+
+  html += '<div class="card"><h3><i class="fas fa-graduation-cap"></i> Painel de Avaliação de Conhecimentos (IA) <span class="badge-count">' + todosTestes.length + '</span></h3>';
+  html += '<p class="mini" style="margin-bottom:6px;">Testes semanais gerados pela IA. A decisão de certificado/corda continua sempre com você.</p>';
+  if (!listaPorAlunoTeste.length) { html += '<p class="sem-dados">Nenhum teste feito ainda.</p>'; }
+  else {
+    html += listaPorAlunoTeste.map(function (item) {
+      var idSeguro = String(item.id).replace(/[^a-zA-Z0-9]/g, '');
+      var historico = item.testes.map(function (t) {
+        return '<div class="linha mini"><span>' + esc(t.semana) + ' • ' + dataBR(t.data) + '</span><span>' + t.acertos + '/' + t.total + '</span></div>';
+      }).join('');
+      return '<div class="lista-item">' +
+        '<div class="linha"><b style="color:var(--primary-green); font-size:0.78rem;">' + esc(item.nome) + '</b><span class="badge-count">' + item.mediaPct + '%</span></div>' +
+        '<span class="mini">' + item.testes.length + ' teste(s) feito(s)</span>' + historico +
+        '<button class="btn btn-secondary" style="margin-top:6px;" onclick="gerarParecerIA(\'' + item.id + '\', \'parecer' + idSeguro + '\')"><i class="fas fa-magic"></i> Gerar Parecer da IA</button>' +
+        '<div id="parecer' + idSeguro + '" class="mini" style="margin-top:6px; color:var(--gold);"></div></div>';
+    }).join('');
+  }
+  html += '</div>';
+
+  html += '<div class="card" style="border:1px solid var(--accent-blue);"><h3 style="color:var(--accent-blue);"><i class="fas fa-hand-point-up"></i> Pedidos de Treino Específico <span class="badge-count">' + solicitacoesPend.length + '</span></h3>';
+  if (!solicitacoesPend.length) { html += '<p class="sem-dados">Nenhum pedido de treino aguardando resposta.</p>'; }
+  solicitacoesPend.forEach(function (s) {
+    html += '<div class="lista-item">' +
+      '<div class="linha"><b>' + esc(s.alunoNome) + (s.alunoApelido ? ' (' + esc(s.alunoApelido) + ')' : '') + '</b>' +
+      '<span class="mini">' + dataHoraBR(s.criadoEm) + '</span></div>' +
+      '<div style="margin:4px 0;"><span class="pill pill-info">' + esc(s.tipo) + '</span>' +
+      (s.graduacao ? ' <span class="mini">' + esc(s.graduacao) + '</span>' : '') + '</div>' +
+      (s.dataPreferida ? '<span class="mini"><i class="fas fa-calendar"></i> Preferência: ' + dataBR(s.dataPreferida) + '</span><br>' : '') +
+      (s.observacao ? '<div class="mini" style="margin-top:3px;">' + esc(s.observacao) + '</div>' : '') +
+      '<input id="respSolic_' + s.id + '" placeholder="Resposta ao aluno (opcional)" style="margin-top:6px;">' +
+      '<div class="flex-btn" style="margin-top:4px;">' +
+        '<button class="btn btn-mini" onclick="decidirSolicitacao(\'' + s.id + '\',\'aprovado\')"><i class="fas fa-check"></i> Aprovar</button>' +
+        '<button class="btn btn-secondary btn-mini" onclick="decidirSolicitacao(\'' + s.id + '\',\'realizado\')"><i class="fas fa-check-double"></i> Já realizado</button>' +
+        '<button class="btn btn-danger btn-mini" onclick="decidirSolicitacao(\'' + s.id + '\',\'rejeitado\')"><i class="fas fa-xmark"></i> Recusar</button>' +
+      '</div></div>';
+  });
+  if (solicitacoesRecentes.length) {
+    html += '<h3 style="margin-top:12px; font-size:0.82rem; color:var(--text-sub);"><i class="fas fa-history"></i> Histórico recente</h3>';
+    solicitacoesRecentes.forEach(function (s) {
+      html += '<div class="lista-item" style="opacity:0.85;"><div class="linha"><span>' + esc(s.alunoNome) + ' — ' + esc(s.tipo) + '</span>' +
+        pillStatusSolicitacao(s.status) + '</div>' +
+        '<span class="mini">' + dataHoraBR(s.criadoEm) + '</span>' +
+        (s.respostaProfessor ? '<div class="mini" style="color:var(--gold);">Resp.: ' + esc(s.respostaProfessor) + '</div>' : '') +
+        '</div>';
+    });
+  }
   html += '</div>';
 
   /* --- polos --- */
@@ -2366,58 +2768,31 @@ function renderAbaProfessor() {
     '<button class="btn" onclick="publicarAviso()"><i class="fas fa-paper-plane"></i> Publicar Aviso</button>' +
     '<button class="btn btn-secondary" onclick="notificarLocalAlunos()"><i class="fas fa-broadcast-tower"></i> Notificar local aos alunos agora</button></div>';
 
-  /* --- avaliações --- */
-  html += '<div class="card"><h3><i class="fas fa-star-half-alt"></i> Lançar Avaliação</h3>' +
-    '<label class="campo-label">Aluno</label><select id="avalAluno">' +
+  /* --- avaliação semanal + desenvolvimento --- */
+  html += '<div class="card" style="border:1px solid var(--gold);">' +
+    '<h3 style="color:var(--gold);"><i class="fas fa-clipboard-list"></i> Avaliação Semanal por Item</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Avalie cada habilidade (0–10) e registre o desenvolvimento do aluno na semana.</p>' +
+    '<label class="campo-label">Aluno</label>' +
+    '<select id="avalAluno" onchange="carregarDesenvolvimentoAluno()">' +
     (alunos.length ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</option>'; }).join('') : '<option value="">Nenhum aluno cadastrado</option>') +
     '</select>' +
-    '<label class="campo-label">Etapa da avaliação</label>' +
-    '<select id="avalEtapa">' +
-      '<option value="1ª Avaliação do Ano">1ª Avaliação do Ano</option>' +
-      '<option value="2ª Avaliação do Ano">2ª Avaliação do Ano</option>' +
-      '<option value="Avaliação Extra">Avaliação Extra</option>' +
-    '</select>' +
-
-    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Chutes (Direita e Esquerda):</h4>' +
-    '<label class="campo-label">Queixada</label><div class="lado-flex"><input type="number" id="notaQueixadaDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaQueixadaEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
-    '<label class="campo-label">Armada</label><div class="lado-flex"><input type="number" id="notaArmadaDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaArmadaEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
-    '<label class="campo-label">Meia Lua de Compasso</label><div class="lado-flex"><input type="number" id="notaMeiaLuaDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaMeiaLuaEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
-    '<label class="campo-label">Meia Lua de Frente</label><div class="lado-flex"><input type="number" id="notaMeiaLuaFrenteDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaMeiaLuaFrenteEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
-
-    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Esquivas (Direita e Esquerda):</h4>' +
-    '<label class="campo-label">Esquiva de Frente</label><div class="lado-flex"><input type="number" id="notaEsquivaFrenteDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaEsquivaFrenteEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
-    '<label class="campo-label">Esquiva Lateral</label><div class="lado-flex"><input type="number" id="notaEsquivaLateralDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaEsquivaLateralEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
-    '<label class="campo-label">Esquiva Diagonal</label><div class="lado-flex"><input type="number" id="notaEsquivaDiagonalDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaEsquivaDiagonalEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
-    '<label class="campo-label">Descida Básica</label><div class="lado-flex"><input type="number" id="notaDescidaBasicaDir" placeholder="Direita (0-100)" min="0" max="100" value="85"><input type="number" id="notaDescidaBasicaEsq" placeholder="Esquerda (0-100)" min="0" max="100" value="85"></div>' +
-
-    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Sequências Básicas:</h4>' +
-    '<label class="campo-label">Descida básica → negativa e rolê</label><input type="number" id="notaSeqNegativaRole" min="0" max="100" value="85">' +
-    '<label class="campo-label">Descida básica → negativa e sobe por trás</label><input type="number" id="notaSeqSobeTras" min="0" max="100" value="85">' +
-    '<label class="campo-label">Descida básica → negativa e sobe pela lateral</label><input type="number" id="notaSeqSobeLateral" min="0" max="100" value="85">' +
-
-    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Jogo nos Toques da Academia:</h4>' +
-    '<label class="campo-label">Jogo de Angola</label><input type="number" id="notaJogoAngola" min="0" max="100" value="85">' +
-    '<label class="campo-label">Jogo de Benguela</label><input type="number" id="notaJogoBenguela" min="0" max="100" value="85">' +
-    '<label class="campo-label">Jogo de São Bento Grande de Bimba</label><input type="number" id="notaJogoSaoBento" min="0" max="100" value="85">' +
-
-    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Ritmo & Instrumentos:</h4>' +
-    '<label class="campo-label">Toque de Berimbau - Angola</label><input type="number" id="notaBerimbauAngola" min="0" max="100" value="85">' +
-    '<label class="campo-label">Toque de Berimbau - Benguela</label><input type="number" id="notaBerimbauBenguela" min="0" max="100" value="85">' +
-    '<label class="campo-label">Toque de Berimbau - São Bento</label><input type="number" id="notaBerimbauSaoBento" min="0" max="100" value="85">' +
-    '<label class="campo-label">Atabaque e Pandeiro</label><input type="number" id="notaAtabaquePandeiro" min="0" max="100" value="85">' +
-
-    '<h4 style="color:var(--gold); font-size:0.78rem; margin-top:6px;">Assiduidade & Compromisso:</h4>' +
-    '<label class="campo-label">Faltas</label><input type="number" id="notaFaltas" min="0" max="100" value="85">' +
-    '<label class="campo-label">Atrasos</label><input type="number" id="notaAtrasos" min="0" max="100" value="85">' +
-    '<label class="campo-label">Compromisso</label><input type="number" id="notaCompromisso" min="0" max="100" value="85">' +
-
-    '<h4 style="color:var(--primary-green); font-size:0.78rem; margin-top:6px;">Graduação Anunciada (opcional):</h4>' +
-    '<select id="avalProximaCorda"><option value="">Manter Graduação Atual</option>' +
-    CONFIG.graduacoes.map(function (g) { return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('') +
-    '</select>' +
-
-    '<label class="campo-label">Observação</label><textarea id="avalObservacao" placeholder="Pontos fortes e o que melhorar"></textarea>' +
-    '<button class="btn" onclick="salvarAvaliacao()"><i class="fas fa-save"></i> Salvar Avaliação</button></div>';
+    '<label class="campo-label">Semana de referência</label>' +
+    '<input id="avalSemana" type="week" value="' + semanaISOAtual() + '" onchange="carregarDesenvolvimentoAluno()">' +
+    '<div id="boxDesenvolvimentoAluno" style="margin:8px 0;"></div>' +
+    '<div class="grade-2">' +
+      '<div><label class="campo-label">Técnica (0-10)</label><input id="avalTecnica" type="number" min="0" max="10" step="0.5" value="8"></div>' +
+      '<div><label class="campo-label">Disciplina (0-10)</label><input id="avalDisciplina" type="number" min="0" max="10" step="0.5" value="8"></div>' +
+      '<div><label class="campo-label">Ritmo (0-10)</label><input id="avalRitmo" type="number" min="0" max="10" step="0.5" value="8"></div>' +
+      '<div><label class="campo-label">Musicalidade (0-10)</label><input id="avalMusicalidade" type="number" min="0" max="10" step="0.5" value="8"></div>' +
+    '</div>' +
+    '<label class="campo-label">Compromisso (0-10)</label><input id="avalCompromisso" type="number" min="0" max="10" step="0.5" value="8">' +
+    '<label class="campo-label">Desenvolvimento na semana</label>' +
+    '<textarea id="avalDesenvolvimento" placeholder="Ex: Melhorou a ginga e as esquivas; ainda trava no berimbau; mais presente nas rodas..."></textarea>' +
+    '<label class="campo-label">Observação geral / feedback</label>' +
+    '<textarea id="avalObservacao" placeholder="Pontos fortes, o que melhorar e metas para a próxima semana"></textarea>' +
+    '<button class="btn btn-gold" onclick="salvarAvaliacao()"><i class="fas fa-save"></i> Salvar avaliação semanal</button>' +
+    '<p class="mini" style="margin-top:6px;">Se já existir avaliação desta semana para o aluno, ela será atualizada.</p>' +
+  '</div>';
 
   /* --- certificados --- */
   html += '<div class="card"><h3><i class="fas fa-award"></i> Emitir Certificado</h3>' +
@@ -2425,18 +2800,42 @@ function renderAbaProfessor() {
     (alunos.length ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + '</option>'; }).join('') : '<option value="">Nenhum aluno cadastrado</option>') +
     '</select>' +
     '<label class="campo-label">Evento</label><input id="certEvento" placeholder="Ex: Roda de Capoeira - Pedra do Sal">' +
-    '<button type="button" class="btn btn-secondary" style="margin:4px 0 8px;" onclick="preencherCertConhecimentosGerais()"><i class="fas fa-graduation-cap"></i> Preencher como Avaliação de Conhecimentos Gerais</button>' +
     '<label class="campo-label">Data</label><input id="certData" type="date" value="' + dataLocalISO() + '">' +
     '<label class="campo-label">Carga horária (opcional)</label><input id="certCarga" placeholder="Ex: 4 horas">' +
     '<label class="campo-label">Assinatura</label><input id="certAssinatura" placeholder="Ex: Mestre Formiga">' +
-    '<label style="display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--text-sub); margin-top:6px;"><input type="checkbox" id="certComLogo" ' + (CONFIG.logo1 ? 'checked' : '') + ' style="width:auto;"> Incluir símbolo da academia no cabeçalho</label>' +
-    '<div class="lado-flex" style="margin-top:6px;">' +
-      '<button class="btn btn-secondary" onclick="visualizarCertificado()"><i class="fas fa-eye"></i> Visualizar</button>' +
-      '<button class="btn btn-gold" onclick="emitirCertificado()"><i class="fas fa-award"></i> Emitir Certificado</button>' +
-    '</div>' +
+    '<button class="btn btn-gold" onclick="emitirCertificado()"><i class="fas fa-award"></i> Emitir Certificado</button>' +
     '<p class="mini" style="margin-top:6px;">Só emita para alunos com check-in aprovado em evento/roda.</p></div>';
 
   box.innerHTML = html;
+  setTimeout(function () { carregarDesenvolvimentoAluno(); }, 50);
+}
+
+function lancarPresencaManual() {
+  var alunoId = $('manualPresencaAluno').value;
+  var aluno = DB.buscar('alunos', alunoId);
+  if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
+  var data = $('manualPresencaData').value || dataLocalISO();
+  var poloId = $('manualPresencaPolo').value;
+  var polo = poloId ? DB.buscar('polos', poloId) : null;
+  var obs = ($('manualPresencaObs').value || '').trim() || 'Lançado manualmente pelo professor.';
+
+  DB.salvar('presencas', {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    data: data,
+    hora: new Date().toTimeString().slice(0, 5),
+    tipo: 'manual',
+    poloId: poloId || '',
+    poloNome: polo ? polo.nome : '',
+    status: 'aprovado',
+    observacaoProfessor: obs,
+    aprovadoPor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
+    criadoEm: agoraISO()
+  }).then(function () {
+    mostrarToast('Presença registrada para ' + aluno.nome + '!');
+    registroLog('professor', 'Presença manual lançada para ' + aluno.nome + ' (' + data + ').');
+    $('manualPresencaObs').value = '';
+  });
 }
 
 function decidirPresenca(id, status) {
@@ -2450,8 +2849,102 @@ function decidirPresenca(id, status) {
     avaliadoEm: agoraISO()
   }, id).then(function () {
     registroLog('professor', 'Check-in de ' + p.alunoNome + ' → ' + status);
-    mostrarToast('Check-in ' + (status === 'aprovado' ? 'aprovado' : 'rejeitado') + '.');
-    if (status === 'aprovado') { notificar('Check-in aprovado', p.alunoNome + ' teve presença aprovada.'); }
+    if (status === 'aprovado') {
+      mostrarToast('Check-in de ' + p.alunoNome + ' aprovado!');
+      notificar('Check-in aprovado!', 'Sua presença de ' + dataBR(p.data) + ' foi confirmada pelo professor.');
+    } else {
+      mostrarToast('Check-in de ' + p.alunoNome + ' rejeitado.');
+      notificar('Check-in não aprovado', 'Seu check-in de ' + dataBR(p.data) + ' foi rejeitado.' + (obs ? ' Motivo: ' + obs : ''));
+    }
+    renderAbaProfessor();
+  });
+}
+
+/* Professor registra check-in manual (corrige erro / aluno sem celular) */
+function professorRegistrarCheckinManual() {
+  var alunoId = ($('profCheckinAluno') || {}).value || '';
+  var poloId = ($('profCheckinPolo') || {}).value || '';
+  var status = ($('profCheckinStatus') || {}).value || 'aprovado';
+  var obs = (($('profCheckinObs') || {}).value || '').trim();
+  var aluno = DB.buscar('alunos', alunoId);
+  if (!aluno) { mostrarToast('Selecione o aluno.', 'erro'); return; }
+  if (!poloId) { mostrarToast('Selecione o polo.', 'erro'); return; }
+
+  var jaExiste = obterCheckinDoDia(aluno);
+  if (jaExiste && jaExiste.status !== 'rejeitado') {
+    abrirModal('Aluno já tem check-in hoje',
+      '<p>Este aluno já possui check-in em <strong>' + dataBR(jaExiste.data) + '</strong> (' + esc(jaExiste.status) + ').</p>' +
+      '<p class="mini">Polo: ' + esc(jaExiste.poloNome || '-') + '</p>' +
+      '<p style="margin-top:8px;">Deseja <strong>substituir</strong> pelo novo registro?</p>',
+      '<button class="btn" onclick="professorForcarCheckinManual()">Substituir check-in</button>');
+    window._profCheckinPendente = { aluno: aluno, poloId: poloId, status: status, obs: obs, substituirId: jaExiste.id };
+    return;
+  }
+  salvarCheckinManualProfessor(aluno, poloId, status, obs, null);
+}
+
+function professorForcarCheckinManual() {
+  fecharModal();
+  var d = window._profCheckinPendente;
+  if (!d) return;
+  salvarCheckinManualProfessor(d.aluno, d.poloId, d.status, d.obs, d.substituirId);
+  window._profCheckinPendente = null;
+}
+
+function salvarCheckinManualProfessor(aluno, poloId, status, obs, substituirId) {
+  var polo = DB.buscar('polos', poloId);
+  var aula = aulaDeHoje();
+  var dados = {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    poloId: poloId,
+    poloNome: polo ? polo.nome : '',
+    horarioId: aula ? aula.id : '',
+    data: dataLocalISO(),
+    hora: horaLocalHM(),
+    tipo: 'manual',
+    status: status,
+    atrasoMin: 0,
+    justificativa: '',
+    observacaoProfessor: obs || 'Registrado manualmente pelo professor',
+    avaliadoPor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
+    avaliadoEm: agoraISO(),
+    criadoEm: agoraISO()
+  };
+
+  var promessa;
+  if (substituirId) {
+    promessa = DB.salvar('presencas', dados, substituirId);
+  } else {
+    promessa = DB.salvar('presencas', dados);
+  }
+  promessa.then(function () {
+    registroLog('professor', 'Check-in manual: ' + aluno.nome + ' → ' + status);
+    mostrarToast('Check-in de ' + aluno.nome + ' registrado (' + status + ').');
+    if (status === 'aprovado') {
+      notificar('Check-in confirmado', 'Sua presença de hoje foi registrada pelo professor.');
+    }
+    renderAbaProfessor();
+  });
+}
+
+function decidirSolicitacao(id, status) {
+  var s = DB.buscar('solicitacoes', id);
+  if (!s) return;
+  var resp = $('respSolic_' + id) ? $('respSolic_' + id).value.trim() : '';
+  DB.salvar('solicitacoes', {
+    status: status,
+    respostaProfessor: resp,
+    respondidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
+    respondidoEm: agoraISO()
+  }, id).then(function () {
+    var msg = status === 'aprovado' ? 'aprovado' : (status === 'realizado' ? 'marcado como realizado' : 'recusado');
+    registroLog('professor', 'Pedido de treino de ' + s.alunoNome + ' → ' + status);
+    mostrarToast('Pedido ' + msg + '.');
+    if (status === 'aprovado') {
+      notificar('Pedido de treino aprovado', s.alunoNome + ': ' + (s.tipo || ''));
+    }
     renderAbaProfessor();
   });
 }
@@ -2530,70 +3023,147 @@ function notificarLocalAlunos() {
   mostrarToast('Notificação enviada para este dispositivo.');
 }
 
-var ROTULOS_AVALIACAO = {
-  queixadaDir: "Queixada (Direita)", queixadaEsq: "Queixada (Esquerda)",
-  armadaDir: "Armada (Direita)", armadaEsq: "Armada (Esquerda)",
-  meiaLuaDir: "Meia Lua (Direita)", meiaLuaEsq: "Meia Lua (Esquerda)",
-  meiaLuaFrenteDir: "Meia Lua Frente (Direita)", meiaLuaFrenteEsq: "Meia Lua Frente (Esquerda)",
-  esquivaFrenteDir: "Esquiva Frente (Direita)", esquivaFrenteEsq: "Esquiva Frente (Esquerda)",
-  esquivaLateralDir: "Esquiva Lateral (Direita)", esquivaLateralEsq: "Esquiva Lateral (Esquerda)",
-  esquivaDiagonalDir: "Esquiva Diagonal (Direita)", esquivaDiagonalEsq: "Esquiva Diagonal (Esquerda)",
-  descidaBasicaDir: "Descida Básica (Direita)", descidaBasicaEsq: "Descida Básica (Esquerda)",
-  seqNegativaRole: "Seq. Negativa e Rolê", seqSobeTras: "Seq. Sobe por Trás", seqSobeLateral: "Seq. Sobe pela Lateral",
-  jogoAngola: "Jogo de Angola", jogoBenguela: "Jogo de Benguela", jogoSaoBento: "Jogo de São Bento Grande",
-  berimbauAngola: "Toque de Berimbau - Angola", berimbauBenguela: "Toque de Berimbau - Benguela", berimbauSaoBento: "Toque de Berimbau - São Bento",
-  atabaquePandeiro: "Atabaque e Pandeiro", faltas: "Faltas", atrasos: "Atrasos", compromisso: "Compromisso"
-};
+function semanaISOAtual() {
+  var d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  var week1 = new Date(d.getFullYear(), 0, 4);
+  var weekNo = 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+  return d.getFullYear() + '-W' + String(weekNo).padStart(2, '0');
+}
+
+function avaliacoesDoAluno(alunoId) {
+  var aluno = DB.buscar('alunos', alunoId);
+  if (!aluno) return [];
+  return DB.listar('avaliacoes').filter(function (a) {
+    return a.alunoId === aluno.id || normalizar(a.alunoNome) === normalizar(aluno.nome);
+  }).sort(function (a, b) { return String(a.data || a.semana || '').localeCompare(String(b.data || b.semana || '')); });
+}
+
+function carregarDesenvolvimentoAluno() {
+  var box = $('boxDesenvolvimentoAluno');
+  var alunoId = ($('avalAluno') || {}).value;
+  if (!box || !alunoId) return;
+  var aluno = DB.buscar('alunos', alunoId);
+  if (!aluno) { box.innerHTML = ''; return; }
+
+  var lista = avaliacoesDoAluno(alunoId);
+  var semana = ($('avalSemana') || {}).value || semanaISOAtual();
+  var daSemana = lista.filter(function (a) { return a.semana === semana; })[0];
+  var ultima = lista.length ? lista[lista.length - 1] : null;
+
+  /* pré-preenche se já existe avaliação da semana */
+  if (daSemana) {
+    if ($('avalTecnica')) $('avalTecnica').value = daSemana.tecnica != null ? daSemana.tecnica : 8;
+    if ($('avalDisciplina')) $('avalDisciplina').value = daSemana.disciplina != null ? daSemana.disciplina : 8;
+    if ($('avalRitmo')) $('avalRitmo').value = daSemana.ritmo != null ? daSemana.ritmo : 8;
+    if ($('avalMusicalidade')) $('avalMusicalidade').value = daSemana.musicalidade != null ? daSemana.musicalidade : 8;
+    if ($('avalCompromisso')) $('avalCompromisso').value = daSemana.compromisso != null ? daSemana.compromisso : 8;
+    if ($('avalDesenvolvimento')) $('avalDesenvolvimento').value = daSemana.desenvolvimento || '';
+    if ($('avalObservacao')) $('avalObservacao').value = daSemana.observacao || '';
+  } else if (ultima) {
+    if ($('avalTecnica')) $('avalTecnica').value = ultima.tecnica != null ? ultima.tecnica : 8;
+    if ($('avalDisciplina')) $('avalDisciplina').value = ultima.disciplina != null ? ultima.disciplina : 8;
+    if ($('avalRitmo')) $('avalRitmo').value = ultima.ritmo != null ? ultima.ritmo : 8;
+    if ($('avalMusicalidade')) $('avalMusicalidade').value = ultima.musicalidade != null ? ultima.musicalidade : 8;
+    if ($('avalCompromisso')) $('avalCompromisso').value = ultima.compromisso != null ? ultima.compromisso : 8;
+    if ($('avalDesenvolvimento')) $('avalDesenvolvimento').value = '';
+    if ($('avalObservacao')) $('avalObservacao').value = '';
+  }
+
+  var html = '';
+  var an = analisarDesempenhoAtletico(aluno);
+  if (an) {
+    html += '<div class="aviso-info"><i class="fas fa-chart-line"></i> Índice atual: <b>' + an.score + '/100</b> — ' + esc(an.nivel) +
+      (an.mediaGeral !== null ? ' • média ' + an.mediaGeral.toFixed(1) : '') +
+      ' • ' + an.aprovadas + ' aulas confirmadas</div>';
+  }
+
+  if (lista.length) {
+    html += '<p class="mini" style="margin:6px 0 4px;"><i class="fas fa-history"></i> Histórico de desenvolvimento (' + lista.length + ' avaliações)</p>';
+    lista.slice(-5).reverse().forEach(function (av) {
+      var media = mediaAvaliacao(av).toFixed(1);
+      html += '<div class="lista-item">' +
+        '<div class="linha"><b>' + esc(av.semana || dataBR(av.data)) + '</b><span class="badge-count">' + media + '</span></div>' +
+        '<span class="mini">Téc ' + esc(av.tecnica || '-') + ' • Disc ' + esc(av.disciplina || '-') +
+        ' • Rit ' + esc(av.ritmo || '-') + ' • Mus ' + esc(av.musicalidade || '-') +
+        ' • Comp ' + esc(av.compromisso || '-') + '</span>' +
+        (av.desenvolvimento ? '<div class="mini" style="margin-top:3px; color:var(--accent-blue);"><i class="fas fa-seedling"></i> ' + esc(av.desenvolvimento) + '</div>' : '') +
+        (av.observacao ? '<div class="mini" style="color:var(--gold);">' + esc(av.observacao) + '</div>' : '') +
+        '</div>';
+    });
+    if (ultima && !daSemana) {
+      html += '<p class="mini" style="margin-top:4px;">Notas da última avaliação carregadas como base — ajuste para esta semana.</p>';
+    }
+    if (daSemana) {
+      html += '<p class="mini" style="color:var(--gold); margin-top:4px;"><i class="fas fa-pen"></i> Já existe avaliação desta semana — ao salvar, ela será atualizada.</p>';
+    }
+  } else {
+    html += '<p class="sem-dados">Primeira avaliação semanal deste aluno.</p>';
+  }
+
+  /* comparação item a item com a última (se diferente da semana atual) */
+  if (ultima && lista.length >= 1) {
+    var ref = daSemana && lista.length >= 2 ? lista[lista.length - 2] : (daSemana ? null : ultima);
+    if (ref && ref !== daSemana) {
+      html += '<p class="mini" style="margin-top:6px;">Referência anterior (' + esc(ref.semana || dataBR(ref.data)) + '): média ' + mediaAvaliacao(ref).toFixed(1) + '</p>';
+    }
+  }
+
+  box.innerHTML = html;
+}
 
 function salvarAvaliacao() {
   var alunoId = $('avalAluno').value;
   var aluno = DB.buscar('alunos', alunoId);
   if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
+  var semana = ($('avalSemana') || {}).value || semanaISOAtual();
+  var tecnica = parseFloat($('avalTecnica').value);
+  var disciplina = parseFloat($('avalDisciplina').value);
+  var ritmo = parseFloat($('avalRitmo').value);
+  var musicalidade = parseFloat($('avalMusicalidade').value);
+  var compromisso = parseFloat($('avalCompromisso').value);
+  var campos = [tecnica, disciplina, ritmo, musicalidade, compromisso];
+  for (var i = 0; i < campos.length; i++) {
+    if (isNaN(campos[i]) || campos[i] < 0 || campos[i] > 10) {
+      mostrarToast('Preencha todas as notas entre 0 e 10.', 'erro');
+      return;
+    }
+  }
 
-  var notas = {};
-  Object.keys(ROTULOS_AVALIACAO).forEach(function (campo) {
-    var el = $('nota' + campo.charAt(0).toUpperCase() + campo.slice(1));
-    notas[campo] = el ? (Number(el.value) || 0) : 0;
-  });
+  var existente = DB.listar('avaliacoes').filter(function (a) {
+    return a.alunoId === aluno.id && a.semana === semana;
+  })[0];
 
-  var dificuldades = [];
-  Object.keys(notas).forEach(function (campo) {
-    if (notas[campo] <= 85) dificuldades.push(ROTULOS_AVALIACAO[campo] + ' (' + notas[campo] + ' pts)');
-  });
-
-  DB.salvar('avaliacoes', {
+  var dados = {
     alunoId: aluno.id,
     alunoNome: aluno.nome,
     alunoApelido: aluno.apelido || '',
     graduacao: aluno.graduacao || '',
-    etapa: $('avalEtapa') ? $('avalEtapa').value : '',
-    notas: notas,
-    dificuldades: dificuldades,
-    proximaCorda: ($('avalProximaCorda') && $('avalProximaCorda').value) || '',
+    tipo: 'semanal',
+    semana: semana,
+    tecnica: tecnica,
+    disciplina: disciplina,
+    ritmo: ritmo,
+    musicalidade: musicalidade,
+    compromisso: compromisso,
+    desenvolvimento: ($('avalDesenvolvimento') || {}).value ? $('avalDesenvolvimento').value.trim() : '',
     observacao: ($('avalObservacao').value || '').trim(),
     data: dataLocalISO(),
     professor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
-    criadoEm: agoraISO()
-  }).then(function () {
-    $('avalObservacao').value = '';
-    mostrarToast('Avaliação salva para ' + aluno.nome + '.');
-    registroLog('professor', 'Avaliação lançada: ' + aluno.nome);
-  });
-}
+    criadoEm: existente ? (existente.criadoEm || agoraISO()) : agoraISO(),
+    atualizadoEm: agoraISO()
+  };
 
-function preencherCertConhecimentosGerais() {
-  var alunoId = $('certAluno').value;
-  var aluno = DB.buscar('alunos', alunoId);
-  $('certEvento').value = 'Avaliação de Conhecimentos Gerais de Capoeira';
-  if (aluno) {
-    var testes = DB.listar('testesConhecimento').filter(function (t) { return t.alunoId === aluno.id; });
-    if (testes.length) {
-      var media = testes.reduce(function (s, t) { return s + (t.acertos / t.total); }, 0) / testes.length;
-      mostrarToast('Aproveitamento médio nos testes semanais: ' + Math.round(media * 100) + '% (' + testes.length + ' teste(s)).');
-    } else {
-      mostrarToast('Este aluno ainda não fez nenhum teste de conhecimentos.', 'erro');
-    }
-  }
+  var promessa = existente
+    ? DB.salvar('avaliacoes', dados, existente.id)
+    : DB.salvar('avaliacoes', dados);
+
+  promessa.then(function () {
+    mostrarToast('Avaliação semanal de ' + aluno.nome + ' salva!');
+    registroLog('professor', 'Avaliação semanal (' + semana + '): ' + aluno.nome);
+    carregarDesenvolvimentoAluno();
+  });
 }
 
 function emitirCertificado() {
@@ -2627,7 +3197,6 @@ function confirmarEmissaoCertificado() {
     data: data,
     cargaHoraria: ($('certCarga').value || '').trim(),
     assinatura: ($('certAssinatura').value || '').trim(),
-    comLogo: $('certComLogo') ? $('certComLogo').checked : true,
     codigo: codigo,
     emitidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Equipe',
     emitidoEm: agoraISO()
@@ -2675,31 +3244,34 @@ function renderAbaAdm() {
     '<label class="campo-label">Filtrar por nome</label><input id="admBuscaAluno" placeholder="Digite para filtrar..." oninput="filtrarAlunosAdm()">' +
     '<div id="listaAlunosAdm">' + htmlListaAlunosAdm(alunos) + '</div></div>';
 
-  /* --- títulos da turma --- */
-  function opcoesAlunosSel(valorAtual) {
-    var out = '<option value="">Selecione...</option>';
-    alunos.forEach(function (a) {
-      var sel = (a.nome === valorAtual) ? ' selected' : '';
-      out += '<option value="' + esc(a.nome) + '"' + sel + '>' + esc(a.nome) + '</option>';
-    });
-    return out;
-  }
-  html += '<div class="card" style="border:1px solid var(--gold);"><h3 style="color:var(--gold);"><i class="fas fa-crown"></i> Títulos da Turma (Início)</h3>' +
-    '<label class="campo-label">🏆 Aluno Nota 10</label><select id="tituloNota10">' + opcoesAlunosSel(CONFIG.tituloNota10) + '</select>' +
-    '<label class="campo-label">⭐ Aluno Destaque 1</label><select id="tituloDestaque1">' + opcoesAlunosSel(CONFIG.tituloDestaque1) + '</select>' +
-    '<label class="campo-label">⭐ Aluno Destaque 2</label><select id="tituloDestaque2">' + opcoesAlunosSel(CONFIG.tituloDestaque2) + '</select>' +
-    '<label class="campo-label">💪 Aluno Superação</label><select id="tituloSuperacao">' + opcoesAlunosSel(CONFIG.tituloSuperacao) + '</select>' +
-    '<button class="btn btn-secondary" onclick="salvarTitulosAdm()"><i class="fas fa-save"></i> Salvar Títulos</button></div>';
-
   /* --- aparência e parâmetros --- */
-  html += '<div class="card"><h3><i class="fas fa-paint-brush"></i> Aparência e Parâmetros</h3>' +
+  html += '<div class="card"><h3><i class="fas fa-paint-brush"></i> Aparência, Logotipos e Parâmetros</h3>' +
     '<label class="campo-label">Título do app</label><input id="cfgTitulo" value="' + esc(CONFIG.tituloApp) + '">' +
     '<label class="campo-label">Instagram (com @)</label><input id="cfgInstagram" value="' + esc(CONFIG.instagram) + '">' +
-    '<label class="campo-label">WhatsApp de suporte (com DDI e DDD, só números — ex: 5521900000000)</label><input id="cfgWhatsappSuporte" value="' + esc(CONFIG.whatsappSuporte || '') + '" placeholder="5521900000000">' +
     '<label class="campo-label">URL do Assistente IA (Cloudflare Worker)</label><input id="cfgIaProxyUrl" value="' + esc(CONFIG.iaProxyUrl || '') + '" placeholder="https://seu-worker.workers.dev">' +
-    '<label class="campo-label">Base de conhecimento para a IA (história, currículo, termos da sua academia)</label><textarea id="cfgBaseConhecimento" rows="4" placeholder="Cole aqui o que a IA deve saber: história da academia, ritmos que vocês ensinam, termos específicos, etc.">' + esc(CONFIG.baseConhecimento || '') + '</textarea>' +
-    '<label class="campo-label">URL do Logo 1</label><input id="cfgLogo1" value="' + esc(CONFIG.logo1 || '') + '" placeholder="https://...">' +
-    '<label class="campo-label">URL do Logo 2</label><input id="cfgLogo2" value="' + esc(CONFIG.logo2 || '') + '" placeholder="https://...">' +
+    '<label class="campo-label">Base de conhecimento para a IA (história, currículo, termos da sua academia)</label><textarea id="cfgBaseConhecimento" rows="4" placeholder="Cole aqui o que a IA deve saber.">' + esc(CONFIG.baseConhecimento || '') + '</textarea>' +
+    '<h3 style="margin-top:12px; font-size:0.82rem;"><i class="fas fa-image"></i> Logotipos da academia</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Envie do armazenamento do aparelho (galeria/arquivos). Os logos aparecem no cabeçalho e nos certificados.</p>' +
+    '<div class="grade-2">' +
+      '<div style="text-align:center;">' +
+        '<label class="campo-label">Logo principal</label>' +
+        (CONFIG.logo1 && urlSegura(CONFIG.logo1)
+          ? '<img id="previewLogo1" src="' + urlSegura(CONFIG.logo1) + '" alt="Logo 1" style="max-height:72px; max-width:100%; border-radius:8px; border:1px solid var(--card-border); margin:4px auto; display:block; background:#fff; padding:4px;">'
+          : '<div id="previewLogo1" class="sem-dados" style="padding:16px 0;">Sem logo</div>') +
+        '<input type="file" id="cfgLogo1File" accept="image/*" onchange="uploadLogoApp(this, 1)" style="font-size:0.7rem;">' +
+        '<input type="hidden" id="cfgLogo1" value="' + esc(CONFIG.logo1 || '') + '">' +
+        '<button type="button" class="btn btn-danger btn-mini" style="margin-top:4px;" onclick="removerLogoApp(1)"><i class="fas fa-trash"></i> Remover</button>' +
+      '</div>' +
+      '<div style="text-align:center;">' +
+        '<label class="campo-label">Logo secundário (opcional)</label>' +
+        (CONFIG.logo2 && urlSegura(CONFIG.logo2)
+          ? '<img id="previewLogo2" src="' + urlSegura(CONFIG.logo2) + '" alt="Logo 2" style="max-height:72px; max-width:100%; border-radius:8px; border:1px solid var(--card-border); margin:4px auto; display:block; background:#fff; padding:4px;">'
+          : '<div id="previewLogo2" class="sem-dados" style="padding:16px 0;">Sem logo</div>') +
+        '<input type="file" id="cfgLogo2File" accept="image/*" onchange="uploadLogoApp(this, 2)" style="font-size:0.7rem;">' +
+        '<input type="hidden" id="cfgLogo2" value="' + esc(CONFIG.logo2 || '') + '">' +
+        '<button type="button" class="btn btn-danger btn-mini" style="margin-top:4px;" onclick="removerLogoApp(2)"><i class="fas fa-trash"></i> Remover</button>' +
+      '</div>' +
+    '</div>' +
     '<label class="campo-label">Tempo padrão do cronômetro (segundos)</label><input id="cfgTimer" type="number" min="10" max="3600" value="' + esc(CONFIG.tempoTimerSegundos) + '">' +
     '<label class="campo-label">Tolerância de atraso (minutos)</label><input id="cfgTolerancia" type="number" min="0" max="120" value="' + esc(CONFIG.toleranciaAtrasoMin) + '">' +
     '<label class="campo-label">Graduações (uma por linha)</label><textarea id="cfgGraduacoes" style="min-height:120px;">' + esc(CONFIG.graduacoes.join('\n')) + '</textarea>' +
@@ -2794,38 +3366,85 @@ function excluirAlunoDefinitivo(id) {
   });
 }
 
+function uploadLogoApp(input, num) {
+  var arquivo = input.files && input.files[0];
+  if (!arquivo) return;
+  if (!/^image\//i.test(arquivo.type)) {
+    mostrarToast('Selecione um arquivo de imagem.', 'erro');
+    return;
+  }
+  mostrarToast('Processando logo...');
+  comprimirImagem(arquivo, 400, 0.85).then(function (dataUrl) {
+    var hidden = $('cfgLogo' + num);
+    if (hidden) hidden.value = dataUrl;
+    var prev = $('previewLogo' + num);
+    if (prev) {
+      if (prev.tagName === 'IMG') {
+        prev.src = dataUrl;
+      } else {
+        var img = document.createElement('img');
+        img.id = 'previewLogo' + num;
+        img.src = dataUrl;
+        img.alt = 'Logo ' + num;
+        img.style.cssText = 'max-height:72px; max-width:100%; border-radius:8px; border:1px solid var(--card-border); margin:4px auto; display:block; background:#fff; padding:4px;';
+        prev.parentNode.replaceChild(img, prev);
+      }
+    }
+    var urlCampo = $('cfgLogo' + num + 'Url');
+    if (urlCampo) urlCampo.value = '';
+    input.value = '';
+    mostrarToast('Logo ' + num + ' carregado. Clique em Salvar Configurações.');
+  }).catch(function () {
+    mostrarToast('Não foi possível processar a imagem.', 'erro');
+  });
+}
+
+function removerLogoApp(num) {
+  var hidden = $('cfgLogo' + num);
+  if (hidden) hidden.value = '';
+  var urlCampo = $('cfgLogo' + num + 'Url');
+  if (urlCampo) urlCampo.value = '';
+  var prev = $('previewLogo' + num);
+  if (prev) {
+    if (prev.tagName === 'IMG') {
+      var div = document.createElement('div');
+      div.id = 'previewLogo' + num;
+      div.className = 'sem-dados';
+      div.style.padding = '16px 0';
+      div.textContent = 'Sem logo';
+      prev.parentNode.replaceChild(div, prev);
+    } else {
+      prev.textContent = 'Sem logo';
+    }
+  }
+  mostrarToast('Logo ' + num + ' removido. Clique em Salvar Configurações.');
+}
+
 function salvarConfiguracaoAdm() {
   var graduacoes = $('cfgGraduacoes').value.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l; });
   if (!graduacoes.length) { mostrarToast('Informe ao menos uma graduação.', 'erro'); return; }
+
+  var logo1 = ($('cfgLogo1') && $('cfgLogo1').value || '').trim();
+  var logo2 = ($('cfgLogo2') && $('cfgLogo2').value || '').trim();
+  if (logo1 && !urlSegura(logo1)) { mostrarToast('Logo 1 inválido (envie um arquivo de imagem).', 'erro'); return; }
+  if (logo2 && !urlSegura(logo2)) { mostrarToast('Logo 2 inválido (envie um arquivo de imagem).', 'erro'); return; }
+
   salvarConfigApp({
     tituloApp: ($('cfgTitulo').value || 'Universo Capoeira').trim(),
     instagram: ($('cfgInstagram').value || '').trim(),
-    whatsappSuporte: ($('cfgWhatsappSuporte').value || '').replace(/\D/g, ''),
     iaProxyUrl: ($('cfgIaProxyUrl').value || '').trim(),
     baseConhecimento: ($('cfgBaseConhecimento').value || '').trim(),
-    logo1: ($('cfgLogo1').value || '').trim(),
-    logo2: ($('cfgLogo2').value || '').trim(),
+    logo1: logo1,
+    logo2: logo2,
     tempoTimerSegundos: Math.max(10, parseInt($('cfgTimer').value, 10) || 90),
     toleranciaAtrasoMin: Math.max(0, parseInt($('cfgTolerancia').value, 10) || 15),
     graduacoes: graduacoes
   }).then(function () {
-    mostrarToast('Configurações salvas.');
-    registroLog('adm', 'Configurações do app atualizadas.');
+    mostrarToast('Configurações salvas. Logos atualizados no cabeçalho e certificados.');
+    registroLog('adm', 'Configurações do app atualizadas (logos inclusos).');
     resetarTimer();
+    aplicarConfig();
     renderAbaAdm();
-  });
-}
-
-function salvarTitulosAdm() {
-  salvarConfigApp({
-    tituloNota10: $('tituloNota10').value,
-    tituloDestaque1: $('tituloDestaque1').value,
-    tituloDestaque2: $('tituloDestaque2').value,
-    tituloSuperacao: $('tituloSuperacao').value
-  }).then(function () {
-    mostrarToast('Títulos da turma salvos.');
-    registroLog('adm', 'Títulos da turma atualizados.');
-    renderTitulosAlunos();
   });
 }
 
@@ -2891,7 +3510,7 @@ function confirmarLimparTudo() {
 
 function limparTudoDefinitivo() {
   fecharModal();
-  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'chatAlunos', 'sugestoes', 'testesConhecimento', 'certificados', 'logs'];
+  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'logs', 'solicitacoes', 'testesConhecimento'];
   Promise.all(alvos.map(function (c) { return DB.limparColecao(c); })).then(function () {
     sessaoAlunoId = null;
     mostrarToast('Todos os dados foram apagados.');
@@ -2935,10 +3554,6 @@ function renderAbaDev() {
       '<button class="btn btn-danger" onclick="removerFirebaseDev()"><i class="fas fa-unlink"></i> Remover configuração (voltar ao local)</button>' +
       '<p class="mini" style="margin-top:6px;">Sem configuração, o app funciona 100% offline e os dados ficam apenas neste navegador.</p></div>' +
 
-    '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-file-import"></i> Importar Dados da Versão Antiga (v86)</h3>' +
-      '<p class="mini" style="margin-bottom:6px;">Traz as avaliações lançadas na versão anterior do app (coleção "historico_avaliacoes") para o formato atual. Pode rodar quantas vezes precisar — não duplica o que já foi importado.</p>' +
-      '<button class="btn btn-secondary" onclick="migrarAvaliacoesAntigas(this)"><i class="fas fa-cloud-download-alt"></i> Importar Avaliações Antigas</button></div>' +
-
     '<div class="card"><h3><i class="fas fa-user-plus"></i> Acessos da Equipe</h3>' + equipe +
       '<label class="campo-label">Nome</label><input id="devEquipeNome" placeholder="Nome do integrante">' +
       '<label class="campo-label">Senha</label><input id="devEquipeSenha" type="password" placeholder="Mínimo 4 caracteres">' +
@@ -2958,66 +3573,150 @@ function renderAbaDev() {
       '<div class="lista-item">Usuário: <b>' + esc(navigator.userAgent.slice(0, 60)) + '...</b></div>' +
       '<div class="lista-item">Offline: <b>' + (navigator.onLine ? 'conectado' : 'sem internet') + '</b></div>' +
       '<div class="lista-item">Notificações: <b>' + (notificacaoAtiva() ? 'ativas' : 'inativas') + '</b></div>' +
-      '<button class="btn btn-secondary" onclick="limparCacheLocal()"><i class="fas fa-broom"></i> Limpar cache local do navegador</button></div>';
+      '<button class="btn btn-secondary" onclick="limparCacheLocal()"><i class="fas fa-broom"></i> Limpar cache local do navegador</button></div>' +
+
+    '<div class="card" style="border:1px solid var(--danger);"><h3><i class="fas fa-bug"></i> Telemetria & Monitor de Erros</h3>' +
+      '<p class="mini" style="margin-bottom:6px;">Qualquer erro de script neste dispositivo é capturado abaixo, em tempo real.</p>' +
+      '<div id="boxTelemetriaErrosLog" style="max-height:160px; overflow-y:auto; font-size:0.7rem; color:#fff; background:#081217; padding:6px; border-radius:6px;">Nenhum erro registrado até o momento (sistema estável).</div>' +
+      '<div class="flex-btn" style="margin-top:6px;">' +
+        '<button class="btn btn-secondary" onclick="perguntarIASobreErros(this)"><i class="fas fa-robot"></i> Perguntar à IA</button>' +
+        '<button class="btn btn-danger" onclick="limparTelemetriaErros()"><i class="fas fa-trash"></i> Limpar</button>' +
+      '</div>' +
+      '<div id="diagnosticoIAErros" class="mini" style="margin-top:8px; color:var(--gold); white-space:pre-wrap;"></div></div>' +
+
+    '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-bullhorn"></i> Publicar Atualização</h3>' +
+      '<p class="mini" style="margin-bottom:6px;">Depois de subir o arquivo novo no GitHub Pages / hospedagem, toque aqui pra avisar todos os aparelhos (professor, alunos, todo mundo) a atualizar. Isso não substitui subir o arquivo — só avisa quem já tem o app aberto ou instalado.</p>' +
+      '<button class="btn btn-gold" onclick="publicarNovaVersaoDev(this)"><i class="fas fa-bullhorn"></i> Avisar Todos os Dispositivos</button></div>';
+  atualizarPainelTelemetria();
 }
 
-function migrarAvaliacoesAntigas(btn) {
-  if (DB.modo !== 'nuvem' || !DB.fs) { mostrarToast('Conecte ao Firebase (modo nuvem) antes de importar.', 'erro'); return; }
-  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Importando...'; }
+function semanaAtualISO(d) {
+  d = d ? new Date(d) : new Date();
+  var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var diaSemanaISO = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - diaSemanaISO);
+  var inicioAno = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  var numSemana = Math.ceil((((date - inicioAno) / 86400000) + 1) / 7);
+  return date.getUTCFullYear() + '-S' + String(numSemana).padStart(2, '0');
+}
 
-  DB.fs.collection('historico_avaliacoes').get().then(function (snap) {
-    var alunos = DB.listar('alunos');
-    var existentes = DB.listar('avaliacoes');
-    var promessas = [];
-    var importados = 0, ignorados = 0;
+var quizAtual = null;
 
-    snap.forEach(function (doc) {
-      var b = doc.data();
-      var origemId = 'v86_' + doc.id;
-      var jaExiste = existentes.some(function (a) { return a.origemHistoricoId === origemId; });
-      if (jaExiste) { ignorados++; return; }
+function renderAreaTesteConhecimento() {
+  var area = $('areaTesteConhecimento');
+  var aluno = alunoLogado();
+  if (!area || !aluno) return;
 
-      var slugAntigo = b.alunoId || '';
-      var nomeAprox = slugAntigo.replace(/_/g, ' ');
-      var aluno = alunos.filter(function (a) { return a.id === slugAntigo; })[0] ||
-        alunos.filter(function (a) { return normalizar(a.nome) === normalizar(nomeAprox) || normalizar(a.apelido) === normalizar(nomeAprox); })[0];
-      if (!aluno) { ignorados++; return; }
+  var semana = semanaAtualISO();
+  var testes = DB.listar('testesConhecimento').filter(function (t) { return t.alunoId === aluno.id; })
+    .slice().sort(function (a, b) { return String(b.semana || '').localeCompare(String(a.semana || '')); });
+  var jaFezEstaSemana = testes.some(function (t) { return t.semana === semana; });
 
-      var notas = b.notas || {};
+  var evolucaoHtml = '';
+  if (testes.length) {
+    evolucaoHtml = '<h4 style="font-size:0.78rem; color:var(--gold); margin-top:10px;">Sua Evolução</h4>' +
+      testes.slice(0, 8).map(function (t) {
+        return '<div class="lista-item"><div class="linha"><span class="mini">' + esc(t.semana) + ' • ' + dataBR(t.data) + '</span>' +
+          '<span class="badge-count">' + t.acertos + '/' + t.total + '</span></div></div>';
+      }).join('');
+  }
 
-      var dataConvertida = '';
-      try { if (b.atualizadoEm && b.atualizadoEm.toDate) dataConvertida = dataLocalISO(b.atualizadoEm.toDate()); } catch (e) {}
+  if (jaFezEstaSemana) {
+    area.innerHTML = '<p class="sem-dados">Você já fez o teste desta semana (' + semana + '). Volte semana que vem!</p>' + evolucaoHtml;
+    return;
+  }
+  if (!CONFIG.iaProxyUrl) {
+    area.innerHTML = '<p class="sem-dados">Assistente de IA ainda não configurado pelo ADM.</p>';
+    return;
+  }
 
-      var mapaEtapa = { '1a_avaliacao': '1ª Avaliação do Ano', '2a_avaliacao': '2ª Avaliação do Ano' };
-      var etapaConvertida = mapaEtapa[b.etapa] || b.etapa || 'Avaliação importada da v86';
+  var lembrete = testes.length ? '<p class="mini" style="color:var(--gold); margin-bottom:6px;">📅 Ainda não fez o teste desta semana — bora manter a sequência?</p>' : '';
+  area.innerHTML = lembrete + '<button class="btn" onclick="gerarTesteConhecimento()"><i class="fas fa-magic"></i> Fazer Teste desta Semana</button>' + evolucaoHtml;
+}
 
-      promessas.push(DB.salvar('avaliacoes', {
-        alunoId: aluno.id,
-        alunoNome: aluno.nome,
-        alunoApelido: aluno.apelido || '',
-        graduacao: b.proximaCorda || aluno.graduacao || '',
-        etapa: etapaConvertida,
-        notas: notas,
-        dificuldades: b.dificuldades || [],
-        proximaCorda: b.proximaCorda || '',
-        observacao: (b.obs || ''),
-        professor: b.avaliadoPor || 'Professor (importado)',
-        data: dataConvertida || dataLocalISO(),
-        criadoEm: agoraISO(),
-        origemHistoricoId: origemId
-      }));
-      importados++;
+function gerarTesteConhecimento() {
+  var area = $('areaTesteConhecimento');
+  area.innerHTML = '<p class="sem-dados"><span class="spinner-btn"></span> Gerando seu teste...</p>';
+
+  fetch(CONFIG.iaProxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ gerarQuiz: true, contexto: montarContextoAluno(), baseConhecimento: CONFIG.baseConhecimento || '' })
+  }).then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data || !data.perguntas || !data.perguntas.length) {
+        area.innerHTML = '<p class="sem-dados">Não consegui gerar o teste agora. Tente de novo em instantes.</p><button class="btn" onclick="gerarTesteConhecimento()">Tentar de novo</button>';
+        return;
+      }
+      quizAtual = data.perguntas;
+      renderizarQuizConhecimento();
+    })
+    .catch(function () {
+      area.innerHTML = '<p class="sem-dados">Erro ao gerar o teste. Tente de novo.</p><button class="btn" onclick="gerarTesteConhecimento()">Tentar de novo</button>';
     });
+}
 
-    Promise.all(promessas).then(function () {
-      if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> Importar Avaliações Antigas'; }
-      mostrarToast(importados + ' avaliação(ões) importada(s)' + (ignorados ? ', ' + ignorados + ' ignorada(s)' : '') + '.');
-      registroLog('dev', 'Importação de avaliações v86: ' + importados + ' importadas, ' + ignorados + ' ignoradas.');
-    });
-  }).catch(function (err) {
-    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-cloud-download-alt"></i> Importar Avaliações Antigas'; }
-    mostrarToast('Erro ao importar: ' + err.message, 'erro');
+function renderizarQuizConhecimento() {
+  var area = $('areaTesteConhecimento');
+  if (!area || !quizAtual) return;
+  area.innerHTML = quizAtual.map(function (p, i) {
+    return '<div class="lista-item"><p style="font-weight:bold; margin-bottom:6px;">' + (i + 1) + '. ' + esc(p.pergunta) + '</p>' +
+      p.opcoes.map(function (op, j) {
+        return '<label style="display:flex; align-items:center; gap:6px; font-size:0.78rem; margin-bottom:4px;"><input type="radio" name="quizP' + i + '" value="' + j + '" style="width:auto;">' + esc(op) + '</label>';
+      }).join('') + '</div>';
+  }).join('') + '<button class="btn" onclick="enviarRespostasQuiz()"><i class="fas fa-check"></i> Enviar Respostas</button>';
+}
+
+function enviarRespostasQuiz() {
+  if (!quizAtual) return;
+  var aluno = alunoLogado();
+  var acertos = 0, semResposta = false;
+  quizAtual.forEach(function (p, i) {
+    var marcado = document.querySelector('input[name="quizP' + i + '"]:checked');
+    if (!marcado) { semResposta = true; return; }
+    if (Number(marcado.value) === Number(p.correta)) acertos++;
   });
+  if (semResposta) { mostrarToast('Responda todas as perguntas antes de enviar.', 'erro'); return; }
+
+  var total = quizAtual.length;
+  DB.salvar('testesConhecimento', {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    semana: semanaAtualISO(),
+    data: dataLocalISO(),
+    acertos: acertos,
+    total: total,
+    criadoEm: agoraISO()
+  }).then(function () {
+    mostrarToast('Teste enviado! Você acertou ' + acertos + ' de ' + total + '.');
+    quizAtual = null;
+    renderAreaTesteConhecimento();
+  });
+}
+
+function gerarParecerIA(alunoId, idAlvo) {
+  var alvo = $(idAlvo);
+  if (!alvo) return;
+  if (!CONFIG.iaProxyUrl) { mostrarToast('Assistente de IA ainda não configurado.', 'erro'); return; }
+  var aluno = DB.buscar('alunos', alunoId);
+  var testes = DB.listar('testesConhecimento').filter(function (t) { return t.alunoId === alunoId; })
+    .slice().sort(function (a, b) { return String(a.semana || '').localeCompare(String(b.semana || '')); });
+
+  alvo.innerHTML = '<span class="spinner-btn"></span> Gerando parecer...';
+  fetch(CONFIG.iaProxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      gerarParecer: true,
+      aluno: { nome: aluno ? (aluno.apelido || aluno.nome) : 'Aluno', historico: testes.map(function (t) { return { semana: t.semana, acertos: t.acertos, total: t.total }; }) },
+      baseConhecimento: CONFIG.baseConhecimento || ''
+    })
+  }).then(function (r) { return r.json(); })
+    .then(function (data) {
+      alvo.textContent = (data && data.parecer) ? data.parecer : ('Erro: ' + ((data && data.erro) || 'não foi possível gerar.'));
+    })
+    .catch(function () { alvo.textContent = 'Não consegui gerar o parecer agora. Tente de novo.'; });
 }
 
 function salvarFirebaseDev() {
@@ -3101,6 +3800,393 @@ function confirmarLimparCache() {
 }
 
 /* ---------------------------------------------------------------
+   14b. ASSISTENTE VIRTUAL
+   --------------------------------------------------------------- */
+var assistenteAberto = false;
+var assistenteJaCumprimentou = false;
+
+function toggleAssistente() {
+  assistenteAberto = !assistenteAberto;
+  var painel = $('assistentePainel');
+  if (!painel) return;
+  painel.classList.toggle('aberto', assistenteAberto);
+  if (assistenteAberto && !assistenteJaCumprimentou) {
+    assistenteJaCumprimentou = true;
+    assistenteAdicionarBolha('bot', assistenteMensagemBoasVindas());
+  }
+  if (assistenteAberto) {
+    setTimeout(function () {
+      var inp = $('assistenteInput');
+      if (inp) inp.focus();
+    }, 200);
+  }
+}
+
+function assistenteMensagemBoasVindas() {
+  var aluno = alunoLogado();
+  var nome = aluno ? (aluno.apelido || aluno.nome) : '';
+  var saudacao = nome ? ('Olá, ' + nome + '! ') : 'Olá! ';
+  return saudacao + 'Sou o Assistente Capoeira.\n\n' +
+    'Posso ajudar com:\n' +
+    '• Próxima aula e horários\n' +
+    '• Status do seu check-in\n' +
+    '• Como usar o app (check-in, pedidos de treino, certificados)\n' +
+    '• Sua graduação, avaliações e presenças\n' +
+    '• Avisos do professor\n\n' +
+    'Toque em um atalho ou digite sua pergunta.';
+}
+
+function assistenteAdicionarBolha(tipo, texto) {
+  var box = $('assistenteMsgs');
+  if (!box) return;
+  var div = document.createElement('div');
+  div.className = 'assistente-bolha ' + tipo;
+  div.textContent = texto;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function assistenteEnviar() {
+  var inp = $('assistenteInput');
+  if (!inp) return;
+  var texto = (inp.value || '').trim();
+  if (!texto) return;
+  inp.value = '';
+  assistentePerguntar(texto);
+}
+
+function assistentePerguntar(texto) {
+  if (!assistenteAberto) {
+    assistenteAberto = true;
+    $('assistentePainel').classList.add('aberto');
+    if (!assistenteJaCumprimentou) {
+      assistenteJaCumprimentou = true;
+      assistenteAdicionarBolha('bot', assistenteMensagemBoasVindas());
+    }
+  }
+  assistenteAdicionarBolha('user', texto);
+  setTimeout(function () {
+    var resp = assistenteProcessar(texto);
+    if (resp !== null) {
+      assistenteAdicionarBolha('bot', resp);
+      return;
+    }
+    if (!CONFIG.iaProxyUrl) {
+      assistenteAdicionarBolha('bot', 'Não entendi completamente, e o assistente de IA ainda não foi configurado pelo ADM.\n\nTente perguntar, por exemplo:\n• "próxima aula"\n• "meu check-in"\n• "horários"\n• "pedir treino"\n• "ajuda"');
+      return;
+    }
+    assistenteAdicionarBolha('bot', '💭 Pensando...');
+    var bolhas = document.querySelectorAll('#assistenteMsgs .assistente-bolha.bot');
+    var ultimaBolha = bolhas[bolhas.length - 1];
+    chamarAssistenteIA(texto, ultimaBolha);
+  }, 280);
+}
+
+function assistenteProcessar(texto) {
+  var t = normalizar(texto);
+  var aluno = alunoLogado();
+
+  /* --- atalhos e intenções --- */
+  if (/ajuda|o que voce faz|comandos|menu/.test(t)) {
+    return 'Posso responder sobre:\n\n' +
+      '1. Próxima aula / horários da semana\n' +
+      '2. Meu check-in de hoje\n' +
+      '3. Como fazer check-in\n' +
+      '4. Pedir treino específico\n' +
+      '5. Minha graduação e avaliações\n' +
+      '6. Certificados\n' +
+      '7. Avisos do professor\n' +
+      '8. Polos / locais de treino\n\n' +
+      'Exemplos: "qual a próxima aula?", "já fiz check-in?", "como pedir treino?"';
+  }
+
+  if (/proxima aula|aula de hoje|quando e a aula|horario de hoje/.test(t)) {
+    return assistenteInfoProximaAula();
+  }
+
+  if (/horario|horarios|quando treina|dias de treino|semana/.test(t)) {
+    return assistenteInfoHorarios();
+  }
+
+  if (/meu check.?in|ja fiz check|status.*check|presenca hoje|check.?in hoje/.test(t)) {
+    return assistenteInfoCheckin(aluno);
+  }
+
+  if (/como.*check.?in|fazer check.?in|check.?in local|gympass|wellhub/.test(t)) {
+    return 'Como fazer check-in:\n\n' +
+      '1. Abra a aba Check-in\n' +
+      '2. Digite seu nome completo\n' +
+      '3. Selecione o polo do treino\n' +
+      '4. Se estiver atrasado, justifique\n' +
+      '5. Toque em "Confirmar Presença Local"\n\n' +
+      '• Só é permitido 1 check-in por aula/dia\n' +
+      '• O professor precisa aprovar\n' +
+      '• Gympass/Wellhub: use o card vermelho com o token de 6 dígitos\n\n' +
+      'Se der erro, peça ao professor para registrar o check-in manual na área Equipe.';
+  }
+
+  if (/pedir treino|treino especifico|solicitar treino|pedido de treino/.test(t)) {
+    return 'Para pedir treino específico:\n\n' +
+      '1. Entre na aba Aluno e faça login\n' +
+      '2. No painel, use o card "Pedir Treino Específico"\n' +
+      '3. Escolha o tipo (ginga, defesa, musicalidade, roda…)\n' +
+      '4. Opcional: data preferida e observação\n' +
+      '5. Envie — o professor recebe e responde\n\n' +
+      (aluno ? assistenteInfoPedidos(aluno) : 'Faça login na aba Aluno para ver seus pedidos.');
+  }
+
+  if (/desempenho|performance|analise|como estou|evolucao atlet|indice/.test(t)) {
+    if (!aluno) return 'Faça login na aba Aluno para ver sua análise de desempenho atlético.';
+    var an = analisarDesempenhoAtletico(aluno);
+    if (!an) return 'Não foi possível calcular o desempenho.';
+    return 'Análise de desempenho atlético:\n\n' +
+      '🏆 Índice: ' + an.score + '/100 — ' + an.nivel + '\n' +
+      '✅ Aulas confirmadas: ' + an.aprovadas + ' (últimos 30 dias: ' + an.aprovadas30 + ')\n' +
+      (an.mediaGeral !== null ? '📊 Média das avaliações: ' + an.mediaGeral.toFixed(1) + '\n' : '') +
+      (an.pontoForte && an.pontoForte.media !== null ? '⭐ Ponto forte: ' + an.pontoForte.nome + ' (' + an.pontoForte.media.toFixed(1) + ')\n' : '') +
+      (an.pontoFraco && an.pontoFraco.media !== null ? '🎯 Priorizar: ' + an.pontoFraco.nome + ' (' + an.pontoFraco.media.toFixed(1) + ')\n' : '') +
+      '\nRecomendações:\n• ' + an.recomendacoes.join('\n• ') +
+      '\n\nVeja o detalhe completo na aba Aluno.';
+  }
+
+  if (/graduacao|corda|nivel|minha corda/.test(t)) {
+    if (!aluno) return 'Faça login na aba Aluno para eu consultar sua graduação.';
+    return 'Sua graduação atual:\n\n🥋 ' + (aluno.graduacao || 'Não registrada') +
+      '\n\nApenas a equipe pode alterar a corda. Em caso de dúvida, fale com o professor.';
+  }
+
+  if (/avaliacao|nota|media|desempenho/.test(t)) {
+    return assistenteInfoAvaliacoes(aluno);
+  }
+
+  if (/certificado/.test(t)) {
+    return assistenteInfoCertificados(aluno);
+  }
+
+  if (/aviso|avisos|comunicado|notificacao/.test(t)) {
+    return assistenteInfoAvisos();
+  }
+
+  if (/polo|local|onde treina|endereco|maps/.test(t)) {
+    return assistenteInfoPolos();
+  }
+
+  if (/ranking|presencas|quantas aulas/.test(t)) {
+    return assistenteInfoPresencas(aluno);
+  }
+
+  if (/instagram|rede social/.test(t)) {
+    return 'Instagram da academia: ' + (CONFIG.instagram || '@capoeiranapequenaafrica') +
+      '\n\nAbra pela aba Início → "Acessar Instagram Oficial".';
+  }
+
+  if (/mural|bate.?papo|mensagem/.test(t)) {
+    return 'O Mural fica na aba Início.\nVocê pode publicar texto ou foto. As mensagens ficam visíveis para a academia.';
+  }
+
+  if (/cronometro|timer|roda/.test(t)) {
+    return 'O cronômetro fica no topo do app (tempo da roda).\nToque no tempo para tela cheia. Use ▶ para iniciar e ↺ para zerar.';
+  }
+
+  if (/professor|equipe|adm|login equipe/.test(t)) {
+    return 'Áreas da equipe (Professor / ADM / Dev):\n\n' +
+      'Toque em Equipe nas abas superiores.\n' +
+      'É necessário login da equipe.\n' +
+      'Lá o professor aprova check-ins, cadastra polos/horários, avalia alunos e registra check-in manual se houver erro.';
+  }
+
+  if (/obrigado|valeu|thanks/.test(t)) {
+    return 'Disponha! Qualquer dúvida sobre a academia ou o app, é só perguntar. Axé! 💚';
+  }
+
+  /* fallback inteligente com dados */
+  var dicas = [];
+  var aula = aulaDeHoje();
+  if (aula) dicas.push('Hoje tem aula às ' + aula.horaInicio + '.');
+  if (aluno) {
+    var ck = obterCheckinDoDia(aluno);
+    if (ck) dicas.push('Seu check-in de hoje está ' + ck.status + '.');
+    else dicas.push('Você ainda não fez check-in hoje.');
+  }
+  return null;
+}
+
+function montarContextoAluno() {
+  var aluno = alunoLogado();
+  if (!aluno) return null;
+
+  var avaliacoes = DB.listar('avaliacoes').filter(function (a) { return a.alunoId === aluno.id; })
+    .slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+  var ultima = avaliacoes[0];
+
+  var horariosTexto = DB.listar('horarios').map(function (h) {
+    var polo = DB.buscar('polos', h.poloId);
+    return (DIAS_SEMANA[Number(h.diaSemana)] || '') + (polo ? ' - ' + polo.nome : '') + ' (' + (h.horaInicio || '') + '-' + (h.horaFim || '') + ')';
+  }).join('; ') || 'Nenhum horário fixo cadastrado.';
+
+  var contexto = {
+    nome: aluno.apelido || aluno.nome,
+    graduacaoAtual: aluno.graduacao || 'não informada',
+    horariosFixos: horariosTexto,
+    ultimaAvaliacao: null
+  };
+
+  if (ultima) {
+    contexto.ultimaAvaliacao = {
+      data: ultima.data || '',
+      media: mediaAvaliacao(ultima).toFixed(1)
+    };
+  }
+
+  return contexto;
+}
+
+var historicoAssistenteIA = [];
+
+function chamarAssistenteIA(texto, bolhaCarregando) {
+  historicoAssistenteIA.push({ role: 'user', content: texto });
+
+  fetch(CONFIG.iaProxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mensagens: historicoAssistenteIA.slice(-12),
+      contexto: montarContextoAluno(),
+      baseConhecimento: CONFIG.baseConhecimento || ''
+    })
+  }).then(function (r) { return r.json(); })
+    .then(function (data) {
+      var resposta = data && data.resposta ? data.resposta : (data && data.erro ? ('Não consegui responder: ' + data.erro) : 'Não consegui responder agora.');
+      historicoAssistenteIA.push({ role: 'assistant', content: resposta });
+      if (bolhaCarregando) bolhaCarregando.textContent = resposta;
+      else assistenteAdicionarBolha('bot', resposta);
+    })
+    .catch(function () {
+      var msg = 'Não consegui falar com o assistente de IA agora. Tente de novo em instantes.';
+      if (bolhaCarregando) bolhaCarregando.textContent = msg;
+      else assistenteAdicionarBolha('bot', msg);
+    });
+}
+
+function assistenteInfoProximaAula() {
+  var aula = aulaDeHoje();
+  if (aula) {
+    var polo = DB.buscar('polos', aula.poloId);
+    return 'Aula de hoje (' + DIAS_SEMANA[new Date().getDay()] + '):\n\n' +
+      '🕐 ' + aula.horaInicio + ' – ' + aula.horaFim + '\n' +
+      '📋 ' + (aula.modalidade || 'Treino') + '\n' +
+      (polo ? ('📍 ' + polo.nome + (polo.endereco ? ' — ' + polo.endereco : '')) : '') +
+      '\n\nFaça o check-in na aba Check-in ao chegar.';
+  }
+  var horarios = DB.listar('horarios').slice().sort(function (a, b) { return Number(a.diaSemana) - Number(b.diaSemana); });
+  if (!horarios.length) return 'Nenhum horário cadastrado ainda. Peça ao professor para cadastrar na área Equipe.';
+  var hoje = new Date().getDay();
+  var prox = null;
+  for (var i = 0; i < 7; i++) {
+    var dia = (hoje + i) % 7;
+    var lista = horarios.filter(function (h) { return Number(h.diaSemana) === dia; });
+    if (lista.length) { prox = lista[0]; break; }
+  }
+  if (!prox) return 'Não encontrei a próxima aula.';
+  var polo2 = DB.buscar('polos', prox.poloId);
+  return 'Não há aula cadastrada para hoje.\n\nPróximo horário:\n' +
+    DIAS_SEMANA[Number(prox.diaSemana)] + ' • ' + prox.horaInicio + ' – ' + prox.horaFim +
+    (polo2 ? '\n📍 ' + polo2.nome : '');
+}
+
+function assistenteInfoHorarios() {
+  var horarios = DB.listar('horarios').slice().sort(function (a, b) { return Number(a.diaSemana) - Number(b.diaSemana); });
+  if (!horarios.length) return 'Nenhum horário fixo cadastrado. O professor pode cadastrar em Equipe → Professor.';
+  var linhas = horarios.map(function (h) {
+    var polo = DB.buscar('polos', h.poloId);
+    return '• ' + DIAS_SEMANA[Number(h.diaSemana)] + ' ' + h.horaInicio + '–' + h.horaFim +
+      ' (' + (h.modalidade || 'Treino') + ')' + (polo ? ' @ ' + polo.nome : '');
+  });
+  return 'Horário fixo da semana:\n\n' + linhas.join('\n');
+}
+
+function assistenteInfoCheckin(aluno) {
+  var nome = aluno ? aluno.nome : nomeCheckinAtual();
+  if (!nome && !aluno) return 'Informe seu nome na aba Check-in ou faça login na aba Aluno para eu consultar seu check-in.';
+  var ck = obterCheckinDoDia(aluno || nome);
+  if (!ck) return 'Você ainda não tem check-in registrado para hoje.\n\nVá em Check-in → escolha o polo → Confirmar Presença Local.\nSó é permitido 1 por aula/dia.';
+  return 'Check-in de hoje:\n\n' +
+    '📅 ' + dataBR(ck.data) + ' às ' + (ck.hora || '-') + '\n' +
+    '📍 ' + (ck.poloNome || ck.tipo || '-') + '\n' +
+    '📌 Status: ' + String(ck.status).toUpperCase() +
+    (ck.observacaoProfessor ? '\n💬 Prof.: ' + ck.observacaoProfessor : '') +
+    (ck.status === 'pendente' ? '\n\nAguarde a aprovação do professor.' : '') +
+    (ck.status === 'aprovado' ? '\n\nPresença confirmada! Bom treino 💚' : '');
+}
+
+function assistenteInfoPedidos(aluno) {
+  var lista = DB.listar('solicitacoes').filter(function (s) {
+    return s.alunoId === aluno.id || normalizar(s.alunoNome) === normalizar(aluno.nome);
+  }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); }).slice(0, 3);
+  if (!lista.length) return 'Você ainda não tem pedidos de treino.';
+  return 'Seus pedidos recentes:\n' + lista.map(function (s) {
+    return '• ' + s.tipo + ' — ' + String(s.status).toUpperCase() +
+      (s.respostaProfessor ? ' (Prof.: ' + s.respostaProfessor + ')' : '');
+  }).join('\n');
+}
+
+function assistenteInfoAvaliacoes(aluno) {
+  if (!aluno) return 'Faça login na aba Aluno para ver suas avaliações.';
+  var avals = DB.listar('avaliacoes').filter(function (a) {
+    return a.alunoId === aluno.id || normalizar(a.alunoNome) === normalizar(aluno.nome);
+  }).sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+  if (!avals.length) return 'Nenhuma avaliação lançada ainda para você.';
+  var ultima = avals[0];
+  var media = mediaAvaliacao(ultima).toFixed(1);
+  return 'Última avaliação (' + (ultima.data || '-') + '):\n\n' +
+    'Média: ' + media + '\n' +
+    'Técnica ' + (ultima.tecnica || '-') + ' • Disciplina ' + (ultima.disciplina || '-') +
+    ' • Ritmo ' + (ultima.ritmo || '-') + ' • Musicalidade ' + (ultima.musicalidade || '-') +
+    ' • Compromisso ' + (ultima.compromisso || '-') +
+    (ultima.observacao ? '\n\nObs.: ' + ultima.observacao : '');
+}
+
+function assistenteInfoCertificados(aluno) {
+  if (!aluno) return 'Faça login na aba Aluno para ver certificados.';
+  var certs = certificadosDoAluno(aluno);
+  if (!certs.length) return 'Você ainda não tem certificados emitidos.';
+  return 'Seus certificados:\n' + certs.slice(0, 5).map(function (c) {
+    return '• ' + (c.evento || 'Apresentação') + ' — ' + dataBR(c.data) + ' (cód. ' + (c.codigo || '-') + ')';
+  }).join('\n') + '\n\nAbra na aba Aluno ou Início para baixar/imprimir.';
+}
+
+function assistenteInfoAvisos() {
+  var avisos = DB.listar('avisos').slice().sort(function (a, b) {
+    return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
+  }).slice(0, 3);
+  if (!avisos.length) return 'Nenhum aviso publicado no momento.';
+  return 'Últimos avisos:\n\n' + avisos.map(function (a) {
+    return '📢 ' + (a.titulo || 'Aviso') + '\n' + (a.texto || '') +
+      (a.poloNome ? '\n📍 ' + a.poloNome : '') +
+      '\n—' + (a.autor || 'Professor') + ' • ' + dataHoraBR(a.criadoEm);
+  }).join('\n\n');
+}
+
+function assistenteInfoPolos() {
+  var polos = DB.listar('polos');
+  if (!polos.length) return 'Nenhum polo cadastrado ainda.';
+  return 'Locais de treino:\n\n' + polos.map(function (p) {
+    return '📍 ' + p.nome + (p.endereco ? '\n   ' + p.endereco : '') + (p.gmaps ? '\n   Maps disponível no app' : '');
+  }).join('\n\n');
+}
+
+function assistenteInfoPresencas(aluno) {
+  if (!aluno) return 'Faça login na aba Aluno para ver suas presenças.';
+  var lista = DB.listar('presencas').filter(function (p) {
+    return p.alunoId === aluno.id || normalizar(p.alunoNome) === normalizar(aluno.nome);
+  });
+  var ok = lista.filter(function (p) { return p.status === 'aprovado'; }).length;
+  var pend = lista.filter(function (p) { return p.status === 'pendente'; }).length;
+  return 'Suas presenças:\n\n✅ Aprovadas: ' + ok + '\n⏳ Pendentes: ' + pend + '\n📋 Total registradas: ' + lista.length +
+    '\n\nVeja o detalhe na aba Aluno ou em Check-in → Minhas Aulas e Check-ins.';
+}
+
+/* ---------------------------------------------------------------
    15. INICIALIZAÇÃO
    --------------------------------------------------------------- */
 function iniciarApp() {
@@ -3137,14 +4223,6 @@ function iniciarApp() {
 
 /* persiste a sessão do aluno para conveniência */
 iniciarApp();
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function (err) {
-      console.warn('[PWA] Falha ao registrar Service Worker:', err);
-    });
-  });
-}
 </script>
 </body>
 </html>
