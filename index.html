@@ -1974,7 +1974,10 @@ function renderCertificadosAluno() {
     html += '<div class="lista-item"><div class="linha"><span><i class="fas fa-award" style="color:var(--gold);"></i> <b>' + esc(c.evento || 'Apresentação') + '</b></span>' +
       '<span class="mini">' + dataBR(c.data) + '</span></div>' +
       '<span class="mini">Código: ' + esc(c.codigo || '-') + '</span>' +
-      '<button class="btn btn-gold btn-mini" style="margin-top:6px;" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir certificado</button></div>';
+      '<div class="flex-btn" style="margin-top:6px;">' +
+        '<button class="btn btn-gold btn-mini" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button>' +
+        '<button class="btn btn-whatsapp btn-mini" onclick="compartilharCertificadoWhatsApp(\'' + c.id + '\')"><i class="fab fa-whatsapp"></i> Enviar por WhatsApp</button>' +
+      '</div></div>';
   });
   $('listaCertificadosAluno').innerHTML = html;
 }
@@ -2838,8 +2841,115 @@ function renderAbaProfessor() {
     '<button class="btn btn-gold" onclick="emitirCertificado()"><i class="fas fa-award"></i> Emitir Certificado</button>' +
     '<p class="mini" style="margin-top:6px;">Só emita para alunos com check-in aprovado em evento/roda.</p></div>';
 
+  /* --- lista de certificados já emitidos, com opção de apagar --- */
+  var todosCerts = DB.listar('certificados').slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+  html += '<div class="card"><h3><i class="fas fa-list"></i> Certificados Emitidos <span class="badge-count">' + todosCerts.length + '</span></h3>';
+  if (!todosCerts.length) { html += '<p class="sem-dados">Nenhum certificado emitido ainda.</p>'; }
+  else {
+    html += todosCerts.map(function (c) {
+      return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.78rem;">' + esc(c.alunoNome || '-') + '</b>' +
+        '<span class="mini">' + dataBR(c.data) + '</span></div>' +
+        '<span class="mini">' + esc(c.evento || '-') + ' • Código: ' + esc(c.codigo || '-') + '</span>' +
+        '<div class="flex-btn" style="margin-top:6px;">' +
+          '<button class="btn btn-gold btn-mini" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button>' +
+          '<button class="btn btn-whatsapp btn-mini" onclick="compartilharCertificadoWhatsApp(\'' + c.id + '\')"><i class="fab fa-whatsapp"></i> WhatsApp</button>' +
+          '<button class="btn btn-danger btn-mini" onclick="apagarCertificado(\'' + c.id + '\')"><i class="fas fa-trash"></i> Apagar</button>' +
+        '</div></div>';
+    }).join('');
+  }
+  html += '</div>';
+
   box.innerHTML = html;
   setTimeout(function () { carregarDesenvolvimentoAluno(); }, 50);
+}
+
+function gerarImagemCertificado(c) {
+  return new Promise(function (resolve) {
+    var canvas = document.createElement('canvas');
+    canvas.width = 1000; canvas.height = 700;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#fffdf5'; ctx.fillRect(0, 0, 1000, 700);
+    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 6; ctx.strokeRect(20, 20, 960, 660);
+    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 2; ctx.strokeRect(32, 32, 936, 636);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1b5e20';
+    ctx.font = 'bold 42px Georgia, serif';
+    ctx.fillText(CONFIG.tituloApp || 'Universo Capoeira', 500, 130);
+
+    ctx.fillStyle = '#333';
+    ctx.font = '20px Georgia, serif';
+    ctx.fillText('Capoeira na Pequena África', 500, 165);
+
+    ctx.fillStyle = '#8d6e00';
+    ctx.font = 'bold 24px Georgia, serif';
+    ctx.fillText('CERTIFICADO DE PARTICIPAÇÃO', 500, 225);
+
+    ctx.fillStyle = '#333';
+    ctx.font = '18px Georgia, serif';
+    ctx.fillText('Certificamos que', 500, 280);
+
+    ctx.fillStyle = '#0b3d0b';
+    ctx.font = 'bold 40px Georgia, serif';
+    ctx.fillText(c.alunoNome || '-', 500, 340);
+
+    ctx.fillStyle = '#333';
+    ctx.font = '18px Georgia, serif';
+    var linha1 = 'participou de ' + (c.evento || 'apresentação da academia') + ',';
+    var linha2 = 'realizada em ' + dataBR(c.data) + (c.cargaHoraria ? ', com carga horária de ' + c.cargaHoraria : '') + '.';
+    ctx.fillText(linha1, 500, 400);
+    ctx.fillText(linha2, 500, 430);
+
+    ctx.fillStyle = '#555';
+    ctx.font = '14px Arial, sans-serif';
+    ctx.fillText('Código de autenticidade: ' + (c.codigo || '-'), 500, 510);
+    ctx.fillText('Emitido em ' + (c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + (c.emitidoPor || 'Equipe'), 500, 534);
+
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(350, 590); ctx.lineTo(650, 590); ctx.stroke();
+    ctx.fillText(c.assinatura || 'Professor responsável', 500, 615);
+
+    canvas.toBlob(function (blob) { resolve(blob); }, 'image/png');
+  });
+}
+
+function compartilharCertificadoWhatsApp(id) {
+  var c = DB.buscar('certificados', id);
+  if (!c) { mostrarToast('Certificado não encontrado.', 'erro'); return; }
+
+  gerarImagemCertificado(c).then(function (blob) {
+    var arquivo = null;
+    try { arquivo = new File([blob], 'certificado-' + (c.codigo || 'uc') + '.png', { type: 'image/png' }); } catch (e) {}
+
+    if (arquivo && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+      navigator.share({
+        files: [arquivo],
+        title: 'Certificado - ' + (c.evento || CONFIG.tituloApp),
+        text: 'Certificado de ' + (c.alunoNome || '') + ' — ' + (c.evento || '')
+      }).catch(function () {});
+    } else {
+      var texto = 'Certificado de ' + (c.alunoNome || '') + '\nEvento: ' + (c.evento || '-') + '\nData: ' + dataBR(c.data) + '\nCódigo: ' + (c.codigo || '-');
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+      mostrarToast('Seu navegador não permite anexar a imagem direto — abri o WhatsApp com o resumo. Pra mandar a imagem, toca em "Abrir" e tira um print ou salva o PDF.');
+    }
+  });
+}
+
+function apagarCertificado(id) {
+  var c = DB.buscar('certificados', id);
+  if (!c) return;
+  abrirModal('Apagar certificado',
+    '<p class="mini">Apagar o certificado de <strong>' + esc(c.alunoNome || '') + '</strong> (' + esc(c.evento || '') + ')? Essa ação não pode ser desfeita.</p>',
+    '<button class="btn btn-danger" onclick="confirmarApagarCertificado(\'' + id + '\')">Apagar definitivamente</button>');
+}
+
+function confirmarApagarCertificado(id) {
+  DB.excluir('certificados', id).then(function () {
+    fecharModal();
+    mostrarToast('Certificado apagado.');
+    registroLog('professor', 'Certificado apagado (id ' + id + ').');
+  });
 }
 
 function lancarPresencaManual() {
