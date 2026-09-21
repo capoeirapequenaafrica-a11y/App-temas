@@ -160,15 +160,34 @@ header {
   box-shadow: var(--shadow-soft);
   transition: border-color 0.2s ease, transform 0.15s ease;
 }
-.card:hover { border-color: rgba(0, 230, 118, 0.25); }
-@keyframes brilhoBordaDestaque {
-  0%, 100% { box-shadow: 0 0 0 rgba(var(--cor-brilho, 255,193,7), 0); }
-  50% { box-shadow: 0 0 16px rgba(var(--cor-brilho, 255,193,7), 0.55); }
+.acordeao {
+  background: var(--card-bg) !important;
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  border: 1px solid var(--card-border);
+  width: 100% !important;
+  max-width: 100% !important;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
 }
-.card-destaque { animation: brilhoBordaDestaque 3s ease-in-out infinite; }
-.card-destaque.brilho-azul { --cor-brilho: 0,210,255; }
-.card-destaque.brilho-verde { --cor-brilho: 0,230,118; }
-@media (prefers-reduced-motion: reduce) { .card-destaque { animation: none; } }
+.acordeao-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.acordeao-seta { transition: transform 0.25s ease; color: var(--text-sub); }
+.acordeao.aberto .acordeao-seta { transform: rotate(180deg); }
+.acordeao-corpo {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 14px;
+}
+.acordeao.aberto .acordeao-corpo { max-height: 4000px; padding: 0 14px 14px; }
+.card:hover { border-color: rgba(0, 230, 118, 0.25); }
 .card h3 { margin-bottom: 8px; color: var(--primary-green); font-size: 0.9rem; display: flex; align-items: center; gap: 7px; letter-spacing: 0.2px; }
 .btn {
   background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
@@ -518,7 +537,7 @@ footer a { color: var(--accent-blue); }
   <!-- ================= ABA 1 - INÍCIO ================= -->
   <div id="tab1" class="tab-content active">
 
-    <div class="card card-destaque" style="border:1px solid var(--gold);">
+    <div class="card" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-bell"></i> Avisos do Professor</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
       <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
@@ -539,27 +558,29 @@ footer a { color: var(--accent-blue); }
       <div id="feedInstagramInicio" style="margin-top:10px;"></div>
     </div>
 
-    <div class="card card-destaque brilho-azul" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
+    <div class="card" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
       <h3><i class="fas fa-broadcast-tower" style="color:var(--accent-blue);"></i> Local Notificado pelo Professor</h3>
       <p id="textoNotificacaoLocal" style="font-size:0.75rem; color:#fff;"></p>
       <a id="linkGmapsNotificacao" href="#" target="_blank" rel="noopener" style="display:none; color:var(--primary-green); font-size:0.7rem; text-decoration:underline; margin-top:4px;">Ver no Google Maps</a>
     </div>
 
-    <div class="card card-destaque" id="cardRankingInicio" style="border:1px solid var(--gold); display:none;">
-      <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos</h3>
-      <div id="conteudoRankingInicio"></div>
+    <div class="acordeao" id="cardRankingInicio" style="border:1px solid var(--gold); display:none;">
+      <div class="acordeao-cabecalho" onclick="alternarAcordeao(this)">
+        <h3 style="margin:0; color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos</h3>
+        <i class="fas fa-chevron-down acordeao-seta"></i>
+      </div>
+      <div class="acordeao-corpo"><div id="conteudoRankingInicio" style="padding-top:10px;"></div></div>
     </div>
 
-    <div class="card card-destaque" id="cardRankingCompletoInicio" style="border:1px solid var(--gold); display:none;">
-      <h3 style="color:var(--gold);"><i class="fas fa-list-ol"></i> Classificação Geral de Avaliações</h3>
-      <p style="font-size:0.68rem; color:var(--text-sub); margin-bottom:6px;">Ordenado pela média da avaliação completa mais recente de cada aluno.</p>
-      <div id="listaRankingCompletoInicio"></div>
-    </div>
-
-    <div class="card" id="cardCertificadosAluno" style="border:1px solid var(--gold); display:none;">
-      <h3 style="color:var(--gold);"><i class="fas fa-award"></i> Certificados de Apresentação</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Disponível para quem fez check-in aprovado pelo professor:</p>
-      <div id="listaCertificadosAluno"></div>
+    <div class="acordeao" id="cardRankingCompletoInicio" style="border:1px solid var(--gold); display:none;">
+      <div class="acordeao-cabecalho" onclick="alternarAcordeao(this)">
+        <h3 style="margin:0; color:var(--gold);"><i class="fas fa-list-ol"></i> Classificação Geral de Avaliações</h3>
+        <i class="fas fa-chevron-down acordeao-seta"></i>
+      </div>
+      <div class="acordeao-corpo">
+        <p style="font-size:0.68rem; color:var(--text-sub); margin:10px 0 6px;">Ordenado pela média da avaliação completa mais recente de cada aluno.</p>
+        <div id="listaRankingCompletoInicio"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -692,33 +713,12 @@ footer a { color: var(--accent-blue); }
 </div>
 
 <!-- Assistente Virtual -->
-<svg width="0" height="0" style="position:absolute;">
-  <symbol id="mascoteDino" viewBox="0 0 100 100">
-    <ellipse cx="50" cy="88" rx="22" ry="5" fill="#000" opacity="0.15"/>
-    <path d="M30 60 Q22 62 22 78 Q22 88 30 88 L38 88 Q40 80 40 72 Z" fill="#fff"/>
-    <path d="M70 60 Q78 62 78 78 Q78 88 70 88 L62 88 Q60 80 60 72 Z" fill="#fff"/>
-    <rect x="30" y="80" width="8" height="7" rx="2" fill="#2a3f4a"/>
-    <rect x="62" y="80" width="8" height="7" rx="2" fill="#2a3f4a"/>
-    <path d="M34 84 L36 88 M42 84 L44 88" stroke="#ffc107" stroke-width="3" opacity="0.9"/>
-    <path d="M66 84 L68 88 M58 84 L56 88" stroke="#ffc107" stroke-width="3" opacity="0.9"/>
-    <path d="M50 82 Q30 84 28 68 Q26 50 40 42 Q34 30 44 22 Q42 34 52 32 Q66 30 72 44 Q80 54 74 68 Q72 80 50 82 Z" fill="#00c853"/>
-    <path d="M40 42 Q34 30 44 22 Q42 32 50 32 Q44 34 42 42 Z" fill="#00a844"/>
-    <ellipse cx="50" cy="66" rx="30" ry="18" fill="#ffc107"/>
-    <rect x="20" y="60" width="60" height="9" fill="#00e676"/>
-    <circle cx="58" cy="44" r="3.4" fill="#0a1419"/>
-    <circle cx="59" cy="43" r="1" fill="#fff"/>
-    <path d="M64 38 Q69 34 74 37" stroke="#00a844" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M52 50 Q58 54 65 50" stroke="#0a1419" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M24 58 Q10 50 6 34" stroke="#00c853" stroke-width="7" fill="none" stroke-linecap="round"/>
-    <path d="M76 58 Q90 48 92 30" stroke="#00c853" stroke-width="7" fill="none" stroke-linecap="round"/>
-  </symbol>
-</svg>
 <button id="assistenteFab" onclick="toggleAssistente()" title="Assistente Capoeira" aria-label="Abrir assistente">
-  <svg viewBox="0 0 100 100" style="width:34px; height:34px;"><use href="#mascoteDino"/></svg>
+  <i class="fas fa-robot"></i>
 </button>
 <div id="assistentePainel">
   <div class="assistente-header">
-    <h4><svg viewBox="0 0 100 100" style="width:22px; height:22px; vertical-align:-5px;"><use href="#mascoteDino"/></svg> Assistente Capoeira</h4>
+    <h4><i class="fas fa-robot"></i> Assistente Capoeira</h4>
     <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
   </div>
   <div class="assistente-msgs" id="assistenteMsgs"></div>
@@ -739,19 +739,6 @@ footer a { color: var(--accent-blue); }
 </div>
 
 <script>
-/* Remove qualquer Service Worker e cache antigos (de versões anteriores, ex: v86)
-   que possam estar guardando uma cópia velha do app no navegador do usuário. */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function (registrations) {
-    registrations.forEach(function (reg) { reg.unregister(); });
-  }).catch(function () {});
-}
-if (window.caches && caches.keys) {
-  caches.keys().then(function (nomes) {
-    nomes.forEach(function (nome) { caches.delete(nome); });
-  }).catch(function () {});
-}
-
 /* =====================================================================
    UNIVERSO CAPOEIRA v87 - Web & Mobile Edition (atualização)
    Arquivo único (HTML + CSS + JS) com camada de dados híbrida:
@@ -764,16 +751,6 @@ if (window.caches && caches.keys) {
 var VERSAO_APP = 'v87';
 var CHAVE_LOCAL = 'uc_db_v87';
 var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v87';
-
-var FIREBASE_CONFIG_PADRAO = {
-  apiKey: "AIzaSyDlmXcUACxQZ3QMjaQIXsJb_gUnv10P85A",
-  authDomain: "project-10dd7ec8-159b-4351-90a.firebaseapp.com",
-  projectId: "project-10dd7ec8-159b-4351-90a",
-  storageBucket: "project-10dd7ec8-159b-4351-90a.firebasestorage.app",
-  messagingSenderId: "944397472361",
-  appId: "1:944397472361:web:f66ba584699859727b08f8",
-  measurementId: "G-F8PW3VL58H"
-};
 
 var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
@@ -964,6 +941,12 @@ function agoraEmMinutos() {
 
 /* Hash simples (djb2) - apenas para evitar senha em texto puro no banco.
    NÃO é criptografia: veja as observações de segurança no relatório. */
+function alternarAcordeao(cabecalho) {
+  var acordeao = cabecalho.closest('.acordeao');
+  if (!acordeao) return;
+  acordeao.classList.toggle('aberto');
+}
+
 function hashSenha(senha) {
   var str = 'uc::' + String(senha || '');
   var h = 5381;
@@ -1091,17 +1074,8 @@ var DB = {
     var self = this;
     var dados = Object.assign({}, obj);
     if (this.modo === 'nuvem') {
-      var idFinal = id || uid();
-      /* atualização otimista: já reflete na tela na hora, sem esperar o servidor confirmar */
-      var lista = this.cache[col] || (this.cache[col] = []);
-      var achouIdx = -1;
-      for (var i = 0; i < lista.length; i++) { if (lista[i].id === idFinal) { achouIdx = i; break; } }
-      if (achouIdx >= 0) { lista[achouIdx] = Object.assign({}, lista[achouIdx], dados, { id: idFinal }); }
-      else { lista.push(Object.assign({ id: idFinal }, dados)); }
-      this.avisar(col);
-
-      var doc = this.fs.collection(col).doc(idFinal);
-      return doc.set(dados, { merge: true }).then(function () { return idFinal; })
+      var doc = id ? this.fs.collection(col).doc(id) : this.fs.collection(col).doc();
+      return doc.set(dados, { merge: true }).then(function () { return doc.id; })
         .catch(function (e) {
           console.warn('[DB] Erro ao salvar em ' + col, e);
           mostrarToast('Falha ao salvar (' + col + ').', 'erro');
@@ -1230,7 +1204,7 @@ function salvarConfigApp(parcial) {
 }
 
 function renderGraduacoes() {
-  ['autoCadGraduacaoSelect', 'admFiltroGraduacao', 'profCadGraduacaoSelect'].forEach(function (id) {
+  ['autoCadGraduacaoSelect', 'admFiltroGraduacao'].forEach(function (id) {
     var sel = $(id);
     if (!sel) return;
     var atual = sel.value;
@@ -1242,6 +1216,16 @@ function renderGraduacoes() {
 }
 
 /* --- configuração do Firebase (persistida localmente no navegador) --- */
+var FIREBASE_CONFIG_PADRAO = {
+  apiKey: "AIzaSyDlmXcUACxQZ3QMjaQIXsJb_gUnv10P85A",
+  authDomain: "project-10dd7ec8-159b-4351-90a.firebaseapp.com",
+  projectId: "project-10dd7ec8-159b-4351-90a",
+  storageBucket: "project-10dd7ec8-159b-4351-90a.firebasestorage.app",
+  messagingSenderId: "944397472361",
+  appId: "1:944397472361:web:f66ba584699859727b08f8",
+  measurementId: "G-F8PW3VL58H"
+};
+
 function carregarConfigFirebase() {
   try {
     var salvo = JSON.parse(localStorage.getItem(CHAVE_CONFIG_LOCAL) || 'null');
@@ -1411,7 +1395,8 @@ function autenticarAlunoNuvem(btn) {
   setTimeout(function () {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Painel'; }
     if (!achado) { mostrarToast('Aluno não encontrado. Faça o cadastro.', 'erro'); return; }
-    if (achado.senhaHash !== hashSenha(senha)) { mostrarToast('Senha incorreta.', 'erro'); return; }
+    var senhaOk = achado.senhaHash ? (achado.senhaHash === hashSenha(senha)) : (achado.senha === senha);
+    if (!senhaOk) { mostrarToast('Senha incorreta.', 'erro'); return; }
     sessaoAlunoId = achado.id;
     registroLog('auth', 'Aluno entrou: ' + achado.nome);
     $('alunoLoginSenha').value = '';
@@ -1594,7 +1579,6 @@ function renderInicio() {
   renderAvisoLocal();
   renderRanking();
   renderRankingCompleto();
-  renderCertificadosAluno();
   renderMural();
   renderFeedInstagramNota();
   if (notificacaoAtiva() && $('btnAtivarNotificacao')) {
@@ -1774,12 +1758,6 @@ function renderRanking() {
 }
 
 function mediaAvaliacao(av) {
-  if (av && av.notas && typeof av.notas === 'object') {
-    var valores = Object.keys(av.notas).map(function (k) { return Number(av.notas[k]); }).filter(function (v) { return !isNaN(v); });
-    if (!valores.length) return 0;
-    var soma100 = valores.reduce(function (s, v) { return s + v; }, 0);
-    return (soma100 / valores.length) / 10;
-  }
   var campos = ['tecnica', 'disciplina', 'ritmo', 'musicalidade', 'compromisso'];
   var soma = 0, n = 0;
   campos.forEach(function (c) {
@@ -2012,10 +1990,7 @@ function renderCertificadosAluno() {
     html += '<div class="lista-item"><div class="linha"><span><i class="fas fa-award" style="color:var(--gold);"></i> <b>' + esc(c.evento || 'Apresentação') + '</b></span>' +
       '<span class="mini">' + dataBR(c.data) + '</span></div>' +
       '<span class="mini">Código: ' + esc(c.codigo || '-') + '</span>' +
-      '<div class="flex-btn" style="margin-top:6px;">' +
-        '<button class="btn btn-gold btn-mini" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button>' +
-        '<button class="btn btn-whatsapp btn-mini" onclick="compartilharCertificadoWhatsApp(\'' + c.id + '\')"><i class="fab fa-whatsapp"></i> Enviar por WhatsApp</button>' +
-      '</div></div>';
+      '<button class="btn btn-gold btn-mini" style="margin-top:6px;" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir certificado</button></div>';
   });
   $('listaCertificadosAluno').innerHTML = html;
 }
@@ -2696,18 +2671,8 @@ function renderAbaProfessor() {
   });
   html += '</div>';
 
-  /* --- cadastro de aluno pelo professor --- */
-  html += '<div class="card" style="border:1px solid var(--primary-green);"><h3><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</h3>' +
-    '<p class="mini" style="margin-bottom:6px;">Use isso pra cadastrar alunos que não têm celular/app, ou que preferem que você faça por eles.</p>' +
-    '<label class="campo-label">Nome completo</label><input id="profCadNome" placeholder="Nome completo">' +
-    '<label class="campo-label">Apelido na capoeira</label><input id="profCadApelido" placeholder="Opcional">' +
-    '<label class="campo-label">Graduação</label><select id="profCadGraduacaoSelect"></select>' +
-    '<label class="campo-label">Contato (WhatsApp, opcional)</label><input id="profCadContato" placeholder="(21) 90000-0000">' +
-    '<button class="btn" onclick="cadastrarAlunoPeloProfessor(this)"><i class="fas fa-user-plus"></i> Cadastrar Aluno</button>' +
-    '<p class="mini" style="margin-top:6px;">Uma senha provisória é gerada automaticamente — o aluno pode trocar depois em "Esqueci minha senha".</p></div>' +
-
   /* --- lançamento manual de presença (caso o check-in do aluno dê erro) --- */
-  '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-user-check"></i> Lançar/Corrigir Presença Manualmente</h3>' +
+  html += '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-user-check"></i> Lançar/Corrigir Presença Manualmente</h3>' +
     '<p class="mini" style="margin-bottom:6px;">Use isso se o check-in do aluno não aparecer aqui por algum erro — você registra a presença na hora.</p>' +
     '<label class="campo-label">Aluno</label><select id="manualPresencaAluno">' +
     '<option value="">Selecione...</option>' +
@@ -2889,155 +2854,24 @@ function renderAbaProfessor() {
     '<button class="btn btn-gold" onclick="emitirCertificado()"><i class="fas fa-award"></i> Emitir Certificado</button>' +
     '<p class="mini" style="margin-top:6px;">Só emita para alunos com check-in aprovado em evento/roda.</p></div>';
 
-  /* --- lista de certificados já emitidos, com opção de apagar --- */
-  var todosCerts = DB.listar('certificados').slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
-  html += '<div class="card"><h3><i class="fas fa-list"></i> Certificados Emitidos <span class="badge-count">' + todosCerts.length + '</span></h3>';
-  if (!todosCerts.length) { html += '<p class="sem-dados">Nenhum certificado emitido ainda.</p>'; }
-  else {
-    html += todosCerts.map(function (c) {
-      return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.78rem;">' + esc(c.alunoNome || '-') + '</b>' +
-        '<span class="mini">' + dataBR(c.data) + '</span></div>' +
-        '<span class="mini">' + esc(c.evento || '-') + ' • Código: ' + esc(c.codigo || '-') + '</span>' +
-        '<div class="flex-btn" style="margin-top:6px;">' +
-          '<button class="btn btn-gold btn-mini" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button>' +
-          '<button class="btn btn-whatsapp btn-mini" onclick="compartilharCertificadoWhatsApp(\'' + c.id + '\')"><i class="fab fa-whatsapp"></i> WhatsApp</button>' +
-          '<button class="btn btn-danger btn-mini" onclick="apagarCertificado(\'' + c.id + '\')"><i class="fas fa-trash"></i> Apagar</button>' +
-        '</div></div>';
-    }).join('');
-  }
-  html += '</div>';
+  /* --- certificados já emitidos (visão geral da equipe) --- */
+  var certificadosEmitidos = DB.listar('certificados').slice()
+    .sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+  html += '<div class="acordeao"><div class="acordeao-cabecalho" onclick="alternarAcordeao(this)">' +
+    '<h3 style="margin:0;"><i class="fas fa-scroll"></i> Certificados Já Emitidos <span class="badge-count">' + certificadosEmitidos.length + '</span></h3>' +
+    '<i class="fas fa-chevron-down acordeao-seta"></i></div>' +
+    '<div class="acordeao-corpo">' +
+    (certificadosEmitidos.length
+      ? certificadosEmitidos.map(function (c) {
+          return '<div class="lista-item"><div class="linha"><span><b>' + esc(c.alunoNome || '-') + '</b></span><span class="mini">' + dataBR(c.data) + '</span></div>' +
+            '<span class="mini">' + esc(c.evento || '-') + ' • Código: ' + esc(c.codigo || '-') + '</span>' +
+            '<button class="btn btn-gold btn-mini" style="margin-top:6px;" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button></div>';
+        }).join('')
+      : '<p class="sem-dados">Nenhum certificado emitido ainda.</p>') +
+    '</div></div>';
 
   box.innerHTML = html;
   setTimeout(function () { carregarDesenvolvimentoAluno(); }, 50);
-}
-
-function gerarImagemCertificado(c) {
-  return new Promise(function (resolve) {
-    var canvas = document.createElement('canvas');
-    canvas.width = 1000; canvas.height = 700;
-    var ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#fffdf5'; ctx.fillRect(0, 0, 1000, 700);
-    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 6; ctx.strokeRect(20, 20, 960, 660);
-    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 2; ctx.strokeRect(32, 32, 936, 636);
-
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#1b5e20';
-    ctx.font = 'bold 42px Georgia, serif';
-    ctx.fillText(CONFIG.tituloApp || 'Universo Capoeira', 500, 130);
-
-    ctx.fillStyle = '#333';
-    ctx.font = '20px Georgia, serif';
-    ctx.fillText('Capoeira na Pequena África', 500, 165);
-
-    ctx.fillStyle = '#8d6e00';
-    ctx.font = 'bold 24px Georgia, serif';
-    ctx.fillText('CERTIFICADO DE PARTICIPAÇÃO', 500, 225);
-
-    ctx.fillStyle = '#333';
-    ctx.font = '18px Georgia, serif';
-    ctx.fillText('Certificamos que', 500, 280);
-
-    ctx.fillStyle = '#0b3d0b';
-    ctx.font = 'bold 40px Georgia, serif';
-    ctx.fillText(c.alunoNome || '-', 500, 340);
-
-    ctx.fillStyle = '#333';
-    ctx.font = '18px Georgia, serif';
-    var linha1 = 'participou de ' + (c.evento || 'apresentação da academia') + ',';
-    var linha2 = 'realizada em ' + dataBR(c.data) + (c.cargaHoraria ? ', com carga horária de ' + c.cargaHoraria : '') + '.';
-    ctx.fillText(linha1, 500, 400);
-    ctx.fillText(linha2, 500, 430);
-
-    ctx.fillStyle = '#555';
-    ctx.font = '14px Arial, sans-serif';
-    ctx.fillText('Código de autenticidade: ' + (c.codigo || '-'), 500, 510);
-    ctx.fillText('Emitido em ' + (c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + (c.emitidoPor || 'Equipe'), 500, 534);
-
-    ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(350, 590); ctx.lineTo(650, 590); ctx.stroke();
-    ctx.fillText(c.assinatura || 'Professor responsável', 500, 615);
-
-    canvas.toBlob(function (blob) { resolve(blob); }, 'image/png');
-  });
-}
-
-function compartilharCertificadoWhatsApp(id) {
-  var c = DB.buscar('certificados', id);
-  if (!c) { mostrarToast('Certificado não encontrado.', 'erro'); return; }
-
-  gerarImagemCertificado(c).then(function (blob) {
-    var arquivo = null;
-    try { arquivo = new File([blob], 'certificado-' + (c.codigo || 'uc') + '.png', { type: 'image/png' }); } catch (e) {}
-
-    if (arquivo && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-      navigator.share({
-        files: [arquivo],
-        title: 'Certificado - ' + (c.evento || CONFIG.tituloApp),
-        text: 'Certificado de ' + (c.alunoNome || '') + ' — ' + (c.evento || '')
-      }).catch(function () {});
-    } else {
-      var texto = 'Certificado de ' + (c.alunoNome || '') + '\nEvento: ' + (c.evento || '-') + '\nData: ' + dataBR(c.data) + '\nCódigo: ' + (c.codigo || '-');
-      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
-      mostrarToast('Seu navegador não permite anexar a imagem direto — abri o WhatsApp com o resumo. Pra mandar a imagem, toca em "Abrir" e tira um print ou salva o PDF.');
-    }
-  });
-}
-
-function apagarCertificado(id) {
-  var c = DB.buscar('certificados', id);
-  if (!c) return;
-  abrirModal('Apagar certificado',
-    '<p class="mini">Apagar o certificado de <strong>' + esc(c.alunoNome || '') + '</strong> (' + esc(c.evento || '') + ')? Essa ação não pode ser desfeita.</p>',
-    '<button class="btn btn-danger" onclick="confirmarApagarCertificado(\'' + id + '\')">Apagar definitivamente</button>');
-}
-
-function confirmarApagarCertificado(id) {
-  DB.excluir('certificados', id).then(function () {
-    fecharModal();
-    mostrarToast('Certificado apagado.');
-    registroLog('professor', 'Certificado apagado (id ' + id + ').');
-  });
-}
-
-function gerarSenhaProvisoria() {
-  return 'capoeira' + Math.floor(1000 + Math.random() * 9000);
-}
-
-function cadastrarAlunoPeloProfessor(btn) {
-  var nome = ($('profCadNome').value || '').trim();
-  var apelido = ($('profCadApelido').value || '').trim();
-  var graduacao = $('profCadGraduacaoSelect').value;
-  var contato = ($('profCadContato').value || '').trim();
-
-  if (nome.length < 3) { mostrarToast('Informe o nome completo do aluno.', 'erro'); return; }
-  var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome) === normalizar(nome); });
-  if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
-
-  var senhaProvisoria = gerarSenhaProvisoria();
-  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Cadastrando...'; }
-
-  DB.salvar('alunos', {
-    nome: nome,
-    apelido: apelido || nome.split(' ')[0],
-    graduacao: graduacao,
-    contato: contato,
-    senhaHash: hashSenha(senhaProvisoria),
-    criadoEm: agoraISO(),
-    ativo: true,
-    cadastradoPeloProfessor: true
-  }).then(function () {
-    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar Aluno'; }
-    ['profCadNome', 'profCadApelido', 'profCadContato'].forEach(function (id) { if ($(id)) $(id).value = ''; });
-    registroLog('professor', 'Aluno cadastrado pelo professor: ' + nome);
-    abrirModal('Aluno cadastrado!',
-      '<p class="mini">Nome: <strong>' + esc(nome) + '</strong></p>' +
-      '<p class="mini">Senha provisória: <strong style="color:var(--gold); font-size:1rem;">' + esc(senhaProvisoria) + '</strong></p>' +
-      '<p class="mini" style="margin-top:8px;">Anota ou avisa o aluno agora — essa senha não fica salva em nenhum outro lugar visível depois.</p>',
-      '<button class="btn" onclick="fecharModal()">Entendi</button>');
-  }).catch(function () {
-    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar Aluno'; }
-  });
 }
 
 function lancarPresencaManual() {
@@ -3814,10 +3648,6 @@ function renderAbaDev() {
       '</div>' +
       '<div id="diagnosticoIAErros" class="mini" style="margin-top:8px; color:var(--gold); white-space:pre-wrap;"></div></div>' +
 
-    '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-box-archive"></i> Importar Dados da Versão Antiga</h3>' +
-      '<p class="mini" style="margin-bottom:6px;">Traz alunos e avaliações que ficaram guardados nas coleções antigas (boletins/historico_avaliacoes) pro formato atual. Pode rodar quantas vezes quiser — não duplica.</p>' +
-      '<button class="btn btn-secondary" onclick="importarDadosAntigos(this)"><i class="fas fa-box-archive"></i> Importar Dados da Versão Antiga</button></div>' +
-
     '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-bullhorn"></i> Publicar Atualização</h3>' +
       '<p class="mini" style="margin-bottom:6px;">Depois de subir o arquivo novo no GitHub Pages / hospedagem, toque aqui pra avisar todos os aparelhos (professor, alunos, todo mundo) a atualizar. Isso não substitui subir o arquivo — só avisa quem já tem o app aberto ou instalado.</p>' +
       '<button class="btn btn-gold" onclick="publicarNovaVersaoDev(this)"><i class="fas fa-bullhorn"></i> Avisar Todos os Dispositivos</button></div>';
@@ -3951,93 +3781,6 @@ function gerarParecerIA(alunoId, idAlvo) {
       alvo.textContent = (data && data.parecer) ? data.parecer : ('Erro: ' + ((data && data.erro) || 'não foi possível gerar.'));
     })
     .catch(function () { alvo.textContent = 'Não consegui gerar o parecer agora. Tente de novo.'; });
-}
-
-function capitalizarSlug(slug) {
-  return String(slug || '').replace(/_/g, ' ').split(' ').map(function (p) {
-    return p ? p.charAt(0).toUpperCase() + p.slice(1) : p;
-  }).join(' ').trim() || 'Aluno';
-}
-
-function importarDadosAntigos(btn) {
-  if (DB.modo !== 'nuvem' || !DB.fs) { mostrarToast('Conecte ao Firebase (modo nuvem) antes de importar.', 'erro'); return; }
-  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Importando...'; }
-
-  var mapaEtapa = { '1a_avaliacao': '1ª Avaliação do Ano', '2a_avaliacao': '2ª Avaliação do Ano' };
-  var alunosExistentes = DB.listar('alunos');
-  var idsRecuperados = {};
-  var alunosCriados = 0, avaliacoesImportadas = 0, ignoradas = 0;
-
-  DB.fs.collection('boletins').get().then(function (snapBoletins) {
-    var promessasAlunos = [];
-
-    snapBoletins.forEach(function (doc) {
-      var slug = doc.id;
-      var jaExiste = alunosExistentes.some(function (a) { return a.id === slug; });
-      idsRecuperados[slug] = true;
-      if (jaExiste) return;
-
-      var b = doc.data();
-      promessasAlunos.push(DB.salvar('alunos', {
-        nome: capitalizarSlug(slug),
-        apelido: capitalizarSlug(slug),
-        graduacao: b.proximaCorda || 'Iniciante - Corda Crua',
-        contato: '',
-        senhaHash: hashSenha('capoeira123'),
-        criadoEm: agoraISO(),
-        importadoDeVersaoAntiga: true
-      }, slug));
-      alunosCriados++;
-    });
-
-    return Promise.all(promessasAlunos);
-  }).then(function () {
-    return DB.fs.collection('historico_avaliacoes').get();
-  }).then(function (snapHistorico) {
-    var alunosAtualizados = DB.listar('alunos');
-    var existentesAvals = DB.listar('avaliacoes');
-    var promessasAvals = [];
-
-    snapHistorico.forEach(function (doc) {
-      var origemId = 'antigo_' + doc.id;
-      var jaImportado = existentesAvals.some(function (a) { return a.origemHistoricoId === origemId; });
-      if (jaImportado) { ignoradas++; return; }
-
-      var b = doc.data();
-      var slug = b.alunoId || '';
-      var aluno = alunosAtualizados.filter(function (a) { return a.id === slug; })[0];
-      if (!aluno) { ignoradas++; return; }
-
-      var dataConvertida = '';
-      try { if (b.atualizadoEm && b.atualizadoEm.toDate) dataConvertida = dataLocalISO(b.atualizadoEm.toDate()); } catch (e) {}
-
-      promessasAvals.push(DB.salvar('avaliacoes', {
-        alunoId: aluno.id,
-        alunoNome: aluno.nome,
-        alunoApelido: aluno.apelido || '',
-        graduacao: b.proximaCorda || aluno.graduacao || '',
-        etapa: mapaEtapa[b.etapa] || b.etapa || 'Avaliação importada',
-        notas: b.notas || {},
-        dificuldades: b.dificuldades || [],
-        proximaCorda: b.proximaCorda || '',
-        observacao: b.obs || '',
-        professor: b.avaliadoPor || 'Professor (importado)',
-        data: dataConvertida || dataLocalISO(),
-        criadoEm: agoraISO(),
-        origemHistoricoId: origemId
-      }));
-      avaliacoesImportadas++;
-    });
-
-    return Promise.all(promessasAvals);
-  }).then(function () {
-    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-box-archive"></i> Importar Dados da Versão Antiga'; }
-    mostrarToast(alunosCriados + ' aluno(s) recuperado(s), ' + avaliacoesImportadas + ' avaliação(ões) importada(s)' + (ignoradas ? ', ' + ignoradas + ' ignorada(s)' : '') + '.');
-    registroLog('dev', 'Importação de dados antigos: ' + alunosCriados + ' alunos, ' + avaliacoesImportadas + ' avaliações.');
-  }).catch(function (err) {
-    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-box-archive"></i> Importar Dados da Versão Antiga'; }
-    mostrarToast('Erro ao importar: ' + err.message, 'erro');
-  });
 }
 
 function salvarFirebaseDev() {
@@ -4510,6 +4253,46 @@ function assistenteInfoPresencas(aluno) {
 /* ---------------------------------------------------------------
    15. INICIALIZAÇÃO
    --------------------------------------------------------------- */
+/* --- migração automática dos professores cadastrados na v86 --- */
+function migrarProfessoresV86UmaVez() {
+  if (DB.modo !== 'nuvem' || !DB.fs) return;
+  var FLAG = 'uc_migracao_professores_v86_feita';
+  try { if (localStorage.getItem(FLAG) === '1') return; } catch (e) {}
+
+  DB.fs.collection('professores').get().then(function (snap) {
+    if (snap.empty) {
+      try { localStorage.setItem(FLAG, '1'); } catch (e) {}
+      return;
+    }
+    var equipeAtual = DB.listar('equipe');
+    var promessas = [];
+    snap.forEach(function (doc) {
+      var p = doc.data();
+      var nome = (p.apelido || p.nome || '').trim();
+      if (!nome) return;
+      var jaExiste = equipeAtual.some(function (u) { return normalizar(u.nome) === normalizar(nome); });
+      if (jaExiste) return;
+      promessas.push(DB.salvar('equipe', {
+        nome: nome,
+        senhaHash: hashSenha(p.senha || ''),
+        papel: 'professor',
+        criadoEm: agoraISO(),
+        ativo: true,
+        migradoDaV86: true
+      }));
+    });
+    Promise.all(promessas).then(function () {
+      try { localStorage.setItem(FLAG, '1'); } catch (e) {}
+      if (promessas.length > 0) {
+        registroLog('migracao', 'Professores migrados da v86: ' + promessas.length);
+        mostrarToast(promessas.length + ' professor(es) da versão anterior foram recuperados.');
+      }
+    });
+  }).catch(function (err) {
+    console.warn('[migração] Erro ao ler professores v86:', err);
+  });
+}
+
 function iniciarApp() {
   /* primeira carga: configuração + render inicial */
   DB.iniciar();
@@ -4532,6 +4315,8 @@ function iniciarApp() {
   renderCheckin();
   renderAluno();
 
+  setTimeout(migrarProfessoresV86UmaVez, 2500);
+
   /* revalida o atraso a cada minuto */
   setInterval(avaliarAtrasoHoje, 60000);
 
@@ -4544,6 +4329,14 @@ function iniciarApp() {
 
 /* persiste a sessão do aluno para conveniência */
 iniciarApp();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (err) {
+      console.warn('[PWA] Falha ao registrar Service Worker:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
