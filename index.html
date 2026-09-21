@@ -161,6 +161,14 @@ header {
   transition: border-color 0.2s ease, transform 0.15s ease;
 }
 .card:hover { border-color: rgba(0, 230, 118, 0.25); }
+@keyframes brilhoBordaDestaque {
+  0%, 100% { box-shadow: 0 0 0 rgba(var(--cor-brilho, 255,193,7), 0); }
+  50% { box-shadow: 0 0 16px rgba(var(--cor-brilho, 255,193,7), 0.55); }
+}
+.card-destaque { animation: brilhoBordaDestaque 3s ease-in-out infinite; }
+.card-destaque.brilho-azul { --cor-brilho: 0,210,255; }
+.card-destaque.brilho-verde { --cor-brilho: 0,230,118; }
+@media (prefers-reduced-motion: reduce) { .card-destaque { animation: none; } }
 .card h3 { margin-bottom: 8px; color: var(--primary-green); font-size: 0.9rem; display: flex; align-items: center; gap: 7px; letter-spacing: 0.2px; }
 .btn {
   background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
@@ -510,7 +518,7 @@ footer a { color: var(--accent-blue); }
   <!-- ================= ABA 1 - INÍCIO ================= -->
   <div id="tab1" class="tab-content active">
 
-    <div class="card" style="border:1px solid var(--gold);">
+    <div class="card card-destaque" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-bell"></i> Avisos do Professor</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
       <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
@@ -531,18 +539,18 @@ footer a { color: var(--accent-blue); }
       <div id="feedInstagramInicio" style="margin-top:10px;"></div>
     </div>
 
-    <div class="card" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
+    <div class="card card-destaque brilho-azul" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
       <h3><i class="fas fa-broadcast-tower" style="color:var(--accent-blue);"></i> Local Notificado pelo Professor</h3>
       <p id="textoNotificacaoLocal" style="font-size:0.75rem; color:#fff;"></p>
       <a id="linkGmapsNotificacao" href="#" target="_blank" rel="noopener" style="display:none; color:var(--primary-green); font-size:0.7rem; text-decoration:underline; margin-top:4px;">Ver no Google Maps</a>
     </div>
 
-    <div class="card" id="cardRankingInicio" style="border:1px solid var(--gold); display:none;">
+    <div class="card card-destaque" id="cardRankingInicio" style="border:1px solid var(--gold); display:none;">
       <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos</h3>
       <div id="conteudoRankingInicio"></div>
     </div>
 
-    <div class="card" id="cardRankingCompletoInicio" style="border:1px solid var(--gold); display:none;">
+    <div class="card card-destaque" id="cardRankingCompletoInicio" style="border:1px solid var(--gold); display:none;">
       <h3 style="color:var(--gold);"><i class="fas fa-list-ol"></i> Classificação Geral de Avaliações</h3>
       <p style="font-size:0.68rem; color:var(--text-sub); margin-bottom:6px;">Ordenado pela média da avaliação completa mais recente de cada aluno.</p>
       <div id="listaRankingCompletoInicio"></div>
@@ -684,12 +692,33 @@ footer a { color: var(--accent-blue); }
 </div>
 
 <!-- Assistente Virtual -->
+<svg width="0" height="0" style="position:absolute;">
+  <symbol id="mascoteDino" viewBox="0 0 100 100">
+    <ellipse cx="50" cy="88" rx="22" ry="5" fill="#000" opacity="0.15"/>
+    <path d="M30 60 Q22 62 22 78 Q22 88 30 88 L38 88 Q40 80 40 72 Z" fill="#fff"/>
+    <path d="M70 60 Q78 62 78 78 Q78 88 70 88 L62 88 Q60 80 60 72 Z" fill="#fff"/>
+    <rect x="30" y="80" width="8" height="7" rx="2" fill="#2a3f4a"/>
+    <rect x="62" y="80" width="8" height="7" rx="2" fill="#2a3f4a"/>
+    <path d="M34 84 L36 88 M42 84 L44 88" stroke="#ffc107" stroke-width="3" opacity="0.9"/>
+    <path d="M66 84 L68 88 M58 84 L56 88" stroke="#ffc107" stroke-width="3" opacity="0.9"/>
+    <path d="M50 82 Q30 84 28 68 Q26 50 40 42 Q34 30 44 22 Q42 34 52 32 Q66 30 72 44 Q80 54 74 68 Q72 80 50 82 Z" fill="#00c853"/>
+    <path d="M40 42 Q34 30 44 22 Q42 32 50 32 Q44 34 42 42 Z" fill="#00a844"/>
+    <ellipse cx="50" cy="66" rx="30" ry="18" fill="#ffc107"/>
+    <rect x="20" y="60" width="60" height="9" fill="#00e676"/>
+    <circle cx="58" cy="44" r="3.4" fill="#0a1419"/>
+    <circle cx="59" cy="43" r="1" fill="#fff"/>
+    <path d="M64 38 Q69 34 74 37" stroke="#00a844" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M52 50 Q58 54 65 50" stroke="#0a1419" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M24 58 Q10 50 6 34" stroke="#00c853" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M76 58 Q90 48 92 30" stroke="#00c853" stroke-width="7" fill="none" stroke-linecap="round"/>
+  </symbol>
+</svg>
 <button id="assistenteFab" onclick="toggleAssistente()" title="Assistente Capoeira" aria-label="Abrir assistente">
-  <i class="fas fa-robot"></i>
+  <svg viewBox="0 0 100 100" style="width:34px; height:34px;"><use href="#mascoteDino"/></svg>
 </button>
 <div id="assistentePainel">
   <div class="assistente-header">
-    <h4><i class="fas fa-robot"></i> Assistente Capoeira</h4>
+    <h4><svg viewBox="0 0 100 100" style="width:22px; height:22px; vertical-align:-5px;"><use href="#mascoteDino"/></svg> Assistente Capoeira</h4>
     <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
   </div>
   <div class="assistente-msgs" id="assistenteMsgs"></div>
@@ -1062,8 +1091,17 @@ var DB = {
     var self = this;
     var dados = Object.assign({}, obj);
     if (this.modo === 'nuvem') {
-      var doc = id ? this.fs.collection(col).doc(id) : this.fs.collection(col).doc();
-      return doc.set(dados, { merge: true }).then(function () { return doc.id; })
+      var idFinal = id || uid();
+      /* atualização otimista: já reflete na tela na hora, sem esperar o servidor confirmar */
+      var lista = this.cache[col] || (this.cache[col] = []);
+      var achouIdx = -1;
+      for (var i = 0; i < lista.length; i++) { if (lista[i].id === idFinal) { achouIdx = i; break; } }
+      if (achouIdx >= 0) { lista[achouIdx] = Object.assign({}, lista[achouIdx], dados, { id: idFinal }); }
+      else { lista.push(Object.assign({ id: idFinal }, dados)); }
+      this.avisar(col);
+
+      var doc = this.fs.collection(col).doc(idFinal);
+      return doc.set(dados, { merge: true }).then(function () { return idFinal; })
         .catch(function (e) {
           console.warn('[DB] Erro ao salvar em ' + col, e);
           mostrarToast('Falha ao salvar (' + col + ').', 'erro');
@@ -1192,7 +1230,7 @@ function salvarConfigApp(parcial) {
 }
 
 function renderGraduacoes() {
-  ['autoCadGraduacaoSelect', 'admFiltroGraduacao'].forEach(function (id) {
+  ['autoCadGraduacaoSelect', 'admFiltroGraduacao', 'profCadGraduacaoSelect'].forEach(function (id) {
     var sel = $(id);
     if (!sel) return;
     var atual = sel.value;
@@ -2658,8 +2696,18 @@ function renderAbaProfessor() {
   });
   html += '</div>';
 
+  /* --- cadastro de aluno pelo professor --- */
+  html += '<div class="card" style="border:1px solid var(--primary-green);"><h3><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</h3>' +
+    '<p class="mini" style="margin-bottom:6px;">Use isso pra cadastrar alunos que não têm celular/app, ou que preferem que você faça por eles.</p>' +
+    '<label class="campo-label">Nome completo</label><input id="profCadNome" placeholder="Nome completo">' +
+    '<label class="campo-label">Apelido na capoeira</label><input id="profCadApelido" placeholder="Opcional">' +
+    '<label class="campo-label">Graduação</label><select id="profCadGraduacaoSelect"></select>' +
+    '<label class="campo-label">Contato (WhatsApp, opcional)</label><input id="profCadContato" placeholder="(21) 90000-0000">' +
+    '<button class="btn" onclick="cadastrarAlunoPeloProfessor(this)"><i class="fas fa-user-plus"></i> Cadastrar Aluno</button>' +
+    '<p class="mini" style="margin-top:6px;">Uma senha provisória é gerada automaticamente — o aluno pode trocar depois em "Esqueci minha senha".</p></div>' +
+
   /* --- lançamento manual de presença (caso o check-in do aluno dê erro) --- */
-  html += '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-user-check"></i> Lançar/Corrigir Presença Manualmente</h3>' +
+  '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-user-check"></i> Lançar/Corrigir Presença Manualmente</h3>' +
     '<p class="mini" style="margin-bottom:6px;">Use isso se o check-in do aluno não aparecer aqui por algum erro — você registra a presença na hora.</p>' +
     '<label class="campo-label">Aluno</label><select id="manualPresencaAluno">' +
     '<option value="">Selecione...</option>' +
@@ -2949,6 +2997,46 @@ function confirmarApagarCertificado(id) {
     fecharModal();
     mostrarToast('Certificado apagado.');
     registroLog('professor', 'Certificado apagado (id ' + id + ').');
+  });
+}
+
+function gerarSenhaProvisoria() {
+  return 'capoeira' + Math.floor(1000 + Math.random() * 9000);
+}
+
+function cadastrarAlunoPeloProfessor(btn) {
+  var nome = ($('profCadNome').value || '').trim();
+  var apelido = ($('profCadApelido').value || '').trim();
+  var graduacao = $('profCadGraduacaoSelect').value;
+  var contato = ($('profCadContato').value || '').trim();
+
+  if (nome.length < 3) { mostrarToast('Informe o nome completo do aluno.', 'erro'); return; }
+  var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome) === normalizar(nome); });
+  if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
+
+  var senhaProvisoria = gerarSenhaProvisoria();
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Cadastrando...'; }
+
+  DB.salvar('alunos', {
+    nome: nome,
+    apelido: apelido || nome.split(' ')[0],
+    graduacao: graduacao,
+    contato: contato,
+    senhaHash: hashSenha(senhaProvisoria),
+    criadoEm: agoraISO(),
+    ativo: true,
+    cadastradoPeloProfessor: true
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar Aluno'; }
+    ['profCadNome', 'profCadApelido', 'profCadContato'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    registroLog('professor', 'Aluno cadastrado pelo professor: ' + nome);
+    abrirModal('Aluno cadastrado!',
+      '<p class="mini">Nome: <strong>' + esc(nome) + '</strong></p>' +
+      '<p class="mini">Senha provisória: <strong style="color:var(--gold); font-size:1rem;">' + esc(senhaProvisoria) + '</strong></p>' +
+      '<p class="mini" style="margin-top:8px;">Anota ou avisa o aluno agora — essa senha não fica salva em nenhum outro lugar visível depois.</p>',
+      '<button class="btn" onclick="fecharModal()">Entendi</button>');
+  }).catch(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar Aluno'; }
   });
 }
 
