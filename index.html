@@ -12,7 +12,7 @@
 <meta name="description" content="App completo da academia Capoeira na Pequena África - check-in, avaliações, mural, pedidos de treino e mais">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg">
-<title>Universo Capoeira v87 - Web &amp; Mobile Edition</title>
+<title>Universo Capoeira v88 - Web &amp; Mobile Edition</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 * {
@@ -160,35 +160,22 @@ header {
   box-shadow: var(--shadow-soft);
   transition: border-color 0.2s ease, transform 0.15s ease;
 }
-.acordeao {
-  background: var(--card-bg) !important;
-  border-radius: var(--radius);
-  margin-bottom: 12px;
-  border: 1px solid var(--card-border);
-  width: 100% !important;
-  max-width: 100% !important;
-  box-shadow: var(--shadow-soft);
-  overflow: hidden;
-}
-.acordeao-cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px;
-  cursor: pointer;
-  user-select: none;
-}
-.acordeao-seta { transition: transform 0.25s ease; color: var(--text-sub); }
-.acordeao.aberto .acordeao-seta { transform: rotate(180deg); }
-.acordeao-corpo {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease;
-  padding: 0 14px;
-}
-.acordeao.aberto .acordeao-corpo { max-height: 4000px; padding: 0 14px 14px; }
 .card:hover { border-color: rgba(0, 230, 118, 0.25); }
+@keyframes brilhoBordaDestaque {
+  0%, 100% { box-shadow: 0 0 0 rgba(var(--cor-brilho, 255,193,7), 0); }
+  50% { box-shadow: 0 0 16px rgba(var(--cor-brilho, 255,193,7), 0.55); }
+}
+.card-destaque { animation: brilhoBordaDestaque 3s ease-in-out infinite; }
+.card-destaque.brilho-azul { --cor-brilho: 0,210,255; }
+.card-destaque.brilho-verde { --cor-brilho: 0,230,118; }
+@media (prefers-reduced-motion: reduce) { .card-destaque { animation: none; } }
 .card h3 { margin-bottom: 8px; color: var(--primary-green); font-size: 0.9rem; display: flex; align-items: center; gap: 7px; letter-spacing: 0.2px; }
+.titulo-colapsavel { cursor: pointer; user-select: none; margin-bottom: 0; }
+.seta-colapsavel { margin-left: auto; transition: transform 0.28s ease; font-size: 0.78rem; color: var(--text-sub); }
+.card.fechado .seta-colapsavel { transform: rotate(-90deg); }
+.card-corpo-colapsavel { overflow: hidden; max-height: 2000px; opacity: 1; transition: max-height 0.32s ease, opacity 0.22s ease, margin-top 0.28s ease; margin-top: 8px; }
+.card.fechado .card-corpo-colapsavel { max-height: 0; opacity: 0; margin-top: 0; }
+@media (prefers-reduced-motion: reduce) { .card-corpo-colapsavel, .seta-colapsavel { transition: none; } }
 .btn {
   background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
   border: none;
@@ -362,6 +349,58 @@ footer a { color: var(--accent-blue); }
 }
 .certificado-area h2 { color: #8d6e00; font-size: 1rem; margin-bottom: 6px; }
 .certificado-area .nome { font-size: 1rem; font-weight: 800; color: #1b5e20; margin: 6px 0; }
+
+
+/* ===== Interação aluno-professor (v88) ===== */
+.badge-notif {
+  background: var(--danger);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.62rem;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  margin-left: 3px;
+  vertical-align: top;
+}
+.card-interacao { border: 1px solid var(--accent-blue) !important; }
+.msg-priv-bolha {
+  padding: 7px 10px;
+  border-radius: 10px;
+  margin: 5px 0;
+  font-size: 0.75rem;
+  max-width: 92%;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
+.msg-priv-bolha.aluno {
+  background: linear-gradient(135deg, #1b5e20, #00a844);
+  color: #fff;
+  margin-left: auto;
+  border-bottom-right-radius: 3px;
+}
+.msg-priv-bolha.professor {
+  background: #1a2a32;
+  border: 1px solid var(--card-border);
+  color: #e0f2f1;
+  border-bottom-left-radius: 3px;
+}
+.msg-priv-meta { font-size: 0.62rem; color: var(--text-sub); margin-top: 2px; }
+.feedback-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.feedback-btns .btn { flex: 1 1 90px; }
+.conversa-thread {
+  background: #0a1419;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-top: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+}
 
 /* ===== Assistente Virtual ===== */
 #assistenteFab {
@@ -537,7 +576,7 @@ footer a { color: var(--accent-blue); }
   <!-- ================= ABA 1 - INÍCIO ================= -->
   <div id="tab1" class="tab-content active">
 
-    <div class="card" style="border:1px solid var(--gold);">
+    <div class="card card-destaque" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-bell"></i> Avisos do Professor</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
       <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
@@ -558,29 +597,27 @@ footer a { color: var(--accent-blue); }
       <div id="feedInstagramInicio" style="margin-top:10px;"></div>
     </div>
 
-    <div class="card" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
+    <div class="card card-destaque brilho-azul" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
       <h3><i class="fas fa-broadcast-tower" style="color:var(--accent-blue);"></i> Local Notificado pelo Professor</h3>
       <p id="textoNotificacaoLocal" style="font-size:0.75rem; color:#fff;"></p>
       <a id="linkGmapsNotificacao" href="#" target="_blank" rel="noopener" style="display:none; color:var(--primary-green); font-size:0.7rem; text-decoration:underline; margin-top:4px;">Ver no Google Maps</a>
     </div>
 
-    <div class="acordeao" id="cardRankingInicio" style="border:1px solid var(--gold); display:none;">
-      <div class="acordeao-cabecalho" onclick="alternarAcordeao(this)">
-        <h3 style="margin:0; color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos</h3>
-        <i class="fas fa-chevron-down acordeao-seta"></i>
-      </div>
-      <div class="acordeao-corpo"><div id="conteudoRankingInicio" style="padding-top:10px;"></div></div>
+    <div class="card card-destaque" id="cardRankingInicio" style="border:1px solid var(--gold); display:none;">
+      <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos</h3>
+      <div id="conteudoRankingInicio"></div>
     </div>
 
-    <div class="acordeao" id="cardRankingCompletoInicio" style="border:1px solid var(--gold); display:none;">
-      <div class="acordeao-cabecalho" onclick="alternarAcordeao(this)">
-        <h3 style="margin:0; color:var(--gold);"><i class="fas fa-list-ol"></i> Classificação Geral de Avaliações</h3>
-        <i class="fas fa-chevron-down acordeao-seta"></i>
-      </div>
-      <div class="acordeao-corpo">
-        <p style="font-size:0.68rem; color:var(--text-sub); margin:10px 0 6px;">Ordenado pela média da avaliação completa mais recente de cada aluno.</p>
-        <div id="listaRankingCompletoInicio"></div>
-      </div>
+    <div class="card card-destaque" id="cardRankingCompletoInicio" style="border:1px solid var(--gold); display:none;">
+      <h3 style="color:var(--gold);"><i class="fas fa-list-ol"></i> Classificação Geral de Avaliações</h3>
+      <p style="font-size:0.68rem; color:var(--text-sub); margin-bottom:6px;">Ordenado pela média da avaliação completa mais recente de cada aluno.</p>
+      <div id="listaRankingCompletoInicio"></div>
+    </div>
+
+    <div class="card" id="cardCertificadosAluno" style="border:1px solid var(--gold); display:none;">
+      <h3 style="color:var(--gold);"><i class="fas fa-award"></i> Certificados de Apresentação</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Disponível para quem fez check-in aprovado pelo professor:</p>
+      <div id="listaCertificadosAluno"></div>
     </div>
 
     <div class="card">
@@ -692,7 +729,7 @@ footer a { color: var(--accent-blue); }
   </div>
 
   <footer>
-    <span id="footerInfo">Universo Capoeira v87</span> &middot; <i class="fas fa-shield-alt"></i> Capoeira na Pequena África
+    <span id="footerInfo">Universo Capoeira v88</span> &middot; <i class="fas fa-shield-alt"></i> Capoeira na Pequena África
   </footer>
 </div>
 
@@ -739,6 +776,19 @@ footer a { color: var(--accent-blue); }
 </div>
 
 <script>
+/* Remove qualquer Service Worker e cache antigos (de versões anteriores, ex: v86)
+   que possam estar guardando uma cópia velha do app no navegador do usuário. */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function (registrations) {
+    registrations.forEach(function (reg) { reg.unregister(); });
+  }).catch(function () {});
+}
+if (window.caches && caches.keys) {
+  caches.keys().then(function (nomes) {
+    nomes.forEach(function (nome) { caches.delete(nome); });
+  }).catch(function () {});
+}
+
 /* =====================================================================
    UNIVERSO CAPOEIRA v87 - Web & Mobile Edition (atualização)
    Arquivo único (HTML + CSS + JS) com camada de dados híbrida:
@@ -748,9 +798,19 @@ footer a { color: var(--accent-blue); }
 /* ---------------------------------------------------------------
    0. CONSTANTES
    --------------------------------------------------------------- */
-var VERSAO_APP = 'v87';
-var CHAVE_LOCAL = 'uc_db_v87';
-var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v87';
+var VERSAO_APP = 'v88';
+var CHAVE_LOCAL = 'uc_db_v88';
+var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v88';
+
+var FIREBASE_CONFIG_PADRAO = {
+  apiKey: "AIzaSyDlmXcUACxQZ3QMjaQIXsJb_gUnv10P85A",
+  authDomain: "project-10dd7ec8-159b-4351-90a.firebaseapp.com",
+  projectId: "project-10dd7ec8-159b-4351-90a",
+  storageBucket: "project-10dd7ec8-159b-4351-90a.firebasestorage.app",
+  messagingSenderId: "944397472361",
+  appId: "1:944397472361:web:f66ba584699859727b08f8",
+  measurementId: "G-F8PW3VL58H"
+};
 
 var DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
@@ -781,7 +841,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -790,6 +850,7 @@ var CONFIG_PADRAO = {
   logo2: '',
   tempoTimerSegundos: 90,
   toleranciaAtrasoMin: 15,
+  janelaCheckinMin: 10,
   graduacoes: GRADUACOES_PADRAO.slice(),
   iaProxyUrl: '',
   baseConhecimento: '',
@@ -800,6 +861,54 @@ var CONFIG_PADRAO = {
    1. UTILITÁRIOS
    --------------------------------------------------------------- */
 function $(id) { return document.getElementById(id); }
+
+/* ---------------------------------------------------------------
+   1.05 CARDS RETRÁTEIS (acordeão) — usados nas abas Professor/ADM/Dev
+   --------------------------------------------------------------- */
+var estadoCardsColapsados = {};
+
+function chaveDoCard(card) {
+  var titulo = card.querySelector('h3');
+  var texto = titulo ? titulo.textContent.replace(/\s+/g, ' ').trim() : '';
+  return texto || card.id || '';
+}
+
+function toggleCardColapsavel(card) {
+  var chave = chaveDoCard(card);
+  var fechado = card.classList.toggle('fechado');
+  estadoCardsColapsados[chave] = fechado;
+}
+
+function tornarCardsColapsaveis(container, padraoFechado) {
+  if (!container) return;
+  var cards = container.querySelectorAll(':scope > .card');
+  cards.forEach(function (card) {
+    var titulo = card.querySelector(':scope > h3');
+    if (!titulo || card.dataset.colapsavelPronto) return;
+    card.dataset.colapsavelPronto = '1';
+
+    var corpo = document.createElement('div');
+    corpo.className = 'card-corpo-colapsavel';
+    var no = titulo.nextSibling;
+    while (no) {
+      var prox = no.nextSibling;
+      corpo.appendChild(no);
+      no = prox;
+    }
+    card.appendChild(corpo);
+
+    var seta = document.createElement('i');
+    seta.className = 'fas fa-chevron-down seta-colapsavel';
+    titulo.appendChild(seta);
+    titulo.classList.add('titulo-colapsavel');
+    titulo.addEventListener('click', function () { toggleCardColapsavel(card); });
+
+    var chave = chaveDoCard(card);
+    var estadoSalvo = estadoCardsColapsados[chave];
+    var deveFechar = (estadoSalvo !== undefined) ? estadoSalvo : !!padraoFechado;
+    if (deveFechar) card.classList.add('fechado');
+  });
+}
 
 /* ---------------------------------------------------------------
    1.1 TELEMETRIA DE ERROS
@@ -939,14 +1048,32 @@ function agoraEmMinutos() {
   return d.getHours() * 60 + d.getMinutes();
 }
 
-/* Hash simples (djb2) - apenas para evitar senha em texto puro no banco.
-   NÃO é criptografia: veja as observações de segurança no relatório. */
-function alternarAcordeao(cabecalho) {
-  var acordeao = cabecalho.closest('.acordeao');
-  if (!acordeao) return;
-  acordeao.classList.toggle('aberto');
+function minutosParaHM(min) {
+  min = ((min % 1440) + 1440) % 1440;
+  return doisDigitos(Math.floor(min / 60)) + ':' + doisDigitos(min % 60);
 }
 
+var TOLERANCIA_JANELA_CHECKIN_MIN_PADRAO = 10;
+
+function janelaCheckin(aula) {
+  if (!aula) return null;
+  var inicio = minutosDoHM(aula.horaInicio);
+  if (inicio === null) return null;
+  var fim = minutosDoHM(aula.horaFim);
+  if (fim === null) fim = inicio + 60;
+  var tolerancia = (CONFIG && typeof CONFIG.janelaCheckinMin === 'number') ? CONFIG.janelaCheckinMin : TOLERANCIA_JANELA_CHECKIN_MIN_PADRAO;
+  return { abre: inicio - tolerancia, fecha: fim + tolerancia };
+}
+
+function dentroJanelaCheckin(aula) {
+  var j = janelaCheckin(aula);
+  if (!j) return true; /* sem horário cadastrado pra hoje: não bloqueia */
+  var agora = agoraEmMinutos();
+  return agora >= j.abre && agora <= j.fecha;
+}
+
+/* Hash simples (djb2) - apenas para evitar senha em texto puro no banco.
+   NÃO é criptografia: veja as observações de segurança no relatório. */
 function hashSenha(senha) {
   var str = 'uc::' + String(senha || '');
   var h = 5381;
@@ -1074,8 +1201,17 @@ var DB = {
     var self = this;
     var dados = Object.assign({}, obj);
     if (this.modo === 'nuvem') {
-      var doc = id ? this.fs.collection(col).doc(id) : this.fs.collection(col).doc();
-      return doc.set(dados, { merge: true }).then(function () { return doc.id; })
+      var idFinal = id || uid();
+      /* atualização otimista: já reflete na tela na hora, sem esperar o servidor confirmar */
+      var lista = this.cache[col] || (this.cache[col] = []);
+      var achouIdx = -1;
+      for (var i = 0; i < lista.length; i++) { if (lista[i].id === idFinal) { achouIdx = i; break; } }
+      if (achouIdx >= 0) { lista[achouIdx] = Object.assign({}, lista[achouIdx], dados, { id: idFinal }); }
+      else { lista.push(Object.assign({ id: idFinal }, dados)); }
+      this.avisar(col);
+
+      var doc = this.fs.collection(col).doc(idFinal);
+      return doc.set(dados, { merge: true }).then(function () { return idFinal; })
         .catch(function (e) {
           console.warn('[DB] Erro ao salvar em ' + col, e);
           mostrarToast('Falha ao salvar (' + col + ').', 'erro');
@@ -1204,7 +1340,7 @@ function salvarConfigApp(parcial) {
 }
 
 function renderGraduacoes() {
-  ['autoCadGraduacaoSelect', 'admFiltroGraduacao'].forEach(function (id) {
+  ['autoCadGraduacaoSelect', 'admFiltroGraduacao', 'profCadGraduacaoSelect'].forEach(function (id) {
     var sel = $(id);
     if (!sel) return;
     var atual = sel.value;
@@ -1216,16 +1352,6 @@ function renderGraduacoes() {
 }
 
 /* --- configuração do Firebase (persistida localmente no navegador) --- */
-var FIREBASE_CONFIG_PADRAO = {
-  apiKey: "AIzaSyDlmXcUACxQZ3QMjaQIXsJb_gUnv10P85A",
-  authDomain: "project-10dd7ec8-159b-4351-90a.firebaseapp.com",
-  projectId: "project-10dd7ec8-159b-4351-90a",
-  storageBucket: "project-10dd7ec8-159b-4351-90a.firebasestorage.app",
-  messagingSenderId: "944397472361",
-  appId: "1:944397472361:web:f66ba584699859727b08f8",
-  measurementId: "G-F8PW3VL58H"
-};
-
 function carregarConfigFirebase() {
   try {
     var salvo = JSON.parse(localStorage.getItem(CHAVE_CONFIG_LOCAL) || 'null');
@@ -1395,8 +1521,7 @@ function autenticarAlunoNuvem(btn) {
   setTimeout(function () {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Painel'; }
     if (!achado) { mostrarToast('Aluno não encontrado. Faça o cadastro.', 'erro'); return; }
-    var senhaOk = achado.senhaHash ? (achado.senhaHash === hashSenha(senha)) : (achado.senha === senha);
-    if (!senhaOk) { mostrarToast('Senha incorreta.', 'erro'); return; }
+    if (achado.senhaHash !== hashSenha(senha)) { mostrarToast('Senha incorreta.', 'erro'); return; }
     sessaoAlunoId = achado.id;
     registroLog('auth', 'Aluno entrou: ' + achado.nome);
     $('alunoLoginSenha').value = '';
@@ -1541,7 +1666,7 @@ function exigirEquipe(papeis, container, rotuloPapel) {
 /* ---------------------------------------------------------------
    8. NOTIFICAÇÕES
    --------------------------------------------------------------- */
-var CHAVE_NOTIF = 'uc_notif_ativa_v87';
+var CHAVE_NOTIF = 'uc_notif_ativa_v88';
 
 function pedirPermissaoNotificacao() {
   if (!('Notification' in window)) {
@@ -1579,11 +1704,54 @@ function renderInicio() {
   renderAvisoLocal();
   renderRanking();
   renderRankingCompleto();
+  renderCertificadosAluno();
   renderMural();
   renderFeedInstagramNota();
+  renderPerguntaSemanaInicio();
   if (notificacaoAtiva() && $('btnAtivarNotificacao')) {
     $('btnAtivarNotificacao').innerHTML = '<i class="fas fa-bell"></i> Notificações Ativas';
   }
+  setTimeout(atualizarBadgesInteracao, 80);
+}
+
+function renderPerguntaSemanaInicio() {
+  var box = $('boxPerguntaSemanaInicio');
+  if (!box) {
+    /* cria o card dinamicamente após o card de avisos se ainda não existir */
+    var tab = $('tab1');
+    if (!tab) return;
+    var div = document.createElement('div');
+    div.id = 'boxPerguntaSemanaInicio';
+    div.className = 'card';
+    div.style.display = 'none';
+    var avisoCard = $('boxNotificacaoAluno');
+    if (avisoCard && avisoCard.parentNode) {
+      avisoCard.parentNode.insertBefore(div, avisoCard.nextSibling);
+    } else {
+      tab.insertBefore(div, tab.firstChild);
+    }
+    box = div;
+  }
+  var aluno = alunoLogado();
+  var p = perguntaAtiva();
+  if (!p) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.className = 'card card-destaque brilho-azul';
+  box.style.border = '1px solid var(--accent-blue)';
+  var ja = aluno && DB.listar('respostasPergunta').some(function (r) { return r.perguntaId === p.id && r.alunoId === aluno.id; });
+  var html = '<h3 style="color:var(--accent-blue);"><i class="fas fa-question-circle"></i> Pergunta da Semana</h3>' +
+    '<p style="font-size:0.8rem;margin-bottom:6px;">' + esc(p.pergunta) + '</p>' +
+    '<span class="mini">Por ' + esc(p.autor || 'Professor') + ' • ' + dataHoraBR(p.criadoEm) + '</span>';
+  if (!aluno) {
+    html += '<p class="mini" style="margin-top:6px;">Faça login na aba Aluno para responder.</p>';
+  } else if (ja) {
+    html += '<p class="mini" style="color:var(--primary-green);margin-top:6px;"><i class="fas fa-check"></i> Você já respondeu. Obrigado!</p>';
+  } else {
+    html += '<label class="campo-label">Sua resposta</label>' +
+      '<textarea id="respostaPerguntaTexto" placeholder="Responda em poucas palavras..."></textarea>' +
+      '<button class="btn btn-secondary" onclick="responderPerguntaSemana(this)"><i class="fas fa-check"></i> Enviar resposta</button>';
+  }
+  box.innerHTML = html;
 }
 
 function renderFeedInstagramNota() {
@@ -1720,10 +1888,19 @@ function renderAvisoLocal() {
   if (!avisos.length) { box.style.display = 'none'; return; }
   var a = avisos[0];
   box.style.display = 'block';
+  var aluno = alunoLogado();
+  var leu = aluno ? alunoLeuAviso(a.id, aluno.id) : false;
+  var nLeituras = contagemLeiturasAviso(a.id);
   $('textoNotificacaoLocal').innerHTML =
     '<strong>' + esc(a.titulo || 'Aviso') + '</strong><br>' + esc(a.texto || '') +
-    '<br><span class="mini">' + esc(a.autor || 'Professor') + ' • ' + dataHoraBR(a.criadoEm) + '</span>' +
-    (a.poloNome ? '<br><span class="mini"><i class="fas fa-map-marker-alt"></i> ' + esc(a.poloNome) + '</span>' : '');
+    '<br><span class="mini">' + esc(a.autor || 'Professor') + ' • ' + dataHoraBR(a.criadoEm) +
+    (nLeituras ? ' • ' + nLeituras + ' leram' : '') + '</span>' +
+    (a.poloNome ? '<br><span class="mini"><i class="fas fa-map-marker-alt"></i> ' + esc(a.poloNome) + '</span>' : '') +
+    (aluno
+      ? (leu
+          ? '<br><span class="mini" style="color:var(--primary-green);"><i class="fas fa-check-circle"></i> Você confirmou a leitura</span>'
+          : '<br><button class="btn btn-secondary btn-mini" style="margin-top:6px;" onclick="marcarAvisoLido(\'' + a.id + '\')"><i class="fas fa-eye"></i> Confirmar leitura</button>')
+      : '<br><span class="mini">Faça login na aba Aluno para confirmar leitura</span>');
   var link = $('linkGmapsNotificacao');
   if (a.gmaps) { link.href = a.gmaps; link.style.display = 'inline-block'; } else { link.style.display = 'none'; }
 
@@ -1758,6 +1935,12 @@ function renderRanking() {
 }
 
 function mediaAvaliacao(av) {
+  if (av && av.notas && typeof av.notas === 'object') {
+    var valores = Object.keys(av.notas).map(function (k) { return Number(av.notas[k]); }).filter(function (v) { return !isNaN(v); });
+    if (!valores.length) return 0;
+    var soma100 = valores.reduce(function (s, v) { return s + v; }, 0);
+    return (soma100 / valores.length) / 10;
+  }
   var campos = ['tecnica', 'disciplina', 'ritmo', 'musicalidade', 'compromisso'];
   var soma = 0, n = 0;
   campos.forEach(function (c) {
@@ -1768,6 +1951,95 @@ function mediaAvaliacao(av) {
 }
 
 /* Análise de desempenho atlético com base em presenças, avaliações e engajamento */
+function identificarAlunosParaAdvertencia() {
+  var alunos = DB.listar('alunos');
+  var presencas = DB.listar('presencas');
+  var avaliacoes = DB.listar('avaliacoes');
+  var testes = DB.listar('testesConhecimento');
+  var resultado = [];
+
+  alunos.forEach(function (a) {
+    var motivos = [];
+    var presDoAluno = presencas.filter(function (p) { return p.alunoId === a.id || normalizar(p.alunoNome) === normalizar(a.nome); });
+    var rejeitadas = presDoAluno.filter(function (p) { return p.status === 'rejeitado'; });
+    var comAtraso = presDoAluno.filter(function (p) { return (p.atrasoMin || 0) > 0; });
+
+    if (rejeitadas.length >= 2) motivos.push(rejeitadas.length + ' presença(s) recusada(s) pelo professor');
+    if (comAtraso.length >= 3) motivos.push(comAtraso.length + ' chegada(s) com atraso registrada(s)');
+
+    var avalsDoAluno = avaliacoes.filter(function (v) { return v.alunoId === a.id; });
+    var ultimaAval = avalsDoAluno.sort(function (x, y) { return String(y.data || '').localeCompare(String(x.data || '')); })[0];
+    if (ultimaAval && ultimaAval.dificuldades && ultimaAval.dificuldades.length >= 4) {
+      motivos.push(ultimaAval.dificuldades.length + ' pontos de atenção na última avaliação');
+    }
+
+    var testesDoAluno = testes.filter(function (t) { return t.alunoId === a.id; });
+    if (testesDoAluno.length >= 2) {
+      var media = testesDoAluno.reduce(function (s, t) { return s + (t.acertos / t.total); }, 0) / testesDoAluno.length;
+      if (media < 0.5) motivos.push('média baixa nos testes de conhecimento (' + Math.round(media * 100) + '%)');
+    }
+
+    if (motivos.length) resultado.push({ aluno: a, motivos: motivos });
+  });
+
+  return resultado;
+}
+
+function gerarAdvertenciaIA(alunoId) {
+  if (!CONFIG.iaProxyUrl) { mostrarToast('Configure a URL do Assistente IA antes (ADM > Configurações).', 'erro'); return; }
+  var aluno = DB.buscar('alunos', alunoId);
+  if (!aluno) return;
+  var flags = identificarAlunosParaAdvertencia().filter(function (f) { return f.aluno.id === alunoId; })[0];
+  var motivos = flags ? flags.motivos : [];
+
+  abrirModal('Gerando advertência...', '<p class="mini"><span class="spinner-btn"></span> A IA está redigindo, aguarde...</p>', '');
+
+  fetch(CONFIG.iaProxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      gerarAdvertencia: true,
+      aluno: { nome: aluno.apelido || aluno.nome, motivos: motivos },
+      baseConhecimento: CONFIG.baseConhecimento || ''
+    })
+  }).then(function (r) { return r.json(); })
+    .then(function (data) {
+      var texto = (data && data.texto) ? data.texto : ('Não consegui gerar agora: ' + ((data && data.erro) || 'erro desconhecido.'));
+      abrirModal('Advertência para ' + (aluno.apelido || aluno.nome),
+        '<p class="mini" style="margin-bottom:6px;">Motivos identificados: ' + esc(motivos.join('; ') || '-') + '</p>' +
+        '<label class="campo-label">Revise ou edite antes de enviar:</label>' +
+        '<textarea id="textoAdvertenciaGerada" rows="6">' + esc(texto) + '</textarea>',
+        '<button class="btn btn-danger" onclick="enviarAdvertenciaAluno(\'' + alunoId + '\')"><i class="fas fa-paper-plane"></i> Enviar ao Aluno</button>' +
+        '<button class="btn btn-back" onclick="fecharModal()">Cancelar</button>');
+    })
+    .catch(function () {
+      abrirModal('Erro', '<p class="mini">Não consegui falar com a IA agora. Tente de novo.</p>', '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+    });
+}
+
+function enviarAdvertenciaAluno(alunoId) {
+  var aluno = DB.buscar('alunos', alunoId);
+  var texto = ($('textoAdvertenciaGerada').value || '').trim();
+  if (!aluno || !texto) { mostrarToast('Escreva o texto da advertência.', 'erro'); return; }
+
+  DB.salvar('mensagensPrivadas', {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    texto: texto.slice(0, 1200),
+    de: 'professor',
+    tipo: 'advertencia',
+    professorNome: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
+    lidaPeloAluno: false,
+    lidaPeloProfessor: true,
+    criadoEm: agoraISO()
+  }).then(function () {
+    fecharModal();
+    mostrarToast('Advertência enviada a ' + (aluno.apelido || aluno.nome) + '.');
+    registroLog('professor', 'Advertência enviada a ' + aluno.nome + ' (gerada por IA).');
+  });
+}
+
 function analisarDesempenhoAtletico(aluno) {
   if (!aluno) return null;
   var campos = ['tecnica', 'disciplina', 'ritmo', 'musicalidade', 'compromisso'];
@@ -1990,7 +2262,10 @@ function renderCertificadosAluno() {
     html += '<div class="lista-item"><div class="linha"><span><i class="fas fa-award" style="color:var(--gold);"></i> <b>' + esc(c.evento || 'Apresentação') + '</b></span>' +
       '<span class="mini">' + dataBR(c.data) + '</span></div>' +
       '<span class="mini">Código: ' + esc(c.codigo || '-') + '</span>' +
-      '<button class="btn btn-gold btn-mini" style="margin-top:6px;" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir certificado</button></div>';
+      '<div class="flex-btn" style="margin-top:6px;">' +
+        '<button class="btn btn-gold btn-mini" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button>' +
+        '<button class="btn btn-whatsapp btn-mini" onclick="compartilharCertificadoWhatsApp(\'' + c.id + '\')"><i class="fab fa-whatsapp"></i> Enviar por WhatsApp</button>' +
+      '</div></div>';
   });
   $('listaCertificadosAluno').innerHTML = html;
 }
@@ -2136,6 +2411,19 @@ function atualizarEstadoBotaoCheckin() {
     btn.classList.add('carregando');
     btn.innerHTML = '<i class="fas fa-lock"></i> Já fez check-in hoje';
     btn.style.opacity = '0.65';
+    return;
+  }
+
+  var aulaHojeBtn = aulaDeHoje();
+  if (aulaHojeBtn && !dentroJanelaCheckin(aulaHojeBtn)) {
+    var jw = janelaCheckin(aulaHojeBtn);
+    box.style.display = 'block';
+    box.innerHTML = '<i class="fas fa-clock" style="color:var(--danger);"></i> <strong>Fora do horário de check-in</strong>' +
+      '<br><span class="mini">Só é permitido entre ' + minutosParaHM(jw.abre) + ' e ' + minutosParaHM(jw.fecha) + ' (aula: ' + esc(aulaHojeBtn.horaInicio) + ' às ' + esc(aulaHojeBtn.horaFim) + ').</span>';
+    btn.disabled = true;
+    btn.classList.remove('carregando');
+    btn.innerHTML = '<i class="fas fa-clock"></i> Fora do horário';
+    btn.style.opacity = '0.65';
   } else {
     box.style.display = 'none';
     box.innerHTML = '';
@@ -2254,6 +2542,13 @@ function alunoCheckinLocalFixoSimples() {
   if (!poloId) { mostrarToast('Selecione o polo do treino.', 'erro'); return; }
   if (atrasado && just.length < 4) { mostrarToast('Justifique o atraso para concluir o check-in.', 'erro'); return; }
 
+  var aulaJanela = aulaDeHoje();
+  if (aulaJanela && !dentroJanelaCheckin(aulaJanela)) {
+    var j = janelaCheckin(aulaJanela);
+    mostrarToast('Check-in só é permitido entre ' + minutosParaHM(j.abre) + ' e ' + minutosParaHM(j.fecha) + ' (aula de hoje: ' + aulaJanela.horaInicio + ' às ' + aulaJanela.horaFim + ').', 'erro');
+    return;
+  }
+
   var aluno = encontrarAlunoPorNome(nome);
   var jaExiste = obterCheckinDoDia(aluno || nome);
   if (jaExiste) {
@@ -2322,6 +2617,13 @@ function validarCheckinGympassNuvem() {
     return;
   }
 
+  var aulaGympass = aulaDeHoje();
+  if (aulaGympass && !dentroJanelaCheckin(aulaGympass)) {
+    var jg = janelaCheckin(aulaGympass);
+    mostrarToast('Check-in só é permitido entre ' + minutosParaHM(jg.abre) + ' e ' + minutosParaHM(jg.fecha) + '.', 'erro');
+    return;
+  }
+
   var limite = Date.now() - 24 * 60 * 60 * 1000;
   var reutilizado = DB.listar('presencas').some(function (p) {
     return p.token === token && new Date(p.criadoEm || 0).getTime() > limite;
@@ -2364,8 +2666,8 @@ function validarCheckinGympassNuvem() {
    --------------------------------------------------------------- */
 function renderAluno() {
   try {
-    if (sessaoAlunoId) localStorage.setItem('uc_sessao_aluno_v87', sessaoAlunoId);
-    else localStorage.removeItem('uc_sessao_aluno_v87');
+    if (sessaoAlunoId) localStorage.setItem('uc_sessao_aluno_v88', sessaoAlunoId);
+    else localStorage.removeItem('uc_sessao_aluno_v88');
   } catch (e) {}
   var logado = alunoLogado();
   var testeCard = $('cardTesteConhecimento');
@@ -2456,6 +2758,11 @@ function renderAluno() {
     /* ===== ANÁLISE DE DESEMPENHO ATLÉTICO ===== */
     htmlAnaliseDesempenho(logado) +
 
+    /* ===== INTERAÇÃO: FALAR COM PROFESSOR + FEEDBACK + PERGUNTA ===== */
+    htmlCardMensagensAluno(logado) +
+    htmlCardFeedbackAula(logado) +
+    htmlCardPerguntaSemanaAluno(logado) +
+
     /* ===== PEDIR TREINO ESPECÍFICO (NOVO) ===== */
     '<div class="card" style="margin-top:4px; border:1px solid var(--accent-blue);">' +
       '<h3 style="color:var(--accent-blue);"><i class="fas fa-hand-point-up"></i> Pedir Treino Específico</h3>' +
@@ -2473,16 +2780,7 @@ function renderAluno() {
 
     /* ===== MEUS PEDIDOS DE TREINO ===== */
     '<h3 style="margin-top:12px;"><i class="fas fa-list-check"></i> Meus Pedidos de Treino</h3>' +
-    (solicitacoes.length
-      ? solicitacoes.slice(0, 8).map(function (s) {
-          return '<div class="lista-item">' +
-            '<div class="linha"><b>' + esc(s.tipo || '-') + '</b>' + pillStatusSolicitacao(s.status) + '</div>' +
-            '<span class="mini">' + dataHoraBR(s.criadoEm) + (s.dataPreferida ? ' • preferência: ' + dataBR(s.dataPreferida) : '') + '</span>' +
-            (s.observacao ? '<div class="mini">' + esc(s.observacao) + '</div>' : '') +
-            (s.respostaProfessor ? '<div class="mini" style="color:var(--gold); margin-top:3px;"><i class="fas fa-comment"></i> Prof.: ' + esc(s.respostaProfessor) + '</div>' : '') +
-            '</div>';
-        }).join('')
-      : '<p class="sem-dados">Você ainda não pediu nenhum treino específico.</p>') +
+    htmlPedidosComConversa(solicitacoes) +
 
     /* ===== PRESENÇAS ===== */
     '<h3 style="margin-top:14px;"><i class="fas fa-history"></i> Minhas Presenças</h3>' +
@@ -2497,15 +2795,7 @@ function renderAluno() {
 
     /* ===== AVALIAÇÕES ===== */
     '<h3 style="margin-top:14px;"><i class="fas fa-star-half-alt"></i> Minhas Avaliações Semanais</h3>' +
-    (avals.length
-      ? avals.map(function (a) {
-          return '<div class="lista-item"><div class="linha"><span><b>' + esc(a.semana || dataBR(a.data) || '-') + '</b></span><span class="badge-count">' + mediaAvaliacao(a).toFixed(1) + '</span></div>' +
-            '<span class="mini">Técnica ' + esc(a.tecnica || '-') + ' • Disciplina ' + esc(a.disciplina || '-') + ' • Ritmo ' + esc(a.ritmo || '-') +
-            ' • Musicalidade ' + esc(a.musicalidade || '-') + ' • Compromisso ' + esc(a.compromisso || '-') + '</span>' +
-            (a.desenvolvimento ? '<div class="mini" style="margin-top:3px; color:var(--accent-blue);"><i class="fas fa-seedling"></i> Desenvolvimento: ' + esc(a.desenvolvimento) + '</div>' : '') +
-            (a.observacao ? '<div class="mini" style="color:var(--gold);">Feedback: ' + esc(a.observacao) + '</div>' : '') + '</div>';
-        }).join('')
-      : '<p class="sem-dados">Nenhuma avaliação semanal lançada ainda.</p>') +
+    htmlAvaliacoesComComentario(avals) +
 
     /* ===== CERTIFICADOS ===== */
     '<h3 style="margin-top:14px;"><i class="fas fa-award"></i> Meus Certificados</h3>' +
@@ -2530,6 +2820,7 @@ function renderAluno() {
     '<button class="btn btn-secondary" onclick="baixarMeusDados()"><i class="fas fa-download"></i> Baixar meus dados (JSON)</button>';
 
   $('cardAlunoPainel').innerHTML = html;
+  setTimeout(atualizarBadgesInteracao, 50);
 }
 
 function salvarPerfilAluno(btn) {
@@ -2654,6 +2945,9 @@ function renderAbaProfessor() {
     '<h3><i class="fas fa-user-shield"></i> Sessão: ' + esc(sessaoEquipe.nome) + ' <span class="pill pill-info">' + esc(sessaoEquipe.papel) + '</span></h3>' +
     '<button class="btn btn-back" style="margin:0;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button></div>';
 
+  /* --- INTERAÇÃO ALUNO-PROFESSOR --- */
+  html += htmlPainelInteracaoProfessor();
+
   /* --- check-ins pendentes --- */
   html += '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Check-ins Pendentes <span class="badge-count">' + pendentes.length + '</span></h3>';
   if (!pendentes.length) { html += '<p class="sem-dados">Nenhum check-in aguardando aprovação.</p>'; }
@@ -2671,8 +2965,32 @@ function renderAbaProfessor() {
   });
   html += '</div>';
 
+  /* --- advertências sugeridas pela IA --- */
+  var flagsAdvertencia = identificarAlunosParaAdvertencia();
+  html += '<div class="card" style="border:1px solid var(--danger);"><h3><i class="fas fa-triangle-exclamation"></i> Advertências (IA) <span class="badge-count">' + flagsAdvertencia.length + '</span></h3>';
+  html += '<p class="mini" style="margin-bottom:6px;">A IA só redige o texto com base em dados reais — você revisa e decide se envia.</p>';
+  if (!flagsAdvertencia.length) { html += '<p class="sem-dados">Nenhum aluno com padrão preocupante no momento.</p>'; }
+  else {
+    html += flagsAdvertencia.map(function (f) {
+      return '<div class="lista-item"><b style="color:var(--danger); font-size:0.78rem;">' + esc(f.aluno.apelido || f.aluno.nome) + '</b>' +
+        '<div class="mini" style="margin-top:2px;">' + f.motivos.map(esc).join('; ') + '</div>' +
+        '<button class="btn btn-danger btn-mini" style="margin-top:6px;" onclick="gerarAdvertenciaIA(\'' + f.aluno.id + '\')"><i class="fas fa-robot"></i> Gerar Advertência com IA</button></div>';
+    }).join('');
+  }
+  html += '</div>';
+
+  /* --- cadastro de aluno pelo professor --- */
+  html += '<div class="card" style="border:1px solid var(--primary-green);"><h3><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</h3>' +
+    '<p class="mini" style="margin-bottom:6px;">Use isso pra cadastrar alunos que não têm celular/app, ou que preferem que você faça por eles.</p>' +
+    '<label class="campo-label">Nome completo</label><input id="profCadNome" placeholder="Nome completo">' +
+    '<label class="campo-label">Apelido na capoeira</label><input id="profCadApelido" placeholder="Opcional">' +
+    '<label class="campo-label">Graduação</label><select id="profCadGraduacaoSelect"></select>' +
+    '<label class="campo-label">Contato (WhatsApp, opcional)</label><input id="profCadContato" placeholder="(21) 90000-0000">' +
+    '<button class="btn" onclick="cadastrarAlunoPeloProfessor(this)"><i class="fas fa-user-plus"></i> Cadastrar Aluno</button>' +
+    '<p class="mini" style="margin-top:6px;">Uma senha provisória é gerada automaticamente — o aluno pode trocar depois em "Esqueci minha senha".</p></div>' +
+
   /* --- lançamento manual de presença (caso o check-in do aluno dê erro) --- */
-  html += '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-user-check"></i> Lançar/Corrigir Presença Manualmente</h3>' +
+  '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-user-check"></i> Lançar/Corrigir Presença Manualmente</h3>' +
     '<p class="mini" style="margin-bottom:6px;">Use isso se o check-in do aluno não aparecer aqui por algum erro — você registra a presença na hora.</p>' +
     '<label class="campo-label">Aluno</label><select id="manualPresencaAluno">' +
     '<option value="">Selecione...</option>' +
@@ -2755,7 +3073,8 @@ function renderAbaProfessor() {
       (s.graduacao ? ' <span class="mini">' + esc(s.graduacao) + '</span>' : '') + '</div>' +
       (s.dataPreferida ? '<span class="mini"><i class="fas fa-calendar"></i> Preferência: ' + dataBR(s.dataPreferida) + '</span><br>' : '') +
       (s.observacao ? '<div class="mini" style="margin-top:3px;">' + esc(s.observacao) + '</div>' : '') +
-      '<input id="respSolic_' + s.id + '" placeholder="Resposta ao aluno (opcional)" style="margin-top:6px;">' +
+      htmlConversaSolicitacao(s, 'professor') +
+      '<input id="respSolic_' + s.id + '" placeholder="Resposta oficial ao aluno (opcional)" style="margin-top:6px;">' +
       '<div class="flex-btn" style="margin-top:4px;">' +
         '<button class="btn btn-mini" onclick="decidirSolicitacao(\'' + s.id + '\',\'aprovado\')"><i class="fas fa-check"></i> Aprovar</button>' +
         '<button class="btn btn-secondary btn-mini" onclick="decidirSolicitacao(\'' + s.id + '\',\'realizado\')"><i class="fas fa-check-double"></i> Já realizado</button>' +
@@ -2786,6 +3105,7 @@ function renderAbaProfessor() {
   html += '<label class="campo-label">Nome do polo</label><input id="poloNome" placeholder="Ex: Sede - Pedra do Sal">' +
     '<label class="campo-label">Endereço</label><input id="poloEndereco" placeholder="Rua, número, bairro">' +
     '<label class="campo-label">Link do Google Maps</label><input id="poloGmaps" placeholder="https://maps.google.com/...">' +
+    '<button type="button" class="btn btn-secondary" onclick="usarGpsParaPolo()"><i class="fas fa-location-arrow"></i> Usar Minha Localização Atual (GPS)</button>' +
     '<button class="btn" onclick="salvarPolo()"><i class="fas fa-plus"></i> Cadastrar Polo</button></div>';
 
   /* --- horários --- */
@@ -2854,24 +3174,156 @@ function renderAbaProfessor() {
     '<button class="btn btn-gold" onclick="emitirCertificado()"><i class="fas fa-award"></i> Emitir Certificado</button>' +
     '<p class="mini" style="margin-top:6px;">Só emita para alunos com check-in aprovado em evento/roda.</p></div>';
 
-  /* --- certificados já emitidos (visão geral da equipe) --- */
-  var certificadosEmitidos = DB.listar('certificados').slice()
-    .sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
-  html += '<div class="acordeao"><div class="acordeao-cabecalho" onclick="alternarAcordeao(this)">' +
-    '<h3 style="margin:0;"><i class="fas fa-scroll"></i> Certificados Já Emitidos <span class="badge-count">' + certificadosEmitidos.length + '</span></h3>' +
-    '<i class="fas fa-chevron-down acordeao-seta"></i></div>' +
-    '<div class="acordeao-corpo">' +
-    (certificadosEmitidos.length
-      ? certificadosEmitidos.map(function (c) {
-          return '<div class="lista-item"><div class="linha"><span><b>' + esc(c.alunoNome || '-') + '</b></span><span class="mini">' + dataBR(c.data) + '</span></div>' +
-            '<span class="mini">' + esc(c.evento || '-') + ' • Código: ' + esc(c.codigo || '-') + '</span>' +
-            '<button class="btn btn-gold btn-mini" style="margin-top:6px;" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button></div>';
-        }).join('')
-      : '<p class="sem-dados">Nenhum certificado emitido ainda.</p>') +
-    '</div></div>';
+  /* --- lista de certificados já emitidos, com opção de apagar --- */
+  var todosCerts = DB.listar('certificados').slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+  html += '<div class="card"><h3><i class="fas fa-list"></i> Certificados Emitidos <span class="badge-count">' + todosCerts.length + '</span></h3>';
+  if (!todosCerts.length) { html += '<p class="sem-dados">Nenhum certificado emitido ainda.</p>'; }
+  else {
+    html += todosCerts.map(function (c) {
+      return '<div class="lista-item"><div class="linha"><b style="color:var(--primary-green); font-size:0.78rem;">' + esc(c.alunoNome || '-') + '</b>' +
+        '<span class="mini">' + dataBR(c.data) + '</span></div>' +
+        '<span class="mini">' + esc(c.evento || '-') + ' • Código: ' + esc(c.codigo || '-') + '</span>' +
+        '<div class="flex-btn" style="margin-top:6px;">' +
+          '<button class="btn btn-gold btn-mini" onclick="baixarCertificado(\'' + c.id + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button>' +
+          '<button class="btn btn-whatsapp btn-mini" onclick="compartilharCertificadoWhatsApp(\'' + c.id + '\')"><i class="fab fa-whatsapp"></i> WhatsApp</button>' +
+          '<button class="btn btn-danger btn-mini" onclick="apagarCertificado(\'' + c.id + '\')"><i class="fas fa-trash"></i> Apagar</button>' +
+        '</div></div>';
+    }).join('');
+  }
+  html += '</div>';
 
   box.innerHTML = html;
-  setTimeout(function () { carregarDesenvolvimentoAluno(); }, 50);
+  tornarCardsColapsaveis(box);
+  setTimeout(function () { carregarDesenvolvimentoAluno(); atualizarBadgesInteracao(); }, 50);
+}
+
+function gerarImagemCertificado(c) {
+  return new Promise(function (resolve) {
+    var canvas = document.createElement('canvas');
+    canvas.width = 1000; canvas.height = 700;
+    var ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#fffdf5'; ctx.fillRect(0, 0, 1000, 700);
+    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 6; ctx.strokeRect(20, 20, 960, 660);
+    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 2; ctx.strokeRect(32, 32, 936, 636);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#1b5e20';
+    ctx.font = 'bold 42px Georgia, serif';
+    ctx.fillText(CONFIG.tituloApp || 'Universo Capoeira', 500, 130);
+
+    ctx.fillStyle = '#333';
+    ctx.font = '20px Georgia, serif';
+    ctx.fillText('Capoeira na Pequena África', 500, 165);
+
+    ctx.fillStyle = '#8d6e00';
+    ctx.font = 'bold 24px Georgia, serif';
+    ctx.fillText('CERTIFICADO DE PARTICIPAÇÃO', 500, 225);
+
+    ctx.fillStyle = '#333';
+    ctx.font = '18px Georgia, serif';
+    ctx.fillText('Certificamos que', 500, 280);
+
+    ctx.fillStyle = '#0b3d0b';
+    ctx.font = 'bold 40px Georgia, serif';
+    ctx.fillText(c.alunoNome || '-', 500, 340);
+
+    ctx.fillStyle = '#333';
+    ctx.font = '18px Georgia, serif';
+    var linha1 = 'participou de ' + (c.evento || 'apresentação da academia') + ',';
+    var linha2 = 'realizada em ' + dataBR(c.data) + (c.cargaHoraria ? ', com carga horária de ' + c.cargaHoraria : '') + '.';
+    ctx.fillText(linha1, 500, 400);
+    ctx.fillText(linha2, 500, 430);
+
+    ctx.fillStyle = '#555';
+    ctx.font = '14px Arial, sans-serif';
+    ctx.fillText('Código de autenticidade: ' + (c.codigo || '-'), 500, 510);
+    ctx.fillText('Emitido em ' + (c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + (c.emitidoPor || 'Equipe'), 500, 534);
+
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(350, 590); ctx.lineTo(650, 590); ctx.stroke();
+    ctx.fillText(c.assinatura || 'Professor responsável', 500, 615);
+
+    canvas.toBlob(function (blob) { resolve(blob); }, 'image/png');
+  });
+}
+
+function compartilharCertificadoWhatsApp(id) {
+  var c = DB.buscar('certificados', id);
+  if (!c) { mostrarToast('Certificado não encontrado.', 'erro'); return; }
+
+  gerarImagemCertificado(c).then(function (blob) {
+    var arquivo = null;
+    try { arquivo = new File([blob], 'certificado-' + (c.codigo || 'uc') + '.png', { type: 'image/png' }); } catch (e) {}
+
+    if (arquivo && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+      navigator.share({
+        files: [arquivo],
+        title: 'Certificado - ' + (c.evento || CONFIG.tituloApp),
+        text: 'Certificado de ' + (c.alunoNome || '') + ' — ' + (c.evento || '')
+      }).catch(function () {});
+    } else {
+      var texto = 'Certificado de ' + (c.alunoNome || '') + '\nEvento: ' + (c.evento || '-') + '\nData: ' + dataBR(c.data) + '\nCódigo: ' + (c.codigo || '-');
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+      mostrarToast('Seu navegador não permite anexar a imagem direto — abri o WhatsApp com o resumo. Pra mandar a imagem, toca em "Abrir" e tira um print ou salva o PDF.');
+    }
+  });
+}
+
+function apagarCertificado(id) {
+  var c = DB.buscar('certificados', id);
+  if (!c) return;
+  abrirModal('Apagar certificado',
+    '<p class="mini">Apagar o certificado de <strong>' + esc(c.alunoNome || '') + '</strong> (' + esc(c.evento || '') + ')? Essa ação não pode ser desfeita.</p>',
+    '<button class="btn btn-danger" onclick="confirmarApagarCertificado(\'' + id + '\')">Apagar definitivamente</button>');
+}
+
+function confirmarApagarCertificado(id) {
+  DB.excluir('certificados', id).then(function () {
+    fecharModal();
+    mostrarToast('Certificado apagado.');
+    registroLog('professor', 'Certificado apagado (id ' + id + ').');
+  });
+}
+
+function gerarSenhaProvisoria() {
+  return 'capoeira' + Math.floor(1000 + Math.random() * 9000);
+}
+
+function cadastrarAlunoPeloProfessor(btn) {
+  var nome = ($('profCadNome').value || '').trim();
+  var apelido = ($('profCadApelido').value || '').trim();
+  var graduacao = $('profCadGraduacaoSelect').value;
+  var contato = ($('profCadContato').value || '').trim();
+
+  if (nome.length < 3) { mostrarToast('Informe o nome completo do aluno.', 'erro'); return; }
+  var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome) === normalizar(nome); });
+  if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
+
+  var senhaProvisoria = gerarSenhaProvisoria();
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Cadastrando...'; }
+
+  DB.salvar('alunos', {
+    nome: nome,
+    apelido: apelido || nome.split(' ')[0],
+    graduacao: graduacao,
+    contato: contato,
+    senhaHash: hashSenha(senhaProvisoria),
+    criadoEm: agoraISO(),
+    ativo: true,
+    cadastradoPeloProfessor: true
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar Aluno'; }
+    ['profCadNome', 'profCadApelido', 'profCadContato'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    registroLog('professor', 'Aluno cadastrado pelo professor: ' + nome);
+    abrirModal('Aluno cadastrado!',
+      '<p class="mini">Nome: <strong>' + esc(nome) + '</strong></p>' +
+      '<p class="mini">Senha provisória: <strong style="color:var(--gold); font-size:1rem;">' + esc(senhaProvisoria) + '</strong></p>' +
+      '<p class="mini" style="margin-top:8px;">Anota ou avisa o aluno agora — essa senha não fica salva em nenhum outro lugar visível depois.</p>',
+      '<button class="btn" onclick="fecharModal()">Entendi</button>');
+  }).catch(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar Aluno'; }
+  });
 }
 
 function lancarPresencaManual() {
@@ -3000,6 +3452,7 @@ function decidirSolicitacao(id, status) {
   DB.salvar('solicitacoes', {
     status: status,
     respostaProfessor: resp,
+    respostaVistaAluno: false,
     respondidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
     respondidoEm: agoraISO()
   }, id).then(function () {
@@ -3010,6 +3463,18 @@ function decidirSolicitacao(id, status) {
       notificar('Pedido de treino aprovado', s.alunoNome + ': ' + (s.tipo || ''));
     }
     renderAbaProfessor();
+  });
+}
+
+function usarGpsParaPolo() {
+  if (!navigator.geolocation) { mostrarToast('GPS não suportado neste navegador.', 'erro'); return; }
+  mostrarToast('Obtendo localização...');
+  navigator.geolocation.getCurrentPosition(function (pos) {
+    var link = 'https://www.google.com/maps?q=' + pos.coords.latitude + ',' + pos.coords.longitude;
+    if ($('poloGmaps')) $('poloGmaps').value = link;
+    mostrarToast('Localização capturada!');
+  }, function (err) {
+    mostrarToast('Erro de GPS: ' + err.message, 'erro');
   });
 }
 
@@ -3338,6 +3803,7 @@ function renderAbaAdm() {
     '</div>' +
     '<label class="campo-label">Tempo padrão do cronômetro (segundos)</label><input id="cfgTimer" type="number" min="10" max="3600" value="' + esc(CONFIG.tempoTimerSegundos) + '">' +
     '<label class="campo-label">Tolerância de atraso (minutos)</label><input id="cfgTolerancia" type="number" min="0" max="120" value="' + esc(CONFIG.toleranciaAtrasoMin) + '">' +
+    '<label class="campo-label">Janela de check-in (minutos antes/depois da aula)</label><input id="cfgJanelaCheckin" type="number" min="0" max="60" value="' + esc(CONFIG.janelaCheckinMin) + '">' +
     '<label class="campo-label">Graduações (uma por linha)</label><textarea id="cfgGraduacoes" style="min-height:120px;">' + esc(CONFIG.graduacoes.join('\n')) + '</textarea>' +
     '<button class="btn" onclick="salvarConfiguracaoAdm()"><i class="fas fa-save"></i> Salvar Configurações</button></div>';
 
@@ -3354,6 +3820,7 @@ function renderAbaAdm() {
     '<p class="mini" style="margin-top:6px;">O backup contém alunos, presenças, avaliações, certificados, avisos, polos e horários. Senhas são exportadas como hash.</p></div>';
 
   box.innerHTML = html;
+  tornarCardsColapsaveis(box);
 }
 
 function htmlListaAlunosAdm(alunos) {
@@ -3502,6 +3969,7 @@ function salvarConfiguracaoAdm() {
     logo2: logo2,
     tempoTimerSegundos: Math.max(10, parseInt($('cfgTimer').value, 10) || 90),
     toleranciaAtrasoMin: Math.max(0, parseInt($('cfgTolerancia').value, 10) || 15),
+    janelaCheckinMin: Math.max(0, parseInt($('cfgJanelaCheckin').value, 10) || 10),
     graduacoes: graduacoes
   }).then(function () {
     mostrarToast('Configurações salvas. Logos atualizados no cabeçalho e certificados.');
@@ -3574,7 +4042,7 @@ function confirmarLimparTudo() {
 
 function limparTudoDefinitivo() {
   fecharModal();
-  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'logs', 'solicitacoes', 'testesConhecimento'];
+  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos'];
   Promise.all(alvos.map(function (c) { return DB.limparColecao(c); })).then(function () {
     sessaoAlunoId = null;
     mostrarToast('Todos os dados foram apagados.');
@@ -3648,10 +4116,15 @@ function renderAbaDev() {
       '</div>' +
       '<div id="diagnosticoIAErros" class="mini" style="margin-top:8px; color:var(--gold); white-space:pre-wrap;"></div></div>' +
 
+    '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-box-archive"></i> Importar Dados da Versão Antiga</h3>' +
+      '<p class="mini" style="margin-bottom:6px;">Traz alunos e avaliações que ficaram guardados nas coleções antigas (boletins/historico_avaliacoes) pro formato atual. Pode rodar quantas vezes quiser — não duplica.</p>' +
+      '<button class="btn btn-secondary" onclick="importarDadosAntigos(this)"><i class="fas fa-box-archive"></i> Importar Dados da Versão Antiga</button></div>' +
+
     '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-bullhorn"></i> Publicar Atualização</h3>' +
       '<p class="mini" style="margin-bottom:6px;">Depois de subir o arquivo novo no GitHub Pages / hospedagem, toque aqui pra avisar todos os aparelhos (professor, alunos, todo mundo) a atualizar. Isso não substitui subir o arquivo — só avisa quem já tem o app aberto ou instalado.</p>' +
       '<button class="btn btn-gold" onclick="publicarNovaVersaoDev(this)"><i class="fas fa-bullhorn"></i> Avisar Todos os Dispositivos</button></div>';
   atualizarPainelTelemetria();
+  tornarCardsColapsaveis(box);
 }
 
 function semanaAtualISO(d) {
@@ -3781,6 +4254,93 @@ function gerarParecerIA(alunoId, idAlvo) {
       alvo.textContent = (data && data.parecer) ? data.parecer : ('Erro: ' + ((data && data.erro) || 'não foi possível gerar.'));
     })
     .catch(function () { alvo.textContent = 'Não consegui gerar o parecer agora. Tente de novo.'; });
+}
+
+function capitalizarSlug(slug) {
+  return String(slug || '').replace(/_/g, ' ').split(' ').map(function (p) {
+    return p ? p.charAt(0).toUpperCase() + p.slice(1) : p;
+  }).join(' ').trim() || 'Aluno';
+}
+
+function importarDadosAntigos(btn) {
+  if (DB.modo !== 'nuvem' || !DB.fs) { mostrarToast('Conecte ao Firebase (modo nuvem) antes de importar.', 'erro'); return; }
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Importando...'; }
+
+  var mapaEtapa = { '1a_avaliacao': '1ª Avaliação do Ano', '2a_avaliacao': '2ª Avaliação do Ano' };
+  var alunosExistentes = DB.listar('alunos');
+  var idsRecuperados = {};
+  var alunosCriados = 0, avaliacoesImportadas = 0, ignoradas = 0;
+
+  DB.fs.collection('boletins').get().then(function (snapBoletins) {
+    var promessasAlunos = [];
+
+    snapBoletins.forEach(function (doc) {
+      var slug = doc.id;
+      var jaExiste = alunosExistentes.some(function (a) { return a.id === slug; });
+      idsRecuperados[slug] = true;
+      if (jaExiste) return;
+
+      var b = doc.data();
+      promessasAlunos.push(DB.salvar('alunos', {
+        nome: capitalizarSlug(slug),
+        apelido: capitalizarSlug(slug),
+        graduacao: b.proximaCorda || 'Iniciante - Corda Crua',
+        contato: '',
+        senhaHash: hashSenha('capoeira123'),
+        criadoEm: agoraISO(),
+        importadoDeVersaoAntiga: true
+      }, slug));
+      alunosCriados++;
+    });
+
+    return Promise.all(promessasAlunos);
+  }).then(function () {
+    return DB.fs.collection('historico_avaliacoes').get();
+  }).then(function (snapHistorico) {
+    var alunosAtualizados = DB.listar('alunos');
+    var existentesAvals = DB.listar('avaliacoes');
+    var promessasAvals = [];
+
+    snapHistorico.forEach(function (doc) {
+      var origemId = 'antigo_' + doc.id;
+      var jaImportado = existentesAvals.some(function (a) { return a.origemHistoricoId === origemId; });
+      if (jaImportado) { ignoradas++; return; }
+
+      var b = doc.data();
+      var slug = b.alunoId || '';
+      var aluno = alunosAtualizados.filter(function (a) { return a.id === slug; })[0];
+      if (!aluno) { ignoradas++; return; }
+
+      var dataConvertida = '';
+      try { if (b.atualizadoEm && b.atualizadoEm.toDate) dataConvertida = dataLocalISO(b.atualizadoEm.toDate()); } catch (e) {}
+
+      promessasAvals.push(DB.salvar('avaliacoes', {
+        alunoId: aluno.id,
+        alunoNome: aluno.nome,
+        alunoApelido: aluno.apelido || '',
+        graduacao: b.proximaCorda || aluno.graduacao || '',
+        etapa: mapaEtapa[b.etapa] || b.etapa || 'Avaliação importada',
+        notas: b.notas || {},
+        dificuldades: b.dificuldades || [],
+        proximaCorda: b.proximaCorda || '',
+        observacao: b.obs || '',
+        professor: b.avaliadoPor || 'Professor (importado)',
+        data: dataConvertida || dataLocalISO(),
+        criadoEm: agoraISO(),
+        origemHistoricoId: origemId
+      }));
+      avaliacoesImportadas++;
+    });
+
+    return Promise.all(promessasAvals);
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-box-archive"></i> Importar Dados da Versão Antiga'; }
+    mostrarToast(alunosCriados + ' aluno(s) recuperado(s), ' + avaliacoesImportadas + ' avaliação(ões) importada(s)' + (ignoradas ? ', ' + ignoradas + ' ignorada(s)' : '') + '.');
+    registroLog('dev', 'Importação de dados antigos: ' + alunosCriados + ' alunos, ' + avaliacoesImportadas + ' avaliações.');
+  }).catch(function (err) {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-box-archive"></i> Importar Dados da Versão Antiga'; }
+    mostrarToast('Erro ao importar: ' + err.message, 'erro');
+  });
 }
 
 function salvarFirebaseDev() {
@@ -3960,8 +4520,10 @@ function assistenteProcessar(texto) {
       '5. Minha graduação e avaliações\n' +
       '6. Certificados\n' +
       '7. Avisos do professor\n' +
-      '8. Polos / locais de treino\n\n' +
-      'Exemplos: "qual a próxima aula?", "já fiz check-in?", "como pedir treino?"';
+      '8. Polos / locais de treino\n' +
+      '9. Falar com o professor (mensagem privada)\n' +
+      '10. Feedback da aula e pergunta da semana\n\n' +
+      'Exemplos: "qual a próxima aula?", "falar com o professor", "pergunta da semana"';
   }
 
   if (/proxima aula|aula de hoje|quando e a aula|horario de hoje/.test(t)) {
@@ -4037,6 +4599,21 @@ function assistenteProcessar(texto) {
 
   if (/ranking|presencas|quantas aulas/.test(t)) {
     return assistenteInfoPresencas(aluno);
+  }
+
+  if (/falar com (o )?professor|mensagem privada|msg professor|conversar com/.test(t)) {
+    if (!aluno) return 'Faça login na aba Aluno. Lá tem o card "Falar com o Professor" para mensagem privada.';
+    return 'Para falar com o professor:\n\n1. Abra a aba Aluno\n2. Use o card "Falar com o Professor"\n3. Digite e envie — só a equipe vê';
+  }
+
+  if (/pergunta da semana|responder pergunta/.test(t)) {
+    var p = perguntaAtiva();
+    if (!p) return 'Não há pergunta da semana ativa no momento.';
+    return 'Pergunta da semana:\n\n' + p.pergunta + '\n\nResponda na aba Início ou no painel do Aluno.';
+  }
+
+  if (/feedback.*(aula|treino)|avaliar a aula/.test(t)) {
+    return 'Após o check-in aprovado de hoje, no painel do Aluno aparece o card "Feedback da Aula".';
   }
 
   if (/instagram|rede social/.test(t)) {
@@ -4250,49 +4827,579 @@ function assistenteInfoPresencas(aluno) {
     '\n\nVeja o detalhe na aba Aluno ou em Check-in → Minhas Aulas e Check-ins.';
 }
 
-/* ---------------------------------------------------------------
-   15. INICIALIZAÇÃO
-   --------------------------------------------------------------- */
-/* --- migração automática dos professores cadastrados na v86 --- */
-function migrarProfessoresV86UmaVez() {
-  if (DB.modo !== 'nuvem' || !DB.fs) return;
-  var FLAG = 'uc_migracao_professores_v86_feita';
-  try { if (localStorage.getItem(FLAG) === '1') return; } catch (e) {}
 
-  DB.fs.collection('professores').get().then(function (snap) {
-    if (snap.empty) {
-      try { localStorage.setItem(FLAG, '1'); } catch (e) {}
-      return;
-    }
-    var equipeAtual = DB.listar('equipe');
-    var promessas = [];
-    snap.forEach(function (doc) {
-      var p = doc.data();
-      var nome = (p.apelido || p.nome || '').trim();
-      if (!nome) return;
-      var jaExiste = equipeAtual.some(function (u) { return normalizar(u.nome) === normalizar(nome); });
-      if (jaExiste) return;
-      promessas.push(DB.salvar('equipe', {
-        nome: nome,
-        senhaHash: hashSenha(p.senha || ''),
-        papel: 'professor',
-        criadoEm: agoraISO(),
-        ativo: true,
-        migradoDaV86: true
-      }));
+/* ---------------------------------------------------------------
+   14c. INTERAÇÃO ALUNO ↔ PROFESSOR (v88 — aditivo)
+   Coleções novas: mensagensPrivadas, feedbacksAula, perguntasSemana,
+   respostasPergunta, leiturasAvisos.
+   Campos aditivos em existentes: avaliacoes.comentarioAluno,
+   solicitacoes.conversa (array).
+   --------------------------------------------------------------- */
+
+function contarNaoLidosAluno(aluno) {
+  if (!aluno) return 0;
+  var n = 0;
+  DB.listar('mensagensPrivadas').forEach(function (m) {
+    if (m.alunoId === aluno.id && m.de === 'professor' && !m.lidaPeloAluno) n++;
+  });
+  DB.listar('solicitacoes').forEach(function (s) {
+    if ((s.alunoId === aluno.id || normalizar(s.alunoNome) === normalizar(aluno.nome)) && s.respostaProfessor && !s.respostaVistaAluno) n++;
+    (s.conversa || []).forEach(function (c) {
+      if (c.de === 'professor' && !c.lidaPeloAluno) n++;
     });
-    Promise.all(promessas).then(function () {
-      try { localStorage.setItem(FLAG, '1'); } catch (e) {}
-      if (promessas.length > 0) {
-        registroLog('migracao', 'Professores migrados da v86: ' + promessas.length);
-        mostrarToast(promessas.length + ' professor(es) da versão anterior foram recuperados.');
-      }
+  });
+  DB.listar('avaliacoes').forEach(function (a) {
+    if ((a.alunoId === aluno.id || normalizar(a.alunoNome) === normalizar(aluno.nome)) && a.observacao && !a.comentarioAluno && !a.vistaPeloAluno) n++;
+  });
+  return n;
+}
+
+function contarNaoLidosProfessor() {
+  var n = 0;
+  DB.listar('mensagensPrivadas').forEach(function (m) {
+    if (m.de === 'aluno' && !m.lidaPeloProfessor) n++;
+  });
+  DB.listar('solicitacoes').forEach(function (s) {
+    if (s.status === 'pendente') n++;
+    (s.conversa || []).forEach(function (c) {
+      if (c.de === 'aluno' && !c.lidaPeloProfessor) n++;
     });
-  }).catch(function (err) {
-    console.warn('[migração] Erro ao ler professores v86:', err);
+  });
+  DB.listar('feedbacksAula').forEach(function (f) {
+    if (!f.vistoProfessor) n++;
+  });
+  DB.listar('respostasPergunta').forEach(function (r) {
+    if (!r.vistoProfessor) n++;
+  });
+  return n;
+}
+
+function atualizarBadgesInteracao() {
+  var aluno = alunoLogado();
+  var nAluno = contarNaoLidosAluno(aluno);
+  var elTab = document.querySelector('.tabs button[onclick*="tab3"]');
+  if (elTab) {
+    var base = '<i class="fas fa-user-graduate"></i>Aluno';
+    elTab.innerHTML = nAluno > 0 ? (base + '<span class="badge-notif">' + nAluno + '</span>') : base;
+  }
+  var nProf = contarNaoLidosProfessor();
+  var elEq = $('btnToggleEquipe');
+  if (elEq && sessaoEquipe) {
+    var baseEq = '<i class="fas fa-users-cog"></i>Equipe';
+    elEq.innerHTML = nProf > 0 ? (baseEq + '<span class="badge-notif">' + nProf + '</span>') : baseEq;
+  }
+}
+
+/* ---------- 1. Mensagens privadas ---------- */
+function mensagensDoAluno(alunoId) {
+  return DB.listar('mensagensPrivadas').filter(function (m) { return m.alunoId === alunoId; })
+    .sort(function (a, b) { return String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); });
+}
+
+function htmlThreadMensagens(alunoId, paraProfessor) {
+  var lista = mensagensDoAluno(alunoId);
+  if (!lista.length) return '<p class="sem-dados">Nenhuma mensagem ainda. Envie a primeira!</p>';
+  return lista.map(function (m) {
+    var lado = m.de === 'aluno' ? 'aluno' : 'professor';
+    var ehAdvertencia = m.tipo === 'advertencia';
+    var estiloExtra = ehAdvertencia ? ' style="border:2px solid var(--danger); background:rgba(239,83,80,0.12);"' : '';
+    var prefixo = ehAdvertencia ? '<div style="color:var(--danger); font-weight:800; font-size:0.68rem; margin-bottom:3px;"><i class="fas fa-triangle-exclamation"></i> ADVERTÊNCIA</div>' : '';
+    return '<div class="msg-priv-bolha ' + lado + '"' + estiloExtra + '>' + prefixo + esc(m.texto) +
+      '<div class="msg-priv-meta">' + (m.de === 'aluno' ? (m.alunoNome || 'Aluno') : (m.professorNome || 'Professor')) +
+      ' • ' + dataHoraBR(m.criadoEm) + '</div></div>';
+  }).join('');
+}
+
+function enviarMensagemPrivadaAluno(btn) {
+  var aluno = alunoLogado();
+  if (!aluno) { mostrarToast('Faça login para enviar mensagem.', 'erro'); return; }
+  var texto = ($('msgPrivAlunoTexto') && $('msgPrivAlunoTexto').value || '').trim();
+  if (!texto) { mostrarToast('Escreva a mensagem.', 'erro'); return; }
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span>'; }
+  DB.salvar('mensagensPrivadas', {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    texto: texto.slice(0, 800),
+    de: 'aluno',
+    professorNome: '',
+    lidaPeloAluno: true,
+    lidaPeloProfessor: false,
+    criadoEm: agoraISO()
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar'; }
+    if ($('msgPrivAlunoTexto')) $('msgPrivAlunoTexto').value = '';
+    mostrarToast('Mensagem enviada ao professor!');
+    registroLog('aluno', 'Mensagem privada de ' + aluno.nome);
+    renderAluno();
+    atualizarBadgesInteracao();
+  }).catch(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar'; }
   });
 }
 
+function enviarMensagemPrivadaProfessor(alunoId, btn) {
+  var aluno = DB.buscar('alunos', alunoId);
+  if (!aluno) { mostrarToast('Aluno não encontrado.', 'erro'); return; }
+  var campo = $('msgPrivProfTexto_' + alunoId);
+  var texto = (campo && campo.value || '').trim();
+  if (!texto) { mostrarToast('Escreva a resposta.', 'erro'); return; }
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span>'; }
+  DB.salvar('mensagensPrivadas', {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    texto: texto.slice(0, 800),
+    de: 'professor',
+    professorNome: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
+    lidaPeloAluno: false,
+    lidaPeloProfessor: true,
+    criadoEm: agoraISO()
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Responder'; }
+    if (campo) campo.value = '';
+    mostrarToast('Resposta enviada a ' + aluno.nome);
+    notificar('Mensagem do professor', texto.slice(0, 80));
+    registroLog('professor', 'Mensagem privada para ' + aluno.nome);
+    renderAbaProfessor();
+    atualizarBadgesInteracao();
+  }).catch(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Responder'; }
+  });
+}
+
+function marcarMensagensLidasAluno(alunoId) {
+  mensagensDoAluno(alunoId).forEach(function (m) {
+    if (m.de === 'professor' && !m.lidaPeloAluno) {
+      DB.salvar('mensagensPrivadas', { lidaPeloAluno: true }, m.id);
+    }
+  });
+}
+
+function marcarMensagensLidasProfessor(alunoId) {
+  mensagensDoAluno(alunoId).forEach(function (m) {
+    if (m.de === 'aluno' && !m.lidaPeloProfessor) {
+      DB.salvar('mensagensPrivadas', { lidaPeloProfessor: true }, m.id);
+    }
+  });
+}
+
+/* ---------- 2. Comentário do aluno na avaliação ---------- */
+function salvarComentarioAvaliacao(avalId, btn) {
+  var aluno = alunoLogado();
+  if (!aluno) return;
+  var campo = $('comentarioAval_' + avalId);
+  var texto = (campo && campo.value || '').trim();
+  if (!texto) { mostrarToast('Escreva um comentário.', 'erro'); return; }
+  if (btn) { btn.classList.add('carregando'); }
+  DB.salvar('avaliacoes', {
+    comentarioAluno: texto.slice(0, 500),
+    comentarioAlunoEm: agoraISO(),
+    vistaPeloAluno: true
+  }, avalId).then(function () {
+    if (btn) { btn.classList.remove('carregando'); }
+    mostrarToast('Comentário enviado ao professor!');
+    registroLog('aluno', 'Comentário em avaliação por ' + aluno.nome);
+    renderAluno();
+  });
+}
+
+function marcarAvaliacaoVista(avalId) {
+  DB.salvar('avaliacoes', { vistaPeloAluno: true }, avalId);
+}
+
+/* ---------- 3. Feedback pós-aula ---------- */
+function enviarFeedbackAula(rating, btn) {
+  var aluno = alunoLogado();
+  if (!aluno) { mostrarToast('Faça login para enviar feedback.', 'erro'); return; }
+  var ck = obterCheckinDoDia(aluno);
+  if (!ck || ck.status !== 'aprovado') {
+    mostrarToast('Só é possível avaliar aulas com check-in aprovado hoje.', 'erro');
+    return;
+  }
+  var ja = DB.listar('feedbacksAula').some(function (f) {
+    return f.alunoId === aluno.id && f.data === dataLocalISO();
+  });
+  if (ja) { mostrarToast('Você já enviou feedback de hoje.', 'erro'); return; }
+  var texto = ($('feedbackAulaTexto') && $('feedbackAulaTexto').value || '').trim();
+  if (btn) { btn.classList.add('carregando'); }
+  DB.salvar('feedbacksAula', {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    data: dataLocalISO(),
+    presencaId: ck.id || '',
+    rating: rating,
+    texto: texto.slice(0, 400),
+    vistoProfessor: false,
+    criadoEm: agoraISO()
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); }
+    mostrarToast('Obrigado pelo feedback! 💚');
+    registroLog('aluno', 'Feedback pós-aula: ' + rating + ' por ' + aluno.nome);
+    renderAluno();
+    atualizarBadgesInteracao();
+  });
+}
+
+function marcarFeedbacksVistos() {
+  DB.listar('feedbacksAula').forEach(function (f) {
+    if (!f.vistoProfessor) DB.salvar('feedbacksAula', { vistoProfessor: true }, f.id);
+  });
+}
+
+/* ---------- 4. Badge já coberto por atualizarBadgesInteracao ---------- */
+
+/* ---------- 5. Pergunta da semana ---------- */
+function perguntaAtiva() {
+  var lista = DB.listar('perguntasSemana').filter(function (p) { return p.ativa !== false; })
+    .sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+  return lista.length ? lista[0] : null;
+}
+
+function publicarPerguntaSemana(btn) {
+  var texto = ($('perguntaSemanaTexto') && $('perguntaSemanaTexto').value || '').trim();
+  if (!texto) { mostrarToast('Escreva a pergunta.', 'erro'); return; }
+  if (btn) { btn.classList.add('carregando'); }
+  /* desativa anteriores */
+  var tarefas = DB.listar('perguntasSemana').filter(function (p) { return p.ativa !== false; })
+    .map(function (p) { return DB.salvar('perguntasSemana', { ativa: false }, p.id); });
+  Promise.all(tarefas).then(function () {
+    return DB.salvar('perguntasSemana', {
+      pergunta: texto.slice(0, 400),
+      ativa: true,
+      autor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
+      criadoEm: agoraISO()
+    });
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Publicar pergunta'; }
+    if ($('perguntaSemanaTexto')) $('perguntaSemanaTexto').value = '';
+    mostrarToast('Pergunta da semana publicada!');
+    notificar('Pergunta do professor', texto.slice(0, 80));
+    registroLog('professor', 'Pergunta da semana publicada');
+    renderAbaProfessor();
+  });
+}
+
+function responderPerguntaSemana(btn) {
+  var aluno = alunoLogado();
+  if (!aluno) { mostrarToast('Faça login para responder.', 'erro'); return; }
+  var p = perguntaAtiva();
+  if (!p) { mostrarToast('Nenhuma pergunta ativa no momento.', 'erro'); return; }
+  var texto = ($('respostaPerguntaTexto') && $('respostaPerguntaTexto').value || '').trim();
+  if (!texto) { mostrarToast('Escreva sua resposta.', 'erro'); return; }
+  var ja = DB.listar('respostasPergunta').some(function (r) {
+    return r.perguntaId === p.id && r.alunoId === aluno.id;
+  });
+  if (ja) { mostrarToast('Você já respondeu esta pergunta.', 'erro'); return; }
+  if (btn) { btn.classList.add('carregando'); }
+  DB.salvar('respostasPergunta', {
+    perguntaId: p.id,
+    perguntaTexto: p.pergunta,
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    texto: texto.slice(0, 500),
+    vistoProfessor: false,
+    criadoEm: agoraISO()
+  }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-check"></i> Enviar resposta'; }
+    if ($('respostaPerguntaTexto')) $('respostaPerguntaTexto').value = '';
+    mostrarToast('Resposta enviada!');
+    registroLog('aluno', 'Resposta à pergunta da semana por ' + aluno.nome);
+    renderAluno();
+    renderInicio();
+    atualizarBadgesInteracao();
+  });
+}
+
+function marcarRespostasPerguntaVistas() {
+  DB.listar('respostasPergunta').forEach(function (r) {
+    if (!r.vistoProfessor) DB.salvar('respostasPergunta', { vistoProfessor: true }, r.id);
+  });
+}
+
+/* ---------- 6. Thread no pedido de treino ---------- */
+function enviarMsgSolicitacao(solicId, de, btn) {
+  var s = DB.buscar('solicitacoes', solicId);
+  if (!s) return;
+  var campoId = de === 'aluno' ? ('convAluno_' + solicId) : ('convProf_' + solicId);
+  var campo = $(campoId);
+  var texto = (campo && campo.value || '').trim();
+  if (!texto) { mostrarToast('Escreva a mensagem.', 'erro'); return; }
+  var conversa = (s.conversa || []).slice();
+  conversa.push({
+    de: de,
+    texto: texto.slice(0, 400),
+    em: agoraISO(),
+    lidaPeloAluno: de === 'aluno',
+    lidaPeloProfessor: de === 'professor',
+    autor: de === 'aluno' ? (s.alunoNome || 'Aluno') : (sessaoEquipe ? sessaoEquipe.nome : 'Professor')
+  });
+  if (btn) { btn.classList.add('carregando'); }
+  DB.salvar('solicitacoes', { conversa: conversa }, solicId).then(function () {
+    if (btn) { btn.classList.remove('carregando'); }
+    if (campo) campo.value = '';
+    mostrarToast('Mensagem enviada na conversa do pedido.');
+    if (de === 'professor') notificar('Resposta no pedido de treino', texto.slice(0, 60));
+    if (de === 'aluno') renderAluno();
+    else renderAbaProfessor();
+    atualizarBadgesInteracao();
+  });
+}
+
+function htmlConversaSolicitacao(s, modo) {
+  var conv = s.conversa || [];
+  var html = '';
+  if (conv.length) {
+    html += '<div class="conversa-thread">';
+    conv.forEach(function (c) {
+      html += '<div class="mini" style="margin:3px 0;"><b style="color:' + (c.de === 'aluno' ? 'var(--primary-green)' : 'var(--accent-blue)') + ';">' +
+        esc(c.autor || c.de) + ':</b> ' + esc(c.texto) +
+        ' <span style="opacity:0.6;">' + dataHoraBR(c.em) + '</span></div>';
+    });
+    html += '</div>';
+  }
+  if (modo === 'aluno') {
+    html += '<div style="display:flex;gap:4px;margin-top:4px;">' +
+      '<input id="convAluno_' + s.id + '" placeholder="Continuar conversa..." style="flex:1;margin:0;">' +
+      '<button class="btn btn-secondary btn-mini" style="margin:0;" onclick="enviarMsgSolicitacao(\'' + s.id + '\',\'aluno\',this)"><i class="fas fa-paper-plane"></i></button></div>';
+  } else if (modo === 'professor') {
+    html += '<div style="display:flex;gap:4px;margin-top:4px;">' +
+      '<input id="convProf_' + s.id + '" placeholder="Responder na conversa..." style="flex:1;margin:0;">' +
+      '<button class="btn btn-secondary btn-mini" style="margin:0;" onclick="enviarMsgSolicitacao(\'' + s.id + '\',\'professor\',this)"><i class="fas fa-paper-plane"></i></button></div>';
+  }
+  return html;
+}
+
+/* ---------- 7. Atalho "Falar com o professor" — no renderAluno ---------- */
+
+/* ---------- 8. Confirmação de leitura de aviso ---------- */
+function marcarAvisoLido(avisoId) {
+  var aluno = alunoLogado();
+  if (!aluno) { mostrarToast('Faça login para confirmar leitura.', 'erro'); return; }
+  var ja = DB.listar('leiturasAvisos').some(function (l) {
+    return l.avisoId === avisoId && l.alunoId === aluno.id;
+  });
+  if (ja) { mostrarToast('Leitura já confirmada.'); return; }
+  DB.salvar('leiturasAvisos', {
+    avisoId: avisoId,
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    lidoEm: agoraISO()
+  }).then(function () {
+    mostrarToast('Leitura confirmada ✓');
+    renderInicio();
+    renderAluno();
+  });
+}
+
+function contagemLeiturasAviso(avisoId) {
+  return DB.listar('leiturasAvisos').filter(function (l) { return l.avisoId === avisoId; }).length;
+}
+
+function alunoLeuAviso(avisoId, alunoId) {
+  return DB.listar('leiturasAvisos').some(function (l) { return l.avisoId === avisoId && l.alunoId === alunoId; });
+}
+
+function htmlCardMensagensAluno(aluno) {
+  marcarMensagensLidasAluno(aluno.id);
+  var n = mensagensDoAluno(aluno.id).length;
+  return '<div class="card card-interacao" id="cardFalarProfessor">' +
+    '<h3 style="color:var(--accent-blue);"><i class="fas fa-comments"></i> Falar com o Professor</h3>' +
+    '<p class="mini" style="margin-bottom:6px;">Canal privado — só você e a equipe veem.</p>' +
+    '<div id="threadMsgAluno" style="max-height:180px;overflow-y:auto;margin-bottom:6px;">' +
+    htmlThreadMensagens(aluno.id, false) + '</div>' +
+    '<div style="display:flex;gap:4px;">' +
+      '<input id="msgPrivAlunoTexto" placeholder="Digite sua mensagem..." style="flex:1;margin:0;" onkeypress="if(event.key===\'Enter\')enviarMensagemPrivadaAluno()">' +
+      '<button class="btn btn-secondary" style="width:auto;margin:0;padding:8px 12px;" onclick="enviarMensagemPrivadaAluno(this)"><i class="fas fa-paper-plane"></i> Enviar</button>' +
+    '</div></div>';
+}
+
+function htmlCardFeedbackAula(aluno) {
+  var ck = obterCheckinDoDia(aluno);
+  var ja = DB.listar('feedbacksAula').some(function (f) { return f.alunoId === aluno.id && f.data === dataLocalISO(); });
+  if (!ck || ck.status !== 'aprovado') {
+    return '<div class="card"><h3><i class="fas fa-heart"></i> Feedback da Aula</h3>' +
+      '<p class="sem-dados">Disponível após check-in aprovado de hoje.</p></div>';
+  }
+  if (ja) {
+    return '<div class="card"><h3><i class="fas fa-heart"></i> Feedback da Aula</h3>' +
+      '<p class="mini" style="color:var(--primary-green);"><i class="fas fa-check-circle"></i> Feedback de hoje já enviado. Obrigado!</p></div>';
+  }
+  return '<div class="card card-interacao"><h3 style="color:var(--accent-blue);"><i class="fas fa-heart"></i> Feedback da Aula de Hoje</h3>' +
+    '<p class="mini" style="margin-bottom:6px;">Como foi o treino? O professor vê o resumo.</p>' +
+    '<div class="feedback-btns">' +
+      '<button class="btn btn-mini" onclick="enviarFeedbackAula(\'gostei\',this)"><i class="fas fa-thumbs-up"></i> Gostei</button>' +
+      '<button class="btn btn-gold btn-mini" onclick="enviarFeedbackAula(\'dificil\',this)"><i class="fas fa-dumbbell"></i> Foi difícil</button>' +
+      '<button class="btn btn-secondary btn-mini" onclick="enviarFeedbackAula(\'repetir\',this)"><i class="fas fa-redo"></i> Quero repetir</button>' +
+    '</div>' +
+    '<label class="campo-label">Comentário (opcional)</label>' +
+    '<textarea id="feedbackAulaTexto" placeholder="Ex: quero treinar mais ginga..."></textarea></div>';
+}
+
+function htmlCardPerguntaSemanaAluno(aluno) {
+  var p = perguntaAtiva();
+  if (!p) return '';
+  var ja = DB.listar('respostasPergunta').some(function (r) { return r.perguntaId === p.id && r.alunoId === aluno.id; });
+  var html = '<div class="card card-destaque brilho-azul" style="border:1px solid var(--accent-blue);">' +
+    '<h3 style="color:var(--accent-blue);"><i class="fas fa-question-circle"></i> Pergunta da Semana</h3>' +
+    '<p style="font-size:0.8rem;margin-bottom:6px;">' + esc(p.pergunta) + '</p>' +
+    '<span class="mini">Por ' + esc(p.autor || 'Professor') + ' • ' + dataHoraBR(p.criadoEm) + '</span>';
+  if (ja) {
+    html += '<p class="mini" style="color:var(--primary-green);margin-top:6px;"><i class="fas fa-check"></i> Você já respondeu. Obrigado!</p>';
+  } else {
+    html += '<label class="campo-label">Sua resposta</label>' +
+      '<textarea id="respostaPerguntaTexto" placeholder="Responda em poucas palavras..."></textarea>' +
+      '<button class="btn btn-secondary" onclick="responderPerguntaSemana(this)"><i class="fas fa-check"></i> Enviar resposta</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function htmlAvaliacoesComComentario(avals) {
+  if (!avals.length) return '<p class="sem-dados">Nenhuma avaliação semanal lançada ainda.</p>';
+  return avals.map(function (a) {
+    var html = '<div class="lista-item"><div class="linha"><span><b>' + esc(a.semana || dataBR(a.data) || '-') + '</b></span><span class="badge-count">' + mediaAvaliacao(a).toFixed(1) + '</span></div>' +
+      '<span class="mini">Técnica ' + esc(a.tecnica || '-') + ' • Disciplina ' + esc(a.disciplina || '-') + ' • Ritmo ' + esc(a.ritmo || '-') +
+      ' • Musicalidade ' + esc(a.musicalidade || '-') + ' • Compromisso ' + esc(a.compromisso || '-') + '</span>' +
+      (a.desenvolvimento ? '<div class="mini" style="margin-top:3px; color:var(--accent-blue);"><i class="fas fa-seedling"></i> Desenvolvimento: ' + esc(a.desenvolvimento) + '</div>' : '') +
+      (a.observacao ? '<div class="mini" style="color:var(--gold);">Feedback: ' + esc(a.observacao) + '</div>' : '');
+    if (a.comentarioAluno) {
+      html += '<div class="mini" style="color:var(--primary-green);margin-top:4px;"><i class="fas fa-comment"></i> Seu comentário: ' + esc(a.comentarioAluno) + '</div>';
+    } else if (a.observacao || a.desenvolvimento) {
+      html += '<label class="campo-label" style="margin-top:6px;">Comentar esta avaliação</label>' +
+        '<textarea id="comentarioAval_' + a.id + '" placeholder="Ex: entendi, quero focar nisso na próxima semana..." style="min-height:48px;"></textarea>' +
+        '<button class="btn btn-secondary btn-mini" onclick="salvarComentarioAvaliacao(\'' + a.id + '\',this)"><i class="fas fa-paper-plane"></i> Enviar comentário</button>';
+    }
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
+function htmlPedidosComConversa(solicitacoes) {
+  if (!solicitacoes.length) return '<p class="sem-dados">Você ainda não pediu nenhum treino específico.</p>';
+  solicitacoes.forEach(function (s) {
+    if (s.respostaProfessor && !s.respostaVistaAluno) {
+      DB.salvar('solicitacoes', { respostaVistaAluno: true }, s.id);
+    }
+  });
+  return solicitacoes.slice(0, 8).map(function (s) {
+    return '<div class="lista-item">' +
+      '<div class="linha"><b>' + esc(s.tipo || '-') + '</b>' + pillStatusSolicitacao(s.status) + '</div>' +
+      '<span class="mini">' + dataHoraBR(s.criadoEm) + (s.dataPreferida ? ' • preferência: ' + dataBR(s.dataPreferida) : '') + '</span>' +
+      (s.observacao ? '<div class="mini">' + esc(s.observacao) + '</div>' : '') +
+      (s.respostaProfessor ? '<div class="mini" style="color:var(--gold); margin-top:3px;"><i class="fas fa-comment"></i> Prof.: ' + esc(s.respostaProfessor) + '</div>' : '') +
+      htmlConversaSolicitacao(s, 'aluno') +
+      '</div>';
+  }).join('');
+}
+
+/* Painel professor: mensagens, feedbacks, pergunta, leituras */
+function htmlPainelInteracaoProfessor() {
+  var alunos = DB.listar('alunos').slice().sort(function (a, b) { return normalizar(a.nome).localeCompare(normalizar(b.nome)); });
+  var msgs = DB.listar('mensagensPrivadas').slice().sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+  var porAluno = {};
+  msgs.forEach(function (m) {
+    if (!porAluno[m.alunoId]) porAluno[m.alunoId] = { nome: m.alunoNome, apelido: m.alunoApelido || '', msgs: [], naoLidas: 0 };
+    porAluno[m.alunoId].msgs.push(m);
+    if (m.de === 'aluno' && !m.lidaPeloProfessor) porAluno[m.alunoId].naoLidas++;
+  });
+  var conversas = Object.keys(porAluno).map(function (id) {
+    var item = porAluno[id];
+    item.id = id;
+    item.ultima = item.msgs[item.msgs.length - 1];
+    return item;
+  }).sort(function (a, b) { return String(b.ultima.criadoEm || '').localeCompare(String(a.ultima.criadoEm || '')); });
+
+  var html = '<div class="card card-interacao"><h3 style="color:var(--accent-blue);"><i class="fas fa-comments"></i> Mensagens Privadas dos Alunos <span class="badge-count">' +
+    conversas.reduce(function (s, c) { return s + c.naoLidas; }, 0) + '</span></h3>';
+  if (!conversas.length) {
+    html += '<p class="sem-dados">Nenhuma mensagem privada ainda.</p>';
+  } else {
+    conversas.slice(0, 12).forEach(function (c) {
+      marcarMensagensLidasProfessor(c.id);
+      html += '<div class="lista-item">' +
+        '<div class="linha"><b>' + esc(c.nome) + (c.apelido ? ' (' + esc(c.apelido) + ')' : '') + '</b>' +
+        (c.naoLidas ? '<span class="badge-notif">' + c.naoLidas + '</span>' : '') + '</div>' +
+        '<div style="max-height:120px;overflow-y:auto;margin:4px 0;">' + htmlThreadMensagens(c.id, true) + '</div>' +
+        '<div style="display:flex;gap:4px;">' +
+          '<input id="msgPrivProfTexto_' + c.id + '" placeholder="Responder..." style="flex:1;margin:0;">' +
+          '<button class="btn btn-secondary btn-mini" style="margin:0;" onclick="enviarMensagemPrivadaProfessor(\'' + c.id + '\',this)"><i class="fas fa-paper-plane"></i> Responder</button>' +
+        '</div></div>';
+    });
+  }
+  html += '</div>';
+
+  /* Feedbacks pós-aula */
+  var feedbacks = DB.listar('feedbacksAula').slice().sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); }).slice(0, 20);
+  var naoVistos = feedbacks.filter(function (f) { return !f.vistoProfessor; }).length;
+  html += '<div class="card"><h3><i class="fas fa-heart"></i> Feedbacks Pós-Aula <span class="badge-count">' + naoVistos + '</span></h3>';
+  if (!feedbacks.length) html += '<p class="sem-dados">Nenhum feedback ainda.</p>';
+  else {
+    var labels = { gostei: '👍 Gostei', dificil: '💪 Foi difícil', repetir: '🔁 Quero repetir' };
+    feedbacks.forEach(function (f) {
+      html += '<div class="lista-item"><div class="linha"><b>' + esc(f.alunoNome) + '</b><span class="mini">' + dataBR(f.data) + '</span></div>' +
+        '<span class="pill pill-info">' + esc(labels[f.rating] || f.rating) + '</span>' +
+        (f.texto ? '<div class="mini" style="margin-top:3px;">' + esc(f.texto) + '</div>' : '') + '</div>';
+    });
+    if (naoVistos) html += '<button class="btn btn-secondary btn-mini" onclick="marcarFeedbacksVistos();mostrarToast(\'Marcados como vistos\');renderAbaProfessor();"><i class="fas fa-eye"></i> Marcar todos como vistos</button>';
+  }
+  html += '</div>';
+
+  /* Pergunta da semana */
+  var pAtiva = perguntaAtiva();
+  var respostas = pAtiva ? DB.listar('respostasPergunta').filter(function (r) { return r.perguntaId === pAtiva.id; })
+    .sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); }) : [];
+  html += '<div class="card" style="border:1px solid var(--gold);"><h3 style="color:var(--gold);"><i class="fas fa-question-circle"></i> Pergunta da Semana</h3>' +
+    '<p class="mini" style="margin-bottom:6px;">Publique uma pergunta aberta. As respostas ficam só para a equipe.</p>';
+  if (pAtiva) {
+    html += '<div class="aviso-info"><b>Ativa:</b> ' + esc(pAtiva.pergunta) + '<br><span class="mini">' + esc(pAtiva.autor) + ' • ' + dataHoraBR(pAtiva.criadoEm) + ' • ' + respostas.length + ' resposta(s)</span></div>';
+    respostas.forEach(function (r) {
+      html += '<div class="lista-item"><div class="linha"><b>' + esc(r.alunoNome) + '</b><span class="mini">' + dataHoraBR(r.criadoEm) + '</span></div>' +
+        '<div class="mini">' + esc(r.texto) + '</div></div>';
+    });
+    if (respostas.some(function (r) { return !r.vistoProfessor; })) {
+      html += '<button class="btn btn-secondary btn-mini" onclick="marcarRespostasPerguntaVistas();mostrarToast(\'Respostas vistas\');renderAbaProfessor();"><i class="fas fa-eye"></i> Marcar respostas como vistas</button>';
+    }
+  }
+  html += '<label class="campo-label">Nova pergunta</label>' +
+    '<textarea id="perguntaSemanaTexto" placeholder="Ex: Qual movimento você quer revisar na próxima semana?"></textarea>' +
+    '<button class="btn btn-gold" onclick="publicarPerguntaSemana(this)"><i class="fas fa-paper-plane"></i> Publicar pergunta</button></div>';
+
+  /* Leituras de avisos */
+  var avisos = DB.listar('avisos').slice().sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); }).slice(0, 8);
+  html += '<div class="card"><h3><i class="fas fa-eye"></i> Leituras de Avisos</h3>';
+  if (!avisos.length) html += '<p class="sem-dados">Nenhum aviso publicado.</p>';
+  else {
+    avisos.forEach(function (a) {
+      var n = contagemLeiturasAviso(a.id);
+      html += '<div class="lista-item"><div class="linha"><b>' + esc(a.titulo || 'Aviso') + '</b><span class="badge-count">' + n + ' leram</span></div>' +
+        '<span class="mini">' + dataHoraBR(a.criadoEm) + '</span></div>';
+    });
+  }
+  html += '</div>';
+
+  /* Comentários de avaliações */
+  var avalsComComent = DB.listar('avaliacoes').filter(function (a) { return a.comentarioAluno; })
+    .sort(function (a, b) { return String(b.comentarioAlunoEm || '').localeCompare(String(a.comentarioAlunoEm || '')); }).slice(0, 15);
+  html += '<div class="card"><h3><i class="fas fa-comment-dots"></i> Comentários dos Alunos nas Avaliações</h3>';
+  if (!avalsComComent.length) html += '<p class="sem-dados">Nenhum comentário ainda.</p>';
+  else {
+    avalsComComent.forEach(function (a) {
+      html += '<div class="lista-item"><div class="linha"><b>' + esc(a.alunoNome) + '</b><span class="mini">' + esc(a.semana || dataBR(a.data)) + '</span></div>' +
+        '<div class="mini" style="color:var(--primary-green);">' + esc(a.comentarioAluno) + '</div></div>';
+    });
+  }
+  html += '</div>';
+
+  return html;
+}
+
+
+/* ---------------------------------------------------------------
+   15. INICIALIZAÇÃO
+   --------------------------------------------------------------- */
 function iniciarApp() {
   /* primeira carga: configuração + render inicial */
   DB.iniciar();
@@ -4305,7 +5412,7 @@ function iniciarApp() {
 
   /* restaura sessões leves */
   try {
-    var alunoSalvo = localStorage.getItem('uc_sessao_aluno_v87');
+    var alunoSalvo = localStorage.getItem('uc_sessao_aluno_v88');
     if (alunoSalvo && DB.buscar('alunos', alunoSalvo)) sessaoAlunoId = alunoSalvo;
   } catch (e) {}
 
@@ -4315,8 +5422,6 @@ function iniciarApp() {
   renderCheckin();
   renderAluno();
 
-  setTimeout(migrarProfessoresV86UmaVez, 2500);
-
   /* revalida o atraso a cada minuto */
   setInterval(avaliarAtrasoHoje, 60000);
 
@@ -4325,18 +5430,11 @@ function iniciarApp() {
 
   registroLog('app', 'App iniciado em modo ' + DB.modo);
   console.log('%cUniverso Capoeira ' + VERSAO_APP + ' — modo ' + DB.modo, 'color:#00e676;font-weight:bold;');
+  setTimeout(atualizarBadgesInteracao, 400);
 }
 
 /* persiste a sessão do aluno para conveniência */
 iniciarApp();
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function (err) {
-      console.warn('[PWA] Falha ao registrar Service Worker:', err);
-    });
-  });
-}
 </script>
 </body>
 </html>
