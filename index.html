@@ -12,7 +12,7 @@
 <meta name="description" content="App completo da academia Capoeira na Pequena África - check-in, avaliações, mural, pedidos de treino e mais">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg">
-<title>Universo Capoeira v88 - Web &amp; Mobile Edition</title>
+<title>Universo Capoeira</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 * {
@@ -351,7 +351,7 @@ footer a { color: var(--accent-blue); }
 .certificado-area .nome { font-size: 1rem; font-weight: 800; color: #1b5e20; margin: 6px 0; }
 
 
-/* ===== Interação aluno-professor (v88) ===== */
+/* ===== Interação aluno-professor ===== */
 .badge-notif {
   background: var(--danger);
   color: #fff;
@@ -620,6 +620,46 @@ footer a { color: var(--accent-blue); }
       <div id="listaCertificadosAluno"></div>
     </div>
 
+    <div class="card" id="cardRankingJogos" style="border:1px solid var(--gold);">
+      <h3 style="color:var(--gold);"><i class="fas fa-gamepad"></i> Ranking dos Mini-Jogos</h3>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Pontuação acumulada nos desafios e na corrida:</p>
+      <div id="listaRankingJogos"></div>
+    </div>
+
+    <div class="card" style="border:1px solid var(--accent-blue);">
+      <h3 style="color:var(--accent-blue);"><i class="fas fa-gamepad"></i> Arcade Clássico</h3>
+      <p class="mini" style="margin-bottom:8px;">Jogos clássicos — seus pontos entram no ranking da academia!</p>
+      <label class="campo-label">Seu nome / apelido (para o ranking)</label>
+      <input id="nomeJogadorCorrida" placeholder="Ex: Formiga">
+      <div class="grade-2" style="margin-top:8px;">
+        <button class="btn btn-secondary" onclick="abrirJogoArcade('snake')"><i class="fas fa-dragon"></i> Minhoca (Snake)</button>
+        <button class="btn btn-gold" onclick="abrirJogoArcade('tetris')"><i class="fas fa-th"></i> Tetris</button>
+        <button class="btn" id="btnJogarCorrida" onclick="jogarCorrida()"><i class="fas fa-flag-checkered"></i> Corrida rápida</button>
+        <button class="btn btn-secondary" onclick="abrirJogoArcade('corrida')"><i class="fas fa-car"></i> Corrida Arcade</button>
+      </div>
+      <div id="pistaCorridaBox" style="background:#000; height:80px; border-radius:10px; border:1px solid var(--accent-blue); display:flex; align-items:center; justify-content:center; margin:10px 0; position:relative; overflow:hidden;">
+        <span id="txtStatusCorrida" style="font-size:0.78rem; color:var(--primary-green); z-index:1;">Escolha um jogo acima</span>
+        <div id="corredorEmoji" style="position:absolute; left:8px; font-size:1.4rem; transition:left 1.2s ease; display:none;">🏃</div>
+      </div>
+    </div>
+
+    <div class="card" id="cardFormacaoInfantil" style="border:1px solid var(--gold);">
+      <h3 style="color:var(--gold);"><i class="fas fa-child"></i> Formação — Aula de Capoeira para Crianças</h3>
+      <p class="mini" style="margin-bottom:8px;">Quer se preparar para dar aula de capoeira infantil? Inscreva-se na formação. O professor recebe sua solicitação.</p>
+      <label class="campo-label">Seu nome completo</label>
+      <input id="formacaoNome" placeholder="Nome completo">
+      <label class="campo-label">Apelido / como é conhecido na roda</label>
+      <input id="formacaoApelido" placeholder="Ex: Formiga">
+      <label class="campo-label">WhatsApp / contato</label>
+      <input id="formacaoContato" placeholder="(21) 99999-9999" inputmode="tel">
+      <label class="campo-label">Experiência com crianças (opcional)</label>
+      <textarea id="formacaoExp" placeholder="Ex: já ajudei em roda infantil, trabalho com educação..."></textarea>
+      <label class="campo-label">Motivação</label>
+      <textarea id="formacaoMotivo" placeholder="Por que quer dar aula de capoeira para crianças?"></textarea>
+      <button class="btn btn-gold" onclick="inscreverFormacaoInfantil(this)"><i class="fas fa-paper-plane"></i> Quero me inscrever na formação</button>
+      <div id="boxMinhaInscricaoFormacao" style="margin-top:8px;"></div>
+    </div>
+
     <div class="card">
       <h3><i class="fas fa-comments"></i> Mural &amp; Bate-Papo da Academia</h3>
       <div id="chatMessages" style="max-height:160px; overflow-y:auto; margin-bottom:6px; font-size:0.75rem;"></div>
@@ -634,6 +674,8 @@ footer a { color: var(--accent-blue); }
 
   <!-- ================= ABA 2 - CHECK-IN ================= -->
   <div id="tab2" class="tab-content">
+
+    <div id="boxProfessorNaAulaCheckin"></div>
 
     <div class="card" style="border:1px solid var(--gympass-red);">
       <h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-in Gympass / Wellhub</h3>
@@ -668,6 +710,12 @@ footer a { color: var(--accent-blue); }
       <p class="mini" style="margin-bottom:6px;">Aqui você vê as aulas confirmadas pelo professor e os check-ins ainda pendentes.</p>
       <div id="listaMinhasPresencasCheckin"></div>
     </div>
+
+    <div class="card" style="border:1px solid var(--gold);" id="cardFormacaoProfessor">
+      <h3 style="color:var(--gold);"><i class="fas fa-user-graduate"></i> Formação de Professor</h3>
+      <p class="mini" style="margin-bottom:8px;">Inscreva-se com login e senha. O professor precisa aceitar sua inscrição para liberar o acesso.</p>
+      <div id="boxFormacaoProfConteudo"></div>
+    </div>
   </div>
 
   <!-- ================= ABA 3 - ALUNO ================= -->
@@ -694,6 +742,11 @@ footer a { color: var(--accent-blue); }
       <input id="autoCadApelido" placeholder="Ex: Formiga">
       <label class="campo-label" style="color:var(--gold);">Sua Corda / Graduação Atual:</label>
       <select id="autoCadGraduacaoSelect"></select>
+      <label class="campo-label">Categoria</label>
+      <select id="autoCadCategoria">
+        <option value="adulto">Adulto</option>
+        <option value="infantil">Infantil</option>
+      </select>
       <label class="campo-label">Contato (WhatsApp)</label>
       <input id="autoCadContato" placeholder="(21) 90000-0000" inputmode="tel">
       <label class="campo-label">Senha de acesso</label>
@@ -729,7 +782,7 @@ footer a { color: var(--accent-blue); }
   </div>
 
   <footer>
-    <span id="footerInfo">Universo Capoeira v88</span> &middot; <i class="fas fa-shield-alt"></i> Capoeira na Pequena África
+    <span id="footerInfo">Universo Capoeira</span> &middot; <i class="fas fa-shield-alt"></i> Capoeira na Pequena África
   </footer>
 </div>
 
@@ -743,6 +796,98 @@ footer a { color: var(--accent-blue); }
 </div>
 
 <div class="toast" id="toastBox"></div>
+
+<!-- Overlay jogos arcade -->
+<div id="arcadeOverlay" style="display:none; position:fixed; inset:0; background:radial-gradient(ellipse at center, #122832 0%, #050b0e 72%); z-index:9600; flex-direction:column; align-items:center; justify-content:space-between; padding:max(10px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom)); box-sizing:border-box;">
+  <div style="width:100%; max-width:380px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+    <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+      <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#00c853,#009624); display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0;">🎮</div>
+      <div style="min-width:0;">
+        <div id="arcadeTitulo" style="color:#00e676; font-size:0.95rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Jogo</div>
+        <div style="font-size:0.72rem; color:#90a4ae;">Pontos <span id="arcadePlacar" style="color:#ffc107; font-weight:800;">0</span></div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-danger btn-mini" style="margin:0; border-radius:20px; padding:8px 14px; flex-shrink:0;" onclick="fecharJogoArcade()"><i class="fas fa-times"></i> Fechar</button>
+  </div>
+
+  <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%; max-width:380px; margin:6px 0; min-height:0;">
+    <div style="position:relative; padding:7px; border-radius:18px; background:linear-gradient(160deg,#1b3d4d 0%,#0a1520 100%); box-shadow:0 0 0 2px rgba(0,210,255,0.4), 0 14px 36px rgba(0,0,0,0.55);">
+      <canvas id="arcadeCanvas" width="320" height="400" style="display:block; background:#071018; border-radius:12px; max-width:min(92vw, 340px); max-height:min(48vh, 400px); width:auto; height:auto; touch-action:none;"></canvas>
+    </div>
+  </div>
+
+  <div style="width:100%; max-width:380px;">
+    <div style="display:flex; gap:16px; align-items:center; justify-content:center; flex-wrap:wrap;">
+      <div class="arcade-dpad" aria-label="Controles de direção">
+        <button type="button" class="arcade-btn arcade-up" onclick="arcadeDir('up')" aria-label="Cima">▲</button>
+        <button type="button" class="arcade-btn arcade-left" onclick="arcadeDir('left')" aria-label="Esquerda">◀</button>
+        <button type="button" class="arcade-btn arcade-center" onclick="arcadeAcao('pause')" aria-label="Pausa">II</button>
+        <button type="button" class="arcade-btn arcade-right" onclick="arcadeDir('right')" aria-label="Direita">▶</button>
+        <button type="button" class="arcade-btn arcade-down" onclick="arcadeDir('down')" aria-label="Baixo">▼</button>
+      </div>
+      <div id="arcadeAcoesTetris" style="display:none; flex-direction:column; gap:10px;">
+        <button type="button" class="arcade-btn arcade-btn-gold" onclick="arcadeAcao('rotate')">Girar</button>
+        <button type="button" class="arcade-btn arcade-btn-green" onclick="arcadeAcao('drop')">Queda</button>
+      </div>
+    </div>
+    <p id="arcadeDica" style="text-align:center; margin:10px 0 0; font-size:0.7rem; color:#90a4ae;">Toque no D-pad ou deslize na tela</p>
+  </div>
+</div>
+
+<style>
+.arcade-dpad {
+  display: grid;
+  grid-template-columns: 54px 54px 54px;
+  grid-template-rows: 54px 54px 54px;
+  gap: 5px;
+  grid-template-areas:
+    ". up ."
+    "left center right"
+    ". down .";
+}
+.arcade-up { grid-area: up; }
+.arcade-left { grid-area: left; }
+.arcade-center { grid-area: center; }
+.arcade-right { grid-area: right; }
+.arcade-down { grid-area: down; }
+.arcade-btn {
+  width: 54px; height: 54px; border: none; border-radius: 16px;
+  background: linear-gradient(145deg, #2196f3, #0d47a1);
+  color: #fff; font-size: 1rem; font-weight: 800;
+  box-shadow: 0 4px 0 #0a2a5c, 0 6px 14px rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.arcade-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #0a2a5c, 0 2px 6px rgba(0,0,0,0.3);
+}
+.arcade-center {
+  background: linear-gradient(145deg, #78909c, #455a64);
+  box-shadow: 0 4px 0 #263238, 0 6px 12px rgba(0,0,0,0.35);
+  font-size: 0.72rem; letter-spacing: 1px;
+}
+.arcade-btn-gold, .arcade-btn-green {
+  width: 118px; height: 50px; border-radius: 25px; font-size: 0.85rem;
+}
+.arcade-btn-gold {
+  background: linear-gradient(145deg, #ffc107, #ff8f00);
+  color: #1a1a1a;
+  box-shadow: 0 4px 0 #e65100, 0 6px 12px rgba(0,0,0,0.35);
+}
+.arcade-btn-green {
+  background: linear-gradient(145deg, #00e676, #00c853);
+  color: #003d1a;
+  box-shadow: 0 4px 0 #1b5e20, 0 6px 12px rgba(0,0,0,0.35);
+}
+@media (max-width: 360px) {
+  .arcade-dpad { grid-template-columns: 48px 48px 48px; grid-template-rows: 48px 48px 48px; }
+  .arcade-btn { width: 48px; height: 48px; border-radius: 14px; }
+  .arcade-btn-gold, .arcade-btn-green { width: 104px; height: 46px; }
+}
+</style>
 
 <div id="bannerAtualizacaoApp" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:linear-gradient(135deg, var(--primary-green-dark), #00a844); color:#fff; padding:10px 12px; text-align:center; z-index:9998; font-size:0.78rem; box-shadow:0 -2px 10px rgba(0,0,0,0.4); align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
   <span>🚀 Tem uma versão nova do app disponível!</span>
@@ -790,7 +935,7 @@ if (window.caches && caches.keys) {
 }
 
 /* =====================================================================
-   UNIVERSO CAPOEIRA v87 - Web & Mobile Edition (atualização)
+   UNIVERSO CAPOEIRA - Web & Mobile Edition
    Arquivo único (HTML + CSS + JS) com camada de dados híbrida:
    Firestore (nuvem) quando configurado, localStorage (local) como reserva.
    ===================================================================== */
@@ -798,9 +943,9 @@ if (window.caches && caches.keys) {
 /* ---------------------------------------------------------------
    0. CONSTANTES
    --------------------------------------------------------------- */
-var VERSAO_APP = 'v88';
-var CHAVE_LOCAL = 'uc_db_v88';
-var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v88';
+var VERSAO_APP = 'v87';
+var CHAVE_LOCAL = 'uc_db_v87';
+var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v87';
 
 var FIREBASE_CONFIG_PADRAO = {
   apiKey: "AIzaSyDlmXcUACxQZ3QMjaQIXsJb_gUnv10P85A",
@@ -841,7 +986,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -851,6 +996,7 @@ var CONFIG_PADRAO = {
   tempoTimerSegundos: 90,
   toleranciaAtrasoMin: 15,
   janelaCheckinMin: 10,
+  horasPorAula: 1.5,
   graduacoes: GRADUACOES_PADRAO.slice(),
   iaProxyUrl: '',
   baseConhecimento: '',
@@ -1282,13 +1428,13 @@ var CONFIG = Object.assign({}, CONFIG_PADRAO);
 var configCarregada = false;
 
 function aplicarConfig() {
-  document.title = CONFIG.tituloApp + ' ' + VERSAO_APP + ' - Web & Mobile Edition';
+  document.title = CONFIG.tituloApp;
   if ($('headerTituloTexto')) $('headerTituloTexto').textContent = CONFIG.tituloApp;
   if ($('handleInstagramAcademiaTxt')) $('handleInstagramAcademiaTxt').textContent = CONFIG.instagram;
   var l1 = $('headerLogo1'), l2 = $('headerLogo2');
   if (CONFIG.logo1) { l1.src = CONFIG.logo1; l1.style.display = 'block'; } else { l1.style.display = 'none'; }
   if (CONFIG.logo2) { l2.src = CONFIG.logo2; l2.style.display = 'block'; } else { l2.style.display = 'none'; }
-  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp + ' ' + VERSAO_APP + ' - modo ' + (DB.modo === 'nuvem' ? 'nuvem' : 'local');
+  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp + ' · Capoeira na Pequena África';
   timerDuracaoPadrao = CONFIG.tempoTimerSegundos || 90;
   if (!timerRodando) { timerSegundos = timerDuracaoPadrao; atualizarTimerUI(); }
   renderGraduacoes();
@@ -1384,6 +1530,7 @@ function atualizarStatusFirebase() {
    --------------------------------------------------------------- */
 var sessaoAlunoId = null;
 var sessaoEquipe = null;
+var sessaoFormacaoProfId = null;
 
 function alunoLogado() { return sessaoAlunoId ? DB.buscar('alunos', sessaoAlunoId) : null; }
 
@@ -1561,10 +1708,14 @@ function cadastrarAlunoNuvem(btn) {
 
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Salvando...'; }
 
+  var categoria = (($('autoCadCategoria') || {}).value || 'adulto');
+  if (categoria !== 'infantil') categoria = 'adulto';
+
   var novo = {
     nome: nome,
     apelido: apelido || nome.split(' ')[0],
     graduacao: graduacao,
+    categoria: categoria,
     contato: contato,
     senhaHash: hashSenha(s1),
     criadoEm: agoraISO(),
@@ -1666,7 +1817,7 @@ function exigirEquipe(papeis, container, rotuloPapel) {
 /* ---------------------------------------------------------------
    8. NOTIFICAÇÕES
    --------------------------------------------------------------- */
-var CHAVE_NOTIF = 'uc_notif_ativa_v88';
+var CHAVE_NOTIF = 'uc_notif_ativa_v87';
 
 function pedirPermissaoNotificacao() {
   if (!('Notification' in window)) {
@@ -1702,9 +1853,14 @@ var ultimoAvisoNotificado = null;
 function renderInicio() {
   renderHorarioFixoInicio();
   renderAvisoLocal();
+  renderBannerProfessorInicio();
   renderRanking();
   renderRankingCompleto();
   renderCertificadosAluno();
+  renderRankingJogos();
+  preencherNomeJogadorCorrida();
+  preencherFormacaoInfantilCampos();
+  renderMinhaInscricaoFormacao();
   renderMural();
   renderFeedInstagramNota();
   renderPerguntaSemanaInicio();
@@ -1712,6 +1868,700 @@ function renderInicio() {
     $('btnAtivarNotificacao').innerHTML = '<i class="fas fa-bell"></i> Notificações Ativas';
   }
   setTimeout(atualizarBadgesInteracao, 80);
+}
+
+function preencherFormacaoInfantilCampos() {
+  var aluno = alunoLogado();
+  if (!aluno) return;
+  if ($('formacaoNome') && !($('formacaoNome').value || '').trim()) $('formacaoNome').value = aluno.nome || '';
+  if ($('formacaoApelido') && !($('formacaoApelido').value || '').trim()) $('formacaoApelido').value = aluno.apelido || '';
+  if ($('formacaoContato') && !($('formacaoContato').value || '').trim()) $('formacaoContato').value = aluno.contato || '';
+}
+
+function renderMinhaInscricaoFormacao() {
+  var box = $('boxMinhaInscricaoFormacao');
+  if (!box) return;
+  var aluno = alunoLogado();
+  var lista = DB.listar('formacaoInfantil').filter(function (f) {
+    if (aluno && f.alunoId === aluno.id) return true;
+    var nome = ($('formacaoNome') || {}).value || '';
+    return nome && normalizar(f.nome) === normalizar(nome);
+  }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+  if (!lista.length) { box.innerHTML = ''; return; }
+  var f = lista[0];
+  var st = f.status === 'aprovado' ? 'pill-ok' : (f.status === 'recusado' ? 'pill-no' : 'pill-pend');
+  box.innerHTML = '<div class="aviso-info"><i class="fas fa-info-circle"></i> Sua inscrição: <span class="pill ' + st + '">' + esc(f.status || 'pendente') + '</span>' +
+    (f.respostaProfessor ? '<br><span class="mini">Prof.: ' + esc(f.respostaProfessor) + '</span>' : '') +
+    '</div>';
+}
+
+function inscreverFormacaoInfantil(btn) {
+  var nome = ($('formacaoNome') || {}).value ? $('formacaoNome').value.trim() : '';
+  var apelido = ($('formacaoApelido') || {}).value ? $('formacaoApelido').value.trim() : '';
+  var contato = ($('formacaoContato') || {}).value ? $('formacaoContato').value.trim() : '';
+  var exp = ($('formacaoExp') || {}).value ? $('formacaoExp').value.trim() : '';
+  var motivo = ($('formacaoMotivo') || {}).value ? $('formacaoMotivo').value.trim() : '';
+  if (nome.length < 3) { mostrarToast('Informe seu nome completo.', 'erro'); return; }
+  if (contato.length < 8) { mostrarToast('Informe um WhatsApp/contato válido.', 'erro'); return; }
+  if (motivo.length < 8) { mostrarToast('Conte um pouco da sua motivação.', 'erro'); return; }
+  var aluno = alunoLogado();
+  var ja = DB.listar('formacaoInfantil').some(function (f) {
+    return f.status === 'pendente' && (
+      (aluno && f.alunoId === aluno.id) || normalizar(f.nome) === normalizar(nome)
+    );
+  });
+  if (ja) { mostrarToast('Você já tem uma inscrição pendente.', 'erro'); return; }
+  if (btn) { btn.disabled = true; btn.classList.add('carregando'); }
+  DB.salvar('formacaoInfantil', {
+    alunoId: aluno ? aluno.id : '',
+    nome: nome,
+    apelido: apelido,
+    contato: contato,
+    experiencia: exp,
+    motivo: motivo,
+    status: 'pendente',
+    criadoEm: agoraISO()
+  }).then(function () {
+    if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
+    mostrarToast('Inscrição enviada! O professor vai analisar.');
+    notificar('Nova inscrição — formação infantil', nome + ' quer se formar para dar aula para crianças');
+    if ($('formacaoMotivo')) $('formacaoMotivo').value = '';
+    if ($('formacaoExp')) $('formacaoExp').value = '';
+    renderMinhaInscricaoFormacao();
+  }).catch(function () {
+    if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
+    mostrarToast('Não foi possível enviar. Tente de novo.', 'erro');
+  });
+}
+
+function renderBannerProfessorInicio() {
+  var tab = $('tab1');
+  if (!tab) return;
+  var box = $('boxProfessorNaAulaInicio');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'boxProfessorNaAulaInicio';
+    var ref = $('boxNotificacaoAluno') || tab.firstElementChild;
+    if (ref && ref.parentNode) ref.parentNode.insertBefore(box, ref.nextSibling);
+    else tab.insertBefore(box, tab.firstChild);
+  }
+  box.innerHTML = htmlBannerProfessorNaAula();
+}
+
+function preencherNomeJogadorCorrida() {
+  var campo = $('nomeJogadorCorrida');
+  if (!campo || (campo.value || '').trim()) return;
+  var aluno = alunoLogado();
+  if (aluno) campo.value = aluno.apelido || aluno.nome || '';
+}
+
+function rankingPontosJogos() {
+  var mapa = {};
+  DB.listar('pontosJogos').forEach(function (r) {
+    var k = normalizar(r.nome);
+    if (!k) return;
+    if (!mapa[k]) mapa[k] = { nome: r.nome, pontos: 0 };
+    mapa[k].pontos += Number(r.pontos) || 0;
+    if (r.nome && r.nome.length > mapa[k].nome.length) mapa[k].nome = r.nome;
+  });
+  return Object.keys(mapa).map(function (k) { return mapa[k]; })
+    .sort(function (a, b) { return b.pontos - a.pontos; });
+}
+
+function renderRankingJogos() {
+  var box = $('listaRankingJogos');
+  if (!box) return;
+  var lista = rankingPontosJogos().slice(0, 8);
+  if (!lista.length) {
+    box.innerHTML = '<p class="sem-dados">Ninguém pontuou ainda. Seja o primeiro na corrida!</p>';
+    return;
+  }
+  var html = '';
+  lista.forEach(function (item, idx) {
+    var med = ['🥇', '🥈', '🥉'][idx] || ((idx + 1) + 'º');
+    html += '<div class="lista-item"><div class="linha"><span>' + med + ' <b>' + esc(item.nome) + '</b></span>' +
+      '<span class="badge-count">' + item.pontos + ' pts</span></div></div>';
+  });
+  box.innerHTML = html;
+}
+
+function jogarCorrida() {
+  var campo = $('nomeJogadorCorrida');
+  var nome = (campo && campo.value || '').trim();
+  if (nome.length < 2) { mostrarToast('Digite seu nome ou apelido para jogar.', 'erro'); return; }
+  var btn = $('btnJogarCorrida');
+  var corredor = $('corredorEmoji');
+  var status = $('txtStatusCorrida');
+  if (btn) { btn.disabled = true; btn.classList.add('carregando'); }
+  if (status) status.textContent = 'Largada! Acelerando...';
+  if (corredor) { corredor.style.display = 'block'; corredor.style.left = '8px'; }
+  setTimeout(function () { if (corredor) corredor.style.left = 'calc(100% - 40px)'; }, 50);
+  var ganho = Math.floor(Math.random() * 200) + 100;
+  setTimeout(function () {
+    registrarPontosJogo(nome, ganho, 'corrida').then(function () {
+      if (status) status.textContent = 'Chegada! +' + ganho + ' pts!';
+      if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
+      if (corredor) setTimeout(function () { corredor.style.left = '8px'; corredor.style.display = 'none'; }, 800);
+      mostrarToast('Parabéns! Você ganhou ' + ganho + ' pontos!');
+      renderRankingJogos();
+    }).catch(function () {
+      if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
+    });
+  }, 1300);
+}
+
+function nomeJogadorArcade() {
+  var campo = $('nomeJogadorCorrida');
+  var nome = (campo && campo.value || '').trim();
+  if (nome.length >= 2) return nome;
+  var aluno = alunoLogado();
+  if (aluno) return aluno.apelido || aluno.nome || '';
+  return '';
+}
+
+function registrarPontosJogo(nome, pontos, jogo) {
+  var aluno = alunoLogado() || encontrarAlunoPorNome(nome);
+  return DB.salvar('pontosJogos', {
+    nome: aluno ? (aluno.apelido || aluno.nome) : nome,
+    alunoId: aluno ? aluno.id : '',
+    pontos: Math.max(0, Math.round(pontos)),
+    jogo: jogo || 'arcade',
+    criadoEm: agoraISO()
+  }).then(function () { renderRankingJogos(); });
+}
+
+/* ===== Arcade: Snake, Tetris, Corrida ===== */
+var arcade = {
+  tipo: null,
+  rodando: false,
+  pausado: false,
+  score: 0,
+  timer: null,
+  canvas: null,
+  ctx: null,
+  // snake
+  snake: [],
+  dir: { x: 1, y: 0 },
+  nextDir: { x: 1, y: 0 },
+  food: { x: 5, y: 5 },
+  grid: 16,
+  cols: 20,
+  rows: 25,
+  // tetris
+  board: [],
+  piece: null,
+  tCols: 10,
+  tRows: 20,
+  tCell: 20,
+  // corrida arcade
+  carX: 1,
+  obstacles: [],
+  speed: 4,
+  frame: 0
+};
+
+var TETRIS_SHAPES = {
+  I: [[1,1,1,1]],
+  O: [[1,1],[1,1]],
+  T: [[0,1,0],[1,1,1]],
+  S: [[0,1,1],[1,1,0]],
+  Z: [[1,1,0],[0,1,1]],
+  J: [[1,0,0],[1,1,1]],
+  L: [[0,0,1],[1,1,1]]
+};
+var TETRIS_COLORS = { I: '#00d2ff', O: '#ffc107', T: '#ab47bc', S: '#00e676', Z: '#ef5350', J: '#42a5f5', L: '#ff9800' };
+
+function abrirJogoArcade(tipo) {
+  var nome = nomeJogadorArcade();
+  if (nome.length < 2) {
+    mostrarToast('Digite seu nome no campo acima para jogar.', 'erro');
+    return;
+  }
+  arcade.tipo = tipo;
+  arcade.score = 0;
+  arcade.pausado = false;
+  arcade.rodando = true;
+  var ov = $('arcadeOverlay');
+  if (ov) ov.style.display = 'flex';
+  try { document.body.style.overflow = 'hidden'; } catch (e) {}
+  var titulos = { snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida' };
+  if ($('arcadeTitulo')) $('arcadeTitulo').textContent = titulos[tipo] || 'Jogo';
+  if ($('arcadePlacar')) $('arcadePlacar').textContent = '0';
+  if ($('arcadeDica')) {
+    $('arcadeDica').textContent = tipo === 'tetris'
+      ? 'D-pad move • Girar / Queda nos botões laterais'
+      : (tipo === 'corrida' ? 'Esquerda e direita no D-pad ou deslize' : 'Controle a minhoca no D-pad ou deslize');
+  }
+  var acoes = $('arcadeAcoesTetris');
+  if (acoes) acoes.style.display = (tipo === 'tetris') ? 'flex' : 'none';
+  arcade.canvas = $('arcadeCanvas');
+  if (!arcade.canvas) return;
+  if (tipo === 'snake') {
+    arcade.canvas.width = arcade.cols * arcade.grid;
+    arcade.canvas.height = arcade.rows * arcade.grid;
+  } else if (tipo === 'tetris') {
+    arcade.canvas.width = arcade.tCols * arcade.tCell;
+    arcade.canvas.height = arcade.tRows * arcade.tCell;
+  } else if (tipo === 'corrida') {
+    arcade.canvas.width = 240;
+    arcade.canvas.height = 360;
+  }
+  arcade.ctx = arcade.canvas.getContext('2d');
+  if (tipo === 'snake') initSnake();
+  else if (tipo === 'tetris') initTetris();
+  else if (tipo === 'corrida') initCorridaArcade();
+  if (arcade.timer) clearInterval(arcade.timer);
+  var ms = tipo === 'tetris' ? 400 : (tipo === 'corrida' ? 50 : 120);
+  arcade.timer = setInterval(arcadeLoop, ms);
+  window.removeEventListener('keydown', arcadeKeyHandler);
+  window.addEventListener('keydown', arcadeKeyHandler);
+  instalarSwipeArcade(arcade.canvas);
+}
+
+function fecharJogoArcade() {
+  var scoreFinal = arcade.score;
+  var tipo = arcade.tipo;
+  arcade.rodando = false;
+  if (arcade.timer) { clearInterval(arcade.timer); arcade.timer = null; }
+  window.removeEventListener('keydown', arcadeKeyHandler);
+  var ov = $('arcadeOverlay');
+  if (ov) ov.style.display = 'none';
+  try { document.body.style.overflow = ''; } catch (e) {}
+  if (scoreFinal > 0 && tipo) {
+    var pts = tipo === 'snake' ? Math.round(scoreFinal * 3)
+      : (tipo === 'tetris' ? Math.round(scoreFinal / 2)
+      : Math.round(scoreFinal));
+    pts = Math.max(5, Math.min(500, pts));
+    var nome = nomeJogadorArcade();
+    if (nome) {
+      registrarPontosJogo(nome, pts, tipo).then(function () {
+        mostrarToast('+' + pts + ' pts no ranking (' + tipo + ')!');
+      });
+    }
+  }
+  arcade.tipo = null;
+}
+
+function instalarSwipeArcade(canvas) {
+  if (!canvas || canvas._swipeOk) return;
+  canvas._swipeOk = true;
+  var sx = 0, sy = 0, t0 = 0;
+  canvas.addEventListener('touchstart', function (e) {
+    if (!e.touches || !e.touches[0]) return;
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    t0 = Date.now();
+  }, { passive: true });
+  canvas.addEventListener('touchend', function (e) {
+    if (!e.changedTouches || !e.changedTouches[0]) return;
+    var dx = e.changedTouches[0].clientX - sx;
+    var dy = e.changedTouches[0].clientY - sy;
+    var adx = Math.abs(dx), ady = Math.abs(dy);
+    if (adx < 24 && ady < 24) {
+      if (arcade.tipo === 'tetris') arcadeAcao('rotate');
+      return;
+    }
+    if (adx > ady) arcadeDir(dx > 0 ? 'right' : 'left');
+    else arcadeDir(dy > 0 ? 'down' : 'up');
+  }, { passive: true });
+}
+
+function arcadeKeyHandler(e) {
+  if (!arcade.rodando) return;
+  var k = e.key;
+  if (k === 'ArrowUp' || k === 'w' || k === 'W') { arcadeDir('up'); e.preventDefault(); }
+  else if (k === 'ArrowDown' || k === 's' || k === 'S') { arcadeDir('down'); e.preventDefault(); }
+  else if (k === 'ArrowLeft' || k === 'a' || k === 'A') { arcadeDir('left'); e.preventDefault(); }
+  else if (k === 'ArrowRight' || k === 'd' || k === 'D') { arcadeDir('right'); e.preventDefault(); }
+  else if (k === ' ' || k === 'Enter') { arcadeAcao(arcade.tipo === 'tetris' ? 'rotate' : 'pause'); e.preventDefault(); }
+  else if (k === 'p' || k === 'P') { arcadeAcao('pause'); e.preventDefault(); }
+  else if (k === 'Escape') { fecharJogoArcade(); }
+}
+
+function arcadeDir(d) {
+  if (!arcade.rodando || arcade.pausado) return;
+  if (arcade.tipo === 'snake') {
+    var map = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
+    var nd = map[d];
+    if (!nd) return;
+    if (nd.x === -arcade.dir.x && nd.y === -arcade.dir.y) return;
+    arcade.nextDir = nd;
+  } else if (arcade.tipo === 'tetris') {
+    if (d === 'left') moveTetris(-1, 0);
+    else if (d === 'right') moveTetris(1, 0);
+    else if (d === 'down') moveTetris(0, 1);
+    else if (d === 'up') rotateTetris();
+  } else if (arcade.tipo === 'corrida') {
+    if (d === 'left') arcade.carX = Math.max(0, arcade.carX - 1);
+    else if (d === 'right') arcade.carX = Math.min(2, arcade.carX + 1);
+  }
+}
+
+function arcadeAcao(a) {
+  if (!arcade.rodando) return;
+  if (a === 'pause') {
+    arcade.pausado = !arcade.pausado;
+    mostrarToast(arcade.pausado ? 'Pausado' : 'Continuando...');
+    return;
+  }
+  if (arcade.pausado) return;
+  if (arcade.tipo === 'tetris') {
+    if (a === 'rotate') rotateTetris();
+    else if (a === 'drop') {
+      while (moveTetris(0, 1)) {}
+    }
+  }
+}
+
+function arcadeLoop() {
+  if (!arcade.rodando || arcade.pausado) return;
+  if (arcade.tipo === 'snake') tickSnake();
+  else if (arcade.tipo === 'tetris') tickTetris();
+  else if (arcade.tipo === 'corrida') tickCorridaArcade();
+  if ($('arcadePlacar')) $('arcadePlacar').textContent = String(arcade.score);
+}
+
+function initSnake() {
+  arcade.snake = [{ x: 8, y: 12 }, { x: 7, y: 12 }, { x: 6, y: 12 }];
+  arcade.dir = { x: 1, y: 0 };
+  arcade.nextDir = { x: 1, y: 0 };
+  spawnFood();
+  drawSnake();
+}
+
+function spawnFood() {
+  var ok = false;
+  while (!ok) {
+    arcade.food = { x: Math.floor(Math.random() * arcade.cols), y: Math.floor(Math.random() * arcade.rows) };
+    ok = !arcade.snake.some(function (s) { return s.x === arcade.food.x && s.y === arcade.food.y; });
+  }
+}
+
+function tickSnake() {
+  arcade.dir = arcade.nextDir;
+  var head = { x: arcade.snake[0].x + arcade.dir.x, y: arcade.snake[0].y + arcade.dir.y };
+  if (head.x < 0 || head.y < 0 || head.x >= arcade.cols || head.y >= arcade.rows ||
+      arcade.snake.some(function (s) { return s.x === head.x && s.y === head.y; })) {
+    gameOverArcade();
+    return;
+  }
+  arcade.snake.unshift(head);
+  if (head.x === arcade.food.x && head.y === arcade.food.y) {
+    arcade.score += 10;
+    spawnFood();
+  } else {
+    arcade.snake.pop();
+  }
+  drawSnake();
+}
+
+function drawSnake() {
+  var ctx = arcade.ctx, g = arcade.grid, w = arcade.canvas.width, h = arcade.canvas.height;
+  /* fundo com grade sutil */
+  var grd = ctx.createLinearGradient(0, 0, 0, h);
+  grd.addColorStop(0, '#0d1f17');
+  grd.addColorStop(1, '#07120e');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(0,230,118,0.06)';
+  ctx.lineWidth = 1;
+  for (var gx = 0; gx <= arcade.cols; gx++) {
+    ctx.beginPath(); ctx.moveTo(gx * g, 0); ctx.lineTo(gx * g, h); ctx.stroke();
+  }
+  for (var gy = 0; gy <= arcade.rows; gy++) {
+    ctx.beginPath(); ctx.moveTo(0, gy * g); ctx.lineTo(w, gy * g); ctx.stroke();
+  }
+  /* minhoca com segmentos arredondados */
+  arcade.snake.forEach(function (s, i) {
+    var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
+    var r = i === 0 ? g / 2 - 1 : g / 2 - 2;
+    var body = ctx.createRadialGradient(cx - 2, cy - 2, 1, cx, cy, r);
+    body.addColorStop(0, i === 0 ? '#69f0ae' : '#00e676');
+    body.addColorStop(1, i === 0 ? '#00c853' : '#1b5e20');
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    if (i === 0) {
+      /* olhos */
+      var ex = arcade.dir.x * 3, ey = arcade.dir.y * 3;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(cx - 3 + ex, cy - 3 + ey, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 3 + ex, cy - 3 + ey, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(cx - 3 + ex + arcade.dir.x, cy - 3 + ey + arcade.dir.y, 1, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx + 3 + ex + arcade.dir.x, cy - 3 + ey + arcade.dir.y, 1, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+  /* comida com brilho */
+  var fx = arcade.food.x * g + g / 2, fy = arcade.food.y * g + g / 2;
+  var foodG = ctx.createRadialGradient(fx - 2, fy - 2, 1, fx, fy, g / 2);
+  foodG.addColorStop(0, '#ffe082');
+  foodG.addColorStop(0.6, '#ffc107');
+  foodG.addColorStop(1, '#ff8f00');
+  ctx.fillStyle = foodG;
+  ctx.beginPath();
+  ctx.arc(fx, fy, g / 2 - 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  ctx.arc(fx - 2, fy - 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function initTetris() {
+  arcade.board = [];
+  for (var r = 0; r < arcade.tRows; r++) {
+    arcade.board[r] = [];
+    for (var c = 0; c < arcade.tCols; c++) arcade.board[r][c] = 0;
+  }
+  spawnTetris();
+  drawTetris();
+}
+
+function spawnTetris() {
+  var keys = Object.keys(TETRIS_SHAPES);
+  var k = keys[Math.floor(Math.random() * keys.length)];
+  arcade.piece = {
+    shape: TETRIS_SHAPES[k].map(function (row) { return row.slice(); }),
+    color: TETRIS_COLORS[k],
+    x: Math.floor(arcade.tCols / 2) - 1,
+    y: 0
+  };
+  if (colisaoTetris(0, 0, arcade.piece.shape)) {
+    gameOverArcade();
+  }
+}
+
+function colisaoTetris(dx, dy, shape) {
+  shape = shape || arcade.piece.shape;
+  for (var r = 0; r < shape.length; r++) {
+    for (var c = 0; c < shape[r].length; c++) {
+      if (!shape[r][c]) continue;
+      var nx = arcade.piece.x + c + dx;
+      var ny = arcade.piece.y + r + dy;
+      if (nx < 0 || nx >= arcade.tCols || ny >= arcade.tRows) return true;
+      if (ny >= 0 && arcade.board[ny][nx]) return true;
+    }
+  }
+  return false;
+}
+
+function mergeTetris() {
+  var sh = arcade.piece.shape;
+  for (var r = 0; r < sh.length; r++) {
+    for (var c = 0; c < sh[r].length; c++) {
+      if (!sh[r][c]) continue;
+      var y = arcade.piece.y + r;
+      var x = arcade.piece.x + c;
+      if (y >= 0) arcade.board[y][x] = arcade.piece.color;
+    }
+  }
+  var lines = 0;
+  for (var row = arcade.tRows - 1; row >= 0; row--) {
+    if (arcade.board[row].every(function (cell) { return cell; })) {
+      arcade.board.splice(row, 1);
+      arcade.board.unshift([]);
+      for (var i = 0; i < arcade.tCols; i++) arcade.board[0][i] = 0;
+      lines++;
+      row++;
+    }
+  }
+  if (lines) arcade.score += lines * 100;
+  spawnTetris();
+}
+
+function moveTetris(dx, dy) {
+  if (colisaoTetris(dx, dy)) {
+    if (dy > 0) mergeTetris();
+    return false;
+  }
+  arcade.piece.x += dx;
+  arcade.piece.y += dy;
+  drawTetris();
+  return true;
+}
+
+function rotateTetris() {
+  var sh = arcade.piece.shape;
+  var rotated = [];
+  var rows = sh.length, cols = sh[0].length;
+  for (var c = 0; c < cols; c++) {
+    rotated[c] = [];
+    for (var r = rows - 1; r >= 0; r--) rotated[c].push(sh[r][c]);
+  }
+  if (!colisaoTetris(0, 0, rotated)) {
+    arcade.piece.shape = rotated;
+    drawTetris();
+  }
+}
+
+function tickTetris() {
+  moveTetris(0, 1);
+}
+
+function desenharBlocoTetris(ctx, x, y, cs, cor) {
+  var g = ctx.createLinearGradient(x, y, x + cs, y + cs);
+  g.addColorStop(0, cor);
+  g.addColorStop(1, '#000');
+  ctx.fillStyle = g;
+  ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fillRect(x + 2, y + 2, cs - 6, 3);
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.strokeRect(x + 1, y + 1, cs - 2, cs - 2);
+}
+
+function drawTetris() {
+  var ctx = arcade.ctx, cs = arcade.tCell, w = arcade.canvas.width, h = arcade.canvas.height;
+  ctx.fillStyle = '#0b1220';
+  ctx.fillRect(0, 0, w, h);
+  /* grade */
+  ctx.strokeStyle = 'rgba(0,210,255,0.08)';
+  ctx.lineWidth = 1;
+  for (var c = 0; c <= arcade.tCols; c++) {
+    ctx.beginPath(); ctx.moveTo(c * cs, 0); ctx.lineTo(c * cs, h); ctx.stroke();
+  }
+  for (var r = 0; r <= arcade.tRows; r++) {
+    ctx.beginPath(); ctx.moveTo(0, r * cs); ctx.lineTo(w, r * cs); ctx.stroke();
+  }
+  for (var r2 = 0; r2 < arcade.tRows; r2++) {
+    for (var c2 = 0; c2 < arcade.tCols; c2++) {
+      if (arcade.board[r2][c2]) {
+        desenharBlocoTetris(ctx, c2 * cs, r2 * cs, cs, arcade.board[r2][c2]);
+      }
+    }
+  }
+  if (arcade.piece) {
+    var sh = arcade.piece.shape;
+    for (var r3 = 0; r3 < sh.length; r3++) {
+      for (var c3 = 0; c3 < sh[r3].length; c3++) {
+        if (sh[r3][c3]) {
+          desenharBlocoTetris(ctx, (arcade.piece.x + c3) * cs, (arcade.piece.y + r3) * cs, cs, arcade.piece.color);
+        }
+      }
+    }
+  }
+  /* HUD */
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(0, 0, w, 22);
+  ctx.fillStyle = '#00d2ff';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('LINHAS / SCORE: ' + arcade.score, 6, 15);
+}
+
+function initCorridaArcade() {
+  arcade.carX = 1;
+  arcade.obstacles = [];
+  arcade.speed = 4;
+  arcade.frame = 0;
+  arcade.score = 0;
+  drawCorridaArcade();
+}
+
+function tickCorridaArcade() {
+  arcade.frame++;
+  if (arcade.frame % 25 === 0) {
+    arcade.obstacles.push({ lane: Math.floor(Math.random() * 3), y: -30 });
+  }
+  if (arcade.frame % 200 === 0) arcade.speed = Math.min(12, arcade.speed + 0.5);
+  for (var i = arcade.obstacles.length - 1; i >= 0; i--) {
+    arcade.obstacles[i].y += arcade.speed;
+    if (arcade.obstacles[i].y > arcade.canvas.height) {
+      arcade.obstacles.splice(i, 1);
+      arcade.score += 5;
+    } else if (arcade.obstacles[i].y > arcade.canvas.height - 70 && arcade.obstacles[i].y < arcade.canvas.height - 20 &&
+               arcade.obstacles[i].lane === arcade.carX) {
+      gameOverArcade();
+      return;
+    }
+  }
+  drawCorridaArcade();
+}
+
+function drawCorridaArcade() {
+  var ctx = arcade.ctx;
+  var w = arcade.canvas.width, h = arcade.canvas.height;
+  /* asfalto */
+  var road = ctx.createLinearGradient(0, 0, w, 0);
+  road.addColorStop(0, '#2a2a2a');
+  road.addColorStop(0.5, '#3a3a3a');
+  road.addColorStop(1, '#2a2a2a');
+  ctx.fillStyle = road;
+  ctx.fillRect(0, 0, w, h);
+  /* acostamento */
+  ctx.fillStyle = '#4e342e';
+  ctx.fillRect(0, 0, 8, h);
+  ctx.fillRect(w - 8, 0, 8, h);
+  var laneW = w / 3;
+  var offset = (arcade.frame * arcade.speed * 2) % 28;
+  ctx.strokeStyle = '#ffc107';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([14, 14]);
+  ctx.lineDashOffset = -offset;
+  ctx.beginPath();
+  ctx.moveTo(laneW, 0); ctx.lineTo(laneW, h);
+  ctx.moveTo(laneW * 2, 0); ctx.lineTo(laneW * 2, h);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.lineWidth = 1;
+  /* obstáculos (carros rivais) */
+  arcade.obstacles.forEach(function (o) {
+    var x = o.lane * laneW + 14;
+    var y = o.y;
+    var bw = laneW - 28, bh = 32;
+    var g = ctx.createLinearGradient(x, y, x + bw, y + bh);
+    g.addColorStop(0, '#ef5350');
+    g.addColorStop(1, '#b71c1c');
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, bw, bh);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(x + 4, y + 4, bw - 8, 8);
+    ctx.fillStyle = '#ffeb3b';
+    ctx.fillRect(x + 3, y + bh - 6, 6, 4);
+    ctx.fillRect(x + bw - 9, y + bh - 6, 6, 4);
+  });
+  /* carro do jogador */
+  var px = arcade.carX * laneW + 16;
+  var py = h - 58;
+  var pw = laneW - 32, ph = 42;
+  var pg = ctx.createLinearGradient(px, py, px + pw, py + ph);
+  pg.addColorStop(0, '#69f0ae');
+  pg.addColorStop(1, '#00c853');
+  ctx.fillStyle = pg;
+  ctx.fillRect(px, py, pw, ph);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillRect(px + 5, py + 6, pw - 10, 10);
+  ctx.fillStyle = '#fff59d';
+  ctx.fillRect(px + 4, py + 2, 7, 5);
+  ctx.fillRect(px + pw - 11, py + 2, 7, 5);
+  /* HUD */
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, 0, w, 24);
+  ctx.fillStyle = '#00e676';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('SCORE ' + arcade.score, 8, 16);
+  ctx.fillStyle = '#ffc107';
+  ctx.fillText('VEL ' + Math.round(arcade.speed * 10), w - 70, 16);
+}
+
+function gameOverArcade() {
+  arcade.rodando = false;
+  if (arcade.timer) { clearInterval(arcade.timer); arcade.timer = null; }
+  var ctx = arcade.ctx;
+  if (ctx) {
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(0, 0, arcade.canvas.width, arcade.canvas.height);
+    ctx.fillStyle = '#00e676';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over', arcade.canvas.width / 2, arcade.canvas.height / 2 - 10);
+    ctx.fillStyle = '#ffc107';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('Pontos: ' + arcade.score, arcade.canvas.width / 2, arcade.canvas.height / 2 + 18);
+    ctx.textAlign = 'left';
+  }
+  setTimeout(function () { fecharJogoArcade(); }, 1600);
 }
 
 function renderPerguntaSemanaInicio() {
@@ -2386,6 +3236,8 @@ function renderCheckin() {
   if (campoNome && logado && !(campoNome.value || '').trim()) {
     campoNome.value = logado.nome;
   }
+  var boxProf = $('boxProfessorNaAulaCheckin');
+  if (boxProf) boxProf.innerHTML = htmlBannerProfessorNaAula();
   renderHorarioAulaHoje();
   renderSelectPolos();
   renderMinhasPresencasCheckin();
@@ -2666,8 +3518,8 @@ function validarCheckinGympassNuvem() {
    --------------------------------------------------------------- */
 function renderAluno() {
   try {
-    if (sessaoAlunoId) localStorage.setItem('uc_sessao_aluno_v88', sessaoAlunoId);
-    else localStorage.removeItem('uc_sessao_aluno_v88');
+    if (sessaoAlunoId) localStorage.setItem('uc_sessao_aluno_v87', sessaoAlunoId);
+    else localStorage.removeItem('uc_sessao_aluno_v87');
   } catch (e) {}
   var logado = alunoLogado();
   var testeCard = $('cardTesteConhecimento');
@@ -2688,6 +3540,7 @@ function renderAluno() {
   }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
 
   var aprovadas = presencas.filter(function (p) { return p.status === 'aprovado'; }).length;
+  var cargaAluno = calcularCargaHorariaAluno(logado);
   var pendentes = presencas.filter(function (p) { return p.status === 'pendente'; }).length;
   var avals = DB.listar('avaliacoes').filter(function (a) {
     return a.alunoId === logado.id || normalizar(a.alunoNome) === normalizar(logado.nome);
@@ -2740,6 +3593,12 @@ function renderAluno() {
       '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + solPendentes + '</div><div class="mini">pedidos pend.</div></div>' +
       '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + avals.length + '</div><div class="mini">avaliações</div></div>' +
     '</div>' +
+    '<div class="card" style="margin-top:8px; border:1px solid var(--gold);">' +
+      '<h3 style="color:var(--gold);"><i class="fas fa-clock"></i> Carga horária para certificado</h3>' +
+      '<div class="linha"><span class="mini">Aulas aprovadas</span><b>' + cargaAluno.aulas + '</b></div>' +
+      '<div class="linha"><span class="mini">Carga acumulada</span><b style="color:var(--gold);">' + cargaAluno.texto + '</b></div>' +
+      '<p class="mini" style="margin-top:6px;">Cada presença aprovada soma ' + formatarCargaHoraria(horasPorAulaConfig()) + '. O professor usa essa carga ao emitir o certificado.</p>' +
+    '</div>' +
 
     (falhas
       ? '<div class="alerta-dificuldade" style="margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> ' + falhas + ' presença(s) rejeitada(s) — isso pode afetar sua graduação.</div>'
@@ -2762,6 +3621,9 @@ function renderAluno() {
     htmlCardMensagensAluno(logado) +
     htmlCardFeedbackAula(logado) +
     htmlCardPerguntaSemanaAluno(logado) +
+
+    /* ===== AULAS E ALONGAMENTOS (professor publica) ===== */
+    htmlCardAulasConteudoAluno() +
 
     /* ===== PEDIR TREINO ESPECÍFICO (NOVO) ===== */
     '<div class="card" style="margin-top:4px; border:1px solid var(--accent-blue);">' +
@@ -2944,6 +3806,27 @@ function renderAbaProfessor() {
   html += '<div class="card" style="border:1px solid var(--accent-blue);">' +
     '<h3><i class="fas fa-user-shield"></i> Sessão: ' + esc(sessaoEquipe.nome) + ' <span class="pill pill-info">' + esc(sessaoEquipe.papel) + '</span></h3>' +
     '<button class="btn btn-back" style="margin:0;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button></div>';
+
+  /* --- Check-in do professor na aula --- */
+  var presProf = professorPresenteHoje();
+  html += '<div class="card" style="border:1px solid var(--primary-green);">' +
+    '<h3 style="color:var(--primary-green);"><i class="fas fa-chalkboard-teacher"></i> Check-in do Professor na Aula</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Marque sua presença. Os alunos verão que o professor já está no treino.</p>';
+  if (presProf) {
+    html += '<div class="aviso-info"><i class="fas fa-check-circle"></i> Você está marcado como <b>presente</b> hoje' +
+      (presProf.hora ? ' desde ' + esc(presProf.hora) : '') +
+      (presProf.poloNome ? ' • ' + esc(presProf.poloNome) : '') + '.</div>' +
+      '<button class="btn btn-danger" onclick="professorCheckoutAula()"><i class="fas fa-sign-out-alt"></i> Encerrar presença de hoje</button>';
+  } else {
+    html += '<label class="campo-label">Polo / local (opcional)</label>' +
+      '<select id="profCheckinPolo"><option value="">— selecionar —</option>' +
+      polos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + '</option>'; }).join('') +
+      '</select>' +
+      '<label class="campo-label">Observação (opcional)</label>' +
+      '<input id="profCheckinObs" placeholder="Ex: roda aberta, foco em ginga...">' +
+      '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula — fazer check-in</button>';
+  }
+  html += '</div>';
 
   /* --- INTERAÇÃO ALUNO-PROFESSOR --- */
   html += htmlPainelInteracaoProfessor();
@@ -3164,15 +4047,16 @@ function renderAbaProfessor() {
 
   /* --- certificados --- */
   html += '<div class="card"><h3><i class="fas fa-award"></i> Emitir Certificado</h3>' +
-    '<label class="campo-label">Aluno</label><select id="certAluno">' +
+    '<label class="campo-label">Aluno</label><select id="certAluno" onchange="atualizarCargaCertificado()">' +
     (alunos.length ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + '</option>'; }).join('') : '<option value="">Nenhum aluno cadastrado</option>') +
     '</select>' +
-    '<label class="campo-label">Evento</label><input id="certEvento" placeholder="Ex: Roda de Capoeira - Pedra do Sal">' +
+    '<div id="certCargaInfo" class="aviso-info" style="margin:8px 0;">Selecione um aluno para ver a carga horária acumulada pelas aulas.</div>' +
+    '<label class="campo-label">Evento / título do certificado</label><input id="certEvento" placeholder="Ex: Curso de Capoeira — semestre">' +
     '<label class="campo-label">Data</label><input id="certData" type="date" value="' + dataLocalISO() + '">' +
-    '<label class="campo-label">Carga horária (opcional)</label><input id="certCarga" placeholder="Ex: 4 horas">' +
+    '<label class="campo-label">Carga horária (preenchida pelas aulas)</label><input id="certCarga" placeholder="Ex: 12h">' +
     '<label class="campo-label">Assinatura</label><input id="certAssinatura" placeholder="Ex: Mestre Formiga">' +
     '<button class="btn btn-gold" onclick="emitirCertificado()"><i class="fas fa-award"></i> Emitir Certificado</button>' +
-    '<p class="mini" style="margin-top:6px;">Só emita para alunos com check-in aprovado em evento/roda.</p></div>';
+    '<p class="mini" style="margin-top:6px;">A carga é calculada automaticamente: cada check-in <b>aprovado</b> soma ' + formatarCargaHoraria(horasPorAulaConfig()) + ' (configurável na ADM).</p></div>';
 
   /* --- lista de certificados já emitidos, com opção de apagar --- */
   var todosCerts = DB.listar('certificados').slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
@@ -3192,9 +4076,234 @@ function renderAbaProfessor() {
   }
   html += '</div>';
 
+  /* --- Aulas com alongamento (fotos + textos) --- */
+  html += htmlPainelAulasConteudoProfessor();
+
   box.innerHTML = html;
   tornarCardsColapsaveis(box);
-  setTimeout(function () { carregarDesenvolvimentoAluno(); atualizarBadgesInteracao(); }, 50);
+  setTimeout(function () {
+    carregarDesenvolvimentoAluno();
+    atualizarBadgesInteracao();
+    atualizarCargaCertificado();
+  }, 50);
+}
+
+function htmlPainelAulasConteudoProfessor() {
+  var lista = DB.listar('aulasConteudo').slice().sort(function (a, b) {
+    return String(b.atualizadoEm || b.criadoEm || '').localeCompare(String(a.atualizadoEm || a.criadoEm || ''));
+  });
+  var html = '<div class="card" style="border:1px solid var(--primary-green);">' +
+    '<h3 style="color:var(--primary-green);"><i class="fas fa-book-open"></i> Aulas e Alongamentos <span class="badge-count">' + lista.length + '</span></h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Cadastre aulas com texto e fotos de alongamento. Os alunos veem na aba Aluno.</p>' +
+    '<input type="hidden" id="aulaConteudoId" value="">' +
+    '<label class="campo-label">Título da aula</label>' +
+    '<input id="aulaConteudoTitulo" placeholder="Ex: Alongamento pré-treino — membros inferiores">' +
+    '<label class="campo-label">Categoria</label>' +
+    '<select id="aulaConteudoCategoria">' +
+      '<option value="alongamento">Alongamento</option>' +
+      '<option value="aquecimento">Aquecimento</option>' +
+      '<option value="tecnica">Técnica</option>' +
+      '<option value="musicalidade">Musicalidade</option>' +
+      '<option value="roda">Roda</option>' +
+      '<option value="outro">Outro</option>' +
+    '</select>' +
+    '<label class="campo-label">Texto / orientação</label>' +
+    '<textarea id="aulaConteudoTexto" placeholder="Descreva os passos, duração, cuidados..."></textarea>' +
+    '<label class="campo-label">Fotos (alongamento / demonstração)</label>' +
+    '<input type="file" id="aulaConteudoFotos" accept="image/*" multiple onchange="prepararFotosAula(this)">' +
+    '<div id="aulaConteudoPreview" style="display:flex; flex-wrap:wrap; gap:6px; margin:6px 0;"></div>' +
+    '<input type="hidden" id="aulaConteudoFotosData" value="[]">' +
+    '<div class="flex-btn">' +
+      '<button class="btn" onclick="salvarAulaConteudo()"><i class="fas fa-save"></i> Salvar aula</button>' +
+      '<button class="btn btn-secondary" onclick="limparFormAulaConteudo()"><i class="fas fa-plus"></i> Nova</button>' +
+    '</div>';
+
+  if (!lista.length) {
+    html += '<p class="sem-dados" style="margin-top:10px;">Nenhuma aula cadastrada ainda.</p>';
+  } else {
+    html += '<h3 style="margin-top:12px; font-size:0.82rem;"><i class="fas fa-list"></i> Aulas publicadas</h3>';
+    lista.forEach(function (a) {
+      var fotos = Array.isArray(a.fotos) ? a.fotos : [];
+      html += '<div class="lista-item">' +
+        '<div class="linha"><b>' + esc(a.titulo || 'Sem título') + '</b><span class="pill pill-info">' + esc(a.categoria || 'outro') + '</span></div>' +
+        '<span class="mini">' + dataHoraBR(a.atualizadoEm || a.criadoEm) + (a.autor ? ' • ' + esc(a.autor) : '') + '</span>' +
+        (a.texto ? '<div class="mini" style="margin-top:4px;">' + esc(String(a.texto).slice(0, 120)) + (a.texto.length > 120 ? '…' : '') + '</div>' : '') +
+        (fotos.length ? '<div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">' +
+          fotos.slice(0, 4).map(function (f) {
+            return urlSegura(f) ? '<img src="' + urlSegura(f) + '" alt="foto" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--card-border);">' : '';
+          }).join('') + '</div>' : '') +
+        '<div class="flex-btn" style="margin-top:6px;">' +
+          '<button class="btn btn-secondary btn-mini" onclick="carregarAulaConteudoEdicao(\'' + a.id + '\')"><i class="fas fa-pen"></i> Editar</button>' +
+          '<button class="btn btn-danger btn-mini" onclick="excluirAulaConteudo(\'' + a.id + '\')"><i class="fas fa-trash"></i> Apagar</button>' +
+        '</div></div>';
+    });
+  }
+  html += '</div>';
+  return html;
+}
+
+function limparFormAulaConteudo() {
+  if ($('aulaConteudoId')) $('aulaConteudoId').value = '';
+  if ($('aulaConteudoTitulo')) $('aulaConteudoTitulo').value = '';
+  if ($('aulaConteudoCategoria')) $('aulaConteudoCategoria').value = 'alongamento';
+  if ($('aulaConteudoTexto')) $('aulaConteudoTexto').value = '';
+  if ($('aulaConteudoFotosData')) $('aulaConteudoFotosData').value = '[]';
+  if ($('aulaConteudoPreview')) $('aulaConteudoPreview').innerHTML = '';
+  if ($('aulaConteudoFotos')) $('aulaConteudoFotos').value = '';
+  mostrarToast('Formulário limpo — nova aula.');
+}
+
+function prepararFotosAula(input) {
+  var files = input.files;
+  if (!files || !files.length) return;
+  var existentes = [];
+  try { existentes = JSON.parse(($('aulaConteudoFotosData') || {}).value || '[]'); } catch (e) { existentes = []; }
+  if (!Array.isArray(existentes)) existentes = [];
+  var restantes = Math.max(0, 6 - existentes.length);
+  if (!restantes) { mostrarToast('Máximo de 6 fotos por aula.', 'erro'); return; }
+  var lista = Array.prototype.slice.call(files, 0, restantes);
+  mostrarToast('Processando fotos...');
+  var chain = Promise.resolve();
+  lista.forEach(function (file) {
+    if (!/^image\//i.test(file.type || '')) return;
+    chain = chain.then(function () {
+      return comprimirImagem(file, 900, 0.8).then(function (dataUrl) {
+        existentes.push(dataUrl);
+      }).catch(function () {});
+    });
+  });
+  chain.then(function () {
+    if ($('aulaConteudoFotosData')) $('aulaConteudoFotosData').value = JSON.stringify(existentes);
+    renderPreviewFotosAula(existentes);
+    if (input) input.value = '';
+    mostrarToast(existentes.length + ' foto(s) pronta(s).');
+  });
+}
+
+function renderPreviewFotosAula(fotos) {
+  var box = $('aulaConteudoPreview');
+  if (!box) return;
+  if (!fotos || !fotos.length) { box.innerHTML = ''; return; }
+  box.innerHTML = fotos.map(function (f, i) {
+    if (!urlSegura(f)) return '';
+    return '<div style="position:relative;">' +
+      '<img src="' + urlSegura(f) + '" alt="foto" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--card-border);">' +
+      '<button type="button" class="btn btn-danger btn-mini" style="position:absolute;top:-4px;right:-4px;padding:2px 6px;margin:0;font-size:0.6rem;" onclick="removerFotoAula(' + i + ')">×</button></div>';
+  }).join('');
+}
+
+function removerFotoAula(idx) {
+  var fotos = [];
+  try { fotos = JSON.parse(($('aulaConteudoFotosData') || {}).value || '[]'); } catch (e) { fotos = []; }
+  if (!Array.isArray(fotos)) fotos = [];
+  fotos.splice(idx, 1);
+  if ($('aulaConteudoFotosData')) $('aulaConteudoFotosData').value = JSON.stringify(fotos);
+  renderPreviewFotosAula(fotos);
+}
+
+function carregarAulaConteudoEdicao(id) {
+  var a = DB.buscar('aulasConteudo', id);
+  if (!a) { mostrarToast('Aula não encontrada.', 'erro'); return; }
+  if ($('aulaConteudoId')) $('aulaConteudoId').value = a.id;
+  if ($('aulaConteudoTitulo')) $('aulaConteudoTitulo').value = a.titulo || '';
+  if ($('aulaConteudoCategoria')) $('aulaConteudoCategoria').value = a.categoria || 'alongamento';
+  if ($('aulaConteudoTexto')) $('aulaConteudoTexto').value = a.texto || '';
+  var fotos = Array.isArray(a.fotos) ? a.fotos : [];
+  if ($('aulaConteudoFotosData')) $('aulaConteudoFotosData').value = JSON.stringify(fotos);
+  renderPreviewFotosAula(fotos);
+  mostrarToast('Editando: ' + (a.titulo || 'aula'));
+  try {
+    var el = $('aulaConteudoTitulo');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch (e) {}
+}
+
+function salvarAulaConteudo() {
+  var titulo = ($('aulaConteudoTitulo') || {}).value || '';
+  titulo = titulo.trim();
+  if (titulo.length < 3) { mostrarToast('Informe um título para a aula.', 'erro'); return; }
+  var texto = ($('aulaConteudoTexto') || {}).value || '';
+  texto = texto.trim();
+  var categoria = ($('aulaConteudoCategoria') || {}).value || 'alongamento';
+  var fotos = [];
+  try { fotos = JSON.parse(($('aulaConteudoFotosData') || {}).value || '[]'); } catch (e) { fotos = []; }
+  if (!Array.isArray(fotos)) fotos = [];
+  fotos = fotos.filter(function (f) { return urlSegura(f); }).slice(0, 6);
+  var id = ($('aulaConteudoId') || {}).value || '';
+  var dados = {
+    titulo: titulo,
+    categoria: categoria,
+    texto: texto,
+    fotos: fotos,
+    autor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
+    atualizadoEm: agoraISO()
+  };
+  var promessa;
+  if (id && DB.buscar('aulasConteudo', id)) {
+    promessa = DB.salvar('aulasConteudo', dados, id);
+  } else {
+    dados.criadoEm = agoraISO();
+    promessa = DB.salvar('aulasConteudo', dados);
+  }
+  promessa.then(function () {
+    mostrarToast(id ? 'Aula atualizada!' : 'Aula publicada!');
+    registroLog('professor', (id ? 'Editou' : 'Publicou') + ' aula: ' + titulo);
+    limparFormAulaConteudo();
+    renderAbaProfessor();
+  }).catch(function () {
+    mostrarToast('Não foi possível salvar a aula.', 'erro');
+  });
+}
+
+function excluirAulaConteudo(id) {
+  var a = DB.buscar('aulasConteudo', id);
+  if (!a) return;
+  abrirModal('Apagar aula',
+    '<div class="alerta-dificuldade">Apagar <strong>' + esc(a.titulo || 'esta aula') + '</strong>?</div>',
+    '<button class="btn btn-danger" onclick="confirmarExcluirAulaConteudo(\'' + id + '\')">Apagar</button>');
+}
+
+function confirmarExcluirAulaConteudo(id) {
+  fecharModal();
+  DB.excluir('aulasConteudo', id).then(function () {
+    mostrarToast('Aula removida.');
+    registroLog('professor', 'Removeu aula conteúdo');
+    renderAbaProfessor();
+  });
+}
+
+function htmlCardAulasConteudoAluno() {
+  var lista = DB.listar('aulasConteudo').slice().sort(function (a, b) {
+    return String(b.atualizadoEm || b.criadoEm || '').localeCompare(String(a.atualizadoEm || a.criadoEm || ''));
+  });
+  if (!lista.length) {
+    return '<div class="card"><h3><i class="fas fa-book-open"></i> Aulas e Alongamentos</h3>' +
+      '<p class="sem-dados">O professor ainda não publicou aulas com fotos.</p></div>';
+  }
+  var html = '<div class="card" style="border:1px solid var(--primary-green);">' +
+    '<h3 style="color:var(--primary-green);"><i class="fas fa-book-open"></i> Aulas e Alongamentos</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Conteúdo publicado pelo professor — textos e fotos.</p>';
+  lista.forEach(function (a) {
+    var fotos = Array.isArray(a.fotos) ? a.fotos : [];
+    html += '<div class="lista-item">' +
+      '<div class="linha"><b>' + esc(a.titulo || 'Aula') + '</b><span class="pill pill-info">' + esc(a.categoria || '') + '</span></div>' +
+      '<span class="mini">' + dataHoraBR(a.atualizadoEm || a.criadoEm) + (a.autor ? ' • ' + esc(a.autor) : '') + '</span>' +
+      (a.texto ? '<div style="font-size:0.78rem; margin-top:6px; white-space:pre-wrap; line-height:1.4;">' + esc(a.texto) + '</div>' : '') +
+      (fotos.length ? '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">' +
+        fotos.map(function (f) {
+          return urlSegura(f) ? '<img src="' + urlSegura(f) + '" alt="Alongamento" style="width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--card-border);cursor:pointer;" onclick="abrirFotoAulaAmpliada(this.src)">' : '';
+        }).join('') + '</div>' : '') +
+      '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function abrirFotoAulaAmpliada(src) {
+  if (!urlSegura(src)) return;
+  abrirModal('Foto da aula',
+    '<img src="' + urlSegura(src) + '" alt="Foto" style="max-width:100%; border-radius:10px; display:block; margin:0 auto;">',
+    '');
 }
 
 function gerarImagemCertificado(c) {
@@ -3354,20 +4463,126 @@ function lancarPresencaManual() {
   });
 }
 
+function professorPresenteHoje() {
+  var hoje = dataLocalISO();
+  return DB.listar('professorPresenca').filter(function (p) {
+    return p.data === hoje && p.status === 'presente';
+  }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); })[0] || null;
+}
+
+function professorCheckinAula() {
+  if (!sessaoEquipe) { mostrarToast('Faça login na equipe.', 'erro'); return; }
+  if (professorPresenteHoje()) { mostrarToast('Você já está com check-in de hoje.'); return; }
+  var poloId = ($('profCheckinPolo') || {}).value || '';
+  var polo = poloId ? DB.buscar('polos', poloId) : null;
+  var agora = new Date();
+  var hora = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
+  DB.salvar('professorPresenca', {
+    professorId: sessaoEquipe.id || '',
+    professorNome: sessaoEquipe.nome,
+    data: dataLocalISO(),
+    hora: hora,
+    poloId: polo ? polo.id : '',
+    poloNome: polo ? polo.nome : '',
+    observacao: ($('profCheckinObs') || {}).value ? $('profCheckinObs').value.trim() : '',
+    status: 'presente',
+    criadoEm: agoraISO()
+  }).then(function () {
+    mostrarToast('Check-in do professor registrado! Alunos já podem ver.');
+    registroLog('professor', 'Check-in na aula: ' + sessaoEquipe.nome);
+    notificar('Professor na aula', sessaoEquipe.nome + ' está no treino' + (polo ? ' — ' + polo.nome : ''));
+    renderAbaProfessor();
+    renderCheckin();
+    renderInicio();
+  });
+}
+
+function professorCheckoutAula() {
+  var p = professorPresenteHoje();
+  if (!p) { mostrarToast('Nenhum check-in ativo hoje.'); return; }
+  DB.salvar('professorPresenca', {
+    status: 'encerrado',
+    encerradoEm: agoraISO()
+  }, p.id).then(function () {
+    mostrarToast('Presença do professor encerrada.');
+    registroLog('professor', 'Checkout da aula');
+    renderAbaProfessor();
+    renderCheckin();
+    renderInicio();
+  });
+}
+
+function htmlBannerProfessorNaAula() {
+  var p = professorPresenteHoje();
+  if (!p) return '';
+  return '<div class="card card-destaque brilho-verde" style="border:1px solid var(--primary-green);">' +
+    '<h3 style="color:var(--primary-green); margin-bottom:4px;"><i class="fas fa-chalkboard-teacher"></i> Professor na aula</h3>' +
+    '<p style="font-size:0.8rem;"><b>' + esc(p.professorNome) + '</b> já está no treino' +
+    (p.hora ? ' desde <b>' + esc(p.hora) + '</b>' : '') +
+    (p.poloNome ? '<br><span class="mini"><i class="fas fa-map-marker-alt"></i> ' + esc(p.poloNome) + '</span>' : '') +
+    (p.observacao ? '<br><span class="mini">' + esc(p.observacao) + '</span>' : '') +
+    '</p></div>';
+}
+
+function horasPorAulaConfig() {
+  var h = Number(CONFIG.horasPorAula);
+  if (!isFinite(h) || h <= 0) h = 1.5;
+  return h;
+}
+
+function formatarCargaHoraria(horas) {
+  var n = Number(horas) || 0;
+  if (n <= 0) return '0h';
+  var arred = Math.round(n * 10) / 10;
+  return (arred % 1 === 0 ? String(Math.round(arred)) : arred.toFixed(1).replace('.', ',')) + 'h';
+}
+
+function calcularCargaHorariaAluno(alunoRef) {
+  if (!alunoRef) return { aulas: 0, horas: 0, texto: '0h' };
+  var alunoId = typeof alunoRef === 'object' ? alunoRef.id : alunoRef;
+  var nomeNorm = '';
+  if (typeof alunoRef === 'object') {
+    nomeNorm = normalizar(alunoRef.nome || '');
+  } else {
+    var a = DB.buscar('alunos', alunoRef);
+    if (a) nomeNorm = normalizar(a.nome || '');
+  }
+  var horasAula = horasPorAulaConfig();
+  var aulas = 0;
+  var horas = 0;
+  DB.listar('presencas').forEach(function (p) {
+    if (p.status !== 'aprovado') return;
+    var match = false;
+    if (alunoId && p.alunoId && p.alunoId === alunoId) match = true;
+    else if (nomeNorm && normalizar(p.alunoNome || '') === nomeNorm) match = true;
+    if (!match) return;
+    aulas += 1;
+    var h = Number(p.horasAula);
+    if (!isFinite(h) || h <= 0) h = horasAula;
+    horas += h;
+  });
+  return { aulas: aulas, horas: horas, texto: formatarCargaHoraria(horas) };
+}
+
 function decidirPresenca(id, status) {
   var p = DB.buscar('presencas', id);
   if (!p) return;
   var obs = $('obsPresenca_' + id) ? $('obsPresenca_' + id).value.trim() : '';
-  DB.salvar('presencas', {
+  var patch = {
     status: status,
     observacaoProfessor: obs,
     avaliadoPor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
     avaliadoEm: agoraISO()
-  }, id).then(function () {
+  };
+  if (status === 'aprovado') {
+    patch.horasAula = Number(p.horasAula) > 0 ? Number(p.horasAula) : horasPorAulaConfig();
+  }
+  DB.salvar('presencas', patch, id).then(function () {
     registroLog('professor', 'Check-in de ' + p.alunoNome + ' → ' + status);
     if (status === 'aprovado') {
-      mostrarToast('Check-in de ' + p.alunoNome + ' aprovado!');
-      notificar('Check-in aprovado!', 'Sua presença de ' + dataBR(p.data) + ' foi confirmada pelo professor.');
+      var carga = calcularCargaHorariaAluno({ id: p.alunoId, nome: p.alunoNome });
+      mostrarToast('Check-in aprovado! Carga de ' + p.alunoNome + ': ' + carga.texto + ' (' + carga.aulas + ' aulas)');
+      notificar('Check-in aprovado!', 'Sua presença de ' + dataBR(p.data) + ' foi confirmada. Carga horária acumulada: ' + carga.texto + '.');
     } else {
       mostrarToast('Check-in de ' + p.alunoNome + ' rejeitado.');
       notificar('Check-in não aprovado', 'Seu check-in de ' + dataBR(p.data) + ' foi rejeitado.' + (obs ? ' Motivo: ' + obs : ''));
@@ -3428,6 +4643,7 @@ function salvarCheckinManualProfessor(aluno, poloId, status, obs, substituirId) 
     avaliadoEm: agoraISO(),
     criadoEm: agoraISO()
   };
+  if (status === 'aprovado') dados.horasAula = horasPorAulaConfig();
 
   var promessa;
   if (substituirId) {
@@ -3437,9 +4653,12 @@ function salvarCheckinManualProfessor(aluno, poloId, status, obs, substituirId) 
   }
   promessa.then(function () {
     registroLog('professor', 'Check-in manual: ' + aluno.nome + ' → ' + status);
-    mostrarToast('Check-in de ' + aluno.nome + ' registrado (' + status + ').');
     if (status === 'aprovado') {
-      notificar('Check-in confirmado', 'Sua presença de hoje foi registrada pelo professor.');
+      var carga = calcularCargaHorariaAluno(aluno);
+      mostrarToast('Check-in de ' + aluno.nome + ' aprovado. Carga: ' + carga.texto);
+      notificar('Check-in confirmado', 'Presença registrada. Carga horária acumulada: ' + carga.texto + '.');
+    } else {
+      mostrarToast('Check-in de ' + aluno.nome + ' registrado (' + status + ').');
     }
     renderAbaProfessor();
   });
@@ -3695,16 +4914,37 @@ function salvarAvaliacao() {
   });
 }
 
+function atualizarCargaCertificado() {
+  var sel = $('certAluno');
+  var info = $('certCargaInfo');
+  var campo = $('certCarga');
+  if (!sel) return;
+  var aluno = DB.buscar('alunos', sel.value);
+  if (!aluno) {
+    if (info) info.innerHTML = 'Selecione um aluno para ver a carga horária acumulada pelas aulas.';
+    if (campo) campo.value = '';
+    return;
+  }
+  var carga = calcularCargaHorariaAluno(aluno);
+  if (info) {
+    info.innerHTML = '<i class="fas fa-clock"></i> <b>' + esc(aluno.nome) + '</b>: ' +
+      carga.aulas + ' aula(s) aprovada(s) = <b>' + carga.texto + '</b> ' +
+      '<span class="mini">( ' + formatarCargaHoraria(horasPorAulaConfig()) + ' por aula )</span>';
+  }
+  if (campo && !((campo.value || '').trim())) {
+    campo.value = carga.texto;
+  } else if (campo && carga.aulas > 0) {
+    campo.value = carga.texto;
+  }
+}
+
 function emitirCertificado() {
   var aluno = DB.buscar('alunos', $('certAluno').value);
   if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
-  var evento = ($('certEvento').value || '').trim() || 'Apresentação da academia';
-  var data = $('certData').value || dataLocalISO();
-  var temAprovado = DB.listar('presencas').some(function (p) {
-    return p.alunoId === aluno.id && p.status === 'aprovado';
-  });
-  if (!temAprovado) {
-    abrirModal('Atenção', '<div class="alerta-dificuldade">Este aluno ainda não possui nenhum check-in aprovado. Deseja emitir o certificado mesmo assim?</div>',
+  atualizarCargaCertificado();
+  var carga = calcularCargaHorariaAluno(aluno);
+  if (carga.aulas < 1) {
+    abrirModal('Atenção', '<div class="alerta-dificuldade">Este aluno ainda não possui check-in aprovado. Sem aulas, a carga horária fica zerada. Deseja emitir mesmo assim?</div>',
       '<button class="btn btn-gold" onclick="confirmarEmissaoCertificado()">Emitir mesmo assim</button>');
     return;
   }
@@ -3715,8 +4955,10 @@ function confirmarEmissaoCertificado() {
   fecharModal();
   var aluno = DB.buscar('alunos', $('certAluno').value);
   if (!aluno) return;
-  var evento = ($('certEvento').value || '').trim() || 'Apresentação da academia';
+  var evento = ($('certEvento').value || '').trim() || 'Participação nas aulas de Capoeira';
   var data = $('certData').value || dataLocalISO();
+  var carga = calcularCargaHorariaAluno(aluno);
+  var cargaTxt = (($('certCarga') || {}).value || '').trim() || carga.texto;
   var codigo = 'UC-' + data.replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
   DB.salvar('certificados', {
     alunoId: aluno.id,
@@ -3724,15 +4966,16 @@ function confirmarEmissaoCertificado() {
     alunoApelido: aluno.apelido || '',
     evento: evento,
     data: data,
-    cargaHoraria: ($('certCarga').value || '').trim(),
+    cargaHoraria: cargaTxt,
+    aulasComputadas: carga.aulas,
     assinatura: ($('certAssinatura').value || '').trim(),
     codigo: codigo,
     emitidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Equipe',
     emitidoEm: agoraISO()
   }).then(function (novoId) {
-    $('certEvento').value = '';
-    mostrarToast('Certificado emitido! Código ' + codigo);
-    registroLog('professor', 'Certificado emitido para ' + aluno.nome + ' (' + codigo + ')');
+    if ($('certEvento')) $('certEvento').value = '';
+    mostrarToast('Certificado emitido! ' + cargaTxt + ' • Código ' + codigo);
+    registroLog('professor', 'Certificado emitido para ' + aluno.nome + ' (' + codigo + ', ' + cargaTxt + ')');
     baixarCertificado(novoId);
     renderAbaProfessor();
   });
@@ -3804,6 +5047,8 @@ function renderAbaAdm() {
     '<label class="campo-label">Tempo padrão do cronômetro (segundos)</label><input id="cfgTimer" type="number" min="10" max="3600" value="' + esc(CONFIG.tempoTimerSegundos) + '">' +
     '<label class="campo-label">Tolerância de atraso (minutos)</label><input id="cfgTolerancia" type="number" min="0" max="120" value="' + esc(CONFIG.toleranciaAtrasoMin) + '">' +
     '<label class="campo-label">Janela de check-in (minutos antes/depois da aula)</label><input id="cfgJanelaCheckin" type="number" min="0" max="60" value="' + esc(CONFIG.janelaCheckinMin) + '">' +
+    '<label class="campo-label">Carga horária por aula (horas) — para certificado</label><input id="cfgHorasPorAula" type="number" min="0.5" max="8" step="0.5" value="' + esc(horasPorAulaConfig()) + '">' +
+    '<p class="mini">Cada check-in aprovado soma esse valor na carga do aluno.</p>' +
     '<label class="campo-label">Graduações (uma por linha)</label><textarea id="cfgGraduacoes" style="min-height:120px;">' + esc(CONFIG.graduacoes.join('\n')) + '</textarea>' +
     '<button class="btn" onclick="salvarConfiguracaoAdm()"><i class="fas fa-save"></i> Salvar Configurações</button></div>';
 
@@ -3811,6 +5056,27 @@ function renderAbaAdm() {
   html += '<div class="card"><h3><i class="fas fa-comments"></i> Mural</h3>' +
     '<p class="mini">' + DB.listar('mural').length + ' mensagens publicadas.</p>' +
     '<button class="btn btn-danger" onclick="limparMural()"><i class="fas fa-trash"></i> Limpar mural</button></div>';
+
+  /* --- testes de jogos arcade --- */
+  var rank = rankingPontosJogos().slice(0, 10);
+  html += '<div class="card" style="border:1px solid var(--accent-blue);">' +
+    '<h3 style="color:var(--accent-blue);"><i class="fas fa-gamepad"></i> Testar Jogos Arcade</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Abra qualquer jogo em modo teste. Os pontos ainda entram no ranking se houver nome preenchido na aba Início.</p>' +
+    '<div class="grade-2">' +
+      '<button class="btn btn-secondary" onclick="testarJogoAdm(\'snake\')"><i class="fas fa-dragon"></i> Testar Minhoca</button>' +
+      '<button class="btn btn-gold" onclick="testarJogoAdm(\'tetris\')"><i class="fas fa-th"></i> Testar Tetris</button>' +
+      '<button class="btn" onclick="testarJogoAdm(\'corrida\')"><i class="fas fa-car"></i> Testar Corrida</button>' +
+      '<button class="btn btn-secondary" onclick="jogarCorrida()"><i class="fas fa-flag-checkered"></i> Corrida rápida</button>' +
+    '</div>' +
+    '<h3 style="margin-top:12px; font-size:0.82rem;"><i class="fas fa-trophy"></i> Ranking atual (top 10)</h3>' +
+    (rank.length
+      ? rank.map(function (item, idx) {
+          var med = ['🥇', '🥈', '🥉'][idx] || ((idx + 1) + 'º');
+          return '<div class="lista-item"><div class="linha"><span>' + med + ' <b>' + esc(item.nome) + '</b></span><span class="badge-count">' + item.pontos + ' pts</span></div></div>';
+        }).join('')
+      : '<p class="sem-dados">Nenhuma pontuação ainda.</p>') +
+    '<button class="btn btn-danger btn-mini" style="margin-top:8px;" onclick="confirmarLimparPontosJogos()"><i class="fas fa-trash"></i> Zerar ranking de jogos</button>' +
+  '</div>';
 
   /* --- backup --- */
   html += '<div class="card"><h3><i class="fas fa-database"></i> Backup e Restauração</h3>' +
@@ -3821,6 +5087,28 @@ function renderAbaAdm() {
 
   box.innerHTML = html;
   tornarCardsColapsaveis(box);
+}
+
+function testarJogoAdm(tipo) {
+  var campo = $('nomeJogadorCorrida');
+  if (campo && !(campo.value || '').trim()) campo.value = 'ADM Teste';
+  abrirJogoArcade(tipo);
+}
+
+function confirmarLimparPontosJogos() {
+  abrirModal('Zerar ranking de jogos',
+    '<div class="alerta-dificuldade">Apagar todas as pontuações de mini-jogos?</div>',
+    '<button class="btn btn-danger" onclick="limparPontosJogosAgora()">Apagar ranking</button>');
+}
+
+function limparPontosJogosAgora() {
+  fecharModal();
+  DB.limparColecao('pontosJogos').then(function () {
+    mostrarToast('Ranking de jogos zerado.');
+    registroLog('adm', 'Ranking de jogos zerado');
+    renderAbaAdm();
+    renderRankingJogos();
+  });
 }
 
 function htmlListaAlunosAdm(alunos) {
@@ -3970,6 +5258,7 @@ function salvarConfiguracaoAdm() {
     tempoTimerSegundos: Math.max(10, parseInt($('cfgTimer').value, 10) || 90),
     toleranciaAtrasoMin: Math.max(0, parseInt($('cfgTolerancia').value, 10) || 15),
     janelaCheckinMin: Math.max(0, parseInt($('cfgJanelaCheckin').value, 10) || 10),
+    horasPorAula: Math.max(0.5, Math.min(8, parseFloat(($('cfgHorasPorAula') || {}).value) || 1.5)),
     graduacoes: graduacoes
   }).then(function () {
     mostrarToast('Configurações salvas. Logos atualizados no cabeçalho e certificados.');
@@ -4042,7 +5331,7 @@ function confirmarLimparTudo() {
 
 function limparTudoDefinitivo() {
   fecharModal();
-  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos'];
+  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'aulasConteudo'];
   Promise.all(alvos.map(function (c) { return DB.limparColecao(c); })).then(function () {
     sessaoAlunoId = null;
     mostrarToast('Todos os dados foram apagados.');
@@ -4100,7 +5389,7 @@ function renderAbaDev() {
       '<button class="btn btn-danger" onclick="limparLogs()"><i class="fas fa-trash"></i> Limpar registros</button></div>' +
 
     '<div class="card"><h3><i class="fas fa-circle-info"></i> Ambiente</h3>' +
-      '<div class="lista-item">Versão do app: <b>' + VERSAO_APP + '</b></div>' +
+      '<div class="lista-item">App: <b>Universo Capoeira</b></div>' +
       '<div class="lista-item">Ambiente: <b>' + (DB.modo === 'nuvem' ? 'produção (nuvem)' : 'local (offline)') + '</b></div>' +
       '<div class="lista-item">Usuário: <b>' + esc(navigator.userAgent.slice(0, 60)) + '...</b></div>' +
       '<div class="lista-item">Offline: <b>' + (navigator.onLine ? 'conectado' : 'sem internet') + '</b></div>' +
@@ -4829,7 +6118,7 @@ function assistenteInfoPresencas(aluno) {
 
 
 /* ---------------------------------------------------------------
-   14c. INTERAÇÃO ALUNO ↔ PROFESSOR (v88 — aditivo)
+   14c. INTERAÇÃO ALUNO ↔ PROFESSOR
    Coleções novas: mensagensPrivadas, feedbacksAula, perguntasSemana,
    respostasPergunta, leiturasAvisos.
    Campos aditivos em existentes: avaliacoes.comentarioAluno,
@@ -5412,7 +6701,7 @@ function iniciarApp() {
 
   /* restaura sessões leves */
   try {
-    var alunoSalvo = localStorage.getItem('uc_sessao_aluno_v88');
+    var alunoSalvo = localStorage.getItem('uc_sessao_aluno_v87');
     if (alunoSalvo && DB.buscar('alunos', alunoSalvo)) sessaoAlunoId = alunoSalvo;
   } catch (e) {}
 
@@ -5429,7 +6718,7 @@ function iniciarApp() {
   window.addEventListener('offline', function () { atualizarStatusFirebase(); });
 
   registroLog('app', 'App iniciado em modo ' + DB.modo);
-  console.log('%cUniverso Capoeira ' + VERSAO_APP + ' — modo ' + DB.modo, 'color:#00e676;font-weight:bold;');
+  console.log('%cUniverso Capoeira — modo ' + DB.modo, 'color:#00e676;font-weight:bold;');
   setTimeout(atualizarBadgesInteracao, 400);
 }
 
