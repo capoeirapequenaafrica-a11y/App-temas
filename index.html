@@ -623,12 +623,9 @@ footer a { color: var(--accent-blue); }
       <div class="grade-2" style="margin-top:8px;">
         <button class="btn btn-secondary" onclick="abrirJogoArcade('snake')"><i class="fas fa-dragon"></i> Minhoca</button>
         <button class="btn btn-gold" onclick="abrirJogoArcade('tetris')"><i class="fas fa-th"></i> Tetris</button>
-        <button class="btn" id="btnJogarCorrida" onclick="jogarCorrida()"><i class="fas fa-flag-checkered"></i> Corrida rápida</button>
-        <button class="btn btn-secondary" onclick="abrirJogoArcade('corrida')"><i class="fas fa-car"></i> Corrida Arcade</button>
-      </div>
-      <div id="pistaCorridaBox" style="background:#000; height:80px; border-radius:10px; border:1px solid var(--accent-blue); display:flex; align-items:center; justify-content:center; margin:10px 0; position:relative; overflow:hidden;">
-        <span id="txtStatusCorrida" style="font-size:0.78rem; color:var(--primary-green); z-index:1;">Escolha um jogo acima</span>
-        <div id="corredorEmoji" style="position:absolute; left:8px; font-size:1.4rem; transition:left 1.2s ease; display:none;">🏃</div>
+        <button class="btn btn-secondary" onclick="abrirJogoArcade('corrida')"><i class="fas fa-car"></i> Corrida</button>
+        <button class="btn" onclick="abrirJogoArcade('quebra')"><i class="fas fa-cubes"></i> Quebra-Blocos</button>
+        <button class="btn btn-secondary" onclick="abrirJogoArcade('pulo')"><i class="fas fa-dove"></i> Pulo</button>
       </div>
     </div>
 
@@ -803,71 +800,69 @@ footer a { color: var(--accent-blue); }
       <div class="arcade-dpad" aria-label="Controles de direção">
         <button type="button" class="arcade-btn arcade-up" onclick="arcadeDir('up')" aria-label="Cima">▲</button>
         <button type="button" class="arcade-btn arcade-left" onclick="arcadeDir('left')" aria-label="Esquerda">◀</button>
-        <button type="button" class="arcade-btn arcade-center" onclick="arcadeAcao('pause')" aria-label="Pausa">II</button>
         <button type="button" class="arcade-btn arcade-right" onclick="arcadeDir('right')" aria-label="Direita">▶</button>
         <button type="button" class="arcade-btn arcade-down" onclick="arcadeDir('down')" aria-label="Baixo">▼</button>
       </div>
-      <div id="arcadeAcoesTetris" style="display:none; flex-direction:column; gap:10px;">
-        <button type="button" class="arcade-btn arcade-btn-gold" onclick="arcadeAcao('rotate')">Girar</button>
-        <button type="button" class="arcade-btn arcade-btn-green" onclick="arcadeAcao('drop')">Queda</button>
+      <div id="arcadeAcoesExtra" style="display:flex; flex-direction:column; gap:10px;">
+        <div id="arcadeAcoesTetris" style="display:none; flex-direction:column; gap:10px;">
+          <button type="button" class="arcade-btn arcade-btn-gold" onclick="arcadeAcao('rotate')">Girar</button>
+          <button type="button" class="arcade-btn arcade-btn-green" onclick="arcadeAcao('drop')">Queda</button>
+        </div>
+        <div id="arcadeAcoesPulo" style="display:none;">
+          <button type="button" class="arcade-btn arcade-btn-green" style="width:118px;" onclick="arcadeAcao('jump')">⬆ Pular</button>
+        </div>
       </div>
     </div>
-    <p id="arcadeDica" style="text-align:center; margin:10px 0 0; font-size:0.7rem; color:#90a4ae;">Toque no D-pad ou deslize na tela</p>
+    <p id="arcadeDica" style="text-align:center; margin:10px 0 0; font-size:0.7rem; color:#90a4ae;">Deslize na tela ou use as setas</p>
   </div>
 </div>
 
 <style>
 .arcade-dpad {
   display: grid;
-  grid-template-columns: 54px 54px 54px;
-  grid-template-rows: 54px 54px 54px;
-  gap: 5px;
+  grid-template-columns: 58px 58px 58px;
+  grid-template-rows: 58px 58px 58px;
+  gap: 6px;
   grid-template-areas:
     ". up ."
-    "left center right"
+    "left . right"
     ". down .";
 }
 .arcade-up { grid-area: up; }
 .arcade-left { grid-area: left; }
-.arcade-center { grid-area: center; }
 .arcade-right { grid-area: right; }
 .arcade-down { grid-area: down; }
 .arcade-btn {
-  width: 54px; height: 54px; border: none; border-radius: 16px;
-  background: linear-gradient(145deg, #2196f3, #0d47a1);
-  color: #fff; font-size: 1rem; font-weight: 800;
-  box-shadow: 0 4px 0 #0a2a5c, 0 6px 14px rgba(0,0,0,0.35);
+  width: 58px; height: 58px; border: none; border-radius: 50%;
+  background: linear-gradient(145deg, #42a5f5, #1565c0);
+  color: #fff; font-size: 1.1rem; font-weight: 800;
+  box-shadow: 0 5px 0 #0d47a1, 0 8px 16px rgba(0,0,0,0.35);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; user-select: none; -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 .arcade-btn:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #0a2a5c, 0 2px 6px rgba(0,0,0,0.3);
-}
-.arcade-center {
-  background: linear-gradient(145deg, #78909c, #455a64);
-  box-shadow: 0 4px 0 #263238, 0 6px 12px rgba(0,0,0,0.35);
-  font-size: 0.72rem; letter-spacing: 1px;
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #0d47a1, 0 2px 6px rgba(0,0,0,0.3);
 }
 .arcade-btn-gold, .arcade-btn-green {
-  width: 118px; height: 50px; border-radius: 25px; font-size: 0.85rem;
+  width: 118px; height: 52px; border-radius: 26px; font-size: 0.88rem;
 }
 .arcade-btn-gold {
   background: linear-gradient(145deg, #ffc107, #ff8f00);
   color: #1a1a1a;
-  box-shadow: 0 4px 0 #e65100, 0 6px 12px rgba(0,0,0,0.35);
+  box-shadow: 0 5px 0 #e65100, 0 8px 14px rgba(0,0,0,0.35);
 }
 .arcade-btn-green {
   background: linear-gradient(145deg, #00e676, #00c853);
   color: #003d1a;
-  box-shadow: 0 4px 0 #1b5e20, 0 6px 12px rgba(0,0,0,0.35);
+  box-shadow: 0 5px 0 #1b5e20, 0 8px 14px rgba(0,0,0,0.35);
 }
 @media (max-width: 360px) {
-  .arcade-dpad { grid-template-columns: 48px 48px 48px; grid-template-rows: 48px 48px 48px; }
-  .arcade-btn { width: 48px; height: 48px; border-radius: 14px; }
-  .arcade-btn-gold, .arcade-btn-green { width: 104px; height: 46px; }
+  .arcade-dpad { grid-template-columns: 50px 50px 50px; grid-template-rows: 50px 50px 50px; }
+  .arcade-btn { width: 50px; height: 50px; }
+  .arcade-btn-gold, .arcade-btn-green { width: 108px; height: 48px; }
 }
 </style>
 
@@ -2012,7 +2007,9 @@ function renderSeletorNiveisArcade() {
   var jogos = [
     { id: 'snake', nome: 'Minhoca' },
     { id: 'tetris', nome: 'Tetris' },
-    { id: 'corrida', nome: 'Corrida' }
+    { id: 'corrida', nome: 'Corrida' },
+    { id: 'quebra', nome: 'Quebra-Blocos' },
+    { id: 'pulo', nome: 'Pulo' }
   ];
   var html = '<p class="mini" style="margin-bottom:6px;">Nível desbloqueado (grátis neste aparelho):</p>';
   jogos.forEach(function (j) {
@@ -2180,6 +2177,22 @@ function configNivelArcade(tipo, nivel) {
       label: 'Complete ' + (3 + nivel) + ' linhas'
     };
   }
+  if (tipo === 'quebra') {
+    return {
+      nivel: nivel,
+      objetivo: 8 + nivel * 3,
+      velocidadeMs: 16,
+      label: 'Quebre ' + (8 + nivel * 3) + ' blocos'
+    };
+  }
+  if (tipo === 'pulo') {
+    return {
+      nivel: nivel,
+      objetivo: 8 + nivel * 2,
+      velocidadeMs: Math.max(14, 22 - Math.floor(nivel / 3)),
+      label: 'Passe ' + (8 + nivel * 2) + ' obstáculos'
+    };
+  }
   /* corrida */
   return {
     nivel: nivel,
@@ -2270,15 +2283,22 @@ function abrirJogoArcade(tipo, nivelInicio) {
   var ov = $('arcadeOverlay');
   if (ov) ov.style.display = 'flex';
   try { document.body.style.overflow = 'hidden'; } catch (e) {}
-  var titulos = { snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida' };
+  var titulos = { snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo' };
   if ($('arcadeTitulo')) $('arcadeTitulo').textContent = (titulos[tipo] || 'Jogo') + ' · Nv.' + nv;
   if ($('arcadeDica')) {
-    $('arcadeDica').textContent = tipo === 'tetris'
-      ? 'D-pad move • Girar / Queda · complete linhas para subir de nível'
-      : (tipo === 'corrida' ? 'Desvie e marque pontos para subir de nível' : 'Coma para subir de nível · D-pad ou deslize');
+    var dicas = {
+      tetris: 'Setas movem · Girar / Queda · complete linhas',
+      corrida: 'Esquerda / Direita para desviar dos carros',
+      snake: 'Dirija a minhoca · coma as maçãs',
+      quebra: 'Mova a barra · quebre todos os blocos',
+      pulo: 'Toque em Pular ou cima para evitar os canos'
+    };
+    $('arcadeDica').textContent = dicas[tipo] || 'Deslize ou use as setas';
   }
-  var acoes = $('arcadeAcoesTetris');
-  if (acoes) acoes.style.display = (tipo === 'tetris') ? 'flex' : 'none';
+  var acoesT = $('arcadeAcoesTetris');
+  if (acoesT) acoesT.style.display = (tipo === 'tetris') ? 'flex' : 'none';
+  var acoesP = $('arcadeAcoesPulo');
+  if (acoesP) acoesP.style.display = (tipo === 'pulo') ? 'block' : 'none';
   arcade.canvas = $('arcadeCanvas');
   if (!arcade.canvas) return;
   if (tipo === 'snake') {
@@ -2287,14 +2307,16 @@ function abrirJogoArcade(tipo, nivelInicio) {
   } else if (tipo === 'tetris') {
     arcade.canvas.width = arcade.tCols * arcade.tCell;
     arcade.canvas.height = arcade.tRows * arcade.tCell;
-  } else if (tipo === 'corrida') {
-    arcade.canvas.width = 240;
-    arcade.canvas.height = 360;
+  } else if (tipo === 'corrida' || tipo === 'quebra' || tipo === 'pulo') {
+    arcade.canvas.width = 260;
+    arcade.canvas.height = 380;
   }
   arcade.ctx = arcade.canvas.getContext('2d');
   if (tipo === 'snake') initSnake();
   else if (tipo === 'tetris') initTetris();
   else if (tipo === 'corrida') initCorridaArcade();
+  else if (tipo === 'quebra') initQuebra();
+  else if (tipo === 'pulo') initPulo();
   if (arcade.timer) clearInterval(arcade.timer);
   arcade.timer = setInterval(arcadeLoop, cfg.velocidadeMs);
   window.removeEventListener('keydown', arcadeKeyHandler);
@@ -2314,9 +2336,11 @@ function fecharJogoArcade() {
   if (ov) ov.style.display = 'none';
   try { document.body.style.overflow = ''; } catch (e) {}
   if (scoreFinal > 0 && tipo) {
-    var pts = tipo === 'snake' ? Math.round(scoreFinal * 3)
-      : (tipo === 'tetris' ? Math.round(scoreFinal / 2)
-      : Math.round(scoreFinal));
+    var pts = scoreFinal;
+    if (tipo === 'snake') pts = Math.round(scoreFinal * 3);
+    else if (tipo === 'tetris') pts = Math.round(scoreFinal / 2);
+    else if (tipo === 'quebra') pts = Math.round(scoreFinal * 1.5);
+    else if (tipo === 'pulo') pts = Math.round(scoreFinal * 2);
     /* bônus por nível alcançado (grátis) */
     pts = Math.round(pts * (1 + (nivelFinal - 1) * 0.12));
     pts = Math.max(5, Math.min(800, pts));
@@ -2349,6 +2373,7 @@ function instalarSwipeArcade(canvas) {
     var adx = Math.abs(dx), ady = Math.abs(dy);
     if (adx < 24 && ady < 24) {
       if (arcade.tipo === 'tetris') arcadeAcao('rotate');
+      else if (arcade.tipo === 'pulo') arcadeAcao('jump');
       return;
     }
     if (adx > ady) arcadeDir(dx > 0 ? 'right' : 'left');
@@ -2363,8 +2388,11 @@ function arcadeKeyHandler(e) {
   else if (k === 'ArrowDown' || k === 's' || k === 'S') { arcadeDir('down'); e.preventDefault(); }
   else if (k === 'ArrowLeft' || k === 'a' || k === 'A') { arcadeDir('left'); e.preventDefault(); }
   else if (k === 'ArrowRight' || k === 'd' || k === 'D') { arcadeDir('right'); e.preventDefault(); }
-  else if (k === ' ' || k === 'Enter') { arcadeAcao(arcade.tipo === 'tetris' ? 'rotate' : 'pause'); e.preventDefault(); }
-  else if (k === 'p' || k === 'P') { arcadeAcao('pause'); e.preventDefault(); }
+  else if (k === ' ' || k === 'Enter') {
+    if (arcade.tipo === 'tetris') arcadeAcao('rotate');
+    else if (arcade.tipo === 'pulo') arcadeAcao('jump');
+    e.preventDefault();
+  }
   else if (k === 'Escape') { fecharJogoArcade(); }
 }
 
@@ -2384,22 +2412,24 @@ function arcadeDir(d) {
   } else if (arcade.tipo === 'corrida') {
     if (d === 'left') arcade.carX = Math.max(0, arcade.carX - 1);
     else if (d === 'right') arcade.carX = Math.min(2, arcade.carX + 1);
+  } else if (arcade.tipo === 'quebra') {
+    if (d === 'left') arcade.paddleX = Math.max(0, arcade.paddleX - 28);
+    else if (d === 'right') arcade.paddleX = Math.min(arcade.canvas.width - arcade.paddleW, arcade.paddleX + 28);
+  } else if (arcade.tipo === 'pulo') {
+    if (d === 'up') puloJump();
   }
 }
 
 function arcadeAcao(a) {
   if (!arcade.rodando) return;
-  if (a === 'pause') {
-    arcade.pausado = !arcade.pausado;
-    mostrarToast(arcade.pausado ? 'Pausado' : 'Continuando...');
-    return;
-  }
   if (arcade.pausado) return;
   if (arcade.tipo === 'tetris') {
     if (a === 'rotate') rotateTetris();
     else if (a === 'drop') {
       while (moveTetris(0, 1)) {}
     }
+  } else if (arcade.tipo === 'pulo' && a === 'jump') {
+    puloJump();
   }
 }
 
@@ -2408,6 +2438,8 @@ function arcadeLoop() {
   if (arcade.tipo === 'snake') tickSnake();
   else if (arcade.tipo === 'tetris') tickTetris();
   else if (arcade.tipo === 'corrida') tickCorridaArcade();
+  else if (arcade.tipo === 'quebra') tickQuebra();
+  else if (arcade.tipo === 'pulo') tickPulo();
   if ($('arcadePlacar')) $('arcadePlacar').textContent = String(arcade.score);
 }
 
@@ -2448,55 +2480,84 @@ function tickSnake() {
 
 function drawSnake() {
   var ctx = arcade.ctx, g = arcade.grid, w = arcade.canvas.width, h = arcade.canvas.height;
-  /* fundo com grade sutil */
   var grd = ctx.createLinearGradient(0, 0, 0, h);
-  grd.addColorStop(0, '#0d1f17');
-  grd.addColorStop(1, '#07120e');
+  grd.addColorStop(0, '#1b3a2a');
+  grd.addColorStop(1, '#0a1810');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, w, h);
-  ctx.strokeStyle = 'rgba(0,230,118,0.06)';
-  ctx.lineWidth = 1;
-  for (var gx = 0; gx <= arcade.cols; gx++) {
-    ctx.beginPath(); ctx.moveTo(gx * g, 0); ctx.lineTo(gx * g, h); ctx.stroke();
+  /* grama sutil */
+  ctx.fillStyle = 'rgba(0,200,80,0.04)';
+  for (var i = 0; i < 40; i++) {
+    ctx.fillRect((i * 37) % w, (i * 53) % h, 3, 8);
   }
-  for (var gy = 0; gy <= arcade.rows; gy++) {
-    ctx.beginPath(); ctx.moveTo(0, gy * g); ctx.lineTo(w, gy * g); ctx.stroke();
-  }
-  /* minhoca com segmentos arredondados */
-  arcade.snake.forEach(function (s, i) {
-    var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
-    var r = i === 0 ? g / 2 - 1 : g / 2 - 2;
-    var body = ctx.createRadialGradient(cx - 2, cy - 2, 1, cx, cy, r);
-    body.addColorStop(0, i === 0 ? '#69f0ae' : '#00e676');
-    body.addColorStop(1, i === 0 ? '#00c853' : '#1b5e20');
-    ctx.fillStyle = body;
+  /* corpo conectado da minhoca */
+  if (arcade.snake.length) {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#2e7d32';
+    ctx.lineWidth = g - 3;
     ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    arcade.snake.forEach(function (s, idx) {
+      var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
+      if (idx === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+    ctx.strokeStyle = '#66bb6a';
+    ctx.lineWidth = g - 7;
+    ctx.beginPath();
+    arcade.snake.forEach(function (s, idx) {
+      var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
+      if (idx === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+    /* anéis */
+    arcade.snake.forEach(function (s, idx) {
+      if (idx % 2) return;
+      var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, (g - 6) / 2, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    /* cabeça */
+    var head = arcade.snake[0];
+    var hx = head.x * g + g / 2, hy = head.y * g + g / 2;
+    var hg = ctx.createRadialGradient(hx - 2, hy - 2, 1, hx, hy, g / 2);
+    hg.addColorStop(0, '#a5d6a7');
+    hg.addColorStop(1, '#1b5e20');
+    ctx.fillStyle = hg;
+    ctx.beginPath();
+    ctx.arc(hx, hy, g / 2 - 1, 0, Math.PI * 2);
     ctx.fill();
-    if (i === 0) {
-      /* olhos */
-      var ex = arcade.dir.x * 3, ey = arcade.dir.y * 3;
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(cx - 3 + ex, cy - 3 + ey, 2.2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx + 3 + ex, cy - 3 + ey, 2.2, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#111';
-      ctx.beginPath(); ctx.arc(cx - 3 + ex + arcade.dir.x, cy - 3 + ey + arcade.dir.y, 1, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(cx + 3 + ex + arcade.dir.x, cy - 3 + ey + arcade.dir.y, 1, 0, Math.PI * 2); ctx.fill();
-    }
-  });
-  /* comida com brilho */
+    var ex = arcade.dir.x * 3, ey = arcade.dir.y * 3;
+    var ox1 = arcade.dir.y * 3, oy1 = -arcade.dir.x * 3;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(hx + ex + ox1 * 0.5, hy + ey + oy1 * 0.5, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + ex - ox1 * 0.5, hy + ey - oy1 * 0.5, 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(hx + ex + ox1 * 0.5 + arcade.dir.x, hy + ey + oy1 * 0.5 + arcade.dir.y, 1.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + ex - ox1 * 0.5 + arcade.dir.x, hy + ey - oy1 * 0.5 + arcade.dir.y, 1.1, 0, Math.PI * 2); ctx.fill();
+  }
+  /* maçã */
   var fx = arcade.food.x * g + g / 2, fy = arcade.food.y * g + g / 2;
-  var foodG = ctx.createRadialGradient(fx - 2, fy - 2, 1, fx, fy, g / 2);
-  foodG.addColorStop(0, '#ffe082');
-  foodG.addColorStop(0.6, '#ffc107');
-  foodG.addColorStop(1, '#ff8f00');
-  ctx.fillStyle = foodG;
+  ctx.fillStyle = '#c62828';
   ctx.beginPath();
-  ctx.arc(fx, fy, g / 2 - 2, 0, Math.PI * 2);
+  ctx.arc(fx, fy, g / 2 - 2, 0.2, Math.PI * 2 - 0.2);
   ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillStyle = '#e53935';
   ctx.beginPath();
-  ctx.arc(fx - 2, fy - 2, 2, 0, Math.PI * 2);
+  ctx.arc(fx - 1, fy - 1, g / 2 - 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#4e342e';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(fx, fy - g / 2 + 3);
+  ctx.quadraticCurveTo(fx + 3, fy - g / 2 - 2, fx + 5, fy - g / 2 + 2);
+  ctx.stroke();
+  ctx.fillStyle = '#66bb6a';
+  ctx.beginPath();
+  ctx.ellipse(fx + 4, fy - g / 2 + 1, 3, 2, 0.4, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -2691,63 +2752,79 @@ function tickCorridaArcade() {
   drawCorridaArcade();
 }
 
+function desenharCarroArcade(ctx, x, y, bw, bh, cor1, cor2) {
+  /* carro mais realista: carroceria, teto, rodas, faróis */
+  ctx.fillStyle = '#111';
+  ctx.fillRect(x + 4, y + bh - 8, 8, 7);
+  ctx.fillRect(x + bw - 12, y + bh - 8, 8, 7);
+  ctx.fillRect(x + 4, y + 2, 8, 7);
+  ctx.fillRect(x + bw - 12, y + 2, 8, 7);
+  var g = ctx.createLinearGradient(x, y, x + bw, y + bh);
+  g.addColorStop(0, cor1);
+  g.addColorStop(1, cor2);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(x + 6, y + bh - 6);
+  ctx.lineTo(x + 4, y + 14);
+  ctx.lineTo(x + 10, y + 4);
+  ctx.lineTo(x + bw - 10, y + 4);
+  ctx.lineTo(x + bw - 4, y + 14);
+  ctx.lineTo(x + bw - 6, y + bh - 6);
+  ctx.closePath();
+  ctx.fill();
+  /* teto / vidro */
+  ctx.fillStyle = 'rgba(180,220,255,0.55)';
+  ctx.fillRect(x + 12, y + 10, bw - 24, 12);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillRect(x + 12, y + 10, bw - 24, 4);
+  /* faróis */
+  ctx.fillStyle = '#fff59d';
+  ctx.fillRect(x + 8, y + 4, 7, 4);
+  ctx.fillRect(x + bw - 15, y + 4, 7, 4);
+  /* lanterna traseira */
+  ctx.fillStyle = '#ff5252';
+  ctx.fillRect(x + 8, y + bh - 10, 6, 4);
+  ctx.fillRect(x + bw - 14, y + bh - 10, 6, 4);
+}
+
 function drawCorridaArcade() {
   var ctx = arcade.ctx;
   var w = arcade.canvas.width, h = arcade.canvas.height;
-  /* asfalto */
   var road = ctx.createLinearGradient(0, 0, w, 0);
-  road.addColorStop(0, '#2a2a2a');
-  road.addColorStop(0.5, '#3a3a3a');
-  road.addColorStop(1, '#2a2a2a');
+  road.addColorStop(0, '#1c1c1c');
+  road.addColorStop(0.5, '#333');
+  road.addColorStop(1, '#1c1c1c');
   ctx.fillStyle = road;
   ctx.fillRect(0, 0, w, h);
-  /* acostamento */
-  ctx.fillStyle = '#4e342e';
-  ctx.fillRect(0, 0, 8, h);
-  ctx.fillRect(w - 8, 0, 8, h);
+  ctx.fillStyle = '#5d4037';
+  ctx.fillRect(0, 0, 10, h);
+  ctx.fillRect(w - 10, 0, 10, h);
+  ctx.fillStyle = '#2e7d32';
+  ctx.fillRect(0, 0, 4, h);
+  ctx.fillRect(w - 4, 0, 4, h);
   var laneW = w / 3;
-  var offset = (arcade.frame * arcade.speed * 2) % 28;
+  var offset = (arcade.frame * arcade.speed * 2) % 30;
   ctx.strokeStyle = '#ffc107';
   ctx.lineWidth = 3;
-  ctx.setLineDash([14, 14]);
+  ctx.setLineDash([16, 12]);
   ctx.lineDashOffset = -offset;
   ctx.beginPath();
   ctx.moveTo(laneW, 0); ctx.lineTo(laneW, h);
   ctx.moveTo(laneW * 2, 0); ctx.lineTo(laneW * 2, h);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.lineWidth = 1;
-  /* obstáculos (carros rivais) */
-  arcade.obstacles.forEach(function (o) {
-    var x = o.lane * laneW + 14;
+  var coresRivais = [['#ef5350', '#b71c1c'], ['#42a5f5', '#0d47a1'], ['#ab47bc', '#6a1b9a'], ['#ff9800', '#e65100']];
+  arcade.obstacles.forEach(function (o, idx) {
+    var x = o.lane * laneW + 12;
     var y = o.y;
-    var bw = laneW - 28, bh = 32;
-    var g = ctx.createLinearGradient(x, y, x + bw, y + bh);
-    g.addColorStop(0, '#ef5350');
-    g.addColorStop(1, '#b71c1c');
-    ctx.fillStyle = g;
-    ctx.fillRect(x, y, bw, bh);
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillRect(x + 4, y + 4, bw - 8, 8);
-    ctx.fillStyle = '#ffeb3b';
-    ctx.fillRect(x + 3, y + bh - 6, 6, 4);
-    ctx.fillRect(x + bw - 9, y + bh - 6, 6, 4);
+    var bw = laneW - 24, bh = 40;
+    var c = coresRivais[idx % coresRivais.length];
+    desenharCarroArcade(ctx, x, y, bw, bh, c[0], c[1]);
   });
-  /* carro do jogador */
-  var px = arcade.carX * laneW + 16;
-  var py = h - 58;
-  var pw = laneW - 32, ph = 42;
-  var pg = ctx.createLinearGradient(px, py, px + pw, py + ph);
-  pg.addColorStop(0, '#69f0ae');
-  pg.addColorStop(1, '#00c853');
-  ctx.fillStyle = pg;
-  ctx.fillRect(px, py, pw, ph);
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.fillRect(px + 5, py + 6, pw - 10, 10);
-  ctx.fillStyle = '#fff59d';
-  ctx.fillRect(px + 4, py + 2, 7, 5);
-  ctx.fillRect(px + pw - 11, py + 2, 7, 5);
-  /* HUD */
+  var px = arcade.carX * laneW + 14;
+  var py = h - 64;
+  var pw = laneW - 28, ph = 46;
+  desenharCarroArcade(ctx, px, py, pw, ph, '#69f0ae', '#00c853');
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   ctx.fillRect(0, 0, w, 24);
   ctx.fillStyle = '#00e676';
@@ -2755,6 +2832,157 @@ function drawCorridaArcade() {
   ctx.fillText('Nv.' + arcade.nivel + '  ' + arcade.score, 8, 16);
   ctx.fillStyle = '#ffc107';
   ctx.fillText('VEL ' + Math.round(arcade.speed * 10), w - 70, 16);
+}
+
+/* ===== Quebra-Blocos ===== */
+function initQuebra() {
+  var w = arcade.canvas.width, h = arcade.canvas.height;
+  arcade.paddleW = 70;
+  arcade.paddleX = (w - arcade.paddleW) / 2;
+  arcade.ball = { x: w / 2, y: h - 50, vx: 2.2 + arcade.nivel * 0.15, vy: -2.6 - arcade.nivel * 0.12, r: 6 };
+  arcade.bricks = [];
+  var cols = 6, rows = 3 + Math.min(3, Math.floor(arcade.nivel / 3));
+  var bw = (w - 20) / cols, bh = 14;
+  var cores = ['#ef5350', '#ff9800', '#ffc107', '#00e676', '#42a5f5', '#ab47bc'];
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      arcade.bricks.push({ x: 10 + c * bw, y: 36 + r * (bh + 4), w: bw - 4, h: bh, vivo: true, cor: cores[(r + c) % cores.length] });
+    }
+  }
+  drawQuebra();
+}
+
+function tickQuebra() {
+  var b = arcade.ball, w = arcade.canvas.width, h = arcade.canvas.height;
+  b.x += b.vx; b.y += b.vy;
+  if (b.x < b.r || b.x > w - b.r) b.vx *= -1;
+  if (b.y < b.r) b.vy *= -1;
+  if (b.y > h - 18 && b.x > arcade.paddleX && b.x < arcade.paddleX + arcade.paddleW) {
+    b.vy = -Math.abs(b.vy);
+    b.vx += (b.x - (arcade.paddleX + arcade.paddleW / 2)) * 0.08;
+  }
+  if (b.y > h + 10) { gameOverArcade(); return; }
+  arcade.bricks.forEach(function (br) {
+    if (!br.vivo) return;
+    if (b.x > br.x && b.x < br.x + br.w && b.y > br.y && b.y < br.y + br.h) {
+      br.vivo = false;
+      b.vy *= -1;
+      arcade.score += 15;
+      registrarProgressoNivel(1);
+    }
+  });
+  if (arcade.bricks.every(function (br) { return !br.vivo; })) {
+    initQuebra();
+  }
+  drawQuebra();
+}
+
+function drawQuebra() {
+  var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
+  ctx.fillStyle = '#0a1620';
+  ctx.fillRect(0, 0, w, h);
+  arcade.bricks.forEach(function (br) {
+    if (!br.vivo) return;
+    ctx.fillStyle = br.cor;
+    ctx.fillRect(br.x, br.y, br.w, br.h);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(br.x, br.y, br.w, 3);
+  });
+  ctx.fillStyle = '#00e676';
+  ctx.fillRect(arcade.paddleX, h - 16, arcade.paddleW, 10);
+  ctx.beginPath();
+  ctx.fillStyle = '#fff';
+  ctx.arc(arcade.ball.x, arcade.ball.y, arcade.ball.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(0, 0, w, 22);
+  ctx.fillStyle = '#00d2ff';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('Nv.' + arcade.nivel + '  ' + arcade.score + '  ' + (arcade.progresso || 0) + '/' + (arcade.objetivo || 0), 6, 15);
+}
+
+/* ===== Pulo (estilo flappy) ===== */
+function initPulo() {
+  var h = arcade.canvas.height;
+  arcade.bird = { x: 50, y: h / 2, vy: 0, r: 12 };
+  arcade.pipes = [];
+  arcade.frame = 0;
+  arcade._passed = 0;
+  drawPulo();
+}
+
+function puloJump() {
+  if (!arcade.rodando || arcade.tipo !== 'pulo') return;
+  arcade.bird.vy = -5.2;
+}
+
+function tickPulo() {
+  var w = arcade.canvas.width, h = arcade.canvas.height;
+  var bird = arcade.bird;
+  arcade.frame++;
+  bird.vy += 0.28;
+  bird.y += bird.vy;
+  if (bird.y < 0 || bird.y > h) { gameOverArcade(); return; }
+  var gap = Math.max(90, 140 - arcade.nivel * 4);
+  if (arcade.frame % Math.max(55, 90 - arcade.nivel * 3) === 0) {
+    var top = 40 + Math.random() * (h - gap - 100);
+    arcade.pipes.push({ x: w + 10, top: top, gap: gap, passed: false });
+  }
+  for (var i = arcade.pipes.length - 1; i >= 0; i--) {
+    var p = arcade.pipes[i];
+    p.x -= 2.2 + arcade.nivel * 0.12;
+    if (!p.passed && p.x + 36 < bird.x) {
+      p.passed = true;
+      arcade.score += 10;
+      registrarProgressoNivel(1);
+    }
+    if (p.x < -50) arcade.pipes.splice(i, 1);
+    else {
+      var hitX = bird.x + bird.r > p.x && bird.x - bird.r < p.x + 36;
+      var hitY = bird.y - bird.r < p.top || bird.y + bird.r > p.top + p.gap;
+      if (hitX && hitY) { gameOverArcade(); return; }
+    }
+  }
+  drawPulo();
+}
+
+function drawPulo() {
+  var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
+  var sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#4fc3f7');
+  sky.addColorStop(1, '#e1f5fe');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#66bb6a';
+  ctx.fillRect(0, h - 24, w, 24);
+  arcade.pipes.forEach(function (p) {
+    ctx.fillStyle = '#2e7d32';
+    ctx.fillRect(p.x, 0, 36, p.top);
+    ctx.fillRect(p.x, p.top + p.gap, 36, h - (p.top + p.gap));
+    ctx.fillStyle = '#43a047';
+    ctx.fillRect(p.x - 2, p.top - 12, 40, 12);
+    ctx.fillRect(p.x - 2, p.top + p.gap, 40, 12);
+  });
+  var b = arcade.bird;
+  ctx.fillStyle = '#ffc107';
+  ctx.beginPath();
+  ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(b.x + 4, b.y - 3, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#111';
+  ctx.beginPath(); ctx.arc(b.x + 5, b.y - 3, 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ff7043';
+  ctx.beginPath();
+  ctx.moveTo(b.x + b.r - 2, b.y);
+  ctx.lineTo(b.x + b.r + 6, b.y + 2);
+  ctx.lineTo(b.x + b.r - 2, b.y + 4);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(0, 0, w, 22);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('Nv.' + arcade.nivel + '  ' + arcade.score + '  ' + (arcade.progresso || 0) + '/' + (arcade.objetivo || 0), 6, 15);
 }
 
 function gameOverArcade() {
@@ -5270,10 +5498,11 @@ function renderAbaAdm() {
     '<h3 style="color:var(--accent-blue);"><i class="fas fa-gamepad"></i> Testar Jogos Arcade</h3>' +
     '<p class="mini" style="margin-bottom:8px;">Abra qualquer jogo em modo teste. Os pontos ainda entram no ranking se houver nome preenchido na aba Início.</p>' +
     '<div class="grade-2">' +
-      '<button class="btn btn-secondary" onclick="testarJogoAdm(\'snake\')"><i class="fas fa-dragon"></i> Testar Minhoca</button>' +
-      '<button class="btn btn-gold" onclick="testarJogoAdm(\'tetris\')"><i class="fas fa-th"></i> Testar Tetris</button>' +
-      '<button class="btn" onclick="testarJogoAdm(\'corrida\')"><i class="fas fa-car"></i> Testar Corrida</button>' +
-      '<button class="btn btn-secondary" onclick="jogarCorrida()"><i class="fas fa-flag-checkered"></i> Corrida rápida</button>' +
+      '<button class="btn btn-secondary" onclick="testarJogoAdm(\'snake\')"><i class="fas fa-dragon"></i> Minhoca</button>' +
+      '<button class="btn btn-gold" onclick="testarJogoAdm(\'tetris\')"><i class="fas fa-th"></i> Tetris</button>' +
+      '<button class="btn" onclick="testarJogoAdm(\'corrida\')"><i class="fas fa-car"></i> Corrida</button>' +
+      '<button class="btn btn-secondary" onclick="testarJogoAdm(\'quebra\')"><i class="fas fa-cubes"></i> Quebra-Blocos</button>' +
+      '<button class="btn btn-secondary" onclick="testarJogoAdm(\'pulo\')"><i class="fas fa-dove"></i> Pulo</button>' +
     '</div>' +
     '<h3 style="margin-top:12px; font-size:0.82rem;"><i class="fas fa-trophy"></i> Ranking atual (top 10)</h3>' +
     (rank.length
