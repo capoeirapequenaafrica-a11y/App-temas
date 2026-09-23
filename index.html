@@ -565,6 +565,12 @@ footer a { color: var(--accent-blue); }
   <!-- ================= ABA 1 - INÍCIO ================= -->
   <div id="tab1" class="tab-content active">
 
+    <div class="card card-destaque brilho-azul" id="cardAvisoAvaliacaoObrigatoria" style="display:none; border:1px solid var(--danger);">
+      <h3 style="color:var(--danger);"><i class="fas fa-triangle-exclamation"></i> Avaliação Semanal Pendente</h3>
+      <p id="textoAvisoAvaliacaoObrigatoria" style="font-size:0.78rem; color:#fff; margin-bottom:8px;"></p>
+      <button class="btn btn-danger" onclick="abrirAba('tab3')"><i class="fas fa-graduation-cap"></i> Fazer Agora</button>
+    </div>
+
     <div class="card card-destaque" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-bell"></i> Avisos do Professor</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
@@ -608,6 +614,10 @@ footer a { color: var(--accent-blue); }
       <div id="listaCertificadosAluno"></div>
     </div>
 
+    <div class="card fechado" id="cardJogosGrupo">
+      <h3 class="titulo-colapsavel" onclick="toggleCardColapsavel($('cardJogosGrupo'))" style="color:var(--gold);"><i class="fas fa-gamepad"></i> Jogos &amp; Mini-Games<span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span></h3>
+      <div class="card-corpo-colapsavel">
+
     <div class="card" id="cardRankingJogos" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-gamepad"></i> Ranking dos Mini-Jogos</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Pontuação acumulada nos desafios e na corrida:</p>
@@ -630,6 +640,10 @@ footer a { color: var(--accent-blue); }
         <button class="btn" onclick="abrirJogoArcade('mario')"><i class="fas fa-mountain"></i> Aventura</button>
       </div>
     </div>
+
+      </div>
+    </div>
+
 
     <div class="card" id="cardFormacaoInfantil" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-chalkboard-teacher"></i> Formação — Dar aula de Capoeira para Crianças</h3>
@@ -654,14 +668,6 @@ footer a { color: var(--accent-blue); }
   <div id="tab2" class="tab-content">
 
     <div id="boxProfessorNaAulaCheckin"></div>
-
-    <div class="card" style="border:1px solid var(--gympass-red);">
-      <h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-in Gympass / Wellhub</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Insira o código gerado no app do Wellhub para validar na unidade <strong>Capoeira na Pequena África</strong>.</p>
-      <input id="gympassAlunoNome" placeholder="Nome do Aluno">
-      <input id="gympassTokenVal" placeholder="Token Wellhub / Gympass (6 dígitos)" inputmode="numeric" maxlength="6">
-      <button class="btn btn-gympass" onclick="validarCheckinGympassNuvem()"><i class="fas fa-check-circle"></i> Confirmar Token Gympass</button>
-    </div>
 
     <div class="card">
       <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
@@ -1113,6 +1119,7 @@ footer a { color: var(--accent-blue); }
     <button class="assistente-atalho" onclick="assistentePerguntar('minha graduação')">Minha graduação</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('meu desempenho')">Desempenho</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('horários')">Horários</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('avaliação semanal')">Avaliação Semanal</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('ajuda')">Ajuda</button>
   </div>
   <div class="assistente-input-row">
@@ -1187,7 +1194,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -2106,6 +2113,7 @@ var ultimoAvisoNotificado = null;
 function renderInicio() {
   renderHorarioFixoInicio();
   renderAvisoLocal();
+  renderAvisoAvaliacaoObrigatoria();
   /* "Professor na aula" não aparece mais no Início — só na aba Check-in */
   var boxProfInicio = $('boxProfessorNaAulaInicio');
   if (boxProfInicio) boxProfInicio.innerHTML = '';
@@ -5597,6 +5605,13 @@ function renderAbaProfessor() {
     '<h3><i class="fas fa-user-shield"></i> Sessão: ' + esc(sessaoEquipe.nome) + ' <span class="pill pill-info">' + esc(sessaoEquipe.papel) + '</span></h3>' +
     '<button class="btn btn-back" style="margin:0;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button></div>';
 
+  /* --- Atalho Portal de Parceiros Wellhub/Gympass --- */
+  html += '<div class="card" style="border:1px solid var(--gympass-red);">' +
+    '<h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-ins Wellhub / Gympass</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Valide os check-ins dos alunos Wellhub direto no Portal de Parceiros (você tem até 20 min após o pedido do aluno).</p>' +
+    '<a class="btn btn-gympass" href="https://partners.gympass.com/validation/capoeira-na-pequena-africa-gamboa" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; text-decoration:none;">' +
+    '<i class="fas fa-external-link-alt"></i>&nbsp; Abrir Portal de Parceiros</a></div>';
+
   /* --- Check-in do professor na aula --- */
   var presProf = professorPresenteHoje();
   html += '<div class="card" style="border:1px solid var(--primary-green);">' +
@@ -7124,7 +7139,7 @@ function confirmarLimparTudo() {
 
 function limparTudoDefinitivo() {
   fecharModal();
-  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'aulasConteudo'];
+  var alvos = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'aulasConteudo', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais'];
   Promise.all(alvos.map(function (c) { return DB.limparColecao(c); })).then(function () {
     sessaoAlunoId = null;
     mostrarToast('Todos os dados foram apagados.');
@@ -7220,6 +7235,7 @@ function semanaAtualISO(d) {
 }
 
 var quizAtual = null;
+var quizOrigemTurmaId = null; /* id do doc em avaliacoesSemanaisTurma quando o quiz atual é o oficial da turma */
 
 function renderAreaTesteConhecimento() {
   var area = $('areaTesteConhecimento');
@@ -7227,6 +7243,37 @@ function renderAreaTesteConhecimento() {
   if (!area || !aluno) return;
 
   var semana = semanaAtualISO();
+  var testeTurma = testeSemanalDaTurmaAtual();
+
+  if (testeTurma) {
+    var notas = DB.listar('notasAvaliacoesSemanais').filter(function (n) { return n.testeId === testeTurma.id && n.alunoId === aluno.id; });
+    var jaRespondeu = notas[0] || null;
+    var prazoPassou = testeTurma.prazo && new Date(testeTurma.prazo).getTime() < Date.now();
+
+    var evolucaoTurmaHtml = '';
+    var historico = DB.listar('notasAvaliacoesSemanais').filter(function (n) { return n.alunoId === aluno.id; })
+      .slice().sort(function (a, b) { return String(b.semana || '').localeCompare(String(a.semana || '')); });
+    if (historico.length) {
+      evolucaoTurmaHtml = '<h4 style="font-size:0.78rem; color:var(--gold); margin-top:10px;">Suas Avaliações Semanais</h4>' +
+        historico.slice(0, 8).map(function (n) {
+          return '<div class="lista-item"><div class="linha"><span class="mini">' + esc(n.temaNome || n.tema || '') + ' • ' + esc(n.semana) + '</span>' +
+            '<span class="badge-count">' + n.nota.toFixed(1) + '</span></div></div>';
+        }).join('');
+    }
+
+    if (jaRespondeu) {
+      area.innerHTML = '<p class="sem-dados">Você já respondeu a avaliação semanal desta semana (' + esc(testeTurma.temaNome) + '). Nota: <b>' + jaRespondeu.nota.toFixed(1) + '/10</b> (' + jaRespondeu.acertos + '/' + jaRespondeu.total + ')</p>' + evolucaoTurmaHtml;
+      return;
+    }
+    if (prazoPassou) {
+      area.innerHTML = '<p class="sem-dados">O prazo da avaliação semanal (' + esc(testeTurma.temaNome) + ') encerrou. Aguarde a próxima semana.</p>' + evolucaoTurmaHtml;
+      return;
+    }
+    area.innerHTML = '<p class="mini" style="margin-bottom:6px;">📌 Tema da semana: <b>' + esc(testeTurma.temaNome) + '</b> — responda até domingo.</p>' +
+      '<button class="btn" onclick="iniciarQuizTurma()"><i class="fas fa-magic"></i> Fazer Avaliação Semanal da Turma</button>' + evolucaoTurmaHtml;
+    return;
+  }
+
   var testes = DB.listar('testesConhecimento').filter(function (t) { return t.alunoId === aluno.id; })
     .slice().sort(function (a, b) { return String(b.semana || '').localeCompare(String(a.semana || '')); });
   var jaFezEstaSemana = testes.some(function (t) { return t.semana === semana; });
@@ -7253,8 +7300,17 @@ function renderAreaTesteConhecimento() {
   area.innerHTML = lembrete + '<button class="btn" onclick="gerarTesteConhecimento()"><i class="fas fa-magic"></i> Fazer Teste desta Semana</button>' + evolucaoHtml;
 }
 
+function iniciarQuizTurma() {
+  var testeTurma = testeSemanalDaTurmaAtual();
+  if (!testeTurma) { renderAreaTesteConhecimento(); return; }
+  quizAtual = testeTurma.perguntas;
+  quizOrigemTurmaId = testeTurma.id;
+  renderizarQuizConhecimento();
+}
+
 function gerarTesteConhecimento() {
   var area = $('areaTesteConhecimento');
+  quizOrigemTurmaId = null;
   area.innerHTML = '<p class="sem-dados"><span class="spinner-btn"></span> Gerando seu teste...</p>';
 
   fetch(CONFIG.iaProxyUrl, {
@@ -7298,6 +7354,32 @@ function enviarRespostasQuiz() {
   if (semResposta) { mostrarToast('Responda todas as perguntas antes de enviar.', 'erro'); return; }
 
   var total = quizAtual.length;
+
+  if (quizOrigemTurmaId) {
+    var testeTurma = DB.buscar('avaliacoesSemanaisTurma', quizOrigemTurmaId);
+    var nota = Math.round((acertos / total) * 10 * 10) / 10;
+    DB.salvar('notasAvaliacoesSemanais', {
+      alunoId: aluno.id,
+      alunoNome: aluno.nome,
+      alunoApelido: aluno.apelido || '',
+      testeId: quizOrigemTurmaId,
+      tema: testeTurma ? testeTurma.tema : '',
+      temaNome: testeTurma ? testeTurma.temaNome : '',
+      semana: testeTurma ? testeTurma.semana : semanaAtualISO(),
+      data: dataLocalISO(),
+      acertos: acertos,
+      total: total,
+      nota: nota,
+      criadoEm: agoraISO()
+    }).then(function () {
+      mostrarToast('Avaliação enviada! Nota: ' + nota.toFixed(1) + '/10.');
+      quizAtual = null;
+      quizOrigemTurmaId = null;
+      renderAreaTesteConhecimento();
+    });
+    return;
+  }
+
   DB.salvar('testesConhecimento', {
     alunoId: aluno.id,
     alunoNome: aluno.nome,
@@ -7571,6 +7653,7 @@ function assistentePerguntar(texto) {
     }
   }
   assistenteAdicionarBolha('user', texto);
+  if (assistenteInterceptarAvaliacaoSemanal(texto)) return;
   setTimeout(function () {
     var resp = assistenteProcessar(texto);
     if (resp !== null) {
@@ -7789,6 +7872,231 @@ function chamarAssistenteIA(texto, bolhaCarregando) {
       if (bolhaCarregando) bolhaCarregando.textContent = msg;
       else assistenteAdicionarBolha('bot', msg);
     });
+}
+
+/* ---------------------------------------------------------------
+   14c. AVALIAÇÃO SEMANAL DA TURMA (via Assistente Virtual)
+   --------------------------------------------------------------- */
+var TEMAS_AVALIACAO_SEMANAL = {
+  T1: { nome: 'Capoeira Angola', foco: 'Mestre Pastinha, jogo baixo, malícia, ritual, tradição' },
+  T2: { nome: 'Capoeira Regional', foco: 'Mestre Bimba, jogo rápido, objetivo, esportivo' },
+  T3: { nome: 'Capoeira Carioca e Maltas', foco: 'Luta de rua no Rio de Janeiro no século XIX, Nagoas, Guaiamús, repressão de 1890' }
+};
+
+/* Banco fixo de perguntas revisado pelo professor — usado em vez de gerar por IA para T1/T2/T3 */
+var BANCO_PERGUNTAS_SEMANAL = {
+  T1: [
+    { pergunta: 'Quem é o principal nome associado à Capoeira Angola moderna?', opcoes: ['Mestre Bimba', 'Mestre Pastinha', 'Mestre Sinhozinho', 'Mestre Zuma'], correta: 1, feedback: 'Mestre Pastinha (Vicente Ferreira Pastinha) fundou o Centro Esportivo de Capoeira Angola em 1941 e defendeu a preservação das tradições antigas. O estilo valoriza malícia, jogo baixo e ritual.' },
+    { pergunta: 'A Capoeira Angola é caracterizada principalmente por:', opcoes: ['Movimentos rápidos e aéreos', 'Jogo mais lento, cadenciado e próximo ao chão', 'Uso obrigatório de armas', 'Ausência de música'], correta: 1, feedback: 'A Angola prioriza estratégia, malícia e movimentos próximos ao solo, mantendo forte ligação com as raízes afro-brasileiras.' },
+    { pergunta: 'Qual instrumento é o principal na bateria de Capoeira Angola?', opcoes: ['Atabaque', 'Berimbau', 'Pandeiro', 'Agogô'], correta: 1, feedback: 'A bateria típica de Angola usa três berimbaus, dois pandeiros, atabaque, agogô e reco-reco. O berimbau comanda a roda.' },
+    { pergunta: 'O que significa "malícia" na Capoeira Angola?', opcoes: ['Força física', 'Estratégia, enganação e esperteza no jogo', 'Velocidade dos golpes', 'Uniforme formal'], correta: 1, feedback: 'Malícia é a capacidade de enganar o adversário, usar fintas e ler o jogo. É um dos pilares da Angola.' },
+    { pergunta: 'Em que cidade a Capoeira Angola se desenvolveu com mais força?', opcoes: ['Rio de Janeiro', 'Salvador (Bahia)', 'Recife', 'São Paulo'], correta: 1, feedback: 'Embora existisse em várias regiões, a Angola moderna se consolidou na Bahia, especialmente com Mestre Pastinha.' },
+    { pergunta: 'A Capoeira Angola valoriza mais:', opcoes: ['Competição esportiva', 'Aspectos ritualísticos, culturais e lúdicos', 'Golpes letais', 'Ranking por cordas'], correta: 1, feedback: 'Diferente da Regional, a Angola enfatiza o jogo como expressão cultural e ritual, e não apenas como luta.' },
+    { pergunta: 'Qual mestre é considerado grande discípulo e continuador de Pastinha?', opcoes: ['Mestre João Grande', 'Mestre Camisa', 'Mestre Bimba', 'Mestre Suassuna'], correta: 0, feedback: 'Mestre João Grande é um dos principais herdeiros da tradição de Pastinha e ajudou a difundir a Angola pelo mundo.' }
+  ],
+  T2: [
+    { pergunta: 'Quem criou a Capoeira Regional?', opcoes: ['Mestre Pastinha', 'Mestre Bimba', 'Mestre João Pequeno', 'Mestre Canjiquinha'], correta: 1, feedback: 'Manoel dos Reis Machado (Mestre Bimba) criou a Regional na década de 1930, inicialmente chamada de Luta Regional Baiana.' },
+    { pergunta: 'Qual era o objetivo principal de Mestre Bimba ao criar a Regional?', opcoes: ['Tornar a capoeira mais ritualística', 'Fortalecer o lado marcial e estruturar o ensino', 'Eliminar a música', 'Voltar às raízes africanas puras'], correta: 1, feedback: 'Bimba queria tirar a capoeira da marginalidade, criar método de ensino e torná-la eficiente como luta.' },
+    { pergunta: 'A Capoeira Regional é conhecida por ser:', opcoes: ['Mais lenta e baixa', 'Mais rápida, alta e objetiva', 'Sem floreios', 'Apenas com armas'], correta: 1, feedback: 'A Regional tem ritmo mais acelerado, muitos movimentos aéreos e foco em ataque e contra-ataque.' },
+    { pergunta: 'Em 1953, Mestre Bimba apresentou a Regional para qual presidente?', opcoes: ['Juscelino Kubitschek', 'Getúlio Vargas', 'Café Filho', 'João Goulart'], correta: 1, feedback: 'Vargas assistiu à demonstração e afirmou que a capoeira era "o único esporte verdadeiramente nacional".' },
+    { pergunta: 'Qual elemento Mestre Bimba incorporou de outra luta?', opcoes: ['Capoeira Carioca', 'Batuque (luta de seu pai)', 'Jiu-jitsu japonês puro', 'Boxe inglês'], correta: 1, feedback: 'Bimba adicionou golpes do batuque e estruturou sequências de ensino, algo inédito na época.' },
+    { pergunta: 'A Regional ajudou a:', opcoes: ['Manter a capoeira ilegal', 'Legalizar e popularizar a capoeira', 'Eliminar a roda', 'Acabar com a música'], correta: 1, feedback: 'Graças ao trabalho de Bimba, a capoeira deixou de ser crime e passou a ser reconhecida como prática cultural e esportiva.' },
+    { pergunta: 'Qual característica visual é comum na Capoeira Regional?', opcoes: ['Roupas pretas e amarelas', 'Calças e camisas brancas com cordas coloridas', 'Terno e chapéu', 'Sem uniforme definido'], correta: 1, feedback: 'O uniforme branco com cordas (graduações) foi uma das inovações de Bimba para dar organização e respeito à prática.' }
+  ],
+  T3: [
+    { pergunta: 'A Capoeira Carioca do século XIX era praticada principalmente em:', opcoes: ['Salvador', 'Rio de Janeiro', 'Recife', 'Minas Gerais'], correta: 1, feedback: 'Foi a versão de luta de rua violenta que se desenvolveu no Rio no século XIX.' },
+    { pergunta: 'As maltas de capoeira eram:', opcoes: ['Toques de berimbau', 'Grupos organizados que controlavam territórios', 'Escolas oficiais', 'Instrumentos'], correta: 1, feedback: 'As maltas eram bandos de capoeiristas que dominavam bairros inteiros do Rio.' },
+    { pergunta: 'Quais eram as duas maiores maltas rivais?', opcoes: ['Nagoas e Guaiamús', 'Angola e Regional', 'Pastinha e Bimba', 'Senzala e Abadá'], correta: 0, feedback: 'Os Nagoas (periferia, tradição africana) e os Guaiamús (centro, mais mestiços) eram as principais rivais.' },
+    { pergunta: 'Os capoeiras das maltas usavam com frequência:', opcoes: ['Apenas o corpo', 'Navalha, faca e cacetes', 'Só berimbau', 'Uniforme oficial'], correta: 1, feedback: 'A Capoeira Carioca e as maltas eram conhecidas pelo uso de armas, especialmente a navalha.' },
+    { pergunta: 'Em que ano a capoeira foi criminalizada em todo o Brasil?', opcoes: ['1888', '1890', '1932', '1941'], correta: 1, feedback: 'O Código Penal de 1890 criminalizou a "capoeiragem". Houve prisões em massa e deportações.' },
+    { pergunta: 'Os Nagoas se diferenciavam visualmente dos Guaiamús pelo:', opcoes: ['Tipo de berimbau', 'Chapéu (cinta e posição das abas)', 'Cor da calça', 'Número de cordas'], correta: 1, feedback: 'Nagoas usavam chapéu com cinta branca sobre vermelho e abas para baixo; Guaiamús usavam o inverso.' },
+    { pergunta: 'A Capoeira Carioca era mais:', opcoes: ['Ritualística e musical', 'Violenta e de combate de rua', 'Acadêmica', 'Esportiva moderna'], correta: 1, feedback: 'Era uma luta de rua que misturava chutes, cabeçadas, golpes de mão e armas.' },
+    { pergunta: 'Após a repressão, a Capoeira Carioca:', opcoes: ['Desapareceu completamente', 'Continuou influenciando a prática no Rio, embora de forma mais discreta', 'Virou o estilo oficial do Brasil', 'Foi transformada em dança de salão'], correta: 1, feedback: 'Embora muito reprimida, elementos da tradição carioca sobreviveram e ainda influenciam grupos no Rio.' },
+    { pergunta: 'Quem fundou, em 1916 no Rio de Janeiro, uma das primeiras academias especializadas em Capoeira, a Escola de Ginástica Nacional?', opcoes: ['Mestre Bimba e Mestre Pastinha', 'Raphael Lothus (Raphael Pereira da Silva) e Mário Aleixo', 'Mestre João Grande', 'Annibal Burlamaqui'], correta: 1, feedback: 'Raphael Pereira da Silva (1882–1917), conhecido como Raphael Lothus, e Mário Aleixo fundaram em 1916 a Escola de Ginástica Nacional perto da Avenida Central, mostrando que a Capoeira já era ensinada de forma organizada no Rio muito antes da Regional de Bimba.' }
+  ]
+};
+
+var assistenteEstadoProf = null; /* null | 'aguardando_tema' | 'gerando' | 'aguardando_aprovacao' */
+var assistenteTemaPendente = null;
+var assistenteQuizPendente = null;
+
+function assistenteEhProfessor() {
+  return !!(sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0);
+}
+
+function proximoDomingo2359ISO() {
+  var d = new Date();
+  var dias = (7 - d.getDay()) % 7;
+  var alvo = new Date(d.getFullYear(), d.getMonth(), d.getDate() + dias, 23, 59, 0);
+  return alvo.toISOString();
+}
+
+function testeSemanalDaTurmaAtual() {
+  var semana = semanaAtualISO();
+  return DB.listar('avaliacoesSemanaisTurma').filter(function (t) { return t.semana === semana; })
+    .sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); })[0] || null;
+}
+
+function renderAvisoAvaliacaoObrigatoria() {
+  var box = $('cardAvisoAvaliacaoObrigatoria');
+  var texto = $('textoAvisoAvaliacaoObrigatoria');
+  if (!box || !texto) return;
+  var aluno = alunoLogado();
+  var teste = testeSemanalDaTurmaAtual();
+  if (!aluno || !teste) { box.style.display = 'none'; return; }
+  var prazoPassou = teste.prazo && new Date(teste.prazo).getTime() < Date.now();
+  if (prazoPassou) { box.style.display = 'none'; return; }
+  var jaRespondeu = DB.listar('notasAvaliacoesSemanais').some(function (n) { return n.testeId === teste.id && n.alunoId === aluno.id; });
+  if (jaRespondeu) { box.style.display = 'none'; return; }
+  texto.textContent = 'Você ainda não fez a avaliação desta semana (' + teste.temaNome + '). É obrigatória e o prazo termina domingo. Vá na aba Aluno para responder.';
+  box.style.display = 'block';
+}
+
+function assistenteInterceptarAvaliacaoSemanal(texto) {
+  var t = normalizar(texto);
+
+  if (/avaliacao semanal|teste semanal|prova semanal/.test(t) && assistenteEstadoProf === null) {
+    if (assistenteEhProfessor()) {
+      assistenteEstadoProf = 'aguardando_tema';
+      assistenteAdicionarBolha('bot',
+        'Escolha o tema da avaliação semanal da turma:\n\n' +
+        'T1 → Capoeira Angola\n' +
+        'T2 → Capoeira Regional\n' +
+        'T3 → Capoeira Carioca e Maltas\n\n' +
+        'Digite T1, T2 ou T3.');
+      return true;
+    }
+    var testeAtivo = testeSemanalDaTurmaAtual();
+    if (!testeAtivo) {
+      assistenteAdicionarBolha('bot', 'Ainda não há avaliação semanal publicada pelo professor para esta semana.');
+    } else {
+      assistenteAdicionarBolha('bot', 'A avaliação semanal (' + testeAtivo.temaNome + ') já foi publicada. Abra a aba Aluno, no card "Teste de Conhecimentos Gerais", para responder até domingo.');
+    }
+    return true;
+  }
+
+  if (assistenteEstadoProf === 'aguardando_tema' && assistenteEhProfessor()) {
+    if (/cancelar/.test(t)) { assistenteEstadoProf = null; assistenteAdicionarBolha('bot', 'Ok, cancelado.'); return true; }
+    var codigo = /\bt1\b/.test(t) ? 'T1' : /\bt2\b/.test(t) ? 'T2' : /\bt3\b/.test(t) ? 'T3' : null;
+    if (!codigo) {
+      assistenteAdicionarBolha('bot', 'Não entendi. Digite T1, T2 ou T3 (ou "cancelar" para sair).');
+      return true;
+    }
+    assistenteTemaPendente = codigo;
+    assistenteEstadoProf = 'gerando';
+    assistenteAdicionarBolha('bot', '🧠 Gerando o teste sobre ' + TEMAS_AVALIACAO_SEMANAL[codigo].nome + '...');
+    gerarTesteSemanalTurma(codigo);
+    return true;
+  }
+
+  if (assistenteEstadoProf === 'aguardando_aprovacao' && assistenteEhProfessor()) {
+    if (/aprovar|publicar|confirmar/.test(t)) { publicarTesteSemanalTurma(); return true; }
+    if (/gerar outro|refazer|regenerar|de novo/.test(t)) {
+      if (BANCO_PERGUNTAS_SEMANAL[assistenteTemaPendente]) {
+        assistenteAdicionarBolha('bot', 'Esse tema já usa o banco de perguntas revisado — não há uma segunda versão pronta. Digite "aprovar" para publicar ou "cancelar".');
+        return true;
+      }
+      assistenteEstadoProf = 'gerando';
+      assistenteAdicionarBolha('bot', '🧠 Gerando outro teste sobre ' + TEMAS_AVALIACAO_SEMANAL[assistenteTemaPendente].nome + '...');
+      gerarTesteSemanalTurma(assistenteTemaPendente);
+      return true;
+    }
+    if (/cancelar/.test(t)) {
+      assistenteEstadoProf = null; assistenteTemaPendente = null; assistenteQuizPendente = null;
+      assistenteAdicionarBolha('bot', 'Ok, cancelado. Nada foi publicado.');
+      return true;
+    }
+    assistenteAdicionarBolha('bot', 'Digite "aprovar" para publicar, "gerar outro" para refazer, ou "cancelar".');
+    return true;
+  }
+
+  return false;
+}
+
+function gerarTesteSemanalTurma(codigo) {
+  var tema = TEMAS_AVALIACAO_SEMANAL[codigo];
+  var banco = BANCO_PERGUNTAS_SEMANAL[codigo];
+
+  if (banco) {
+    assistenteQuizPendente = banco;
+    assistenteEstadoProf = 'aguardando_aprovacao';
+    var previewBanco = banco.map(function (p, i) {
+      var letras = ['a', 'b', 'c', 'd'];
+      return (i + 1) + '. ' + p.pergunta + '\n' +
+        p.opcoes.map(function (op, j) { return '   ' + letras[j] + ') ' + op; }).join('\n');
+    }).join('\n\n');
+    assistenteAdicionarBolha('bot',
+      'Teste pronto — ' + tema.nome + ' (' + banco.length + ' perguntas):\n\n' + previewBanco +
+      '\n\nDigite "aprovar" para publicar aos alunos (prazo até domingo), ou "cancelar".');
+    return;
+  }
+
+  if (!CONFIG.iaProxyUrl) {
+    assistenteEstadoProf = null;
+    assistenteAdicionarBolha('bot', 'O Assistente de IA ainda não foi configurado (ADM > Configurações). Não consigo gerar o teste.');
+    return;
+  }
+  fetch(CONFIG.iaProxyUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      gerarQuiz: true,
+      gerarQuizTema: true,
+      tema: codigo,
+      temaNome: tema.nome,
+      temaFoco: tema.foco,
+      baseConhecimento: CONFIG.baseConhecimento || ''
+    })
+  }).then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (!data || !data.perguntas || !data.perguntas.length) {
+        assistenteEstadoProf = null;
+        assistenteAdicionarBolha('bot', 'Não consegui gerar o teste agora. Digite "avaliação semanal" para tentar de novo.');
+        return;
+      }
+      assistenteQuizPendente = data.perguntas;
+      assistenteEstadoProf = 'aguardando_aprovacao';
+      var preview = data.perguntas.map(function (p, i) {
+        var letras = ['a', 'b', 'c', 'd'];
+        return (i + 1) + '. ' + p.pergunta + '\n' +
+          (p.opcoes || []).map(function (op, j) { return '   ' + letras[j] + ') ' + op; }).join('\n');
+      }).join('\n\n');
+      assistenteAdicionarBolha('bot',
+        'Teste gerado — ' + tema.nome + ' (' + data.perguntas.length + ' perguntas):\n\n' + preview +
+        '\n\nDigite "aprovar" para publicar aos alunos (prazo até domingo), "gerar outro" para refazer, ou "cancelar".');
+    })
+    .catch(function () {
+      assistenteEstadoProf = null;
+      assistenteAdicionarBolha('bot', 'Erro ao gerar o teste. Digite "avaliação semanal" para tentar de novo.');
+    });
+}
+
+function publicarTesteSemanalTurma() {
+  if (!assistenteQuizPendente || !assistenteTemaPendente) {
+    assistenteEstadoProf = null;
+    assistenteAdicionarBolha('bot', 'Não há teste pendente para aprovar.');
+    return;
+  }
+  var tema = TEMAS_AVALIACAO_SEMANAL[assistenteTemaPendente];
+  var semana = semanaAtualISO();
+  var dados = {
+    tema: assistenteTemaPendente,
+    temaNome: tema.nome,
+    perguntas: assistenteQuizPendente,
+    semana: semana,
+    prazo: proximoDomingo2359ISO(),
+    status: 'publicado',
+    aprovadoPor: sessaoEquipe ? sessaoEquipe.nome : 'Professor',
+    criadoEm: agoraISO()
+  };
+  var existente = testeSemanalDaTurmaAtual();
+  DB.salvar('avaliacoesSemanaisTurma', dados, existente ? existente.id : null).then(function () {
+    assistenteAdicionarBolha('bot', '✅ Avaliação semanal publicada — ' + tema.nome + ' (' + assistenteQuizPendente.length + ' perguntas). Os alunos já podem responder na aba Aluno, até domingo.');
+    assistenteEstadoProf = null;
+    assistenteTemaPendente = null;
+    assistenteQuizPendente = null;
+    try { registroLog('avaliacao_semanal', 'Publicada: ' + tema.nome + ' (' + semana + ')'); } catch (e) {}
+  });
 }
 
 function assistenteInfoProximaAula() {
@@ -8472,6 +8780,27 @@ function htmlPainelInteracaoProfessor() {
       html += '<div class="lista-item"><div class="linha"><b>' + esc(a.alunoNome) + '</b><span class="mini">' + esc(a.semana || dataBR(a.data)) + '</span></div>' +
         '<div class="mini" style="color:var(--primary-green);">' + esc(a.comentarioAluno) + '</div></div>';
     });
+  }
+  html += '</div>';
+
+  /* Avaliação Semanal da Turma (via Assistente Virtual) */
+  var testeTurmaAtual = testeSemanalDaTurmaAtual();
+  html += '<div class="card"><h3><i class="fas fa-clipboard-list"></i> Avaliação Semanal da Turma</h3>' +
+    '<p class="mini" style="margin-bottom:6px;">Para gerar e publicar, abra o Assistente Virtual (ícone flutuante) e digite "avaliação semanal".</p>';
+  if (!testeTurmaAtual) {
+    html += '<p class="sem-dados">Nenhuma avaliação semanal publicada ainda para esta semana.</p>';
+  } else {
+    var notasTurma = DB.listar('notasAvaliacoesSemanais').filter(function (n) { return n.testeId === testeTurmaAtual.id; })
+      .slice().sort(function (a, b) { return b.nota - a.nota; });
+    html += '<div class="aviso-info"><b>' + esc(testeTurmaAtual.temaNome) + '</b> • ' + esc(testeTurmaAtual.perguntas.length) + ' perguntas' +
+      '<br><span class="mini">Prazo: ' + dataHoraBR(testeTurmaAtual.prazo) + ' • ' + notasTurma.length + ' aluno(s) responderam</span></div>';
+    if (!notasTurma.length) {
+      html += '<p class="sem-dados">Ninguém respondeu ainda.</p>';
+    } else {
+      notasTurma.forEach(function (n) {
+        html += '<div class="lista-item"><div class="linha"><b>' + esc(n.alunoApelido || n.alunoNome) + '</b><span class="badge-count">' + n.nota.toFixed(1) + '</span></div></div>';
+      });
+    }
   }
   html += '</div>';
 
