@@ -1481,6 +1481,11 @@ var DB = {
   cache: {},
   listeners: {},
   pronto: false,
+  primeiraCarga: {},
+
+  carregado: function (col) {
+    return this.modo === 'local' || !!this.primeiraCarga[col];
+  },
 
   iniciar: function () {
     var cfg = carregarConfigFirebase();
@@ -1514,6 +1519,7 @@ var DB = {
         var arr = [];
         snap.forEach(function (doc) { arr.push(Object.assign({ id: doc.id }, doc.data())); });
         self.cache[col] = arr;
+        self.primeiraCarga[col] = true;
         self.avisar(col);
       }, function (err) {
         console.warn('[DB] Erro na escuta de "' + col + '".', err);
@@ -1918,6 +1924,10 @@ function autenticarAlunoNuvem(btn) {
   var nome = ($('alunoLoginNome').value || '').trim();
   var senha = $('alunoLoginSenha').value || '';
   if (!nome || !senha) { mostrarToast('Informe nome e senha.', 'erro'); return; }
+  if (!DB.carregado('alunos')) {
+    mostrarToast('Ainda carregando os dados da academia. Aguarde alguns segundos e tente de novo.', 'erro');
+    return;
+  }
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Entrando...'; }
 
   var alvo = normalizar(nome);
