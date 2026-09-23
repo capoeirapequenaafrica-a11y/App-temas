@@ -626,6 +626,8 @@ footer a { color: var(--accent-blue); }
         <button class="btn btn-secondary" onclick="abrirJogoArcade('corrida')"><i class="fas fa-car"></i> Corrida</button>
         <button class="btn" onclick="abrirJogoArcade('quebra')"><i class="fas fa-cubes"></i> Quebra-Blocos</button>
         <button class="btn btn-secondary" onclick="abrirJogoArcade('pulo')"><i class="fas fa-dove"></i> Pulo</button>
+        <button class="btn btn-gold" onclick="abrirJogoArcade('surfe')"><i class="fas fa-running"></i> Surfe</button>
+        <button class="btn" onclick="abrirJogoArcade('mario')"><i class="fas fa-mountain"></i> Aventura</button>
       </div>
     </div>
 
@@ -772,97 +774,319 @@ footer a { color: var(--accent-blue); }
 
 <div class="toast" id="toastBox"></div>
 
-<!-- Overlay jogos arcade -->
-<div id="arcadeOverlay" style="display:none; position:fixed; inset:0; background:radial-gradient(ellipse at center, #122832 0%, #050b0e 72%); z-index:9600; flex-direction:column; align-items:center; justify-content:space-between; padding:max(10px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom)); box-sizing:border-box;">
-  <div style="width:100%; max-width:380px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-    <div style="display:flex; align-items:center; gap:10px; min-width:0;">
-      <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#00c853,#009624); display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0;">🎮</div>
-      <div style="min-width:0;">
-        <div id="arcadeTitulo" style="color:#00e676; font-size:0.95rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Jogo</div>
-        <div style="font-size:0.72rem; color:#90a4ae;">
-          Nv.<span id="arcadeNivel" style="color:#00e676;font-weight:800;">1</span>
-          · Pts <span id="arcadePlacar" style="color:#ffc107; font-weight:800;">0</span>
+<!-- Overlay jogos arcade — interface tech (Canvas 2D grátis) -->
+<div id="arcadeOverlay" class="arcade-overlay-tech">
+  <div class="arcade-topbar-tech">
+    <div class="arcade-topbar-left">
+      <div class="arcade-icon-tech">⚡</div>
+      <div class="arcade-topbar-info">
+        <div id="arcadeTitulo" class="arcade-titulo-tech">Jogo</div>
+        <div class="arcade-meta-tech">
+          <span class="arcade-chip">NV <span id="arcadeNivel">1</span></span>
+          <span class="arcade-chip arcade-chip-gold">PTS <span id="arcadePlacar">0</span></span>
         </div>
-        <div id="arcadeObjetivo" style="font-size:0.65rem; color:#78909c; margin-top:1px;">Objetivo</div>
+        <div id="arcadeObjetivo" class="arcade-obj-tech">Objetivo</div>
       </div>
     </div>
-    <button type="button" class="btn btn-danger btn-mini" style="margin:0; border-radius:20px; padding:8px 14px; flex-shrink:0;" onclick="fecharJogoArcade()"><i class="fas fa-times"></i> Fechar</button>
-  </div>
-
-  <div style="flex:1; display:flex; align-items:center; justify-content:center; width:100%; max-width:380px; margin:6px 0; min-height:0;">
-    <div style="position:relative; padding:7px; border-radius:18px; background:linear-gradient(160deg,#1b3d4d 0%,#0a1520 100%); box-shadow:0 0 0 2px rgba(0,210,255,0.4), 0 14px 36px rgba(0,0,0,0.55);">
-      <canvas id="arcadeCanvas" width="320" height="400" style="display:block; background:#071018; border-radius:12px; max-width:min(92vw, 340px); max-height:min(48vh, 400px); width:auto; height:auto; touch-action:none;"></canvas>
+    <div class="arcade-topbar-actions">
+      <button type="button" class="arcade-tech-btn" id="btnArcadeExpand" onclick="toggleArcadeTelaGrande()" title="Aumentar tela"><i class="fas fa-expand"></i></button>
+      <button type="button" class="arcade-tech-btn arcade-tech-btn-off" onclick="fecharJogoArcade()" title="Fechar"><i class="fas fa-times"></i></button>
     </div>
   </div>
 
-  <div style="width:100%; max-width:380px;">
-    <div style="display:flex; gap:16px; align-items:center; justify-content:center; flex-wrap:wrap;">
-      <div class="arcade-dpad" aria-label="Controles de direção">
-        <button type="button" class="arcade-btn arcade-up" onclick="arcadeDir('up')" aria-label="Cima">▲</button>
-        <button type="button" class="arcade-btn arcade-left" onclick="arcadeDir('left')" aria-label="Esquerda">◀</button>
-        <button type="button" class="arcade-btn arcade-right" onclick="arcadeDir('right')" aria-label="Direita">▶</button>
-        <button type="button" class="arcade-btn arcade-down" onclick="arcadeDir('down')" aria-label="Baixo">▼</button>
+  <div id="arcadeCanvasWrap" class="arcade-canvas-wrap-tech">
+    <div id="arcadeCanvasFrame" class="arcade-canvas-frame-tech">
+      <div class="arcade-scanlines" aria-hidden="true"></div>
+      <canvas id="arcadeCanvas" width="320" height="400" style="display:block; background:#03080c; border-radius:10px; max-width:min(92vw, 340px); max-height:min(48vh, 400px); width:auto; height:auto; touch-action:none; position:relative; z-index:1;"></canvas>
+    </div>
+  </div>
+
+  <!-- Controles: dois polegares — esquerda direção, direita ações (transparentes) -->
+  <div class="arcade-controls-bar">
+    <div class="arcade-dpad" aria-label="Direção (polegar esquerdo)">
+      <button type="button" class="arcade-btn arcade-up" data-dir="up" aria-label="Cima">▲</button>
+      <button type="button" class="arcade-btn arcade-left" data-dir="left" aria-label="Esquerda">◀</button>
+      <button type="button" class="arcade-btn arcade-right" data-dir="right" aria-label="Direita">▶</button>
+      <button type="button" class="arcade-btn arcade-down" data-dir="down" aria-label="Baixo">▼</button>
+    </div>
+    <div id="arcadeAcoesExtra" class="arcade-acoes-lado">
+      <div id="arcadeAcoesTetris" style="display:none;" class="arcade-acoes-col">
+        <button type="button" class="arcade-btn arcade-btn-gold" data-acao="rotate">Girar</button>
+        <button type="button" class="arcade-btn arcade-btn-green" data-acao="drop">Queda</button>
       </div>
-      <div id="arcadeAcoesExtra" style="display:flex; flex-direction:column; gap:10px;">
-        <div id="arcadeAcoesTetris" style="display:none; flex-direction:column; gap:10px;">
-          <button type="button" class="arcade-btn arcade-btn-gold" onclick="arcadeAcao('rotate')">Girar</button>
-          <button type="button" class="arcade-btn arcade-btn-green" onclick="arcadeAcao('drop')">Queda</button>
-        </div>
-        <div id="arcadeAcoesPulo" style="display:none;">
-          <button type="button" class="arcade-btn arcade-btn-green" style="width:118px;" onclick="arcadeAcao('jump')">⬆ Pular</button>
-        </div>
+      <div id="arcadeAcoesPulo" style="display:none;" class="arcade-acoes-col">
+        <button type="button" class="arcade-btn arcade-btn-green arcade-btn-jump" data-acao="jump">⬆ Pular</button>
+      </div>
+      <div id="arcadeAcoesGeral" style="display:none;" class="arcade-acoes-col">
+        <button type="button" class="arcade-btn arcade-btn-side" data-dir="left" aria-label="Esquerda">◀</button>
+        <button type="button" class="arcade-btn arcade-btn-side" data-dir="right" aria-label="Direita">▶</button>
       </div>
     </div>
-    <p id="arcadeDica" style="text-align:center; margin:10px 0 0; font-size:0.7rem; color:#90a4ae;">Deslize na tela ou use as setas</p>
   </div>
+  <p id="arcadeDica" class="arcade-dica">2 dedos · esquerda move · direita ação · transparentes</p>
 </div>
 
 <style>
+/* ===== Interface tecnológica dos jogos (grátis, CSS + Canvas) ===== */
+.arcade-overlay-tech {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: max(10px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,230,118,0.12), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,180,255,0.1), transparent 50%),
+    linear-gradient(180deg, #061018 0%, #020508 100%);
+}
+.arcade-topbar-tech {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(8, 20, 28, 0.75);
+  border: 1px solid rgba(0, 230, 118, 0.25);
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.arcade-topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.arcade-icon-tech {
+  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+  background: linear-gradient(145deg, rgba(0,230,118,0.35), rgba(0,150,255,0.25));
+  border: 1px solid rgba(0,230,118,0.45);
+  box-shadow: 0 0 12px rgba(0,230,118,0.25);
+}
+.arcade-titulo-tech {
+  color: #00e676;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 10px rgba(0,230,118,0.5);
+}
+.arcade-meta-tech { display: flex; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+.arcade-chip {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(0,230,118,0.12);
+  border: 1px solid rgba(0,230,118,0.35);
+  color: #69f0ae;
+}
+.arcade-chip-gold {
+  background: rgba(255,193,7,0.12);
+  border-color: rgba(255,193,7,0.4);
+  color: #ffc107;
+}
+.arcade-obj-tech {
+  font-size: 0.62rem;
+  color: #78909c;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.arcade-topbar-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.arcade-tech-btn {
+  width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(0,210,255,0.35);
+  background: rgba(0, 150, 200, 0.15); color: #80d8ff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 0 8px rgba(0,180,255,0.15);
+}
+.arcade-tech-btn-off {
+  border-color: rgba(239,83,80,0.45);
+  background: rgba(239,83,80,0.15);
+  color: #ef9a9a;
+}
+.arcade-canvas-wrap-tech {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+  margin: 6px 0;
+  min-height: 0;
+}
+.arcade-canvas-frame-tech {
+  position: relative;
+  padding: 3px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(0,230,118,0.55), rgba(0,180,255,0.45), rgba(156,39,176,0.35));
+  box-shadow:
+    0 0 0 1px rgba(0,230,118,0.3),
+    0 0 28px rgba(0,200,255,0.2),
+    0 12px 40px rgba(0,0,0,0.55);
+}
+.arcade-canvas-frame-tech::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 12px;
+  background: #03080c;
+  z-index: 0;
+}
+.arcade-scanlines {
+  pointer-events: none;
+  position: absolute;
+  inset: 3px;
+  border-radius: 12px;
+  z-index: 2;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+  opacity: 0.35;
+}
+
+/* Barra de controles — dois polegares, transparente */
+.arcade-controls-bar {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 4px 8px 2px;
+  pointer-events: none; /* só os botões recebem toque */
+  touch-action: none;
+}
+.arcade-controls-bar .arcade-dpad,
+.arcade-controls-bar .arcade-acoes-lado,
+.arcade-controls-bar .arcade-btn {
+  pointer-events: auto;
+}
 .arcade-dpad {
   display: grid;
-  grid-template-columns: 58px 58px 58px;
-  grid-template-rows: 58px 58px 58px;
-  gap: 6px;
+  grid-template-columns: 62px 62px 62px;
+  grid-template-rows: 62px 62px 62px;
+  gap: 5px;
   grid-template-areas:
     ". up ."
     "left . right"
     ". down .";
+  flex-shrink: 0;
 }
 .arcade-up { grid-area: up; }
 .arcade-left { grid-area: left; }
 .arcade-right { grid-area: right; }
 .arcade-down { grid-area: down; }
-.arcade-btn {
-  width: 58px; height: 58px; border: none; border-radius: 50%;
-  background: linear-gradient(145deg, #42a5f5, #1565c0);
-  color: #fff; font-size: 1.1rem; font-weight: 800;
-  box-shadow: 0 5px 0 #0d47a1, 0 8px 16px rgba(0,0,0,0.35);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; user-select: none; -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+.arcade-acoes-lado {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 130px;
+  flex-shrink: 0;
 }
-.arcade-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 1px 0 #0d47a1, 0 2px 6px rgba(0,0,0,0.3);
+.arcade-acoes-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+/* Botões glass / transparentes */
+.arcade-btn {
+  width: 62px;
+  height: 62px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 50%;
+  background: rgba(33, 150, 243, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255,255,255,0.95);
+  font-size: 1.15rem;
+  font-weight: 800;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  transition: background 0.1s, transform 0.08s;
+}
+.arcade-btn:active,
+.arcade-btn.arcade-pressed {
+  background: rgba(33, 150, 243, 0.55);
+  transform: scale(0.94);
+  border-color: rgba(255,255,255,0.6);
 }
 .arcade-btn-gold, .arcade-btn-green {
-  width: 118px; height: 52px; border-radius: 26px; font-size: 0.88rem;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
 }
 .arcade-btn-gold {
-  background: linear-gradient(145deg, #ffc107, #ff8f00);
-  color: #1a1a1a;
-  box-shadow: 0 5px 0 #e65100, 0 8px 14px rgba(0,0,0,0.35);
+  background: rgba(255, 193, 7, 0.32);
+  border-color: rgba(255, 236, 150, 0.45);
+  color: #fffde7;
+}
+.arcade-btn-gold:active,
+.arcade-btn-gold.arcade-pressed {
+  background: rgba(255, 193, 7, 0.6);
 }
 .arcade-btn-green {
-  background: linear-gradient(145deg, #00e676, #00c853);
-  color: #003d1a;
-  box-shadow: 0 5px 0 #1b5e20, 0 8px 14px rgba(0,0,0,0.35);
+  background: rgba(0, 230, 118, 0.3);
+  border-color: rgba(105, 240, 174, 0.45);
+  color: #e8f5e9;
+}
+.arcade-btn-green:active,
+.arcade-btn-green.arcade-pressed {
+  background: rgba(0, 230, 118, 0.55);
+}
+.arcade-btn-jump {
+  width: 96px !important;
+  height: 96px !important;
+  font-size: 0.95rem !important;
+}
+.arcade-btn-side {
+  width: 72px !important;
+  height: 72px !important;
+  background: rgba(144, 202, 249, 0.25) !important;
+  border-color: rgba(255,255,255,0.35) !important;
+}
+.arcade-btn-side:active,
+.arcade-btn-side.arcade-pressed {
+  background: rgba(144, 202, 249, 0.5) !important;
+}
+.arcade-dica {
+  text-align: center;
+  margin: 6px 0 0;
+  font-size: 0.68rem;
+  color: rgba(144, 164, 174, 0.9);
+  pointer-events: none;
 }
 @media (max-width: 360px) {
-  .arcade-dpad { grid-template-columns: 50px 50px 50px; grid-template-rows: 50px 50px 50px; }
-  .arcade-btn { width: 50px; height: 50px; }
-  .arcade-btn-gold, .arcade-btn-green { width: 108px; height: 48px; }
+  .arcade-dpad {
+    grid-template-columns: 54px 54px 54px;
+    grid-template-rows: 54px 54px 54px;
+  }
+  .arcade-btn { width: 54px; height: 54px; }
+  .arcade-btn-gold, .arcade-btn-green { width: 76px; height: 76px; }
+  .arcade-btn-jump { width: 84px !important; height: 84px !important; }
 }
 </style>
 
@@ -963,7 +1187,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -1320,25 +1544,77 @@ var DB = {
     return null;
   },
 
+  atualizar: function (col, id, patch) {
+    return this.salvar(col, patch, id);
+  },
+
+  /* fila offline (check-in e outros) — sincroniza quando voltar a internet */
+  _filaKey: 'uc_fila_offline_v87',
+  _lerFila: function () {
+    try { return JSON.parse(localStorage.getItem(this._filaKey) || '[]') || []; }
+    catch (e) { return []; }
+  },
+  _gravarFila: function (fila) {
+    try { localStorage.setItem(this._filaKey, JSON.stringify(fila)); } catch (e) {}
+  },
+  _enfileirar: function (col, id, dados) {
+    var fila = this._lerFila();
+    fila.push({ col: col, id: id, dados: dados, em: Date.now() });
+    this._gravarFila(fila);
+  },
+  sincronizarFilaOffline: function () {
+    var self = this;
+    if (this.modo !== 'nuvem' || !this.fs) return Promise.resolve(0);
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return Promise.resolve(0);
+    var fila = this._lerFila();
+    if (!fila.length) return Promise.resolve(0);
+    var rest = [];
+    var ok = 0;
+    var chain = Promise.resolve();
+    fila.forEach(function (item) {
+      chain = chain.then(function () {
+        return self.fs.collection(item.col).doc(item.id).set(item.dados, { merge: true })
+          .then(function () { ok++; })
+          .catch(function () { rest.push(item); });
+      });
+    });
+    return chain.then(function () {
+      self._gravarFila(rest);
+      if (ok > 0) {
+        try { mostrarToast(ok + ' item(ns) sincronizado(s) com a nuvem.'); } catch (e) {}
+      }
+      return ok;
+    });
+  },
+
   salvar: function (col, obj, id) {
     var self = this;
     var dados = Object.assign({}, obj);
     if (this.modo === 'nuvem') {
       var idFinal = id || uid();
-      /* atualização otimista: já reflete na tela na hora, sem esperar o servidor confirmar */
+      /* atualização otimista: já reflete na tela na hora */
       var lista = this.cache[col] || (this.cache[col] = []);
       var achouIdx = -1;
       for (var i = 0; i < lista.length; i++) { if (lista[i].id === idFinal) { achouIdx = i; break; } }
       if (achouIdx >= 0) { lista[achouIdx] = Object.assign({}, lista[achouIdx], dados, { id: idFinal }); }
       else { lista.push(Object.assign({ id: idFinal }, dados)); }
       this.avisar(col);
+      /* também guarda local para sobreviver offline */
+      try { this.persistirLocal(); } catch (e) {}
+
+      var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+      if (offline) {
+        this._enfileirar(col, idFinal, dados);
+        return Promise.resolve(idFinal);
+      }
 
       var doc = this.fs.collection(col).doc(idFinal);
       return doc.set(dados, { merge: true }).then(function () { return idFinal; })
         .catch(function (e) {
-          console.warn('[DB] Erro ao salvar em ' + col, e);
-          mostrarToast('Falha ao salvar (' + col + ').', 'erro');
-          throw e;
+          console.warn('[DB] Sem nuvem — salvando offline em ' + col, e);
+          self._enfileirar(col, idFinal, dados);
+          try { mostrarToast('Salvo offline. Será enviado quando houver internet.', 'erro'); } catch (e2) {}
+          return idFinal; /* não falha o check-in */
         });
     }
     var lista = this.cache[col] || (this.cache[col] = []);
@@ -2009,9 +2285,11 @@ function renderSeletorNiveisArcade() {
     { id: 'tetris', nome: 'Tetris' },
     { id: 'corrida', nome: 'Corrida' },
     { id: 'quebra', nome: 'Quebra-Blocos' },
-    { id: 'pulo', nome: 'Pulo' }
+    { id: 'pulo', nome: 'Pulo' },
+    { id: 'surfe', nome: 'Surfe' },
+    { id: 'mario', nome: 'Aventura' }
   ];
-  var html = '<p class="mini" style="margin-bottom:6px;">Nível desbloqueado (grátis neste aparelho):</p>';
+  var html = '<p class="mini" style="margin-bottom:6px;">Níveis na nuvem (e neste aparelho) — grátis:</p>';
   jogos.forEach(function (j) {
     var max = nivelMaxDesbloqueado(j.id);
     html += '<div class="lista-item" style="padding:6px 8px;"><div class="linha"><b>' + esc(j.nome) + '</b><span class="badge-count">Nv. ' + max + '/10</span></div>' +
@@ -2101,6 +2379,236 @@ function registrarPontosJogo(nome, pontos, jogo) {
   }).then(function () { renderRankingJogos(); });
 }
 
+/* ===== Desafios de jogos entre alunos ===== */
+var desafioAtivoId = null;
+var JOGOS_DESAFIO = [
+  { id: 'snake', nome: 'Minhoca' },
+  { id: 'tetris', nome: 'Tetris' },
+  { id: 'corrida', nome: 'Corrida' },
+  { id: 'quebra', nome: 'Quebra-Blocos' },
+  { id: 'pulo', nome: 'Pulo' },
+  { id: 'surfe', nome: 'Surfe' },
+  { id: 'mario', nome: 'Aventura' }
+];
+
+function nomeJogoDesafio(id) {
+  var j = JOGOS_DESAFIO.find(function (x) { return x.id === id; });
+  return j ? j.nome : id;
+}
+
+function htmlCardDesafiosJogos(aluno) {
+  if (!aluno) return '';
+  var lista = DB.listar('desafiosJogos').sort(function (a, b) {
+    return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
+  });
+  var abertos = lista.filter(function (d) {
+    return d.status === 'aberto' && d.desafianteId !== aluno.id;
+  }).slice(0, 8);
+  var meus = lista.filter(function (d) {
+    return d.desafianteId === aluno.id || d.desafiadoId === aluno.id;
+  }).slice(0, 10);
+
+  var html = '<div class="card" style="border:1px solid var(--primary-green);">' +
+    '<h3 style="color:var(--primary-green);"><i class="fas fa-fist-raised"></i> Desafios de Jogos</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Lance um desafio para outro aluno. Quem fizer mais pontos no jogo vence.</p>' +
+    '<label class="campo-label">Jogo</label>' +
+    '<select id="desafioJogoSel">' +
+      JOGOS_DESAFIO.map(function (j) {
+        return '<option value="' + j.id + '">' + esc(j.nome) + '</option>';
+      }).join('') +
+    '</select>' +
+    '<label class="campo-label">Desafiar (nome ou apelido — deixe vazio para qualquer um)</label>' +
+    '<input id="desafioAlvoNome" placeholder="Ex: Formiga ou deixe em branco">' +
+    '<label class="campo-label">Mensagem (opcional)</label>' +
+    '<input id="desafioMsg" placeholder="Ex: Bora ver quem manda na minhoca!">' +
+    '<button class="btn" onclick="lancarDesafioJogo(this)"><i class="fas fa-bolt"></i> Lançar desafio</button>';
+
+  if (abertos.length) {
+    html += '<h3 style="margin-top:12px;font-size:0.85rem;"><i class="fas fa-inbox"></i> Desafios abertos</h3>';
+    abertos.forEach(function (d) {
+      html += '<div class="lista-item"><div class="linha"><span><b>' + esc(d.desafianteNome) + '</b> · ' + esc(nomeJogoDesafio(d.jogo)) + '</span>' +
+        '<span class="pill pill-pend">aberto</span></div>' +
+        (d.mensagem ? '<span class="mini">' + esc(d.mensagem) + '</span>' : '') +
+        (d.desafiadoNome ? '<span class="mini">Para: ' + esc(d.desafiadoNome) + '</span>' : '<span class="mini">Para qualquer aluno</span>') +
+        '<button class="btn btn-mini" style="margin-top:6px;" onclick="aceitarDesafioJogo(\'' + d.id + '\')"><i class="fas fa-check"></i> Aceitar e jogar</button></div>';
+    });
+  }
+
+  if (meus.length) {
+    html += '<h3 style="margin-top:12px;font-size:0.85rem;"><i class="fas fa-history"></i> Meus desafios</h3>';
+    meus.forEach(function (d) {
+      var st = d.status === 'finalizado' ? 'pill-ok' : (d.status === 'cancelado' ? 'pill-no' : 'pill-pend');
+      var placar = '';
+      if (d.status === 'finalizado') {
+        placar = '<div class="mini">Placar: ' + esc(d.desafianteNome) + ' ' + (d.scoreDesafiante || 0) +
+          ' × ' + (d.scoreDesafiado || 0) + ' ' + esc(d.desafiadoNome || 'rival') +
+          (d.vencedorNome ? ' · Venceu: <b>' + esc(d.vencedorNome) + '</b>' : '') + '</div>';
+      } else if (d.status === 'aceito' || d.status === 'em_jogo') {
+        placar = '<div class="mini">Pontos: você ' +
+          (d.desafianteId === aluno.id ? (d.scoreDesafiante || '—') : (d.scoreDesafiado || '—')) +
+          ' · rival ' +
+          (d.desafianteId === aluno.id ? (d.scoreDesafiado || '—') : (d.scoreDesafiante || '—')) + '</div>';
+      }
+      html += '<div class="lista-item"><div class="linha"><span>' + esc(nomeJogoDesafio(d.jogo)) + ' · ' +
+        esc(d.desafianteNome) + ' vs ' + esc(d.desafiadoNome || 'aberto') + '</span>' +
+        '<span class="pill ' + st + '">' + esc(d.status) + '</span></div>' + placar;
+      if (d.status === 'aceito' || d.status === 'em_jogo') {
+        html += '<button class="btn btn-mini btn-gold" style="margin-top:6px;" onclick="jogarDesafioAtivo(\'' + d.id + '\')"><i class="fas fa-gamepad"></i> Jogar agora</button>';
+      }
+      if (d.status === 'aberto' && d.desafianteId === aluno.id) {
+        html += '<button class="btn btn-mini btn-secondary" style="margin-top:6px;" onclick="cancelarDesafioJogo(\'' + d.id + '\')"><i class="fas fa-times"></i> Cancelar</button>';
+      }
+      html += '</div>';
+    });
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function lancarDesafioJogo(btn) {
+  var aluno = alunoLogado();
+  if (!aluno) { mostrarToast('Faça login na aba Aluno.', 'erro'); return; }
+  var jogo = ($('desafioJogoSel') || {}).value || 'snake';
+  var alvo = ($('desafioAlvoNome') || {}).value ? $('desafioAlvoNome').value.trim() : '';
+  var msg = ($('desafioMsg') || {}).value ? $('desafioMsg').value.trim() : '';
+  var ja = DB.listar('desafiosJogos').some(function (d) {
+    return d.desafianteId === aluno.id && (d.status === 'aberto' || d.status === 'aceito' || d.status === 'em_jogo');
+  });
+  if (ja) { mostrarToast('Você já tem um desafio em andamento.', 'erro'); return; }
+  if (btn) { btn.disabled = true; btn.classList.add('carregando'); }
+  DB.salvar('desafiosJogos', {
+    desafianteId: aluno.id,
+    desafianteNome: aluno.apelido || aluno.nome,
+    desafiadoId: '',
+    desafiadoNome: alvo,
+    jogo: jogo,
+    mensagem: msg,
+    status: 'aberto',
+    scoreDesafiante: null,
+    scoreDesafiado: null,
+    vencedorId: '',
+    vencedorNome: '',
+    criadoEm: agoraISO()
+  }).then(function () {
+    if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
+    mostrarToast('Desafio lançado!');
+    notificar('Novo desafio de jogo', (aluno.apelido || aluno.nome) + ' desafiou no ' + nomeJogoDesafio(jogo));
+    renderAluno();
+  }).catch(function () {
+    if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
+    mostrarToast('Não foi possível lançar o desafio.', 'erro');
+  });
+}
+
+function aceitarDesafioJogo(id) {
+  var aluno = alunoLogado();
+  if (!aluno) { mostrarToast('Faça login na aba Aluno.', 'erro'); return; }
+  var d = DB.buscar('desafiosJogos', id);
+  if (!d || d.status !== 'aberto') { mostrarToast('Desafio indisponível.', 'erro'); return; }
+  if (d.desafianteId === aluno.id) { mostrarToast('Você não pode aceitar o próprio desafio.', 'erro'); return; }
+  /* se o desafio citava um nome, qualquer aluno logado ainda pode aceitar (desafio aberto na academia) */
+  DB.atualizar('desafiosJogos', id, {
+    desafiadoId: aluno.id,
+    desafiadoNome: aluno.apelido || aluno.nome,
+    status: 'aceito',
+    aceitoEm: agoraISO()
+  }).then(function () {
+    desafioAtivoId = id;
+    mostrarToast('Desafio aceito! Jogue agora.');
+    if ($('nomeJogadorCorrida')) $('nomeJogadorCorrida').value = aluno.apelido || aluno.nome;
+    abrirJogoArcade(d.jogo, 1);
+  }).catch(function () {
+    mostrarToast('Erro ao aceitar.', 'erro');
+  });
+}
+
+function jogarDesafioAtivo(id) {
+  var aluno = alunoLogado();
+  if (!aluno) return;
+  var d = DB.buscar('desafiosJogos', id);
+  if (!d || (d.status !== 'aceito' && d.status !== 'em_jogo')) {
+    mostrarToast('Desafio não está ativo.', 'erro');
+    return;
+  }
+  if (d.desafianteId !== aluno.id && d.desafiadoId !== aluno.id) {
+    mostrarToast('Este desafio não é seu.', 'erro');
+    return;
+  }
+  /* já jogou? */
+  var jaScore = (d.desafianteId === aluno.id && d.scoreDesafiante != null) ||
+    (d.desafiadoId === aluno.id && d.scoreDesafiado != null);
+  if (jaScore) {
+    mostrarToast('Você já enviou sua pontuação neste desafio.', 'erro');
+    return;
+  }
+  desafioAtivoId = id;
+  DB.atualizar('desafiosJogos', id, { status: 'em_jogo' });
+  if ($('nomeJogadorCorrida')) $('nomeJogadorCorrida').value = aluno.apelido || aluno.nome;
+  abrirJogoArcade(d.jogo, 1);
+}
+
+function cancelarDesafioJogo(id) {
+  var aluno = alunoLogado();
+  var d = DB.buscar('desafiosJogos', id);
+  if (!d || d.desafianteId !== (aluno && aluno.id)) return;
+  DB.atualizar('desafiosJogos', id, { status: 'cancelado' }).then(function () {
+    mostrarToast('Desafio cancelado.');
+    renderAluno();
+  });
+}
+
+function registrarScoreDesafio(score, jogo) {
+  if (!desafioAtivoId) return Promise.resolve();
+  var aluno = alunoLogado();
+  if (!aluno) return Promise.resolve();
+  var d = DB.buscar('desafiosJogos', desafioAtivoId);
+  if (!d || (d.status !== 'aceito' && d.status !== 'em_jogo')) {
+    desafioAtivoId = null;
+    return Promise.resolve();
+  }
+  if (d.jogo && jogo && d.jogo !== jogo) return Promise.resolve();
+  var patch = {};
+  if (d.desafianteId === aluno.id) {
+    if (d.scoreDesafiante != null) { desafioAtivoId = null; return Promise.resolve(); }
+    patch.scoreDesafiante = Math.max(0, Math.round(score));
+  } else if (d.desafiadoId === aluno.id) {
+    if (d.scoreDesafiado != null) { desafioAtivoId = null; return Promise.resolve(); }
+    patch.scoreDesafiado = Math.max(0, Math.round(score));
+  } else {
+    desafioAtivoId = null;
+    return Promise.resolve();
+  }
+  patch.status = 'em_jogo';
+  var s1 = patch.scoreDesafiante != null ? patch.scoreDesafiante : d.scoreDesafiante;
+  var s2 = patch.scoreDesafiado != null ? patch.scoreDesafiado : d.scoreDesafiado;
+  if (s1 != null && s2 != null) {
+    patch.status = 'finalizado';
+    patch.finalizadoEm = agoraISO();
+    if (s1 > s2) {
+      patch.vencedorId = d.desafianteId;
+      patch.vencedorNome = d.desafianteNome;
+    } else if (s2 > s1) {
+      patch.vencedorId = d.desafiadoId;
+      patch.vencedorNome = d.desafiadoNome;
+    } else {
+      patch.vencedorId = '';
+      patch.vencedorNome = 'Empate';
+    }
+  }
+  var id = desafioAtivoId;
+  desafioAtivoId = null;
+  return DB.atualizar('desafiosJogos', id, patch).then(function () {
+    if (patch.status === 'finalizado') {
+      mostrarToast(patch.vencedorNome === 'Empate' ? 'Desafio empatado!' : 'Desafio finalizado! Venceu: ' + patch.vencedorNome);
+      notificar('Desafio finalizado', nomeJogoDesafio(d.jogo) + ': ' + (patch.vencedorNome || ''));
+    } else {
+      mostrarToast('Pontuação do desafio registrada! Aguarde o rival.');
+    }
+    try { renderAluno(); } catch (e) {}
+  });
+}
+
 /* ===== Arcade: Snake, Tetris, Corrida ===== */
 var arcade = {
   tipo: null,
@@ -2139,9 +2647,40 @@ var arcade = {
 var ARCADE_NIVEIS_KEY = 'uc_arcade_niveis_v87';
 
 function carregarNiveisArcade() {
+  var data = {};
+  try { data = JSON.parse(localStorage.getItem(ARCADE_NIVEIS_KEY) || '{}') || {}; } catch (e) { data = {}; }
+  /* mescla progresso da nuvem (aluno logado ou aparelho) */
   try {
-    return JSON.parse(localStorage.getItem(ARCADE_NIVEIS_KEY) || '{}') || {};
-  } catch (e) { return {}; }
+    var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    var lista = DB.listar('progressoJogos') || [];
+    lista.forEach(function (p) {
+      if (aluno && p.alunoId && p.alunoId === aluno.id && p.niveis) {
+        Object.keys(p.niveis).forEach(function (k) {
+          data[k] = Math.max(Number(data[k]) || 1, Number(p.niveis[k]) || 1);
+        });
+      } else if (!aluno && p.aparelhoId && p.niveis) {
+        var ap = localStorage.getItem('uc_aparelho_id_v87');
+        if (ap && p.aparelhoId === ap) {
+          Object.keys(p.niveis).forEach(function (k) {
+            data[k] = Math.max(Number(data[k]) || 1, Number(p.niveis[k]) || 1);
+          });
+        }
+      }
+    });
+  } catch (e) {}
+  return data;
+}
+
+function idAparelhoJogos() {
+  var k = 'uc_aparelho_id_v87';
+  try {
+    var id = localStorage.getItem(k);
+    if (!id) {
+      id = 'ap_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem(k, id);
+    }
+    return id;
+  } catch (e) { return 'ap_local'; }
 }
 
 function salvarNivelArcade(tipo, nivel) {
@@ -2150,6 +2689,28 @@ function salvarNivelArcade(tipo, nivel) {
   if (nivel > atual) {
     data[tipo] = Math.min(10, nivel);
     try { localStorage.setItem(ARCADE_NIVEIS_KEY, JSON.stringify(data)); } catch (e) {}
+    /* salva na nuvem para atualizar rápido em qualquer aparelho */
+    try {
+      var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+      var aparelhoId = idAparelhoJogos();
+      var lista = DB.listar('progressoJogos') || [];
+      var reg = null;
+      if (aluno) {
+        reg = lista.find(function (p) { return p.alunoId === aluno.id; });
+      } else {
+        reg = lista.find(function (p) { return p.aparelhoId === aparelhoId && !p.alunoId; });
+      }
+      var niveis = Object.assign({}, (reg && reg.niveis) || {}, data);
+      var payload = {
+        alunoId: aluno ? aluno.id : '',
+        alunoNome: aluno ? (aluno.apelido || aluno.nome) : '',
+        aparelhoId: aparelhoId,
+        niveis: niveis,
+        atualizadoEm: agoraISO()
+      };
+      if (reg && reg.id) DB.salvar('progressoJogos', payload, reg.id);
+      else DB.salvar('progressoJogos', payload);
+    } catch (e) {}
   }
 }
 
@@ -2193,6 +2754,23 @@ function configNivelArcade(tipo, nivel) {
       label: 'Passe ' + (8 + nivel * 2) + ' obstáculos'
     };
   }
+  if (tipo === 'surfe') {
+    return {
+      nivel: nivel,
+      objetivo: 30 + nivel * 20,
+      velocidadeMs: 20,
+      speedBase: 3.2 + nivel * 0.35,
+      label: 'Faça ' + (30 + nivel * 20) + ' pts sem cair'
+    };
+  }
+  if (tipo === 'mario') {
+    return {
+      nivel: nivel,
+      objetivo: 5 + nivel * 2,
+      velocidadeMs: 20,
+      label: 'Pegue ' + (5 + nivel * 2) + ' moedas / bandeira'
+    };
+  }
   /* corrida */
   return {
     nivel: nivel,
@@ -2212,6 +2790,43 @@ function atualizarHUDNivelArcade() {
     var prog = arcade.progresso || 0;
     var obj = arcade.objetivo || cfg.objetivo;
     $('arcadeObjetivo').textContent = (cfg.label || '') + ' · ' + prog + '/' + obj;
+  }
+}
+
+function desenharHUDArcade(ctx, w, titulo) {
+  /* barra tech neon */
+  var g = ctx.createLinearGradient(0, 0, w, 0);
+  g.addColorStop(0, 'rgba(0,40,30,0.85)');
+  g.addColorStop(0.5, 'rgba(0,20,40,0.9)');
+  g.addColorStop(1, 'rgba(0,30,50,0.85)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, 28);
+  ctx.strokeStyle = 'rgba(0,230,118,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 28);
+  ctx.lineTo(w, 28);
+  ctx.stroke();
+  /* cantos tech */
+  ctx.strokeStyle = 'rgba(0,210,255,0.5)';
+  ctx.beginPath();
+  ctx.moveTo(0, 8); ctx.lineTo(0, 0); ctx.lineTo(10, 0);
+  ctx.moveTo(w, 8); ctx.lineTo(w, 0); ctx.lineTo(w - 10, 0);
+  ctx.stroke();
+  ctx.fillStyle = '#00e676';
+  ctx.font = 'bold 12px "Segoe UI", system-ui, sans-serif';
+  ctx.shadowColor = 'rgba(0,230,118,0.6)';
+  ctx.shadowBlur = 6;
+  ctx.fillText('NV.' + arcade.nivel + '  ' + arcade.score, 10, 18);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#ffc107';
+  ctx.font = 'bold 11px "Segoe UI", system-ui, sans-serif';
+  var prog = (arcade.progresso || 0) + '/' + (arcade.objetivo || 0);
+  ctx.fillText(prog, w / 2 - ctx.measureText(prog).width / 2, 18);
+  if (titulo) {
+    ctx.fillStyle = '#80d8ff';
+    ctx.font = 'bold 10px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(titulo, w - 10 - ctx.measureText(titulo).width, 18);
   }
 }
 
@@ -2262,12 +2877,44 @@ var TETRIS_SHAPES = {
 };
 var TETRIS_COLORS = { I: '#00d2ff', O: '#ffc107', T: '#ab47bc', S: '#00e676', Z: '#ef5350', J: '#42a5f5', L: '#ff9800' };
 
+function toggleArcadeTelaGrande() {
+  arcade.telaGrande = !arcade.telaGrande;
+  var wrap = $('arcadeCanvasWrap');
+  var canvas = $('arcadeCanvas');
+  var btn = $('btnArcadeExpand');
+  if (!wrap || !canvas) return;
+  if (arcade.telaGrande) {
+    wrap.style.maxWidth = '100%';
+    wrap.style.flex = '1 1 auto';
+    canvas.style.maxWidth = 'min(96vw, 520px)';
+    canvas.style.maxHeight = 'min(68vh, 640px)';
+    if (btn) btn.innerHTML = '<i class="fas fa-compress"></i>';
+    mostrarToast('Tela ampliada');
+  } else {
+    wrap.style.maxWidth = '380px';
+    canvas.style.maxWidth = 'min(92vw, 340px)';
+    canvas.style.maxHeight = 'min(48vh, 400px)';
+    if (btn) btn.innerHTML = '<i class="fas fa-expand"></i>';
+    mostrarToast('Tela normal');
+  }
+}
+
 function abrirJogoArcade(tipo, nivelInicio) {
   var nome = nomeJogadorArcade();
   if (nome.length < 2) {
     mostrarToast('Digite seu nome no campo acima para jogar.', 'erro');
     return;
   }
+  arcade.telaGrande = false;
+  var wrap0 = $('arcadeCanvasWrap');
+  var canvas0 = $('arcadeCanvas');
+  var btn0 = $('btnArcadeExpand');
+  if (wrap0) wrap0.style.maxWidth = '380px';
+  if (canvas0) {
+    canvas0.style.maxWidth = 'min(92vw, 340px)';
+    canvas0.style.maxHeight = 'min(48vh, 400px)';
+  }
+  if (btn0) btn0.innerHTML = '<i class="fas fa-expand"></i>';
   var maxLib = nivelMaxDesbloqueado(tipo);
   var nv = Math.max(1, Math.min(maxLib, Number(nivelInicio) || 1));
   arcade.tipo = tipo;
@@ -2283,22 +2930,29 @@ function abrirJogoArcade(tipo, nivelInicio) {
   var ov = $('arcadeOverlay');
   if (ov) ov.style.display = 'flex';
   try { document.body.style.overflow = 'hidden'; } catch (e) {}
-  var titulos = { snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo' };
+  var titulos = { snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', mario: 'Aventura' };
   if ($('arcadeTitulo')) $('arcadeTitulo').textContent = (titulos[tipo] || 'Jogo') + ' · Nv.' + nv;
   if ($('arcadeDica')) {
     var dicas = {
-      tetris: 'Setas movem · Girar / Queda · complete linhas',
+      tetris: '◀ ▶ um toque vai até a borda · ▼ queda · Girar',
       corrida: 'Esquerda / Direita para desviar dos carros',
       snake: 'Dirija a minhoca · coma as maçãs',
       quebra: 'Mova a barra · quebre todos os blocos',
-      pulo: 'Toque em Pular ou cima para evitar os canos'
+      pulo: 'Toque em Pular ou cima para evitar os canos',
+      surfe: '◀ ▶ muda de faixa · ▲ ou Pular para saltar obstáculos',
+      mario: '◀ ▶ corre · ▲ ou Pular · pegue moedas e chegue na bandeira'
     };
     $('arcadeDica').textContent = dicas[tipo] || 'Deslize ou use as setas';
   }
   var acoesT = $('arcadeAcoesTetris');
   if (acoesT) acoesT.style.display = (tipo === 'tetris') ? 'flex' : 'none';
   var acoesP = $('arcadeAcoesPulo');
-  if (acoesP) acoesP.style.display = (tipo === 'pulo') ? 'block' : 'none';
+  if (acoesP) acoesP.style.display = (tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario') ? 'flex' : 'none';
+  var acoesG = $('arcadeAcoesGeral');
+  /* snake, corrida, quebra: também usam polegar direito (◀ ▶) */
+  if (acoesG) {
+    acoesG.style.display = (tipo === 'snake' || tipo === 'corrida' || tipo === 'quebra') ? 'flex' : 'none';
+  }
   arcade.canvas = $('arcadeCanvas');
   if (!arcade.canvas) return;
   if (tipo === 'snake') {
@@ -2307,9 +2961,9 @@ function abrirJogoArcade(tipo, nivelInicio) {
   } else if (tipo === 'tetris') {
     arcade.canvas.width = arcade.tCols * arcade.tCell;
     arcade.canvas.height = arcade.tRows * arcade.tCell;
-  } else if (tipo === 'corrida' || tipo === 'quebra' || tipo === 'pulo') {
-    arcade.canvas.width = 260;
-    arcade.canvas.height = 380;
+  } else if (tipo === 'corrida' || tipo === 'quebra' || tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario') {
+    arcade.canvas.width = 280;
+    arcade.canvas.height = 400;
   }
   arcade.ctx = arcade.canvas.getContext('2d');
   if (tipo === 'snake') initSnake();
@@ -2317,12 +2971,64 @@ function abrirJogoArcade(tipo, nivelInicio) {
   else if (tipo === 'corrida') initCorridaArcade();
   else if (tipo === 'quebra') initQuebra();
   else if (tipo === 'pulo') initPulo();
+  else if (tipo === 'surfe') initSurfe();
+  else if (tipo === 'mario') initMario();
   if (arcade.timer) clearInterval(arcade.timer);
   arcade.timer = setInterval(arcadeLoop, cfg.velocidadeMs);
   window.removeEventListener('keydown', arcadeKeyHandler);
   window.addEventListener('keydown', arcadeKeyHandler);
   instalarSwipeArcade(arcade.canvas);
+  instalarControlesArcadeTouch();
   atualizarHUDNivelArcade();
+}
+
+/* Controles multi-toque (2 dedos) — transparente e simultâneo — todos os jogos */
+function instalarControlesArcadeTouch() {
+  if (window._arcadeControlsOk) return;
+  window._arcadeControlsOk = true;
+  var bar = document.querySelector('.arcade-controls-bar');
+  if (!bar) return;
+  function btnFrom(e) {
+    var t = e.target;
+    while (t && t !== bar) {
+      if (t.classList && t.classList.contains('arcade-btn')) return t;
+      t = t.parentNode;
+    }
+    return null;
+  }
+  function press(btn, on) {
+    if (!btn) return;
+    if (on) btn.classList.add('arcade-pressed');
+    else btn.classList.remove('arcade-pressed');
+  }
+  function handleStart(e) {
+    var btn = btnFrom(e);
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    press(btn, true);
+    var dir = btn.getAttribute('data-dir');
+    var acao = btn.getAttribute('data-acao');
+    if (dir) arcadeDir(dir);
+    if (acao) arcadeAcao(acao);
+  }
+  function handleEnd(e) {
+    var btn = btnFrom(e);
+    if (!btn) return;
+    e.preventDefault();
+    press(btn, false);
+  }
+  bar.addEventListener('touchstart', handleStart, { passive: false });
+  bar.addEventListener('touchend', handleEnd, { passive: false });
+  bar.addEventListener('touchcancel', handleEnd, { passive: false });
+  bar.addEventListener('mousedown', handleStart);
+  bar.addEventListener('mouseup', handleEnd);
+  bar.addEventListener('mouseleave', function () {
+    bar.querySelectorAll('.arcade-pressed').forEach(function (b) { b.classList.remove('arcade-pressed'); });
+  });
+  bar.addEventListener('click', function (e) {
+    if (btnFrom(e)) e.preventDefault();
+  });
 }
 
 function fecharJogoArcade() {
@@ -2341,6 +3047,8 @@ function fecharJogoArcade() {
     else if (tipo === 'tetris') pts = Math.round(scoreFinal / 2);
     else if (tipo === 'quebra') pts = Math.round(scoreFinal * 1.5);
     else if (tipo === 'pulo') pts = Math.round(scoreFinal * 2);
+    else if (tipo === 'surfe') pts = Math.round(scoreFinal * 1.8);
+    else if (tipo === 'mario') pts = Math.round(scoreFinal * 2);
     /* bônus por nível alcançado (grátis) */
     pts = Math.round(pts * (1 + (nivelFinal - 1) * 0.12));
     pts = Math.max(5, Math.min(800, pts));
@@ -2351,6 +3059,9 @@ function fecharJogoArcade() {
       });
     }
     salvarNivelArcade(tipo, nivelFinal);
+    try { registrarScoreDesafio(scoreFinal, tipo); } catch (e) {}
+  } else if (desafioAtivoId) {
+    try { registrarScoreDesafio(scoreFinal || 0, tipo); } catch (e) {}
   }
   arcade.tipo = null;
   try { renderSeletorNiveisArcade(); } catch (e) {}
@@ -2405,9 +3116,10 @@ function arcadeDir(d) {
     if (nd.x === -arcade.dir.x && nd.y === -arcade.dir.y) return;
     arcade.nextDir = nd;
   } else if (arcade.tipo === 'tetris') {
-    if (d === 'left') moveTetris(-1, 0);
-    else if (d === 'right') moveTetris(1, 0);
-    else if (d === 'down') moveTetris(0, 1);
+    /* um toque leva até a borda (esquerda/direita) ou queda total (baixo) */
+    if (d === 'left') { while (moveTetris(-1, 0)) {} }
+    else if (d === 'right') { while (moveTetris(1, 0)) {} }
+    else if (d === 'down') { while (moveTetris(0, 1)) {} }
     else if (d === 'up') rotateTetris();
   } else if (arcade.tipo === 'corrida') {
     if (d === 'left') arcade.carX = Math.max(0, arcade.carX - 1);
@@ -2417,6 +3129,14 @@ function arcadeDir(d) {
     else if (d === 'right') arcade.paddleX = Math.min(arcade.canvas.width - arcade.paddleW, arcade.paddleX + 28);
   } else if (arcade.tipo === 'pulo') {
     if (d === 'up') puloJump();
+  } else if (arcade.tipo === 'surfe') {
+    if (d === 'left') arcade.surferLane = Math.max(0, arcade.surferLane - 1);
+    else if (d === 'right') arcade.surferLane = Math.min(2, arcade.surferLane + 1);
+    else if (d === 'up') surfeJump();
+  } else if (arcade.tipo === 'mario') {
+    if (d === 'left') arcade.marioVx = -4.2;
+    else if (d === 'right') arcade.marioVx = 4.2;
+    else if (d === 'up') marioJump();
   }
 }
 
@@ -2428,8 +3148,10 @@ function arcadeAcao(a) {
     else if (a === 'drop') {
       while (moveTetris(0, 1)) {}
     }
-  } else if (arcade.tipo === 'pulo' && a === 'jump') {
-    puloJump();
+  } else if (a === 'jump') {
+    if (arcade.tipo === 'pulo') puloJump();
+    else if (arcade.tipo === 'surfe') surfeJump();
+    else if (arcade.tipo === 'mario') marioJump();
   }
 }
 
@@ -2440,6 +3162,8 @@ function arcadeLoop() {
   else if (arcade.tipo === 'corrida') tickCorridaArcade();
   else if (arcade.tipo === 'quebra') tickQuebra();
   else if (arcade.tipo === 'pulo') tickPulo();
+  else if (arcade.tipo === 'surfe') tickSurfe();
+  else if (arcade.tipo === 'mario') tickMario();
   if ($('arcadePlacar')) $('arcadePlacar').textContent = String(arcade.score);
 }
 
@@ -2480,85 +3204,92 @@ function tickSnake() {
 
 function drawSnake() {
   var ctx = arcade.ctx, g = arcade.grid, w = arcade.canvas.width, h = arcade.canvas.height;
+  /* fundo tech */
   var grd = ctx.createLinearGradient(0, 0, 0, h);
-  grd.addColorStop(0, '#1b3a2a');
-  grd.addColorStop(1, '#0a1810');
+  grd.addColorStop(0, '#041a12');
+  grd.addColorStop(0.5, '#0a1f18');
+  grd.addColorStop(1, '#030d0a');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, w, h);
-  /* grama sutil */
-  ctx.fillStyle = 'rgba(0,200,80,0.04)';
-  for (var i = 0; i < 40; i++) {
-    ctx.fillRect((i * 37) % w, (i * 53) % h, 3, 8);
+  /* grade neon */
+  ctx.strokeStyle = 'rgba(0,230,118,0.07)';
+  ctx.lineWidth = 1;
+  for (var gx = 0; gx <= arcade.cols; gx++) {
+    ctx.beginPath(); ctx.moveTo(gx * g, 0); ctx.lineTo(gx * g, h); ctx.stroke();
   }
-  /* corpo conectado da minhoca */
+  for (var gy = 0; gy <= arcade.rows; gy++) {
+    ctx.beginPath(); ctx.moveTo(0, gy * g); ctx.lineTo(w, gy * g); ctx.stroke();
+  }
   if (arcade.snake.length) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#2e7d32';
-    ctx.lineWidth = g - 3;
+    /* glow externo */
+    ctx.shadowColor = '#00e676';
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = '#1b5e20';
+    ctx.lineWidth = g - 2;
     ctx.beginPath();
     arcade.snake.forEach(function (s, idx) {
       var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
       if (idx === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
     });
     ctx.stroke();
-    ctx.strokeStyle = '#66bb6a';
-    ctx.lineWidth = g - 7;
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#00e676';
+    ctx.lineWidth = g - 6;
     ctx.beginPath();
     arcade.snake.forEach(function (s, idx) {
       var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
       if (idx === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
     });
     ctx.stroke();
-    /* anéis */
+    ctx.strokeStyle = 'rgba(105,240,174,0.9)';
+    ctx.lineWidth = g - 10;
+    ctx.beginPath();
     arcade.snake.forEach(function (s, idx) {
-      if (idx % 2) return;
       var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, (g - 6) / 2, 0, Math.PI * 2);
-      ctx.stroke();
+      if (idx === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
     });
-    /* cabeça */
+    ctx.stroke();
     var head = arcade.snake[0];
     var hx = head.x * g + g / 2, hy = head.y * g + g / 2;
+    ctx.shadowColor = '#69f0ae';
+    ctx.shadowBlur = 10;
     var hg = ctx.createRadialGradient(hx - 2, hy - 2, 1, hx, hy, g / 2);
-    hg.addColorStop(0, '#a5d6a7');
-    hg.addColorStop(1, '#1b5e20');
+    hg.addColorStop(0, '#b9f6ca');
+    hg.addColorStop(1, '#00c853');
     ctx.fillStyle = hg;
     ctx.beginPath();
     ctx.arc(hx, hy, g / 2 - 1, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
     var ex = arcade.dir.x * 3, ey = arcade.dir.y * 3;
     var ox1 = arcade.dir.y * 3, oy1 = -arcade.dir.x * 3;
     ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(hx + ex + ox1 * 0.5, hy + ey + oy1 * 0.5, 2.4, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx + ex - ox1 * 0.5, hy + ey - oy1 * 0.5, 2.4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#111';
-    ctx.beginPath(); ctx.arc(hx + ex + ox1 * 0.5 + arcade.dir.x, hy + ey + oy1 * 0.5 + arcade.dir.y, 1.1, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(hx + ex - ox1 * 0.5 + arcade.dir.x, hy + ey - oy1 * 0.5 + arcade.dir.y, 1.1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + ex + ox1 * 0.5, hy + ey + oy1 * 0.5, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + ex - ox1 * 0.5, hy + ey - oy1 * 0.5, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0a1a10';
+    ctx.beginPath(); ctx.arc(hx + ex + ox1 * 0.5 + arcade.dir.x, hy + ey + oy1 * 0.5 + arcade.dir.y, 1.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(hx + ex - ox1 * 0.5 + arcade.dir.x, hy + ey - oy1 * 0.5 + arcade.dir.y, 1.2, 0, Math.PI * 2); ctx.fill();
   }
-  /* maçã */
+  /* energia / comida tech */
   var fx = arcade.food.x * g + g / 2, fy = arcade.food.y * g + g / 2;
-  ctx.fillStyle = '#c62828';
+  ctx.shadowColor = '#ff5252';
+  ctx.shadowBlur = 14;
+  var fg = ctx.createRadialGradient(fx - 2, fy - 2, 1, fx, fy, g / 2);
+  fg.addColorStop(0, '#ff8a80');
+  fg.addColorStop(0.5, '#ff1744');
+  fg.addColorStop(1, '#b71c1c');
+  ctx.fillStyle = fg;
   ctx.beginPath();
-  ctx.arc(fx, fy, g / 2 - 2, 0.2, Math.PI * 2 - 0.2);
+  ctx.arc(fx, fy, g / 2 - 2, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#e53935';
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.beginPath();
-  ctx.arc(fx - 1, fy - 1, g / 2 - 4, 0, Math.PI * 2);
+  ctx.arc(fx - 2, fy - 2, 2.5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = '#4e342e';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(fx, fy - g / 2 + 3);
-  ctx.quadraticCurveTo(fx + 3, fy - g / 2 - 2, fx + 5, fy - g / 2 + 2);
-  ctx.stroke();
-  ctx.fillStyle = '#66bb6a';
-  ctx.beginPath();
-  ctx.ellipse(fx + 4, fy - g / 2 + 1, 3, 2, 0.4, 0, Math.PI * 2);
-  ctx.fill();
+  desenharHUDArcade(ctx, w, 'MINHOCA');
 }
 
 function initTetris() {
@@ -2657,23 +3388,39 @@ function tickTetris() {
 }
 
 function desenharBlocoTetris(ctx, x, y, cs, cor) {
+  var pad = 1.5;
   var g = ctx.createLinearGradient(x, y, x + cs, y + cs);
   g.addColorStop(0, cor);
-  g.addColorStop(1, '#000');
+  g.addColorStop(0.45, cor);
+  g.addColorStop(1, 'rgba(0,0,0,0.55)');
   ctx.fillStyle = g;
-  ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.fillRect(x + 2, y + 2, cs - 6, 3);
-  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-  ctx.strokeRect(x + 1, y + 1, cs - 2, cs - 2);
+  ctx.fillRect(x + pad, y + pad, cs - pad * 2, cs - pad * 2);
+  /* brilho tech */
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(x + pad + 1, y + pad + 1, cs - pad * 2 - 4, 3);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + pad, y + pad, cs - pad * 2, cs - pad * 2);
+  /* neon sutil */
+  ctx.shadowColor = cor;
+  ctx.shadowBlur = 4;
+  ctx.strokeStyle = cor;
+  ctx.globalAlpha = 0.35;
+  ctx.strokeRect(x + pad, y + pad, cs - pad * 2, cs - pad * 2);
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
 }
 
 function drawTetris() {
   var ctx = arcade.ctx, cs = arcade.tCell, w = arcade.canvas.width, h = arcade.canvas.height;
-  ctx.fillStyle = '#0b1220';
+  var bg = ctx.createLinearGradient(0, 0, w, h);
+  bg.addColorStop(0, '#050d18');
+  bg.addColorStop(0.5, '#0a1628');
+  bg.addColorStop(1, '#040a12');
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
-  /* grade */
-  ctx.strokeStyle = 'rgba(0,210,255,0.08)';
+  /* grade tech */
+  ctx.strokeStyle = 'rgba(0,210,255,0.12)';
   ctx.lineWidth = 1;
   for (var c = 0; c <= arcade.tCols; c++) {
     ctx.beginPath(); ctx.moveTo(c * cs, 0); ctx.lineTo(c * cs, h); ctx.stroke();
@@ -2681,6 +3428,11 @@ function drawTetris() {
   for (var r = 0; r <= arcade.tRows; r++) {
     ctx.beginPath(); ctx.moveTo(0, r * cs); ctx.lineTo(w, r * cs); ctx.stroke();
   }
+  /* linha de base neon */
+  ctx.strokeStyle = 'rgba(0,230,118,0.25)';
+  ctx.beginPath();
+  ctx.moveTo(0, h - 1); ctx.lineTo(w, h - 1);
+  ctx.stroke();
   for (var r2 = 0; r2 < arcade.tRows; r2++) {
     for (var c2 = 0; c2 < arcade.tCols; c2++) {
       if (arcade.board[r2][c2]) {
@@ -2698,12 +3450,7 @@ function drawTetris() {
       }
     }
   }
-  /* HUD */
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(0, 0, w, 22);
-  ctx.fillStyle = '#00d2ff';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.fillText('Nv.' + arcade.nivel + '  SCORE ' + arcade.score + '  ' + (arcade.progresso || 0) + '/' + (arcade.objetivo || 0), 6, 15);
+  desenharHUDArcade(ctx, w, 'TETRIS');
 }
 
 function initCorridaArcade() {
@@ -2790,22 +3537,35 @@ function desenharCarroArcade(ctx, x, y, bw, bh, cor1, cor2) {
 function drawCorridaArcade() {
   var ctx = arcade.ctx;
   var w = arcade.canvas.width, h = arcade.canvas.height;
-  var road = ctx.createLinearGradient(0, 0, w, 0);
-  road.addColorStop(0, '#1c1c1c');
-  road.addColorStop(0.5, '#333');
-  road.addColorStop(1, '#1c1c1c');
-  ctx.fillStyle = road;
+  /* noite tech */
+  var sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#0a1628');
+  sky.addColorStop(0.4, '#121212');
+  sky.addColorStop(1, '#1a1a1a');
+  ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = '#5d4037';
-  ctx.fillRect(0, 0, 10, h);
-  ctx.fillRect(w - 10, 0, 10, h);
-  ctx.fillStyle = '#2e7d32';
-  ctx.fillRect(0, 0, 4, h);
-  ctx.fillRect(w - 4, 0, 4, h);
+  /* asfalto neon */
+  var road = ctx.createLinearGradient(0, 0, w, 0);
+  road.addColorStop(0, '#0d1117');
+  road.addColorStop(0.5, '#1c2333');
+  road.addColorStop(1, '#0d1117');
+  ctx.fillStyle = road;
+  ctx.fillRect(8, 0, w - 16, h);
+  /* bordas neon */
+  ctx.fillStyle = '#00e676';
+  ctx.globalAlpha = 0.35;
+  ctx.fillRect(0, 0, 6, h);
+  ctx.fillRect(w - 6, 0, 6, h);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(0,210,255,0.4)';
+  ctx.fillRect(6, 0, 3, h);
+  ctx.fillRect(w - 9, 0, 3, h);
   var laneW = w / 3;
   var offset = (arcade.frame * arcade.speed * 2) % 30;
-  ctx.strokeStyle = '#ffc107';
+  ctx.strokeStyle = 'rgba(255,193,7,0.85)';
   ctx.lineWidth = 3;
+  ctx.shadowColor = '#ffc107';
+  ctx.shadowBlur = 6;
   ctx.setLineDash([16, 12]);
   ctx.lineDashOffset = -offset;
   ctx.beginPath();
@@ -2813,6 +3573,7 @@ function drawCorridaArcade() {
   ctx.moveTo(laneW * 2, 0); ctx.lineTo(laneW * 2, h);
   ctx.stroke();
   ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
   var coresRivais = [['#ef5350', '#b71c1c'], ['#42a5f5', '#0d47a1'], ['#ab47bc', '#6a1b9a'], ['#ff9800', '#e65100']];
   arcade.obstacles.forEach(function (o, idx) {
     var x = o.lane * laneW + 12;
@@ -2824,14 +3585,12 @@ function drawCorridaArcade() {
   var px = arcade.carX * laneW + 14;
   var py = h - 64;
   var pw = laneW - 28, ph = 46;
+  /* glow do carro do jogador */
+  ctx.shadowColor = '#00e676';
+  ctx.shadowBlur = 16;
   desenharCarroArcade(ctx, px, py, pw, ph, '#69f0ae', '#00c853');
-  ctx.fillStyle = 'rgba(0,0,0,0.5)';
-  ctx.fillRect(0, 0, w, 24);
-  ctx.fillStyle = '#00e676';
-  ctx.font = 'bold 12px sans-serif';
-  ctx.fillText('Nv.' + arcade.nivel + '  ' + arcade.score, 8, 16);
-  ctx.fillStyle = '#ffc107';
-  ctx.fillText('VEL ' + Math.round(arcade.speed * 10), w - 70, 16);
+  ctx.shadowBlur = 0;
+  desenharHUDArcade(ctx, w, 'CORRIDA');
 }
 
 /* ===== Quebra-Blocos ===== */
@@ -2879,26 +3638,46 @@ function tickQuebra() {
 
 function drawQuebra() {
   var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
-  ctx.fillStyle = '#0a1620';
+  var bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#1a237e');
+  bg.addColorStop(0.5, '#0d1b2a');
+  bg.addColorStop(1, '#0a1620');
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
+  /* estrelas de fundo */
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  for (var s = 0; s < 20; s++) {
+    ctx.fillRect((s * 37) % w, (s * 53) % (h - 40) + 30, 2, 2);
+  }
   arcade.bricks.forEach(function (br) {
     if (!br.vivo) return;
-    ctx.fillStyle = br.cor;
+    var g = ctx.createLinearGradient(br.x, br.y, br.x, br.y + br.h);
+    g.addColorStop(0, br.cor);
+    g.addColorStop(1, 'rgba(0,0,0,0.35)');
+    ctx.fillStyle = g;
     ctx.fillRect(br.x, br.y, br.w, br.h);
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.fillRect(br.x, br.y, br.w, 3);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(br.x + 1, br.y + 1, br.w - 2, 3);
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.strokeRect(br.x, br.y, br.w, br.h);
   });
-  ctx.fillStyle = '#00e676';
-  ctx.fillRect(arcade.paddleX, h - 16, arcade.paddleW, 10);
+  /* raquete */
+  var pg = ctx.createLinearGradient(arcade.paddleX, h - 16, arcade.paddleX, h - 6);
+  pg.addColorStop(0, '#69f0ae');
+  pg.addColorStop(1, '#00c853');
+  ctx.fillStyle = pg;
+  ctx.fillRect(arcade.paddleX, h - 16, arcade.paddleW, 11);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillRect(arcade.paddleX + 4, h - 14, arcade.paddleW - 8, 3);
+  /* bola com brilho */
+  var ballG = ctx.createRadialGradient(arcade.ball.x - 2, arcade.ball.y - 2, 1, arcade.ball.x, arcade.ball.y, arcade.ball.r);
+  ballG.addColorStop(0, '#fff');
+  ballG.addColorStop(1, '#90caf9');
+  ctx.fillStyle = ballG;
   ctx.beginPath();
-  ctx.fillStyle = '#fff';
   ctx.arc(arcade.ball.x, arcade.ball.y, arcade.ball.r, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(0, 0, w, 22);
-  ctx.fillStyle = '#00d2ff';
-  ctx.font = 'bold 11px sans-serif';
-  ctx.fillText('Nv.' + arcade.nivel + '  ' + arcade.score + '  ' + (arcade.progresso || 0) + '/' + (arcade.objetivo || 0), 6, 15);
+  desenharHUDArcade(ctx, w, 'QUEBRA');
 }
 
 /* ===== Pulo (estilo flappy) ===== */
@@ -2949,40 +3728,608 @@ function tickPulo() {
 function drawPulo() {
   var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
   var sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#4fc3f7');
-  sky.addColorStop(1, '#e1f5fe');
+  sky.addColorStop(0, '#0277bd');
+  sky.addColorStop(0.5, '#4fc3f7');
+  sky.addColorStop(1, '#b3e5fc');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = '#66bb6a';
-  ctx.fillRect(0, h - 24, w, 24);
+  /* nuvens */
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  var sc = (arcade.frame || 0) * 0.5;
+  for (var i = 0; i < 3; i++) {
+    var cx = ((i * 100 - sc) % (w + 60)) - 30;
+    ctx.beginPath();
+    ctx.ellipse(cx, 40 + i * 25, 28, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 18, 42 + i * 25, 20, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  /* chão */
+  var gr = ctx.createLinearGradient(0, h - 28, 0, h);
+  gr.addColorStop(0, '#7cb342');
+  gr.addColorStop(1, '#33691e');
+  ctx.fillStyle = gr;
+  ctx.fillRect(0, h - 28, w, 28);
+  ctx.fillStyle = '#8d6e63';
+  ctx.fillRect(0, h - 28, w, 4);
   arcade.pipes.forEach(function (p) {
-    ctx.fillStyle = '#2e7d32';
+    var pg = ctx.createLinearGradient(p.x, 0, p.x + 36, 0);
+    pg.addColorStop(0, '#1b5e20');
+    pg.addColorStop(0.5, '#43a047');
+    pg.addColorStop(1, '#2e7d32');
+    ctx.fillStyle = pg;
     ctx.fillRect(p.x, 0, 36, p.top);
-    ctx.fillRect(p.x, p.top + p.gap, 36, h - (p.top + p.gap));
-    ctx.fillStyle = '#43a047';
-    ctx.fillRect(p.x - 2, p.top - 12, 40, 12);
-    ctx.fillRect(p.x - 2, p.top + p.gap, 40, 12);
+    ctx.fillRect(p.x, p.top + p.gap, 36, h - (p.top + p.gap) - 28);
+    ctx.fillStyle = '#66bb6a';
+    ctx.fillRect(p.x - 3, p.top - 14, 42, 14);
+    ctx.fillRect(p.x - 3, p.top + p.gap, 42, 14);
   });
   var b = arcade.bird;
+  /* asa */
+  ctx.fillStyle = '#ffa000';
+  ctx.beginPath();
+  ctx.ellipse(b.x - 2, b.y + 2, 8, 5, -0.4, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = '#ffc107';
   ctx.beginPath();
   ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#fff';
-  ctx.beginPath(); ctx.arc(b.x + 4, b.y - 3, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(b.x + 4, b.y - 3, 3.2, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#111';
-  ctx.beginPath(); ctx.arc(b.x + 5, b.y - 3, 1.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(b.x + 5, b.y - 3, 1.3, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#ff7043';
   ctx.beginPath();
   ctx.moveTo(b.x + b.r - 2, b.y);
-  ctx.lineTo(b.x + b.r + 6, b.y + 2);
-  ctx.lineTo(b.x + b.r - 2, b.y + 4);
+  ctx.lineTo(b.x + b.r + 7, b.y + 2);
+  ctx.lineTo(b.x + b.r - 2, b.y + 5);
   ctx.fill();
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.fillRect(0, 0, w, 22);
-  ctx.fillStyle = '#fff';
+  desenharHUDArcade(ctx, w, 'PULO');
+}
+
+/* ===== Surfe (estilo Subway Surfers / corrida com pulo) ===== */
+function initSurfe() {
+  var cfg = configNivelArcade('surfe', arcade.nivel || 1);
+  arcade.surferLane = 1;
+  arcade.surferY = 0;
+  arcade.surferVy = 0;
+  arcade.surferOnGround = true;
+  arcade.surfeObst = [];
+  arcade.surfeCoins = [];
+  arcade.frame = 0;
+  arcade.speed = cfg.speedBase || 3.5;
+  arcade.score = 0;
+  arcade._lastScoreNivel = 0;
+  /* prédios laterais (cenário) */
+  arcade.surfeBuildingsL = [];
+  arcade.surfeBuildingsR = [];
+  for (var i = 0; i < 8; i++) {
+    arcade.surfeBuildingsL.push({ z: 0.15 + i * 0.12, h: 40 + Math.random() * 90, hue: 200 + Math.random() * 40 });
+    arcade.surfeBuildingsR.push({ z: 0.1 + i * 0.12, h: 35 + Math.random() * 100, hue: 200 + Math.random() * 40 });
+  }
+  drawSurfe();
+}
+
+function surfeJump() {
+  if (!arcade.rodando || arcade.tipo !== 'surfe') return;
+  if (arcade.surferOnGround) {
+    arcade.surferVy = -9.5;
+    arcade.surferOnGround = false;
+  }
+}
+
+function tickSurfe() {
+  var w = arcade.canvas.width, h = arcade.canvas.height;
+  arcade.frame++;
+  arcade.speed = Math.min(11, (configNivelArcade('surfe', arcade.nivel).speedBase || 3.5) + arcade.frame * 0.002);
+  /* gravidade do pulo */
+  if (!arcade.surferOnGround) {
+    arcade.surferVy += 0.55;
+    arcade.surferY += arcade.surferVy;
+    if (arcade.surferY >= 0) {
+      arcade.surferY = 0;
+      arcade.surferVy = 0;
+      arcade.surferOnGround = true;
+    }
+  }
+  /* spawn obstáculos e moedas */
+  if (arcade.frame % Math.max(28, 55 - arcade.nivel * 2) === 0) {
+    var lane = Math.floor(Math.random() * 3);
+    var tipo = Math.random() < 0.55 ? 'barreira' : 'bloco';
+    arcade.surfeObst.push({ lane: lane, z: 1, tipo: tipo });
+  }
+  if (arcade.frame % 18 === 0) {
+    arcade.surfeCoins.push({ lane: Math.floor(Math.random() * 3), z: 1 });
+  }
+  var groundY = h - 70;
+  /* mover obstáculos */
+  for (var i = arcade.surfeObst.length - 1; i >= 0; i--) {
+    var o = arcade.surfeObst[i];
+    o.z -= arcade.speed * 0.012;
+    if (o.z < 0.08) {
+      arcade.surfeObst.splice(i, 1);
+      arcade.score += 3;
+      continue;
+    }
+    /* colisão perto do jogador */
+    if (o.z < 0.22 && o.z > 0.12 && o.lane === arcade.surferLane) {
+      if (o.tipo === 'barreira' && arcade.surferY > -28) {
+        gameOverArcade();
+        return;
+      }
+      if (o.tipo === 'bloco' && arcade.surferY > -40) {
+        gameOverArcade();
+        return;
+      }
+    }
+  }
+  for (var j = arcade.surfeCoins.length - 1; j >= 0; j--) {
+    var c = arcade.surfeCoins[j];
+    c.z -= arcade.speed * 0.012;
+    if (c.z < 0.08) { arcade.surfeCoins.splice(j, 1); continue; }
+    if (c.z < 0.22 && c.z > 0.12 && c.lane === arcade.surferLane && arcade.surferY > -50) {
+      arcade.score += 8;
+      arcade.surfeCoins.splice(j, 1);
+    }
+  }
+  if (arcade.frame % 8 === 0) arcade.score += 1;
+  var ganho = arcade.score - (arcade._lastScoreNivel || 0);
+  if (ganho > 0) {
+    arcade._lastScoreNivel = arcade.score;
+    registrarProgressoNivel(ganho);
+  }
+  drawSurfe();
+}
+
+function drawSurfe() {
+  var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
+  var horizon = h * 0.32;
+  var scroll = (arcade.frame || 0) * (arcade.speed || 3) * 0.4;
+
+  /* céu degradê realista */
+  var sky = ctx.createLinearGradient(0, 0, 0, horizon + 30);
+  sky.addColorStop(0, '#0d47a1');
+  sky.addColorStop(0.35, '#1976d2');
+  sky.addColorStop(0.7, '#64b5f6');
+  sky.addColorStop(1, '#bbdefb');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, horizon + 30);
+
+  /* sol */
+  var sx = w * 0.78, sy = horizon * 0.35;
+  var sun = ctx.createRadialGradient(sx, sy, 2, sx, sy, 28);
+  sun.addColorStop(0, '#fffde7');
+  sun.addColorStop(0.4, '#ffe082');
+  sun.addColorStop(1, 'rgba(255,200,50,0)');
+  ctx.fillStyle = sun;
+  ctx.beginPath(); ctx.arc(sx, sy, 28, 0, Math.PI * 2); ctx.fill();
+
+  /* nuvens */
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  for (var n = 0; n < 4; n++) {
+    var nx = ((n * 70 - scroll * 0.15) % (w + 80)) - 40;
+    var ny = 18 + (n % 3) * 16;
+    ctx.beginPath();
+    ctx.ellipse(nx, ny, 22, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(nx + 14, ny + 2, 16, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* silhueta de cidade no horizonte */
+  ctx.fillStyle = '#1a237e';
+  for (var b = 0; b < 14; b++) {
+    var bx = b * (w / 13) - 5;
+    var bh = 18 + (Math.sin(b * 1.7 + 2) * 0.5 + 0.5) * 36;
+    ctx.fillRect(bx, horizon - bh + 8, w / 12, bh);
+  }
+  ctx.fillStyle = '#283593';
+  for (var b2 = 0; b2 < 12; b2++) {
+    var bx2 = b2 * (w / 11);
+    var bh2 = 12 + (Math.cos(b2 * 2.1) * 0.5 + 0.5) * 28;
+    ctx.fillRect(bx2, horizon - bh2 + 10, w / 14, bh2);
+  }
+
+  /* chão / asfalto lateral */
+  var ground = ctx.createLinearGradient(0, horizon, 0, h);
+  ground.addColorStop(0, '#455a64');
+  ground.addColorStop(0.3, '#37474f');
+  ground.addColorStop(1, '#263238');
+  ctx.fillStyle = ground;
+  ctx.fillRect(0, horizon, w, h - horizon);
+
+  /* prédios laterais em perspectiva */
+  function drawSideBuilding(side, z, height, hue) {
+    var t = 1 - z;
+    var yBase = horizon + (h - horizon) * t * 0.92;
+    var scale = 0.2 + 0.8 * t;
+    var bw = 28 * scale + 10;
+    var bh = height * scale;
+    var edge = side < 0 ? 0 : w;
+    var xNear = side < 0 ? w * 0.08 * t : w - w * 0.08 * t;
+    var x = side < 0 ? xNear - bw - 8 : xNear + 8;
+    /* sombra perspectiva */
+    ctx.fillStyle = 'hsla(' + hue + ',25%,18%,0.9)';
+    ctx.beginPath();
+    if (side < 0) {
+      ctx.moveTo(x + bw, yBase);
+      ctx.lineTo(x + bw + 10 * scale, yBase);
+      ctx.lineTo(x + bw + 6 * scale, yBase - bh);
+      ctx.lineTo(x + bw, yBase - bh);
+    } else {
+      ctx.moveTo(x, yBase);
+      ctx.lineTo(x - 10 * scale, yBase);
+      ctx.lineTo(x - 6 * scale, yBase - bh);
+      ctx.lineTo(x, yBase - bh);
+    }
+    ctx.closePath();
+    ctx.fill();
+    /* fachada */
+    var fac = ctx.createLinearGradient(x, yBase - bh, x + bw, yBase);
+    fac.addColorStop(0, 'hsl(' + hue + ',30%,' + (28 + t * 12) + '%)');
+    fac.addColorStop(1, 'hsl(' + hue + ',25%,' + (18 + t * 8) + '%)');
+    ctx.fillStyle = fac;
+    ctx.fillRect(x, yBase - bh, bw, bh);
+    /* janelas */
+    var rows = Math.max(2, Math.floor(bh / 12));
+    var cols = Math.max(1, Math.floor(bw / 10));
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        var lit = ((r + c + Math.floor(scroll / 20)) % 3) !== 0;
+        ctx.fillStyle = lit ? 'rgba(255,236,150,0.75)' : 'rgba(30,40,60,0.6)';
+        ctx.fillRect(x + 3 + c * (bw / cols), yBase - bh + 4 + r * (bh / rows), Math.max(2, bw / cols - 4), Math.max(2, bh / rows - 5));
+      }
+    }
+  }
+
+  if (!arcade.surfeBuildingsL) arcade.surfeBuildingsL = [];
+  if (!arcade.surfeBuildingsR) arcade.surfeBuildingsR = [];
+  /* mover prédios com o scroll */
+  arcade.surfeBuildingsL.forEach(function (b) {
+    b.z -= (arcade.speed || 3) * 0.004;
+    if (b.z < 0.05) {
+      b.z = 0.95;
+      b.h = 40 + Math.random() * 90;
+    }
+  });
+  arcade.surfeBuildingsR.forEach(function (b) {
+    b.z -= (arcade.speed || 3) * 0.004;
+    if (b.z < 0.05) {
+      b.z = 0.95;
+      b.h = 35 + Math.random() * 100;
+    }
+  });
+  var allB = arcade.surfeBuildingsL.map(function (b) { return { side: -1, b: b }; })
+    .concat(arcade.surfeBuildingsR.map(function (b) { return { side: 1, b: b }; }));
+  allB.sort(function (a, c) { return c.b.z - a.b.z; });
+  allB.forEach(function (item) {
+    drawSideBuilding(item.side, item.b.z, item.b.h, item.b.hue);
+  });
+
+  /* trilhos / pista 3 faixas com perspectiva melhor */
+  ctx.fillStyle = '#37474f';
+  ctx.beginPath();
+  ctx.moveTo(w * 0.42, horizon);
+  ctx.lineTo(w * 0.58, horizon);
+  ctx.lineTo(w * 0.98, h);
+  ctx.lineTo(w * 0.02, h);
+  ctx.closePath();
+  ctx.fill();
+  /* faixas */
+  var laneCols = ['#546e7a', '#607d8b', '#546e7a'];
+  for (var L = 0; L < 3; L++) {
+    var x0a = w * 0.5 + (L - 1.5) * 14;
+    var x0b = w * 0.5 + (L - 0.5) * 14;
+    var x1a = w * (0.05 + L * 0.3);
+    var x1b = w * (0.05 + (L + 1) * 0.3);
+    ctx.fillStyle = laneCols[L];
+    ctx.beginPath();
+    ctx.moveTo(x0a, horizon);
+    ctx.lineTo(x0b, horizon);
+    ctx.lineTo(x1b, h);
+    ctx.lineTo(x1a, h);
+    ctx.closePath();
+    ctx.fill();
+    /* linhas tracejadas */
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([12, 14]);
+    ctx.lineDashOffset = -scroll;
+    ctx.beginPath();
+    ctx.moveTo((x0a + x0b) / 2, horizon);
+    ctx.lineTo((x1a + x1b) / 2, h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  /* trilho metálico nas bordas */
+  ctx.strokeStyle = '#90a4ae';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.42, horizon); ctx.lineTo(w * 0.02, h);
+  ctx.moveTo(w * 0.58, horizon); ctx.lineTo(w * 0.98, h);
+  ctx.stroke();
+
+  function proj(lane, z) {
+    var y = horizon + (h - 36 - horizon) * (1 - z);
+    var laneW = 22 + (w * 0.3) * (1 - z);
+    var cx = w / 2 + (lane - 1) * laneW;
+    var scale = 0.22 + 0.78 * (1 - z);
+    return { x: cx, y: y, s: scale, lw: laneW };
+  }
+
+  /* moedas com brilho */
+  arcade.surfeCoins.forEach(function (c) {
+    var p = proj(c.lane, c.z);
+    var rg = ctx.createRadialGradient(p.x - 2, p.y - 12 * p.s, 1, p.x, p.y - 10 * p.s, 9 * p.s);
+    rg.addColorStop(0, '#fff9c4');
+    rg.addColorStop(0.5, '#ffc107');
+    rg.addColorStop(1, '#ff8f00');
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - 10 * p.s, 8 * p.s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  /* obstáculos mais realistas */
+  arcade.surfeObst.forEach(function (o) {
+    var p = proj(o.lane, o.z);
+    if (o.tipo === 'barreira') {
+      ctx.fillStyle = '#c62828';
+      ctx.fillRect(p.x - 20 * p.s, p.y - 18 * p.s, 40 * p.s, 12 * p.s);
+      ctx.fillStyle = '#fff';
+      for (var s = 0; s < 3; s++) {
+        ctx.fillRect(p.x - 16 * p.s + s * 12 * p.s, p.y - 15 * p.s, 6 * p.s, 6 * p.s);
+      }
+      ctx.fillStyle = '#b71c1c';
+      ctx.fillRect(p.x - 22 * p.s, p.y - 8 * p.s, 4 * p.s, 10 * p.s);
+      ctx.fillRect(p.x + 18 * p.s, p.y - 8 * p.s, 4 * p.s, 10 * p.s);
+    } else {
+      /* trem / caixa */
+      var g = ctx.createLinearGradient(p.x - 18 * p.s, p.y - 48 * p.s, p.x + 18 * p.s, p.y);
+      g.addColorStop(0, '#546e7a');
+      g.addColorStop(1, '#263238');
+      ctx.fillStyle = g;
+      ctx.fillRect(p.x - 18 * p.s, p.y - 48 * p.s, 36 * p.s, 48 * p.s);
+      ctx.fillStyle = 'rgba(100,180,255,0.35)';
+      ctx.fillRect(p.x - 12 * p.s, p.y - 40 * p.s, 24 * p.s, 12 * p.s);
+      ctx.fillStyle = '#ffc107';
+      ctx.fillRect(p.x - 14 * p.s, p.y - 10 * p.s, 8 * p.s, 4 * p.s);
+      ctx.fillRect(p.x + 6 * p.s, p.y - 10 * p.s, 8 * p.s, 4 * p.s);
+    }
+  });
+
+  /* jogador — capoeirista em movimento */
+  var pp = proj(arcade.surferLane, 0.14);
+  var py = pp.y + arcade.surferY;
+  var bob = Math.sin((arcade.frame || 0) * 0.35) * (arcade.surferOnGround ? 2 : 0);
+  /* sombra */
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(pp.x, pp.y + 2, 14, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  /* pernas */
+  ctx.strokeStyle = '#1565c0';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  var leg = Math.sin((arcade.frame || 0) * 0.4) * 6;
+  ctx.beginPath();
+  ctx.moveTo(pp.x - 3, py - 12 + bob);
+  ctx.lineTo(pp.x - 5 - (arcade.surferOnGround ? leg : 0), py + 2 + bob);
+  ctx.moveTo(pp.x + 3, py - 12 + bob);
+  ctx.lineTo(pp.x + 5 + (arcade.surferOnGround ? leg : 0), py + 2 + bob);
+  ctx.stroke();
+  /* corpo */
+  var body = ctx.createLinearGradient(pp.x, py - 36, pp.x, py - 8);
+  body.addColorStop(0, '#00e676');
+  body.addColorStop(1, '#00a844');
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') ctx.roundRect(pp.x - 9, py - 34 + bob, 18, 24, 5);
+  else ctx.rect(pp.x - 9, py - 34 + bob, 18, 24);
+  ctx.fill();
+  /* cabeça */
+  ctx.fillStyle = '#ffcc80';
+  ctx.beginPath();
+  ctx.arc(pp.x, py - 40 + bob, 8, 0, Math.PI * 2);
+  ctx.fill();
+  /* abadá / faixa */
+  ctx.fillStyle = '#ffc107';
+  ctx.fillRect(pp.x - 9, py - 18 + bob, 18, 3);
+
+  /* HUD moderno */
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0, 0, w, 28);
+  ctx.fillStyle = '#00e676';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('Nv.' + arcade.nivel + '   ' + arcade.score + ' pts', 8, 18);
+  ctx.fillStyle = '#ffc107';
   ctx.font = 'bold 11px sans-serif';
-  ctx.fillText('Nv.' + arcade.nivel + '  ' + arcade.score + '  ' + (arcade.progresso || 0) + '/' + (arcade.objetivo || 0), 6, 15);
+  ctx.fillText((arcade.progresso || 0) + '/' + (arcade.objetivo || 0), w / 2 - 12, 18);
+  ctx.fillStyle = '#90caf9';
+  ctx.fillText('SURFE', w - 48, 18);
+}
+
+/* ===== Aventura (estilo Super Mario / plataforma) ===== */
+function initMario() {
+  var h = arcade.canvas.height;
+  var nivel = arcade.nivel || 1;
+  arcade.mario = { x: 40, y: h - 80, w: 18, h: 26, onGround: false };
+  arcade.marioVx = 0;
+  arcade.marioVy = 0;
+  arcade.cameraX = 0;
+  arcade.score = 0;
+  /* plataformas */
+  arcade.platforms = [
+    { x: 0, y: h - 28, w: 900 + nivel * 80, h: 28 },
+    { x: 140, y: h - 90, w: 70, h: 12 },
+    { x: 240, y: h - 140, w: 60, h: 12 },
+    { x: 340, y: h - 100, w: 80, h: 12 },
+    { x: 460, y: h - 150, w: 55, h: 12 },
+    { x: 560, y: h - 90, w: 90, h: 12 },
+    { x: 700, y: h - 130, w: 70, h: 12 },
+    { x: 820, y: h - 80, w: 100, h: 12 }
+  ];
+  /* inimigos */
+  arcade.enemies = [];
+  for (var e = 0; e < 2 + Math.floor(nivel / 2); e++) {
+    arcade.enemies.push({
+      x: 180 + e * 160,
+      y: h - 50,
+      w: 16, h: 16,
+      vx: (e % 2 ? 1.2 : -1.2) * (1 + nivel * 0.08),
+      minX: 160 + e * 160,
+      maxX: 240 + e * 160
+    });
+  }
+  /* moedas */
+  arcade.marioCoins = [];
+  for (var c = 0; c < 6 + nivel; c++) {
+    arcade.marioCoins.push({
+      x: 120 + c * 90,
+      y: h - 120 - (c % 3) * 40,
+      r: 7,
+      pega: false
+    });
+  }
+  /* bandeira no fim */
+  arcade.flag = { x: 880 + nivel * 40, y: h - 120, w: 8, h: 90 };
+  drawMario();
+}
+
+function marioJump() {
+  if (!arcade.rodando || arcade.tipo !== 'mario') return;
+  if (arcade.mario && arcade.mario.onGround) {
+    arcade.marioVy = -9.8;
+    arcade.mario.onGround = false;
+  }
+}
+
+function tickMario() {
+  var m = arcade.mario;
+  var w = arcade.canvas.width, h = arcade.canvas.height;
+  if (!m) return;
+  /* movimento horizontal com atrito */
+  m.x += arcade.marioVx || 0;
+  arcade.marioVx *= 0.82;
+  if (Math.abs(arcade.marioVx) < 0.3) arcade.marioVx = 0;
+  /* gravidade */
+  arcade.marioVy += 0.45;
+  m.y += arcade.marioVy;
+  m.onGround = false;
+  /* colisão plataformas */
+  arcade.platforms.forEach(function (p) {
+    if (m.x + m.w > p.x && m.x < p.x + p.w &&
+        m.y + m.h > p.y && m.y + m.h < p.y + p.h + 12 &&
+        arcade.marioVy >= 0) {
+      m.y = p.y - m.h;
+      arcade.marioVy = 0;
+      m.onGround = true;
+    }
+  });
+  if (m.y > h + 40) { gameOverArcade(); return; }
+  if (m.x < 0) m.x = 0;
+  /* inimigos */
+  for (var i = 0; i < arcade.enemies.length; i++) {
+    var en = arcade.enemies[i];
+    en.x += en.vx;
+    if (en.x < en.minX || en.x > en.maxX) en.vx *= -1;
+    if (m.x < en.x + en.w && m.x + m.w > en.x && m.y < en.y + en.h && m.y + m.h > en.y) {
+      /* pula em cima */
+      if (arcade.marioVy > 0 && m.y + m.h < en.y + en.h * 0.6) {
+        arcade.enemies.splice(i, 1);
+        arcade.marioVy = -6;
+        arcade.score += 25;
+        i--;
+      } else {
+        gameOverArcade();
+        return;
+      }
+    }
+  }
+  /* moedas */
+  arcade.marioCoins.forEach(function (c) {
+    if (c.pega) return;
+    if (Math.abs(m.x + m.w / 2 - c.x) < 14 && Math.abs(m.y + m.h / 2 - c.y) < 16) {
+      c.pega = true;
+      arcade.score += 15;
+      registrarProgressoNivel(1);
+    }
+  });
+  /* bandeira */
+  var f = arcade.flag;
+  if (m.x + m.w > f.x && m.x < f.x + 20) {
+    arcade.score += 50;
+    registrarProgressoNivel(3);
+    mostrarToast('Bandeira! Fase completa');
+    /* recomeça fase um pouco mais à frente / sobe nível via progresso */
+    initMario();
+    return;
+  }
+  /* câmera */
+  arcade.cameraX = Math.max(0, m.x - w * 0.35);
+  drawMario();
+}
+
+function drawMario() {
+  var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
+  var cam = arcade.cameraX || 0;
+  /* céu */
+  var sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#4fc3f7');
+  sky.addColorStop(1, '#b3e5fc');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+  /* colinas */
+  ctx.fillStyle = '#81c784';
+  ctx.beginPath();
+  ctx.ellipse(80 - cam * 0.2, h - 20, 90, 40, 0, 0, Math.PI * 2);
+  ctx.ellipse(220 - cam * 0.2, h - 10, 110, 50, 0, 0, Math.PI * 2);
+  ctx.fill();
+  /* plataformas */
+  arcade.platforms.forEach(function (p) {
+    ctx.fillStyle = '#6d4c41';
+    ctx.fillRect(p.x - cam, p.y, p.w, p.h);
+    ctx.fillStyle = '#8bc34a';
+    ctx.fillRect(p.x - cam, p.y, p.w, 5);
+  });
+  /* bandeira */
+  var f = arcade.flag;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(f.x - cam, f.y, f.w, f.h);
+  ctx.fillStyle = '#e53935';
+  ctx.beginPath();
+  ctx.moveTo(f.x - cam + f.w, f.y);
+  ctx.lineTo(f.x - cam + f.w + 22, f.y + 10);
+  ctx.lineTo(f.x - cam + f.w, f.y + 20);
+  ctx.fill();
+  /* moedas */
+  arcade.marioCoins.forEach(function (c) {
+    if (c.pega) return;
+    ctx.fillStyle = '#ffc107';
+    ctx.beginPath();
+    ctx.arc(c.x - cam, c.y, c.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  /* inimigos */
+  arcade.enemies.forEach(function (en) {
+    ctx.fillStyle = '#6d4c41';
+    ctx.fillRect(en.x - cam, en.y, en.w, en.h);
+    ctx.fillStyle = '#ef5350';
+    ctx.fillRect(en.x - cam + 2, en.y + 3, 4, 4);
+    ctx.fillRect(en.x - cam + 10, en.y + 3, 4, 4);
+  });
+  /* jogador */
+  var m = arcade.mario;
+  ctx.fillStyle = '#e53935';
+  ctx.fillRect(m.x - cam, m.y, m.w, m.h * 0.45);
+  ctx.fillStyle = '#1565c0';
+  ctx.fillRect(m.x - cam, m.y + m.h * 0.45, m.w, m.h * 0.55);
+  ctx.fillStyle = '#ffcc80';
+  ctx.beginPath();
+  ctx.arc(m.x - cam + m.w / 2, m.y - 4, 7, 0, Math.PI * 2);
+  ctx.fill();
+  desenharHUDArcade(ctx, w, 'AVENTURA');
 }
 
 function gameOverArcade() {
@@ -3002,7 +4349,7 @@ function gameOverArcade() {
     ctx.fillText('Pontos: ' + arcade.score + ' · Nível ' + (arcade.nivel || 1), arcade.canvas.width / 2, arcade.canvas.height / 2 + 12);
     ctx.fillStyle = '#90a4ae';
     ctx.font = '12px sans-serif';
-    ctx.fillText('Grátis · progresso salvo neste aparelho', arcade.canvas.width / 2, arcade.canvas.height / 2 + 34);
+    ctx.fillText('Grátis · progresso na nuvem / aparelho', arcade.canvas.width / 2, arcade.canvas.height / 2 + 34);
     ctx.textAlign = 'left';
   }
   setTimeout(function () { fecharJogoArcade(); }, 1800);
@@ -3856,6 +5203,7 @@ function alunoCheckinLocalFixoSimples() {
 
   var horaAgora = horaLocalHM();
   var dataAgora = dataLocalISO();
+  var offlineAgora = (typeof navigator !== 'undefined' && navigator.onLine === false);
   DB.salvar('presencas', {
     alunoId: aluno ? aluno.id : '',
     alunoNome: aluno ? aluno.nome : nome,
@@ -3869,18 +5217,22 @@ function alunoCheckinLocalFixoSimples() {
     status: 'pendente',
     atrasoMin: atrasado ? atrasoMin : 0,
     justificativa: just,
+    offline: offlineAgora,
     criadoEm: agoraISO()
   }).then(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Presença Local'; }
     $('justificativaAtrasoInput').value = '';
-    mostrarToast('Check-in enviado com sucesso!');
+    mostrarToast(offlineAgora ? 'Check-in salvo offline! Sincroniza quando houver internet.' : 'Check-in enviado com sucesso!');
     abrirModal('Check-in registrado',
       '<div style="text-align:center; padding:6px 0;">' +
         '<div style="font-size:2rem; color:var(--primary-green); margin-bottom:8px;"><i class="fas fa-check-circle"></i></div>' +
-        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Presença enviada!</strong></p>' +
+        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>' + (offlineAgora ? 'Presença salva neste aparelho!' : 'Presença enviada!') + '</strong></p>' +
         '<p class="mini">Aluno: <b>' + esc(aluno ? aluno.nome : nome) + '</b></p>' +
         '<p class="mini">Data: <b>' + dataBR(dataAgora) + '</b> às <b>' + esc(horaAgora) + '</b></p>' +
         '<p class="mini">Local: <b>' + esc(polo ? polo.nome : '-') + '</b></p>' +
-        '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — aguarde a aprovação do professor.</p>' +
+        (offlineAgora
+          ? '<p class="mini" style="margin-top:8px; color:var(--gold);"><b>OFFLINE</b> — quando a internet voltar, o check-in sobe automaticamente para o professor.</p>'
+          : '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — aguarde a aprovação do professor.</p>') +
         '<p class="mini" style="margin-top:6px;">Você pode acompanhar em “Meus Check-ins Recentes” e na aba Aluno.</p>' +
       '</div>');
     renderMinhasPresencasCheckin();
@@ -4051,6 +5403,9 @@ function renderAluno() {
 
     /* ===== ANÁLISE DE DESEMPENHO ATLÉTICO ===== */
     htmlAnaliseDesempenho(logado) +
+
+    /* ===== DESAFIOS DE JOGOS ENTRE ALUNOS ===== */
+    htmlCardDesafiosJogos(logado) +
 
     /* ===== INTERAÇÃO: FALAR COM PROFESSOR + FEEDBACK + PERGUNTA ===== */
     htmlCardMensagensAluno(logado) +
@@ -5503,6 +6858,8 @@ function renderAbaAdm() {
       '<button class="btn" onclick="testarJogoAdm(\'corrida\')"><i class="fas fa-car"></i> Corrida</button>' +
       '<button class="btn btn-secondary" onclick="testarJogoAdm(\'quebra\')"><i class="fas fa-cubes"></i> Quebra-Blocos</button>' +
       '<button class="btn btn-secondary" onclick="testarJogoAdm(\'pulo\')"><i class="fas fa-dove"></i> Pulo</button>' +
+      '<button class="btn btn-gold" onclick="testarJogoAdm(\'surfe\')"><i class="fas fa-running"></i> Surfe</button>' +
+      '<button class="btn" onclick="testarJogoAdm(\'mario\')"><i class="fas fa-mountain"></i> Aventura</button>' +
     '</div>' +
     '<h3 style="margin-top:12px; font-size:0.82rem;"><i class="fas fa-trophy"></i> Ranking atual (top 10)</h3>' +
     (rank.length
@@ -7150,8 +8507,19 @@ function iniciarApp() {
   /* revalida o atraso a cada minuto */
   setInterval(avaliarAtrasoHoje, 60000);
 
-  window.addEventListener('online', function () { atualizarStatusFirebase(); renderAbaDev(); });
+  window.addEventListener('online', function () {
+    atualizarStatusFirebase();
+    try { DB.sincronizarFilaOffline(); } catch (e) {}
+    try { renderAbaDev(); } catch (e) {}
+  });
   window.addEventListener('offline', function () { atualizarStatusFirebase(); });
+  /* tenta sincronizar fila ao abrir e a cada 45s se online */
+  setTimeout(function () { try { DB.sincronizarFilaOffline(); } catch (e) {} }, 2500);
+  setInterval(function () {
+    if (typeof navigator !== 'undefined' && navigator.onLine !== false) {
+      try { DB.sincronizarFilaOffline(); } catch (e) {}
+    }
+  }, 45000);
 
   registroLog('app', 'App iniciado em modo ' + DB.modo);
   console.log('%cUniverso Capoeira — modo ' + DB.modo, 'color:#00e676;font-weight:bold;');
