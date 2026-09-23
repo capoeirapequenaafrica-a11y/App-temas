@@ -1972,6 +1972,10 @@ function cadastrarAlunoNuvem(btn) {
   if (nome.length < 3) { mostrarToast('Informe o nome completo.', 'erro'); return; }
   if (s1.length < 4) { mostrarToast('A senha precisa de ao menos 4 caracteres.', 'erro'); return; }
   if (s1 !== s2) { mostrarToast('As senhas não conferem.', 'erro'); return; }
+  if (!DB.carregado('alunos')) {
+    mostrarToast('Ainda carregando os dados da academia. Aguarde alguns segundos e tente de novo.', 'erro');
+    return;
+  }
 
   var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome) === normalizar(nome); });
   if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
@@ -2036,6 +2040,10 @@ function autenticarEquipe(papelRequerido) {
   var nome = (campoNome && campoNome.value || '').trim();
   var senha = (campoSenha && campoSenha.value) || '';
   if (nome.length < 3 || senha.length < 4) { mostrarToast('Informe nome e senha (mín. 4 caracteres).', 'erro'); return; }
+  if (!DB.carregado('equipe')) {
+    mostrarToast('Ainda carregando os dados da academia. Aguarde alguns segundos e tente de novo.', 'erro');
+    return;
+  }
 
   var equipe = DB.listar('equipe');
 
