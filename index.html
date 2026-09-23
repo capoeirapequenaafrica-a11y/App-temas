@@ -732,6 +732,11 @@ footer a { color: var(--accent-blue); }
       </select>
       <label class="campo-label">Contato (WhatsApp)</label>
       <input id="autoCadContato" placeholder="(21) 90000-0000" inputmode="tel">
+      <label class="campo-label">Como você treina na academia?</label>
+      <select id="autoCadTipoAluno">
+        <option value="normal">Aluno normal (matrícula direta)</option>
+        <option value="gympass">Aluno Gympass / Wellhub</option>
+      </select>
       <label class="campo-label">Senha de acesso</label>
       <input id="autoCadSenha" type="password" placeholder="Mínimo 4 caracteres">
       <label class="campo-label">Repita a senha</label>
@@ -1984,6 +1989,8 @@ function cadastrarAlunoNuvem(btn) {
 
   var categoria = (($('autoCadCategoria') || {}).value || 'adulto');
   if (categoria !== 'infantil') categoria = 'adulto';
+  var tipoAluno = (($('autoCadTipoAluno') || {}).value || 'normal');
+  if (tipoAluno !== 'gympass') tipoAluno = 'normal';
 
   var novo = {
     nome: nome,
@@ -1991,6 +1998,7 @@ function cadastrarAlunoNuvem(btn) {
     graduacao: graduacao,
     categoria: categoria,
     contato: contato,
+    tipoAluno: tipoAluno,
     senhaHash: hashSenha(s1),
     criadoEm: agoraISO(),
     ativo: true
@@ -5692,6 +5700,7 @@ function renderAbaProfessor() {
     '<label class="campo-label">Apelido na capoeira</label><input id="profCadApelido" placeholder="Opcional">' +
     '<label class="campo-label">Graduação</label><select id="profCadGraduacaoSelect"></select>' +
     '<label class="campo-label">Contato (WhatsApp, opcional)</label><input id="profCadContato" placeholder="(21) 90000-0000">' +
+    '<label class="campo-label">Como treina?</label><select id="profCadTipoAluno"><option value="normal">Aluno normal (matrícula direta)</option><option value="gympass">Aluno Gympass / Wellhub</option></select>' +
     '<button class="btn" onclick="cadastrarAlunoPeloProfessor(this)"><i class="fas fa-user-plus"></i> Cadastrar Aluno</button>' +
     '<p class="mini" style="margin-top:6px;">Uma senha provisória é gerada automaticamente — o aluno pode trocar depois em "Esqueci minha senha".</p></div>' +
 
@@ -6227,6 +6236,8 @@ function cadastrarAlunoPeloProfessor(btn) {
   var apelido = ($('profCadApelido').value || '').trim();
   var graduacao = $('profCadGraduacaoSelect').value;
   var contato = ($('profCadContato').value || '').trim();
+  var tipoAluno = (($('profCadTipoAluno') || {}).value || 'normal');
+  if (tipoAluno !== 'gympass') tipoAluno = 'normal';
 
   if (nome.length < 3) { mostrarToast('Informe o nome completo do aluno.', 'erro'); return; }
   var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome) === normalizar(nome); });
@@ -6240,6 +6251,7 @@ function cadastrarAlunoPeloProfessor(btn) {
     apelido: apelido || nome.split(' ')[0],
     graduacao: graduacao,
     contato: contato,
+    tipoAluno: tipoAluno,
     senhaHash: hashSenha(senhaProvisoria),
     criadoEm: agoraISO(),
     ativo: true,
@@ -6943,7 +6955,8 @@ function htmlListaAlunosAdm(alunos) {
   alunos.forEach(function (a) {
     html += '<div class="lista-item" data-nome="' + esc(normalizar(a.nome + ' ' + (a.apelido || ''))) + '">' +
       '<div class="linha"><b>' + esc(a.nome) + '</b><span class="mini">' + esc(a.apelido || '') + '</span></div>' +
-      '<span class="mini">' + esc(a.graduacao || '-') + (a.contato ? ' • ' + esc(a.contato) : '') + '</span>' +
+      '<span class="mini">' + esc(a.graduacao || '-') + (a.contato ? ' • ' + esc(a.contato) : '') +
+      (a.tipoAluno === 'gympass' ? ' • <span class="pill" style="background:var(--gympass-red);color:#fff;">Gympass</span>' : '') + '</span>' +
       '<div class="flex-btn" style="margin-top:6px;">' +
         '<button class="btn btn-secondary btn-mini" onclick="alterarGraduacao(\'' + a.id + '\')"><i class="fas fa-medal"></i> Graduação</button>' +
         '<button class="btn btn-secondary btn-mini" onclick="resetarSenhaAluno(\'' + a.id + '\')"><i class="fas fa-key"></i> Reset senha</button>' +
@@ -7730,7 +7743,7 @@ function assistenteProcessar(texto) {
       '5. Toque em "Confirmar Presença Local"\n\n' +
       '• Só é permitido 1 check-in por aula/dia\n' +
       '• O professor precisa aprovar\n' +
-      '• Gympass/Wellhub: use o card vermelho com o token de 6 dígitos\n\n' +
+      '• Aluno Gympass/Wellhub: o check-in do benefício é feito no próprio app Wellhub — o professor valida no Portal de Parceiros\n\n' +
       'Se der erro, peça ao professor para registrar o check-in manual na área Equipe.';
   }
 
@@ -7898,7 +7911,8 @@ function chamarAssistenteIA(texto, bolhaCarregando) {
 var TEMAS_AVALIACAO_SEMANAL = {
   T1: { nome: 'Capoeira Angola', foco: 'Mestre Pastinha, jogo baixo, malícia, ritual, tradição' },
   T2: { nome: 'Capoeira Regional', foco: 'Mestre Bimba, jogo rápido, objetivo, esportivo' },
-  T3: { nome: 'Capoeira Carioca e Maltas', foco: 'Luta de rua no Rio de Janeiro no século XIX, Nagoas, Guaiamús, repressão de 1890' }
+  T3: { nome: 'Capoeira Carioca e Maltas', foco: 'Luta de rua no Rio de Janeiro no século XIX, Nagoas, Guaiamús, repressão de 1890' },
+  T4: { nome: 'Instrumentos e Toques de Berimbau', foco: 'Bateria de instrumentos, partes do berimbau, principais toques e seus significados' }
 };
 
 /* Banco fixo de perguntas revisado pelo professor — usado em vez de gerar por IA para T1/T2/T3 */
@@ -7931,6 +7945,15 @@ var BANCO_PERGUNTAS_SEMANAL = {
     { pergunta: 'A Capoeira Carioca era mais:', opcoes: ['Ritualística e musical', 'Violenta e de combate de rua', 'Acadêmica', 'Esportiva moderna'], correta: 1, feedback: 'Era uma luta de rua que misturava chutes, cabeçadas, golpes de mão e armas.' },
     { pergunta: 'Após a repressão, a Capoeira Carioca:', opcoes: ['Desapareceu completamente', 'Continuou influenciando a prática no Rio, embora de forma mais discreta', 'Virou o estilo oficial do Brasil', 'Foi transformada em dança de salão'], correta: 1, feedback: 'Embora muito reprimida, elementos da tradição carioca sobreviveram e ainda influenciam grupos no Rio.' },
     { pergunta: 'Quem fundou, em 1916 no Rio de Janeiro, uma das primeiras academias especializadas em Capoeira, a Escola de Ginástica Nacional?', opcoes: ['Mestre Bimba e Mestre Pastinha', 'Raphael Lothus (Raphael Pereira da Silva) e Mário Aleixo', 'Mestre João Grande', 'Annibal Burlamaqui'], correta: 1, feedback: 'Raphael Pereira da Silva (1882–1917), conhecido como Raphael Lothus, e Mário Aleixo fundaram em 1916 a Escola de Ginástica Nacional perto da Avenida Central, mostrando que a Capoeira já era ensinada de forma organizada no Rio muito antes da Regional de Bimba.' }
+  ],
+  T4: [
+    { pergunta: 'Quantos berimbaus compõem, tradicionalmente, uma bateria completa de capoeira?', opcoes: ['Um', 'Dois', 'Três', 'Cinco'], correta: 2, feedback: 'A bateria clássica usa três berimbaus, cada um com afinação e função diferentes: gunga (grave), médio e viola (agudo).' },
+    { pergunta: 'Qual berimbau tem o som mais grave e costuma comandar a roda?', opcoes: ['Viola', 'Médio', 'Gunga (berra-boi)', 'Nenhum, todos tocam igual'], correta: 2, feedback: 'O gunga (também chamado berra-boi) é o berimbau mais grave e geralmente é tocado por quem lidera a roda.' },
+    { pergunta: 'Como se chama a cabaça de resonância presa na base do berimbau?', opcoes: ['Baqueta', 'Cabaço', 'Dobrão', 'Caxixi'], correta: 1, feedback: 'O cabaço é a cabaça oca amarrada na base do arame, responsável pela ressonância do som.' },
+    { pergunta: 'O objeto de metal ou pedra que o capoeirista encosta na corda do berimbau para alterar o tom se chama:', opcoes: ['Caxixi', 'Baqueta', 'Dobrão (ou pedra)', 'Vareta'], correta: 2, feedback: 'O dobrão (uma moeda ou pedra) é pressionado contra o arame para mudar a afinação do som durante o toque.' },
+    { pergunta: 'O toque de berimbau usado para chamar um capoeirista mais experiente para jogar (geralmente sinalizando respeito ou pedido de substituição) é:', opcoes: ['São Bento Grande', 'Cavalaria', 'Iúna', 'Idalina'], correta: 2, feedback: 'O toque Iúna costuma estar associado a jogos mais lentos, rasteiros e de respeito, e em algumas tradições marca a chamada de um mestre.' },
+    { pergunta: 'Qual toque de berimbau avisa tradicionalmente sobre a chegada da polícia, mandando os capoeiristas disfarçarem o jogo?', opcoes: ['São Bento Pequeno', 'Cavalaria', 'Santa Maria', 'Amazonas'], correta: 1, feedback: 'O toque Cavalaria tem origem histórica como aviso de que a polícia se aproximava, quando a capoeira era perseguida.' },
+    { pergunta: 'Além dos berimbaus, quais outros instrumentos normalmente compõem a bateria de capoeira?', opcoes: ['Apenas atabaque', 'Pandeiro, atabaque, agogô e reco-reco', 'Violão e cavaquinho', 'Bateria de bumbo e caixa'], correta: 1, feedback: 'A bateria tradicional inclui berimbaus, pandeiros, atabaque, agogô e reco-reco, cada um com seu papel rítmico.' }
   ]
 };
 
@@ -7980,8 +8003,9 @@ function assistenteInterceptarAvaliacaoSemanal(texto) {
         'Escolha o tema da avaliação semanal da turma:\n\n' +
         'T1 → Capoeira Angola\n' +
         'T2 → Capoeira Regional\n' +
-        'T3 → Capoeira Carioca e Maltas\n\n' +
-        'Digite T1, T2 ou T3.');
+        'T3 → Capoeira Carioca e Maltas\n' +
+        'T4 → Instrumentos e Toques de Berimbau\n\n' +
+        'Digite T1, T2, T3 ou T4.');
       return true;
     }
     var testeAtivo = testeSemanalDaTurmaAtual();
@@ -7995,9 +8019,9 @@ function assistenteInterceptarAvaliacaoSemanal(texto) {
 
   if (assistenteEstadoProf === 'aguardando_tema' && assistenteEhProfessor()) {
     if (/cancelar/.test(t)) { assistenteEstadoProf = null; assistenteAdicionarBolha('bot', 'Ok, cancelado.'); return true; }
-    var codigo = /\bt1\b/.test(t) ? 'T1' : /\bt2\b/.test(t) ? 'T2' : /\bt3\b/.test(t) ? 'T3' : null;
+    var codigo = /\bt1\b/.test(t) ? 'T1' : /\bt2\b/.test(t) ? 'T2' : /\bt3\b/.test(t) ? 'T3' : /\bt4\b/.test(t) ? 'T4' : null;
     if (!codigo) {
-      assistenteAdicionarBolha('bot', 'Não entendi. Digite T1, T2 ou T3 (ou "cancelar" para sair).');
+      assistenteAdicionarBolha('bot', 'Não entendi. Digite T1, T2, T3 ou T4 (ou "cancelar" para sair).');
       return true;
     }
     assistenteTemaPendente = codigo;
@@ -8850,6 +8874,17 @@ function iniciarApp() {
   renderInicio();
   renderCheckin();
   renderAluno();
+
+  /* link direto: ?aba=checkin (ou #checkin) abre já na aba de Check-in */
+  try {
+    var abaPedida = (new URLSearchParams(window.location.search)).get('aba') ||
+      (window.location.hash || '').replace('#', '');
+    if (abaPedida) {
+      var mapaAba = { checkin: 'tab2', inicio: 'tab1', aluno: 'tab3' };
+      var idAba = mapaAba[normalizar(abaPedida)];
+      if (idAba) { abrirAba(idAba); }
+    }
+  } catch (e) {}
 
   /* revalida o atraso a cada minuto */
   setInterval(avaliarAtrasoHoje, 60000);
