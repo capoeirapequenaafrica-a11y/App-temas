@@ -699,7 +699,6 @@ footer a { color: var(--accent-blue); }
   <div id="tab2" class="tab-content">
 
     <div id="boxProfessorNaAulaCheckin"></div>
-    <div id="boxGympassCheckin"></div>
 
     <div class="card">
       <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
@@ -1740,7 +1739,7 @@ function aplicarConfig() {
   var l1 = $('headerLogo1'), l2 = $('headerLogo2');
   if (CONFIG.logo1) { l1.src = CONFIG.logo1; l1.style.display = 'block'; } else { l1.style.display = 'none'; }
   if (CONFIG.logo2) { l2.src = CONFIG.logo2; l2.style.display = 'block'; } else { l2.style.display = 'none'; }
-  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp;
+  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp + ' · Capoeira na Pequena África';
   timerDuracaoPadrao = CONFIG.tempoTimerSegundos || 90;
   if (!timerRodando) { timerSegundos = timerDuracaoPadrao; atualizarTimerUI(); }
   renderGraduacoes();
@@ -2837,9 +2836,9 @@ function configNivelArcade(tipo, nivel) {
   if (tipo === 'snake') {
     return {
       nivel: nivel,
-      objetivo: 5 + nivel * 2,
+      objetivo: 10 + nivel * 5,
       velocidadeMs: Math.max(55, 140 - nivel * 8),
-      label: 'Coma ' + (5 + nivel * 2) + ' comidas'
+      label: 'Coma ' + (10 + nivel * 5) + ' comidas'
     };
   }
   if (tipo === 'tetris') {
@@ -3042,6 +3041,8 @@ function abrirJogoArcade(tipo, nivelInicio) {
   arcade.linesCleared = 0;
   arcade.pausado = false;
   arcade.rodando = true;
+  arcade.powerFood = null;
+  arcade.impulsoAte = 0;
   var cfg = configNivelArcade(tipo, nv);
   arcade.objetivo = cfg.objetivo;
   var ov = $('arcadeOverlay');
@@ -3310,7 +3311,17 @@ function spawnFood() {
   var ok = false;
   while (!ok) {
     arcade.food = { x: Math.floor(Math.random() * arcade.cols), y: Math.floor(Math.random() * arcade.rows) };
-    ok = !arcade.snake.some(function (s) { return s.x === arcade.food.x && s.y === arcade.food.y; });
+    ok = !arcade.snake.some(function (s) { return s.x === arcade.food.x && s.y === arcade.food.y; }) &&
+      !(arcade.powerFood && arcade.powerFood.x === arcade.food.x && arcade.powerFood.y === arcade.food.y);
+  }
+  /* chance de surgir um item especial (poder), se não houver um ativo na tela */
+  if (!arcade.powerFood && Math.random() < 0.25) {
+    for (var tentativa = 0; tentativa < 25; tentativa++) {
+      var px = Math.floor(Math.random() * arcade.cols), py = Math.floor(Math.random() * arcade.rows);
+      var livre = !arcade.snake.some(function (s) { return s.x === px && s.y === py; }) &&
+        !(px === arcade.food.x && py === arcade.food.y);
+      if (livre) { arcade.powerFood = { x: px, y: py, expiraEm: Date.now() + 6500 }; break; }
+    }
   }
 }
 
@@ -3323,13 +3334,46 @@ function tickSnake() {
     return;
   }
   arcade.snake.unshift(head);
-  if (head.x === arcade.food.x && head.y === arcade.food.y) {
+
+  /* item especial expira sozinho se não for comido a tempo */
+  if (arcade.powerFood && Date.now() > arcade.powerFood.expiraEm) {
+    arcade.powerFood = null;
+  }
+
+  if (arcade.powerFood && head.x === arcade.powerFood.x && head.y === arcade.powerFood.y) {
+    /* poder: cresce rápido (mais segmentos) e ganha impulso de velocidade por alguns segundos */
+    for (var i = 0; i < 3; i++) { arcade.snake.push(arcade.snake[arcade.snake.length - 1]); }
+    arcade.score += 25 + arcade.nivel * 3;
+    arcade.powerFood = null;
+    arcade.impulsoAte = Date.now() + 4000;
+    if (arcade.rampaAtiva) {
+      var velImpulso = Math.max(45, Math.round(arcade.velAlvo * 0.6));
+      if (velImpulso < arcade.velAtual) {
+        arcade.velAtual = velImpulso;
+        clearInterval(arcade.timer);
+        arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
+      }
+    }
+    registrarProgressoNivel(2);
+    mostrarToast('⚡ Impulso! Crescimento e velocidade extra por alguns segundos.');
+  } else if (head.x === arcade.food.x && head.y === arcade.food.y) {
     arcade.score += 10 + arcade.nivel * 2;
     spawnFood();
     registrarProgressoNivel(1);
   } else {
     arcade.snake.pop();
   }
+
+  /* fim do impulso: volta pra velocidade normal do nível */
+  if (arcade.impulsoAte && Date.now() > arcade.impulsoAte) {
+    arcade.impulsoAte = 0;
+    if (arcade.rampaAtiva && arcade.velAtual !== arcade.velAlvo) {
+      arcade.velAtual = arcade.velAlvo;
+      clearInterval(arcade.timer);
+      arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
+    }
+  }
+
   drawSnake();
 }
 
@@ -3420,6 +3464,25 @@ function drawSnake() {
   ctx.beginPath();
   ctx.arc(fx - 2, fy - 2, 2.5, 0, Math.PI * 2);
   ctx.fill();
+  /* item especial (poder): pisca em dourado, cresce e some sozinho após alguns segundos */
+  if (arcade.powerFood) {
+    var px = arcade.powerFood.x * g + g / 2, py = arcade.powerFood.y * g + g / 2;
+    var piscar = 0.65 + 0.35 * Math.sin(Date.now() / 90);
+    ctx.save();
+    ctx.globalAlpha = piscar;
+    ctx.shadowColor = '#ffd600';
+    ctx.shadowBlur = 18;
+    var pg = ctx.createRadialGradient(px - 2, py - 2, 1, px, py, g / 2 + 1);
+    pg.addColorStop(0, '#fff9c4');
+    pg.addColorStop(0.5, '#ffd600');
+    pg.addColorStop(1, '#ff8f00');
+    ctx.fillStyle = pg;
+    ctx.beginPath();
+    ctx.arc(px, py, g / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  }
   desenharHUDArcade(ctx, w, 'MINHOCA');
 }
 
@@ -5141,18 +5204,6 @@ function abrirInstagramOficial() {
 /* ---------------------------------------------------------------
    10. MÓDULO CHECK-IN
    --------------------------------------------------------------- */
-function htmlCardGympassAluno(logado) {
-  if (!logado || logado.tipoAluno !== 'gympass') return '';
-  var link = logado.gympassLink || '';
-  return '<div class="card" style="border:1px solid var(--gympass-red);">' +
-    '<h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-in Gympass / Wellhub</h3>' +
-    '<p class="mini" style="margin-bottom:8px;">Seu check-in é feito direto no app Wellhub — o professor valida no Portal de Parceiros.</p>' +
-    (link
-      ? '<a class="btn btn-gympass" href="' + esc(link) + '" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; text-decoration:none;"><i class="fas fa-external-link-alt"></i>&nbsp; Abrir meu Wellhub</a>'
-      : '<p class="mini">Você ainda não salvou seu link do Wellhub. Adicione em <b>Meu Perfil</b>, mais abaixo.</p>') +
-    '</div>';
-}
-
 function renderCheckin() {
   var logado = alunoLogado();
   var campoNome = $('checkinFixoNomeAluno');
@@ -5161,8 +5212,6 @@ function renderCheckin() {
   }
   var boxProf = $('boxProfessorNaAulaCheckin');
   if (boxProf) boxProf.innerHTML = htmlBannerProfessorNaAula();
-  var boxGympass = $('boxGympassCheckin');
-  if (boxGympass) boxGympass.innerHTML = htmlCardGympassAluno(logado);
   renderHorarioAulaHoje();
   renderSelectPolos();
   renderMinhasPresencasCheckin();
@@ -5387,6 +5436,63 @@ function alunoCheckinLocalFixoSimples() {
   });
 }
 
+function validarCheckinGympassNuvem() {
+  var nome = ($('gympassAlunoNome').value || '').trim();
+  var token = ($('gympassTokenVal').value || '').replace(/\D/g, '');
+  if (nome.length < 3) { mostrarToast('Informe o nome do aluno.', 'erro'); return; }
+  if (!/^\d{6}$/.test(token)) { mostrarToast('O token Wellhub deve ter 6 dígitos.', 'erro'); return; }
+
+  var aluno = encontrarAlunoPorNome(nome);
+  var jaExiste = obterCheckinDoDia(aluno || nome);
+  if (jaExiste) {
+    mostrarToast('Este aluno já possui check-in hoje. Só é permitido um por aula.', 'erro');
+    return;
+  }
+
+  var aulaGympass = aulaDeHoje();
+  if (aulaGympass && !dentroJanelaCheckin(aulaGympass)) {
+    var jg = janelaCheckin(aulaGympass);
+    mostrarToast('Check-in só é permitido entre ' + minutosParaHM(jg.abre) + ' e ' + minutosParaHM(jg.fecha) + '.', 'erro');
+    return;
+  }
+
+  var limite = Date.now() - 24 * 60 * 60 * 1000;
+  var reutilizado = DB.listar('presencas').some(function (p) {
+    return p.token === token && new Date(p.criadoEm || 0).getTime() > limite;
+  });
+  if (reutilizado) { mostrarToast('Este token já foi utilizado nas últimas 24 horas.', 'erro'); return; }
+
+  var polo = (DB.listar('polos')[0] || null);
+
+  DB.salvar('presencas', {
+    alunoId: aluno ? aluno.id : '',
+    alunoNome: aluno ? aluno.nome : nome,
+    alunoApelido: aluno ? (aluno.apelido || '') : '',
+    poloId: polo ? polo.id : '',
+    poloNome: polo ? polo.nome : 'Capoeira na Pequena África',
+    data: dataLocalISO(),
+    hora: horaLocalHM(),
+    tipo: 'gympass',
+    status: 'pendente',
+    token: token,
+    atrasoMin: 0,
+    justificativa: '',
+    criadoEm: agoraISO()
+  }).then(function () {
+    $('gympassTokenVal').value = '';
+    mostrarToast('Token Gympass validado!');
+    abrirModal('Check-in Gympass registrado',
+      '<div style="text-align:center; padding:6px 0;">' +
+        '<div style="font-size:2rem; color:var(--gympass-red); margin-bottom:8px;"><i class="fas fa-ticket-alt"></i></div>' +
+        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Token validado com sucesso!</strong></p>' +
+        '<p class="mini">Aluno: <b>' + esc(aluno ? aluno.nome : nome) + '</b></p>' +
+        '<p class="mini">Data: <b>' + dataBR(dataLocalISO()) + '</b></p>' +
+        '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — aguarde aprovação do professor.</p>' +
+      '</div>');
+    renderCheckin();
+  });
+}
+
 /* ---------------------------------------------------------------
    11. MÓDULO ALUNO (painel)
    --------------------------------------------------------------- */
@@ -5560,11 +5666,6 @@ function renderAluno() {
     '<label class="campo-label">Contato (WhatsApp)</label><input id="perfilContato" value="' + esc(logado.contato || '') + '">' +
     '<label class="campo-label">Graduação (alterada somente pela equipe)</label>' +
     '<input value="' + esc(logado.graduacao || '-') + '" disabled>' +
-    (logado.tipoAluno === 'gympass'
-      ? '<label class="campo-label"><i class="fas fa-ticket-alt" style="color:var(--gympass-red);"></i> Link do meu Wellhub/Gympass</label>' +
-        '<input id="perfilGympassLink" placeholder="Cole aqui o link do seu perfil/check-in no app Wellhub" value="' + esc(logado.gympassLink || '') + '">' +
-        '<p class="mini" style="margin:-4px 0 8px;">O professor pode usar esse link para conferir seu check-in mais rápido.</p>'
-      : '') +
     '<label class="campo-label">Foto de perfil</label>' +
     '<input type="file" accept="image/*" onchange="uploadFotoPerfil(this)">' +
     '<button class="btn" onclick="salvarPerfilAluno(this)"><i class="fas fa-save"></i> Salvar Perfil</button>' +
@@ -5584,10 +5685,8 @@ function salvarPerfilAluno(btn) {
   var apelido = ($('perfilApelido').value || '').trim();
   var contato = ($('perfilContato').value || '').trim();
   if (nome.length < 3) { mostrarToast('Nome inválido.', 'erro'); return; }
-  var dados = { nome: nome, apelido: apelido, contato: contato };
-  if ($('perfilGympassLink')) dados.gympassLink = ($('perfilGympassLink').value || '').trim();
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Salvando...'; }
-  DB.salvar('alunos', dados, logado.id).then(function () {
+  DB.salvar('alunos', { nome: nome, apelido: apelido, contato: contato }, logado.id).then(function () {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-save"></i> Salvar Perfil'; }
     mostrarToast('Perfil atualizado.');
     renderAluno();
@@ -5720,11 +5819,11 @@ function renderAbaProfessor() {
       '<button class="btn btn-danger" onclick="professorCheckoutAula()"><i class="fas fa-sign-out-alt"></i> Encerrar presença de hoje</button>';
   } else {
     html += '<label class="campo-label">Polo / local (opcional)</label>' +
-      '<select id="profCheckinPolo"><option value="">— selecionar —</option>' +
+      '<select id="profCheckinPoloAuto"><option value="">— selecionar —</option>' +
       polos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + '</option>'; }).join('') +
       '</select>' +
       '<label class="campo-label">Observação (opcional)</label>' +
-      '<input id="profCheckinObs" placeholder="Ex: roda aberta, foco em ginga...">' +
+      '<input id="profCheckinObsAuto" placeholder="Ex: roda aberta, foco em ginga...">' +
       '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula — fazer check-in</button>';
   }
   html += '</div>';
@@ -5922,7 +6021,7 @@ function renderAbaProfessor() {
     '<button class="btn btn-secondary" onclick="notificarLocalAlunos()"><i class="fas fa-broadcast-tower"></i> Notificar local aos alunos agora</button></div>';
 
   /* --- avaliação semanal + desenvolvimento --- */
-  html += '<div class="card" style="border:1px solid var(--gold);">' +
+  html += '<div class="card" id="cardAvaliacaoSemanalProfessor" style="border:1px solid var(--gold);">' +
     '<h3 style="color:var(--gold);"><i class="fas fa-clipboard-list"></i> Avaliação Semanal por Item</h3>' +
     '<p class="mini" style="margin-bottom:8px;">Avalie cada habilidade (0–10) e registre o desenvolvimento do aluno na semana.</p>' +
     '<label class="campo-label">Aluno</label>' +
@@ -6378,7 +6477,7 @@ function professorPresenteHoje() {
 function professorCheckinAula() {
   if (!sessaoEquipe) { mostrarToast('Faça login na equipe.', 'erro'); return; }
   if (professorPresenteHoje()) { mostrarToast('Você já está com check-in de hoje.'); return; }
-  var poloId = ($('profCheckinPolo') || {}).value || '';
+  var poloId = ($('profCheckinPoloAuto') || {}).value || '';
   var polo = poloId ? DB.buscar('polos', poloId) : null;
   var agora = new Date();
   var hora = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
@@ -6389,7 +6488,7 @@ function professorCheckinAula() {
     hora: hora,
     poloId: polo ? polo.id : '',
     poloNome: polo ? polo.nome : '',
-    observacao: ($('profCheckinObs') || {}).value ? $('profCheckinObs').value.trim() : '',
+    observacao: ($('profCheckinObsAuto') || {}).value ? $('profCheckinObsAuto').value.trim() : '',
     status: 'presente',
     criadoEm: agoraISO()
   }).then(function () {
@@ -7720,13 +7819,16 @@ function assistenteMensagemBoasVindas() {
   var aluno = alunoLogado();
   var nome = aluno ? (aluno.apelido || aluno.nome) : '';
   var saudacao = nome ? ('Olá, ' + nome + '! ') : 'Olá! ';
+  var extraProfessor = assistenteEhProfessor()
+    ? '\n\n👨‍🏫 Modo equipe: digite "avaliação de [nome do aluno]" ou "ficha de [nome]" que eu abro a ficha dele direto pra você lançar ou corrigir a nota.'
+    : '';
   return saudacao + 'Sou o Assistente Capoeira.\n\n' +
     'Posso ajudar com:\n' +
     '• Próxima aula e horários\n' +
     '• Status do seu check-in\n' +
     '• Como usar o app (check-in, pedidos de treino, certificados)\n' +
     '• Sua graduação, avaliações e presenças\n' +
-    '• Avisos do professor\n\n' +
+    '• Avisos do professor' + extraProfessor + '\n\n' +
     'Toque em um atalho ou digite sua pergunta.';
 }
 
@@ -7760,6 +7862,7 @@ function assistentePerguntar(texto) {
   }
   assistenteAdicionarBolha('user', texto);
   if (assistenteInterceptarAvaliacaoSemanal(texto)) return;
+  if (assistenteInterceptarGerenciarAluno(texto)) return;
   setTimeout(function () {
     var resp = assistenteProcessar(texto);
     if (resp !== null) {
@@ -8060,6 +8163,58 @@ var assistenteQuizPendente = null;
 function assistenteEhProfessor() {
   return !!(sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0);
 }
+
+/* --- Assistente como gerente virtual: professor pede pra abrir/editar a ficha de um aluno --- */
+function assistenteInterceptarGerenciarAluno(texto) {
+  if (!assistenteEhProfessor()) return false;
+  var t = normalizar(texto);
+
+  var gatilho = /^(editar|gerenciar|abrir|mudar|alterar|corrigir)?\s*(a\s+)?(ficha|avaliacao|avaliação|prova|nota|notas)\s+(d[eoa]\s+|do\s+aluno\s+|da\s+aluna\s+)?(.{2,40})$/i.exec(texto.trim())
+    || /^(editar|gerenciar|abrir)\s+(o\s+)?aluno\s+(.{2,40})$/i.exec(texto.trim());
+  if (!gatilho) return false;
+
+  var nomeBuscado = normalizar(gatilho[gatilho.length - 1]);
+  if (!nomeBuscado || nomeBuscado.length < 2) return false;
+
+  var alunos = DB.listar('alunos');
+  var encontrados = alunos.filter(function (a) {
+    return normalizar(a.nome).indexOf(nomeBuscado) >= 0 || normalizar(a.apelido || '').indexOf(nomeBuscado) >= 0;
+  });
+
+  if (encontrados.length === 0) {
+    assistenteAdicionarBolha('bot', 'Não achei nenhum aluno chamado "' + gatilho[gatilho.length - 1].trim() + '". Confira o nome e tente de novo — ex: "avaliação da Maria".');
+    return true;
+  }
+  if (encontrados.length > 1) {
+    var nomes = encontrados.slice(0, 6).map(function (a) { return '• ' + a.nome + (a.apelido ? ' (' + a.apelido + ')' : ''); }).join('\n');
+    assistenteAdicionarBolha('bot', 'Achei mais de um aluno com esse nome:\n\n' + nomes + '\n\nDigite o nome completo pra eu abrir a ficha certa.');
+    return true;
+  }
+
+  var aluno = encontrados[0];
+  var avals = avaliacoesDoAluno(aluno.id);
+  var ultima = avals.length ? avals[avals.length - 1] : null;
+  var pendencias = DB.listar('solicitacoes').filter(function (s) { return s.alunoId === aluno.id && s.status === 'pendente'; }).length;
+
+  var resumo = '👤 ' + aluno.nome + (aluno.apelido ? ' (' + aluno.apelido + ')' : '') + '\n' +
+    'Graduação: ' + (aluno.graduacao || '—') + '\n' +
+    'Avaliações registradas: ' + avals.length + (ultima ? ' (última: ' + mediaAvaliacao(ultima).toFixed(1) + ', semana ' + (ultima.semana || '-') + ')' : '') + '\n' +
+    (pendencias ? '⚠️ ' + pendencias + ' solicitação(ões) pendente(s) dele\n' : '') +
+    '\nAbri a ficha dele na aba Professor, no card "Avaliação Semanal por Item" — já pode lançar ou corrigir a nota.';
+
+  abrirAba('tab4');
+  setTimeout(function () {
+    var sel = $('avalAluno');
+    if (sel) { sel.value = aluno.id; }
+    if (typeof carregarDesenvolvimentoAluno === 'function') carregarDesenvolvimentoAluno();
+    var card = $('cardAvaliacaoSemanalProfessor');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 150);
+
+  assistenteAdicionarBolha('bot', resumo);
+  return true;
+}
+
 
 function proximoDomingo2359ISO() {
   var d = new Date();
@@ -8614,7 +8769,8 @@ function responderPerguntaSemana(btn) {
   if (!aluno) { mostrarToast('Faça login para responder.', 'erro'); return; }
   var p = perguntaAtiva();
   if (!p) { mostrarToast('Nenhuma pergunta ativa no momento.', 'erro'); return; }
-  var texto = ($('respostaPerguntaTexto') && $('respostaPerguntaTexto').value || '').trim();
+  var campoResposta = btn && btn.previousElementSibling;
+  var texto = ((campoResposta && campoResposta.value) || ($('respostaPerguntaTexto') && $('respostaPerguntaTexto').value) || '').trim();
   if (!texto) { mostrarToast('Escreva sua resposta.', 'erro'); return; }
   var ja = DB.listar('respostasPergunta').some(function (r) {
     return r.perguntaId === p.id && r.alunoId === aluno.id;
