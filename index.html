@@ -699,6 +699,7 @@ footer a { color: var(--accent-blue); }
   <div id="tab2" class="tab-content">
 
     <div id="boxProfessorNaAulaCheckin"></div>
+    <div id="boxGympassCheckin"></div>
 
     <div class="card">
       <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
@@ -1739,7 +1740,7 @@ function aplicarConfig() {
   var l1 = $('headerLogo1'), l2 = $('headerLogo2');
   if (CONFIG.logo1) { l1.src = CONFIG.logo1; l1.style.display = 'block'; } else { l1.style.display = 'none'; }
   if (CONFIG.logo2) { l2.src = CONFIG.logo2; l2.style.display = 'block'; } else { l2.style.display = 'none'; }
-  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp + ' · Capoeira na Pequena África';
+  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp;
   timerDuracaoPadrao = CONFIG.tempoTimerSegundos || 90;
   if (!timerRodando) { timerSegundos = timerDuracaoPadrao; atualizarTimerUI(); }
   renderGraduacoes();
@@ -2837,59 +2838,59 @@ function configNivelArcade(tipo, nivel) {
     return {
       nivel: nivel,
       objetivo: 10 + nivel * 5,
-      velocidadeMs: Math.max(55, 140 - nivel * 8),
+      velocidadeMs: Math.max(95, 175 - nivel * 7),
       label: 'Coma ' + (10 + nivel * 5) + ' comidas'
     };
   }
   if (tipo === 'tetris') {
     return {
       nivel: nivel,
-      objetivo: 3 + nivel,
-      velocidadeMs: Math.max(120, 420 - nivel * 28),
-      label: 'Complete ' + (3 + nivel) + ' linhas'
+      objetivo: 4 + Math.round(nivel * 1.5),
+      velocidadeMs: Math.max(160, 460 - nivel * 26),
+      label: 'Complete ' + (4 + Math.round(nivel * 1.5)) + ' linhas'
     };
   }
   if (tipo === 'quebra') {
     return {
       nivel: nivel,
-      objetivo: 8 + nivel * 3,
+      objetivo: 10 + nivel * 4,
       velocidadeMs: 16,
-      label: 'Quebre ' + (8 + nivel * 3) + ' blocos'
+      label: 'Quebre ' + (10 + nivel * 4) + ' blocos'
     };
   }
   if (tipo === 'pulo') {
     return {
       nivel: nivel,
-      objetivo: 8 + nivel * 2,
-      velocidadeMs: Math.max(14, 22 - Math.floor(nivel / 3)),
-      label: 'Passe ' + (8 + nivel * 2) + ' obstáculos'
+      objetivo: 10 + nivel * 3,
+      velocidadeMs: Math.max(17, 25 - Math.floor(nivel / 4)),
+      label: 'Passe ' + (10 + nivel * 3) + ' obstáculos'
     };
   }
   if (tipo === 'surfe') {
     return {
       nivel: nivel,
-      objetivo: 30 + nivel * 20,
+      objetivo: 45 + nivel * 25,
       velocidadeMs: 20,
-      speedBase: 3.2 + nivel * 0.35,
-      label: 'Faça ' + (30 + nivel * 20) + ' pts sem cair'
+      speedBase: 2.4 + nivel * 0.26,
+      label: 'Faça ' + (45 + nivel * 25) + ' pts sem cair'
     };
   }
   if (tipo === 'mario') {
     return {
       nivel: nivel,
-      objetivo: 5 + nivel * 2,
+      objetivo: 7 + nivel * 3,
       velocidadeMs: 20,
-      label: 'Pegue ' + (5 + nivel * 2) + ' moedas / bandeira'
+      label: 'Pegue ' + (7 + nivel * 3) + ' moedas / bandeira'
     };
   }
   /* corrida */
   return {
     nivel: nivel,
-    objetivo: 40 + nivel * 25,
+    objetivo: 55 + nivel * 30,
     velocidadeMs: 50,
-    speedBase: 3 + nivel * 0.55,
-    spawnEvery: Math.max(12, 28 - nivel),
-    label: 'Faça ' + (40 + nivel * 25) + ' pts sem bater'
+    speedBase: 2.2 + nivel * 0.42,
+    spawnEvery: Math.max(16, 30 - Math.floor(nivel * 0.8)),
+    label: 'Faça ' + (55 + nivel * 30) + ' pts sem bater'
   };
 }
 
@@ -2955,10 +2956,10 @@ function subirNivelArcade() {
   var cfg = configNivelArcade(arcade.tipo, novo);
   arcade.objetivo = cfg.objetivo;
   if (arcade.timer) clearInterval(arcade.timer);
-  var gamesComRampa2 = ['snake', 'tetris', 'pulo', 'quebra', 'mario'];
+  var gamesComRampa2 = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe'];
   arcade.rampaAtiva = gamesComRampa2.indexOf(arcade.tipo) >= 0;
   arcade.velAlvo = cfg.velocidadeMs;
-  arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 1.25) : cfg.velocidadeMs;
+  arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 1.6) : cfg.velocidadeMs;
   arcade.rampTick = 0;
   arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
   if (arcade.tipo === 'corrida') {
@@ -3092,10 +3093,10 @@ function abrirJogoArcade(tipo, nivelInicio) {
   else if (tipo === 'surfe') initSurfe();
   else if (tipo === 'mario') initMario();
   if (arcade.timer) clearInterval(arcade.timer);
-  var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario'];
+  var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe'];
   arcade.rampaAtiva = gamesComRampa.indexOf(tipo) >= 0;
   arcade.velAlvo = cfg.velocidadeMs;
-  arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 1.7) : cfg.velocidadeMs;
+  arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 2.2) : cfg.velocidadeMs;
   arcade.rampTick = 0;
   arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
   window.removeEventListener('keydown', arcadeKeyHandler);
@@ -3282,8 +3283,8 @@ function arcadeLoop() {
   if (!arcade.rodando || arcade.pausado) return;
   if (arcade.rampaAtiva && arcade.velAtual > arcade.velAlvo) {
     arcade.rampTick = (arcade.rampTick || 0) + 1;
-    if (arcade.rampTick % 12 === 0) {
-      var passo = Math.max(2, Math.round((arcade.velAtual - arcade.velAlvo) / 6));
+    if (arcade.rampTick % 20 === 0) {
+      var passo = Math.max(2, Math.round((arcade.velAtual - arcade.velAlvo) / 9));
       arcade.velAtual = Math.max(arcade.velAlvo, arcade.velAtual - passo);
       clearInterval(arcade.timer);
       arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
@@ -3310,14 +3311,14 @@ function initSnake() {
 function spawnFood() {
   var ok = false;
   while (!ok) {
-    arcade.food = { x: Math.floor(Math.random() * arcade.cols), y: Math.floor(Math.random() * arcade.rows) };
+    arcade.food = { x: Math.floor(Math.random() * arcade.cols), y: 2 + Math.floor(Math.random() * (arcade.rows - 2)) };
     ok = !arcade.snake.some(function (s) { return s.x === arcade.food.x && s.y === arcade.food.y; }) &&
       !(arcade.powerFood && arcade.powerFood.x === arcade.food.x && arcade.powerFood.y === arcade.food.y);
   }
   /* chance de surgir um item especial (poder), se não houver um ativo na tela */
   if (!arcade.powerFood && Math.random() < 0.25) {
     for (var tentativa = 0; tentativa < 25; tentativa++) {
-      var px = Math.floor(Math.random() * arcade.cols), py = Math.floor(Math.random() * arcade.rows);
+      var px = Math.floor(Math.random() * arcade.cols), py = 2 + Math.floor(Math.random() * (arcade.rows - 2));
       var livre = !arcade.snake.some(function (s) { return s.x === px && s.y === py; }) &&
         !(px === arcade.food.x && py === arcade.food.y);
       if (livre) { arcade.powerFood = { x: px, y: py, expiraEm: Date.now() + 6500 }; break; }
@@ -3896,14 +3897,14 @@ function tickPulo() {
   bird.vy += 0.28;
   bird.y += bird.vy;
   if (bird.y < 0 || bird.y > h) { gameOverArcade(); return; }
-  var gap = Math.max(90, 140 - arcade.nivel * 4);
-  if (arcade.frame % Math.max(55, 90 - arcade.nivel * 3) === 0) {
+  var gap = Math.max(100, 150 - arcade.nivel * 4);
+  if (arcade.frame % Math.max(70, 110 - arcade.nivel * 3) === 0) {
     var top = 40 + Math.random() * (h - gap - 100);
     arcade.pipes.push({ x: w + 10, top: top, gap: gap, passed: false });
   }
   for (var i = arcade.pipes.length - 1; i >= 0; i--) {
     var p = arcade.pipes[i];
-    p.x -= 2.2 + arcade.nivel * 0.12;
+    p.x -= 1.7 + arcade.nivel * 0.1;
     if (!p.passed && p.x + 36 < bird.x) {
       p.passed = true;
       arcade.score += 10;
@@ -5212,6 +5213,8 @@ function renderCheckin() {
   }
   var boxProf = $('boxProfessorNaAulaCheckin');
   if (boxProf) boxProf.innerHTML = htmlBannerProfessorNaAula();
+  var boxGympass = $('boxGympassCheckin');
+  if (boxGympass) boxGympass.innerHTML = htmlCardGympassAluno(logado);
   renderHorarioAulaHoje();
   renderSelectPolos();
   renderMinhasPresencasCheckin();
@@ -5436,61 +5439,16 @@ function alunoCheckinLocalFixoSimples() {
   });
 }
 
-function validarCheckinGympassNuvem() {
-  var nome = ($('gympassAlunoNome').value || '').trim();
-  var token = ($('gympassTokenVal').value || '').replace(/\D/g, '');
-  if (nome.length < 3) { mostrarToast('Informe o nome do aluno.', 'erro'); return; }
-  if (!/^\d{6}$/.test(token)) { mostrarToast('O token Wellhub deve ter 6 dígitos.', 'erro'); return; }
-
-  var aluno = encontrarAlunoPorNome(nome);
-  var jaExiste = obterCheckinDoDia(aluno || nome);
-  if (jaExiste) {
-    mostrarToast('Este aluno já possui check-in hoje. Só é permitido um por aula.', 'erro');
-    return;
-  }
-
-  var aulaGympass = aulaDeHoje();
-  if (aulaGympass && !dentroJanelaCheckin(aulaGympass)) {
-    var jg = janelaCheckin(aulaGympass);
-    mostrarToast('Check-in só é permitido entre ' + minutosParaHM(jg.abre) + ' e ' + minutosParaHM(jg.fecha) + '.', 'erro');
-    return;
-  }
-
-  var limite = Date.now() - 24 * 60 * 60 * 1000;
-  var reutilizado = DB.listar('presencas').some(function (p) {
-    return p.token === token && new Date(p.criadoEm || 0).getTime() > limite;
-  });
-  if (reutilizado) { mostrarToast('Este token já foi utilizado nas últimas 24 horas.', 'erro'); return; }
-
-  var polo = (DB.listar('polos')[0] || null);
-
-  DB.salvar('presencas', {
-    alunoId: aluno ? aluno.id : '',
-    alunoNome: aluno ? aluno.nome : nome,
-    alunoApelido: aluno ? (aluno.apelido || '') : '',
-    poloId: polo ? polo.id : '',
-    poloNome: polo ? polo.nome : 'Capoeira na Pequena África',
-    data: dataLocalISO(),
-    hora: horaLocalHM(),
-    tipo: 'gympass',
-    status: 'pendente',
-    token: token,
-    atrasoMin: 0,
-    justificativa: '',
-    criadoEm: agoraISO()
-  }).then(function () {
-    $('gympassTokenVal').value = '';
-    mostrarToast('Token Gympass validado!');
-    abrirModal('Check-in Gympass registrado',
-      '<div style="text-align:center; padding:6px 0;">' +
-        '<div style="font-size:2rem; color:var(--gympass-red); margin-bottom:8px;"><i class="fas fa-ticket-alt"></i></div>' +
-        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Token validado com sucesso!</strong></p>' +
-        '<p class="mini">Aluno: <b>' + esc(aluno ? aluno.nome : nome) + '</b></p>' +
-        '<p class="mini">Data: <b>' + dataBR(dataLocalISO()) + '</b></p>' +
-        '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — aguarde aprovação do professor.</p>' +
-      '</div>');
-    renderCheckin();
-  });
+function htmlCardGympassAluno(logado) {
+  if (!logado || logado.tipoAluno !== 'gympass') return '';
+  var link = logado.gympassLink || '';
+  return '<div class="card" style="border:1px solid var(--gympass-red);">' +
+    '<h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-in Gympass / Wellhub</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Seu check-in é feito direto no app Wellhub — o professor valida no Portal de Parceiros.</p>' +
+    (link
+      ? '<a class="btn btn-gympass" href="' + esc(link) + '" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; text-decoration:none;"><i class="fas fa-external-link-alt"></i>&nbsp; Abrir meu Wellhub</a>'
+      : '<p class="mini">Você ainda não salvou seu link do Wellhub. Adicione em <b>Meu Perfil</b>, mais abaixo.</p>') +
+    '</div>';
 }
 
 /* ---------------------------------------------------------------
@@ -5666,6 +5624,11 @@ function renderAluno() {
     '<label class="campo-label">Contato (WhatsApp)</label><input id="perfilContato" value="' + esc(logado.contato || '') + '">' +
     '<label class="campo-label">Graduação (alterada somente pela equipe)</label>' +
     '<input value="' + esc(logado.graduacao || '-') + '" disabled>' +
+    (logado.tipoAluno === 'gympass'
+      ? '<label class="campo-label"><i class="fas fa-ticket-alt" style="color:var(--gympass-red);"></i> Link do meu Wellhub/Gympass</label>' +
+        '<input id="perfilGympassLink" placeholder="Cole aqui o link do seu perfil/check-in no app Wellhub" value="' + esc(logado.gympassLink || '') + '">' +
+        '<p class="mini" style="margin:-4px 0 8px;">O professor pode usar esse link para conferir seu check-in mais rápido.</p>'
+      : '') +
     '<label class="campo-label">Foto de perfil</label>' +
     '<input type="file" accept="image/*" onchange="uploadFotoPerfil(this)">' +
     '<button class="btn" onclick="salvarPerfilAluno(this)"><i class="fas fa-save"></i> Salvar Perfil</button>' +
@@ -5685,8 +5648,10 @@ function salvarPerfilAluno(btn) {
   var apelido = ($('perfilApelido').value || '').trim();
   var contato = ($('perfilContato').value || '').trim();
   if (nome.length < 3) { mostrarToast('Nome inválido.', 'erro'); return; }
+  var dados = { nome: nome, apelido: apelido, contato: contato };
+  if ($('perfilGympassLink')) dados.gympassLink = ($('perfilGympassLink').value || '').trim();
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Salvando...'; }
-  DB.salvar('alunos', { nome: nome, apelido: apelido, contato: contato }, logado.id).then(function () {
+  DB.salvar('alunos', dados, logado.id).then(function () {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-save"></i> Salvar Perfil'; }
     mostrarToast('Perfil atualizado.');
     renderAluno();
