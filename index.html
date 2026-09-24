@@ -423,6 +423,35 @@ footer a { color: var(--accent-blue); }
   transition: transform 0.15s ease;
 }
 #assistenteFab:active { transform: scale(0.94); }
+.dica-assistente-bolha {
+  position: fixed;
+  right: 14px;
+  bottom: 78px;
+  background: #fff;
+  color: #0d1a1f;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  z-index: 9499;
+  cursor: pointer;
+  animation: dicaAssistentePulso 1.6s ease-in-out infinite;
+}
+.dica-assistente-bolha::after {
+  content: '';
+  position: absolute;
+  right: 20px;
+  bottom: -6px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  transform: rotate(45deg);
+}
+@keyframes dicaAssistentePulso {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
 #assistentePainel {
   display: none;
   position: fixed;
@@ -527,7 +556,7 @@ footer a { color: var(--accent-blue); }
 <div class="app-frame">
 
   <!-- ================= CABEÇALHO ================= -->
-  <header>
+  <header id="headerAppTopo">
     <div class="logos-header-box">
       <img id="headerLogo1" class="app-logo-img" alt="Logo 1">
       <img id="headerLogo2" class="app-logo-img" alt="Logo 2">
@@ -553,7 +582,7 @@ footer a { color: var(--accent-blue); }
       <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-home"></i>Início</button>
       <button onclick="abrirAba('tab2', this)"><i class="fas fa-map-marker-alt"></i>Check-in</button>
       <button onclick="abrirAba('tab3', this)"><i class="fas fa-user-graduate"></i>Aluno</button>
-      <button onclick="toggleMenuEquipe()" id="btnToggleEquipe"><i class="fas fa-users-cog"></i>Equipe</button>
+      <button onclick="toggleMenuEquipe()" id="btnToggleEquipe" style="display:none;"><i class="fas fa-users-cog"></i>Equipe</button>
     </div>
     <div class="tabs tabs-equipe" id="tabsEquipe" style="display:none;">
       <button onclick="abrirAba('tab4', this)"><i class="fas fa-chalkboard-teacher"></i>Professor</button>
@@ -561,6 +590,8 @@ footer a { color: var(--accent-blue); }
       <button onclick="abrirAba('tab6', this)"><i class="fas fa-code"></i>Dev</button>
     </div>
   </div>
+
+  <p class="mini" id="dicaAcessoEquipe" style="text-align:center; margin:-4px 0 6px; opacity:0.55;">Área de aluno · toque e segure o logo para acesso da equipe</p>
 
   <!-- ================= ABA 1 - INÍCIO ================= -->
   <div id="tab1" class="tab-content active">
@@ -584,7 +615,7 @@ footer a { color: var(--accent-blue); }
       <p id="txtJaConfirmouHoje" style="display:none; font-size:0.75rem; color:var(--primary-green); margin-top:6px;"><i class="fas fa-check-circle"></i> Presença confirmada para hoje!</p>
     </div>
 
-    <div class="card" style="border:1px solid #e6683c;">
+    <div class="card fechado" style="border:1px solid #e6683c;">
       <h3 style="color:#f09433;"><i class="fab fa-instagram"></i> Instagram da Academia</h3>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe as fotos, vídeos e novidades no nosso perfil oficial:</p>
       <p style="font-size:0.8rem; font-weight:bold; color:#fff; margin-bottom:8px;" id="handleInstagramAcademiaTxt">@capoeiranapequenaafrica</p>
@@ -614,7 +645,7 @@ footer a { color: var(--accent-blue); }
       <div id="listaCertificadosAluno"></div>
     </div>
 
-    <div class="card fechado" id="cardJogosGrupo">
+    <div class="card fechado" id="cardJogosGrupo" data-colapsavel-pronto="1">
       <h3 class="titulo-colapsavel" onclick="toggleCardColapsavel($('cardJogosGrupo'))" style="color:var(--gold);"><i class="fas fa-gamepad"></i> Jogos &amp; Mini-Games<span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span></h3>
       <div class="card-corpo-colapsavel">
 
@@ -645,14 +676,14 @@ footer a { color: var(--accent-blue); }
     </div>
 
 
-    <div class="card" id="cardFormacaoInfantil" style="border:1px solid var(--gold);">
+    <div class="card fechado" id="cardFormacaoInfantil" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-chalkboard-teacher"></i> Formação — Dar aula de Capoeira para Crianças</h3>
       <p class="mini" style="margin-bottom:8px;">Aluno já cadastrado usa o <b>mesmo login</b> da aba Aluno. Ao ser aprovado, aparece um ícone especial no check-in e no painel.</p>
       <div id="boxFormacaoInfantilUI"></div>
       <div id="boxMinhaInscricaoFormacao" style="margin-top:8px;"></div>
     </div>
 
-    <div class="card">
+    <div class="card fechado">
       <h3><i class="fas fa-comments"></i> Mural &amp; Bate-Papo da Academia</h3>
       <div id="chatMessages" style="max-height:160px; overflow-y:auto; margin-bottom:6px; font-size:0.75rem;"></div>
       <div style="display:flex; gap:4px; align-items:center;">
@@ -668,6 +699,7 @@ footer a { color: var(--accent-blue); }
   <div id="tab2" class="tab-content">
 
     <div id="boxProfessorNaAulaCheckin"></div>
+    <div id="boxGympassCheckin"></div>
 
     <div class="card">
       <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
@@ -1107,6 +1139,7 @@ footer a { color: var(--accent-blue); }
 </div>
 
 <!-- Assistente Virtual -->
+<div id="dicaAssistentePrimeiroAcesso" class="dica-assistente-bolha" style="display:none;" onclick="toggleAssistente()">Precisa de ajuda? 👋</div>
 <button id="assistenteFab" onclick="toggleAssistente()" title="Assistente Capoeira" aria-label="Abrir assistente">
   <i class="fas fa-robot"></i>
 </button>
@@ -1120,6 +1153,8 @@ footer a { color: var(--accent-blue); }
     <button class="assistente-atalho" onclick="assistentePerguntar('próxima aula')">Próxima aula</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('meu check-in')">Meu check-in</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('como fazer check-in')">Como fazer check-in</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('check-in deu erro')">Check-in com erro</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('esqueci minha senha')">Esqueci a senha</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('pedir treino')">Pedir treino</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('minha graduação')">Minha graduação</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('meu desempenho')">Desempenho</button>
@@ -1705,7 +1740,7 @@ function aplicarConfig() {
   var l1 = $('headerLogo1'), l2 = $('headerLogo2');
   if (CONFIG.logo1) { l1.src = CONFIG.logo1; l1.style.display = 'block'; } else { l1.style.display = 'none'; }
   if (CONFIG.logo2) { l2.src = CONFIG.logo2; l2.style.display = 'block'; } else { l2.style.display = 'none'; }
-  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp + ' · Capoeira na Pequena África';
+  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp;
   timerDuracaoPadrao = CONFIG.tempoTimerSegundos || 90;
   if (!timerRodando) { timerSegundos = timerDuracaoPadrao; atualizarTimerUI(); }
   renderGraduacoes();
@@ -1801,6 +1836,7 @@ function atualizarStatusFirebase() {
    --------------------------------------------------------------- */
 var sessaoAlunoId = null;
 var sessaoEquipe = null;
+var boasVindasNovoAluno = false;
 var sessaoFormacaoProfId = null;
 
 function alunoLogado() { return sessaoAlunoId ? DB.buscar('alunos', sessaoAlunoId) : null; }
@@ -1913,6 +1949,47 @@ function toggleMenuEquipe() {
   else if (['tab4', 'tab5', 'tab6'].indexOf(abaAtual) >= 0) { abrirAba('tab1'); }
 }
 
+function revelarAcessoEquipe() {
+  var btn = $('btnToggleEquipe');
+  var dica = $('dicaAcessoEquipe');
+  if (btn && btn.style.display === 'none') {
+    btn.style.display = 'flex';
+    try { mostrarToast('Acesso da equipe liberado.'); } catch (e) {}
+  }
+  if (dica) dica.style.display = 'none';
+  toggleMenuEquipe();
+}
+
+function mostrarDicaAssistentePrimeiroAcesso() {
+  var ja = false;
+  try { ja = !!localStorage.getItem('uc_assistente_apresentado_v1'); } catch (e) {}
+  if (ja) return;
+  var dica = $('dicaAssistentePrimeiroAcesso');
+  if (!dica) return;
+  setTimeout(function () {
+    if (!assistenteAberto) dica.style.display = 'block';
+  }, 4000);
+}
+
+function instalarGestoAcessoEquipe() {
+  var alvo = $('headerAppTopo');
+  if (!alvo) return;
+  var pressTimer = null;
+  var iniciar = function () {
+    pressTimer = setTimeout(revelarAcessoEquipe, 700);
+  };
+  var cancelar = function () {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  };
+  alvo.addEventListener('touchstart', iniciar, { passive: true });
+  alvo.addEventListener('touchend', cancelar);
+  alvo.addEventListener('touchmove', cancelar);
+  alvo.addEventListener('mousedown', iniciar);
+  alvo.addEventListener('mouseup', cancelar);
+  alvo.addEventListener('mouseleave', cancelar);
+}
+
+
 function renderizarAba(id) {
   if (id === 'tab1') renderInicio();
   if (id === 'tab2') renderCheckin();
@@ -2010,6 +2087,7 @@ function cadastrarAlunoNuvem(btn) {
     ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadSenha', 'autoCadSenha2'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     registroLog('cadastro', 'Novo aluno cadastrado: ' + nome);
     toggleAutoCadastroAluno(false);
+    boasVindasNovoAluno = true;
     renderAluno();
     mostrarToast('Cadastro concluído! Bem-vindo(a).');
   }).catch(function () {
@@ -2878,7 +2956,12 @@ function subirNivelArcade() {
   var cfg = configNivelArcade(arcade.tipo, novo);
   arcade.objetivo = cfg.objetivo;
   if (arcade.timer) clearInterval(arcade.timer);
-  arcade.timer = setInterval(arcadeLoop, cfg.velocidadeMs);
+  var gamesComRampa2 = ['snake', 'tetris', 'pulo', 'quebra', 'mario'];
+  arcade.rampaAtiva = gamesComRampa2.indexOf(arcade.tipo) >= 0;
+  arcade.velAlvo = cfg.velocidadeMs;
+  arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 1.25) : cfg.velocidadeMs;
+  arcade.rampTick = 0;
+  arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
   if (arcade.tipo === 'corrida') {
     arcade.speed = cfg.speedBase;
   }
@@ -3008,7 +3091,12 @@ function abrirJogoArcade(tipo, nivelInicio) {
   else if (tipo === 'surfe') initSurfe();
   else if (tipo === 'mario') initMario();
   if (arcade.timer) clearInterval(arcade.timer);
-  arcade.timer = setInterval(arcadeLoop, cfg.velocidadeMs);
+  var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario'];
+  arcade.rampaAtiva = gamesComRampa.indexOf(tipo) >= 0;
+  arcade.velAlvo = cfg.velocidadeMs;
+  arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 1.7) : cfg.velocidadeMs;
+  arcade.rampTick = 0;
+  arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
   window.removeEventListener('keydown', arcadeKeyHandler);
   window.addEventListener('keydown', arcadeKeyHandler);
   instalarSwipeArcade(arcade.canvas);
@@ -3191,6 +3279,15 @@ function arcadeAcao(a) {
 
 function arcadeLoop() {
   if (!arcade.rodando || arcade.pausado) return;
+  if (arcade.rampaAtiva && arcade.velAtual > arcade.velAlvo) {
+    arcade.rampTick = (arcade.rampTick || 0) + 1;
+    if (arcade.rampTick % 12 === 0) {
+      var passo = Math.max(2, Math.round((arcade.velAtual - arcade.velAlvo) / 6));
+      arcade.velAtual = Math.max(arcade.velAlvo, arcade.velAtual - passo);
+      clearInterval(arcade.timer);
+      arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
+    }
+  }
   if (arcade.tipo === 'snake') tickSnake();
   else if (arcade.tipo === 'tetris') tickTetris();
   else if (arcade.tipo === 'corrida') tickCorridaArcade();
@@ -5044,6 +5141,18 @@ function abrirInstagramOficial() {
 /* ---------------------------------------------------------------
    10. MÓDULO CHECK-IN
    --------------------------------------------------------------- */
+function htmlCardGympassAluno(logado) {
+  if (!logado || logado.tipoAluno !== 'gympass') return '';
+  var link = logado.gympassLink || '';
+  return '<div class="card" style="border:1px solid var(--gympass-red);">' +
+    '<h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-in Gympass / Wellhub</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Seu check-in é feito direto no app Wellhub — o professor valida no Portal de Parceiros.</p>' +
+    (link
+      ? '<a class="btn btn-gympass" href="' + esc(link) + '" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; text-decoration:none;"><i class="fas fa-external-link-alt"></i>&nbsp; Abrir meu Wellhub</a>'
+      : '<p class="mini">Você ainda não salvou seu link do Wellhub. Adicione em <b>Meu Perfil</b>, mais abaixo.</p>') +
+    '</div>';
+}
+
 function renderCheckin() {
   var logado = alunoLogado();
   var campoNome = $('checkinFixoNomeAluno');
@@ -5052,6 +5161,8 @@ function renderCheckin() {
   }
   var boxProf = $('boxProfessorNaAulaCheckin');
   if (boxProf) boxProf.innerHTML = htmlBannerProfessorNaAula();
+  var boxGympass = $('boxGympassCheckin');
+  if (boxGympass) boxGympass.innerHTML = htmlCardGympassAluno(logado);
   renderHorarioAulaHoje();
   renderSelectPolos();
   renderMinhasPresencasCheckin();
@@ -5276,63 +5387,6 @@ function alunoCheckinLocalFixoSimples() {
   });
 }
 
-function validarCheckinGympassNuvem() {
-  var nome = ($('gympassAlunoNome').value || '').trim();
-  var token = ($('gympassTokenVal').value || '').replace(/\D/g, '');
-  if (nome.length < 3) { mostrarToast('Informe o nome do aluno.', 'erro'); return; }
-  if (!/^\d{6}$/.test(token)) { mostrarToast('O token Wellhub deve ter 6 dígitos.', 'erro'); return; }
-
-  var aluno = encontrarAlunoPorNome(nome);
-  var jaExiste = obterCheckinDoDia(aluno || nome);
-  if (jaExiste) {
-    mostrarToast('Este aluno já possui check-in hoje. Só é permitido um por aula.', 'erro');
-    return;
-  }
-
-  var aulaGympass = aulaDeHoje();
-  if (aulaGympass && !dentroJanelaCheckin(aulaGympass)) {
-    var jg = janelaCheckin(aulaGympass);
-    mostrarToast('Check-in só é permitido entre ' + minutosParaHM(jg.abre) + ' e ' + minutosParaHM(jg.fecha) + '.', 'erro');
-    return;
-  }
-
-  var limite = Date.now() - 24 * 60 * 60 * 1000;
-  var reutilizado = DB.listar('presencas').some(function (p) {
-    return p.token === token && new Date(p.criadoEm || 0).getTime() > limite;
-  });
-  if (reutilizado) { mostrarToast('Este token já foi utilizado nas últimas 24 horas.', 'erro'); return; }
-
-  var polo = (DB.listar('polos')[0] || null);
-
-  DB.salvar('presencas', {
-    alunoId: aluno ? aluno.id : '',
-    alunoNome: aluno ? aluno.nome : nome,
-    alunoApelido: aluno ? (aluno.apelido || '') : '',
-    poloId: polo ? polo.id : '',
-    poloNome: polo ? polo.nome : 'Capoeira na Pequena África',
-    data: dataLocalISO(),
-    hora: horaLocalHM(),
-    tipo: 'gympass',
-    status: 'pendente',
-    token: token,
-    atrasoMin: 0,
-    justificativa: '',
-    criadoEm: agoraISO()
-  }).then(function () {
-    $('gympassTokenVal').value = '';
-    mostrarToast('Token Gympass validado!');
-    abrirModal('Check-in Gympass registrado',
-      '<div style="text-align:center; padding:6px 0;">' +
-        '<div style="font-size:2rem; color:var(--gympass-red); margin-bottom:8px;"><i class="fas fa-ticket-alt"></i></div>' +
-        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Token validado com sucesso!</strong></p>' +
-        '<p class="mini">Aluno: <b>' + esc(aluno ? aluno.nome : nome) + '</b></p>' +
-        '<p class="mini">Data: <b>' + dataBR(dataLocalISO()) + '</b></p>' +
-        '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — aguarde aprovação do professor.</p>' +
-      '</div>');
-    renderCheckin();
-  });
-}
-
 /* ---------------------------------------------------------------
    11. MÓDULO ALUNO (painel)
    --------------------------------------------------------------- */
@@ -5391,6 +5445,13 @@ function renderAluno() {
   ];
 
   var html =
+    (boasVindasNovoAluno
+      ? '<div class="card card-destaque" style="border:1px solid var(--primary-green); background:rgba(0,230,118,0.08);">' +
+          '<h3 style="color:var(--primary-green);"><i class="fas fa-circle-check"></i> Cadastro concluído!</h3>' +
+          '<p class="mini">Pronto, ' + esc(logado.apelido || logado.nome.split(' ')[0]) + '! Agora é só ir na aba <b>Check-in</b> sempre que vier treinar. Toque no robozinho no canto da tela se tiver alguma dúvida.</p>' +
+          '<button class="btn btn-secondary" onclick="abrirAba(\'tab2\'); this.closest(\'.card\').remove();"><i class="fas fa-map-marker-alt"></i> Ir para o Check-in</button>' +
+        '</div>'
+      : '') +
     '<button class="btn btn-back" onclick="sairAluno()"><i class="fas fa-sign-out-alt"></i> Sair</button>' +
 
     /* ===== CABEÇALHO DO ALUNO ===== */
@@ -5499,6 +5560,11 @@ function renderAluno() {
     '<label class="campo-label">Contato (WhatsApp)</label><input id="perfilContato" value="' + esc(logado.contato || '') + '">' +
     '<label class="campo-label">Graduação (alterada somente pela equipe)</label>' +
     '<input value="' + esc(logado.graduacao || '-') + '" disabled>' +
+    (logado.tipoAluno === 'gympass'
+      ? '<label class="campo-label"><i class="fas fa-ticket-alt" style="color:var(--gympass-red);"></i> Link do meu Wellhub/Gympass</label>' +
+        '<input id="perfilGympassLink" placeholder="Cole aqui o link do seu perfil/check-in no app Wellhub" value="' + esc(logado.gympassLink || '') + '">' +
+        '<p class="mini" style="margin:-4px 0 8px;">O professor pode usar esse link para conferir seu check-in mais rápido.</p>'
+      : '') +
     '<label class="campo-label">Foto de perfil</label>' +
     '<input type="file" accept="image/*" onchange="uploadFotoPerfil(this)">' +
     '<button class="btn" onclick="salvarPerfilAluno(this)"><i class="fas fa-save"></i> Salvar Perfil</button>' +
@@ -5506,6 +5572,8 @@ function renderAluno() {
     '<button class="btn btn-secondary" onclick="baixarMeusDados()"><i class="fas fa-download"></i> Baixar meus dados (JSON)</button>';
 
   $('cardAlunoPainel').innerHTML = html;
+  tornarCardsColapsaveis($('cardAlunoPainel'));
+  boasVindasNovoAluno = false;
   setTimeout(atualizarBadgesInteracao, 50);
 }
 
@@ -5516,8 +5584,10 @@ function salvarPerfilAluno(btn) {
   var apelido = ($('perfilApelido').value || '').trim();
   var contato = ($('perfilContato').value || '').trim();
   if (nome.length < 3) { mostrarToast('Nome inválido.', 'erro'); return; }
+  var dados = { nome: nome, apelido: apelido, contato: contato };
+  if ($('perfilGympassLink')) dados.gympassLink = ($('perfilGympassLink').value || '').trim();
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Salvando...'; }
-  DB.salvar('alunos', { nome: nome, apelido: apelido, contato: contato }, logado.id).then(function () {
+  DB.salvar('alunos', dados, logado.id).then(function () {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-save"></i> Salvar Perfil'; }
     mostrarToast('Perfil atualizado.');
     renderAluno();
@@ -7233,7 +7303,9 @@ function renderAbaDev() {
       '<div class="lista-item">Usuário: <b>' + esc(navigator.userAgent.slice(0, 60)) + '...</b></div>' +
       '<div class="lista-item">Offline: <b>' + (navigator.onLine ? 'conectado' : 'sem internet') + '</b></div>' +
       '<div class="lista-item">Notificações: <b>' + (notificacaoAtiva() ? 'ativas' : 'inativas') + '</b></div>' +
-      '<button class="btn btn-secondary" onclick="limparCacheLocal()"><i class="fas fa-broom"></i> Limpar cache local do navegador</button></div>' +
+      '<button class="btn btn-secondary" onclick="limparCacheLocal()"><i class="fas fa-broom"></i> Limpar cache local do navegador</button>' +
+      '<button class="btn btn-secondary" onclick="location.reload()"><i class="fas fa-sync-alt"></i> Recarregar app</button>' +
+      '<button class="btn btn-secondary" onclick="mostrarToast(\'Tela: \' + window.innerWidth + \'x\' + window.innerHeight + \'px\')"><i class="fas fa-mobile-alt"></i> Informações da tela</button></div>' +
 
     '<div class="card" style="border:1px solid var(--danger);"><h3><i class="fas fa-bug"></i> Telemetria & Monitor de Erros</h3>' +
       '<p class="mini" style="margin-bottom:6px;">Qualquer erro de script neste dispositivo é capturado abaixo, em tempo real.</p>' +
@@ -7628,6 +7700,9 @@ function toggleAssistente() {
   assistenteAberto = !assistenteAberto;
   var painel = $('assistentePainel');
   if (!painel) return;
+  var dica = $('dicaAssistentePrimeiroAcesso');
+  if (dica) dica.style.display = 'none';
+  try { localStorage.setItem('uc_assistente_apresentado_v1', '1'); } catch (e) {}
   painel.classList.toggle('aberto', assistenteAberto);
   if (assistenteAberto && !assistenteJaCumprimentou) {
     assistenteJaCumprimentou = true;
@@ -7745,6 +7820,27 @@ function assistenteProcessar(texto) {
       '• O professor precisa aprovar\n' +
       '• Aluno Gympass/Wellhub: o check-in do benefício é feito no próprio app Wellhub — o professor valida no Portal de Parceiros\n\n' +
       'Se der erro, peça ao professor para registrar o check-in manual na área Equipe.';
+  }
+
+  if (/esqueci.*senha|nao lembro.*senha|perdi.*senha|trocar.*senha|redefinir.*senha|recuperar.*senha/.test(t)) {
+    return 'Esqueceu sua senha? Eu não posso trocar por aqui (só o professor pode, por segurança).\n\n' +
+      '1. Toque em "Falar com o professor" (ou chame pessoalmente)\n' +
+      '2. Peça pra resetar sua senha de aluno\n' +
+      '3. O professor faz isso em segundos na aba Equipe\n' +
+      '4. Você recebe uma senha provisória e troca no primeiro login';
+  }
+
+  if (/check.?in.*erro|erro.*check.?in|check.?in.*nao funciona|deu errado.*check|nao consigo.*check.?in|check.?in.*travou/.test(t)) {
+    var msgErro = 'Vamos resolver! Confira nesta ordem:\n\n' +
+      '1. Confira se digitou seu nome exatamente como foi cadastrado\n' +
+      '2. Veja se já não fez check-in hoje (só é permitido 1 por dia)\n' +
+      '3. Confira sua internet — sem conexão, o check-in fica salvo no aparelho e envia sozinho depois\n' +
+      '4. Se continuar travando, feche e abra o app de novo\n\n' +
+      'Se nada disso resolver, ';
+    msgErro += aluno
+      ? 'toque no atalho "Falar com o professor" aqui embaixo e explique o problema — ele registra seu check-in manualmente.'
+      : 'peça para o professor registrar seu check-in manualmente na área Equipe.';
+    return msgErro;
   }
 
   if (/pedir treino|treino especifico|solicitar treino|pedido de treino/.test(t)) {
@@ -8874,6 +8970,10 @@ function iniciarApp() {
   renderInicio();
   renderCheckin();
   renderAluno();
+  tornarCardsColapsaveis($('tab1'));
+  tornarCardsColapsaveis($('tab2'));
+  instalarGestoAcessoEquipe();
+  mostrarDicaAssistentePrimeiroAcesso();
 
   /* link direto: ?aba=checkin (ou #checkin) abre já na aba de Check-in */
   try {
