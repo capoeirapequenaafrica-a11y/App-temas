@@ -160,7 +160,34 @@ header {
   box-shadow: var(--shadow-soft);
   transition: border-color 0.2s ease, transform 0.15s ease;
 }
-.card:hover { border-color: rgba(0, 230, 118, 0.25); }
+.card:hover {
+  border-color: rgba(0, 230, 118, 0.35);
+  box-shadow: 0 8px 32px 0 rgba(0, 230, 118, 0.05);
+}
+
+.jogo-card-btn {
+  background: rgba(12, 21, 26, 0.85);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 18px 10px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.2s, transform 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.jogo-card-btn strong { font-size: 0.88rem; }
+.jogo-card-btn span { font-size: 0.7rem; color: var(--text-sub); }
+.jogo-card-btn:active,
+.jogo-card-btn:hover {
+  border-color: var(--primary-green);
+  transform: scale(0.97);
+}
+
 @keyframes brilhoBordaDestaque {
   0%, 100% { box-shadow: 0 0 0 rgba(var(--cor-brilho, 255,193,7), 0); }
   50% { box-shadow: 0 0 16px rgba(var(--cor-brilho, 255,193,7), 0.55); }
@@ -582,6 +609,7 @@ footer a { color: var(--accent-blue); }
       <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-home"></i>Início</button>
       <button onclick="abrirAba('tab2', this)"><i class="fas fa-map-marker-alt"></i>Check-in</button>
       <button onclick="abrirAba('tab3', this)"><i class="fas fa-user-graduate"></i>Aluno</button>
+      <button onclick="abrirAba('tabJogos', this)"><i class="fas fa-gamepad"></i>Jogos</button>
       <button onclick="toggleMenuEquipe()" id="btnToggleEquipe" style="display:none;"><i class="fas fa-users-cog"></i>Equipe</button>
     </div>
     <div class="tabs tabs-equipe" id="tabsEquipe" style="display:none;">
@@ -645,8 +673,17 @@ footer a { color: var(--accent-blue); }
       <div id="listaCertificadosAluno"></div>
     </div>
 
+
+    <!-- UX fitness: resumo no Início → detalhe na aba Jogos (nada removido abaixo) -->
+    <div class="card card-destaque brilho-verde" id="cardAtalhoArcadeInicio" style="border:1px solid var(--gold);">
+      <h3 style="color:var(--gold);"><i class="fas fa-gamepad"></i> Arcade da Academia</h3>
+      <p class="mini" style="margin-bottom:8px;">8 mini-jogos · 10 níveis · ranking grátis. O catálogo completo fica na aba <b>Jogos</b>.</p>
+      <div id="resumoArcadeInicio" class="mini" style="margin-bottom:8px;color:var(--text-sub);">Carregando progresso…</div>
+      <button type="button" class="btn btn-gold" onclick="abrirAba('tabJogos')"><i class="fas fa-gamepad"></i> Abrir aba Jogos</button>
+    </div>
+
     <div class="card fechado" id="cardJogosGrupo" data-colapsavel-pronto="1">
-      <h3 class="titulo-colapsavel" onclick="toggleCardColapsavel($('cardJogosGrupo'))" style="color:var(--gold);"><i class="fas fa-gamepad"></i> Jogos &amp; Mini-Games<span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span></h3>
+      <h3 class="titulo-colapsavel" onclick="toggleCardColapsavel($('cardJogosGrupo'))" style="color:var(--gold);"><i class="fas fa-gamepad"></i> Jogos &amp; Mini-Games <span class="mini" style="font-weight:500;opacity:0.7;">(atalho no Início)</span><span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span></h3>
       <div class="card-corpo-colapsavel">
 
     <div class="card" id="cardRankingJogos" style="border:1px solid var(--gold);">
@@ -659,7 +696,7 @@ footer a { color: var(--accent-blue); }
       <h3 style="color:var(--accent-blue);"><i class="fas fa-gamepad"></i> Arcade Clássico</h3>
       <p class="mini" style="margin-bottom:8px;">100% grátis · 10 níveis por jogo · pontos no ranking da academia</p>
       <label class="campo-label">Seu nome / apelido (para o ranking)</label>
-      <input id="nomeJogadorCorrida" placeholder="Ex: Formiga">
+      <input id="nomeJogadorCorrida" placeholder="Ex: Formiga" oninput="sincronizarNomeJogador(this.value)">
       <div id="boxNiveisArcade" style="margin:8px 0;"></div>
       <div class="grade-2" style="margin-top:8px;">
         <button class="btn btn-gold" onclick="abrirJogoArcade('pacman')"><i class="fas fa-ghost"></i> Pac-Man</button>
@@ -731,6 +768,65 @@ footer a { color: var(--accent-blue); }
     <!-- Formação usa o login do aluno (card no Início) — card antigo oculto -->
     <div class="card" id="cardFormacaoProfessor" style="display:none !important;" aria-hidden="true">
       <div id="boxFormacaoProfConteudo"></div>
+    </div>
+  </div>
+
+
+  <!-- ================= ABA JOGOS ================= -->
+  <div id="tabJogos" class="tab-content">
+    <div class="card">
+      <h3 style="color:var(--primary-green);"><i class="fas fa-gamepad"></i> Jogos da Capoeira</h3>
+      <label class="campo-label">Seu Nome / Apelido</label>
+      <input type="text" id="nomeJogadorTab" placeholder="Ex: Formiga" oninput="sincronizarNomeJogador(this.value)">
+      <p class="mini" style="margin:8px 0 4px;">Toque em um jogo ou escolha o nível abaixo:</p>
+      <div id="boxNiveisArcadeTab" style="margin:8px 0;"></div>
+      <div class="jogos-grid-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;">
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('snake')">
+          <i class="fas fa-dragon" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Minhoca</strong>
+          <span>Coma e cresça</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('tetris')">
+          <i class="fas fa-th" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Tetris</strong>
+          <span>Complete as linhas</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pacman')">
+          <i class="fas fa-ghost" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Pac-Man</strong>
+          <span>Fuja dos fantasmas</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('corrida')">
+          <i class="fas fa-car" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Corrida</strong>
+          <span>Desvie dos carros</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('quebra')">
+          <i class="fas fa-cubes" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Quebra-Blocos</strong>
+          <span>Destrua tudo</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pulo')">
+          <i class="fas fa-dove" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Pulo</strong>
+          <span>Esquive os obstáculos</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('surfe')">
+          <i class="fas fa-running" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Surfe</strong>
+          <span>Mude de faixa</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('mario')">
+          <i class="fas fa-mountain" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Aventura</strong>
+          <span>Pegue moedas</span>
+        </button>
+      </div>
+      <div class="card" id="cardRankingJogosTab" style="border:1px solid var(--gold);margin-top:8px;margin-bottom:0;">
+        <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking de Pontos</h3>
+        <div id="listaRankingJogosTab"></div>
+        <p class="mini" style="text-align:center;margin-top:6px;">Jogue para aparecer no ranking!</p>
+      </div>
     </div>
   </div>
 
@@ -1213,6 +1309,10 @@ footer a { color: var(--accent-blue); }
     <button class="assistente-atalho" onclick="assistentePerguntar('meu desempenho')">Desempenho</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('horários')">Horários</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('avaliação semanal')">Avaliação Semanal</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('formação')">Formação Prof.</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('aquecimento')">Aquecimento</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('mobilidade')">Mobilidade</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('protocolo de aula')">Protocolo de aula</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('ajuda')">Ajuda</button>
   </div>
   <div class="assistente-input-row">
@@ -2047,6 +2147,18 @@ function renderizarAba(id) {
   if (id === 'tab1') renderInicio();
   if (id === 'tab2') renderCheckin();
   if (id === 'tab3') renderAluno();
+  if (id === 'tabJogos') {
+    try {
+      var salvo = localStorage.getItem('uc_nome_jogador_arcade') || '';
+      if ($('nomeJogadorTab') && !$('nomeJogadorTab').value) $('nomeJogadorTab').value = salvo;
+      if ($('nomeJogadorCorrida') && !$('nomeJogadorCorrida').value) $('nomeJogadorCorrida').value = salvo;
+    } catch (e) {}
+    try { renderSeletorNiveisArcade(); } catch (e) {}
+    renderRankingJogos();
+    var box = $('listaRankingJogosTab');
+    var src = $('listaRankingJogos');
+    if (box && src && src.innerHTML) box.innerHTML = src.innerHTML;
+  }
   if (id === 'tab4') renderAbaProfessor();
   if (id === 'tab5') renderAbaAdm();
   if (id === 'tab6') renderAbaDev();
@@ -2443,8 +2555,6 @@ function preencherNomeJogadorCorrida() {
 }
 
 function renderSeletorNiveisArcade() {
-  var box = $('boxNiveisArcade');
-  if (!box) return;
   var jogos = [
     { id: 'pacman', nome: 'Pac-Man' },
     { id: 'snake', nome: 'Minhoca' },
@@ -2456,8 +2566,10 @@ function renderSeletorNiveisArcade() {
     { id: 'mario', nome: 'Aventura' }
   ];
   var html = '<p class="mini" style="margin-bottom:6px;">Níveis na nuvem (e neste aparelho) — grátis:</p>';
+  var totalMax = 0;
   jogos.forEach(function (j) {
     var max = nivelMaxDesbloqueado(j.id);
+    totalMax += max;
     html += '<div class="lista-item" style="padding:6px 8px;"><div class="linha"><b>' + esc(j.nome) + '</b><span class="badge-count">Nv. ' + max + '/10</span></div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">';
     for (var n = 1; n <= 10; n++) {
@@ -2467,7 +2579,16 @@ function renderSeletorNiveisArcade() {
     }
     html += '</div></div>';
   });
-  box.innerHTML = html;
+  /* mantém Início e aba Jogos sincronizados — nada removido */
+  var box = $('boxNiveisArcade');
+  if (box) box.innerHTML = html;
+  var boxTab = $('boxNiveisArcadeTab');
+  if (boxTab) boxTab.innerHTML = html;
+  var resumo = $('resumoArcadeInicio');
+  if (resumo) {
+    resumo.innerHTML = 'Progresso médio: <b style="color:var(--primary-green);">Nv. ' +
+      Math.max(1, Math.round(totalMax / jogos.length)) + '/10</b> nos 8 jogos · toque em <b>Abrir aba Jogos</b> para jogar.';
+  }
 }
 
 function rankingPontosJogos() {
@@ -2485,10 +2606,14 @@ function rankingPontosJogos() {
 
 function renderRankingJogos() {
   var box = $('listaRankingJogos');
-  if (!box) return;
+  var boxTab = $('listaRankingJogosTab');
+  if (!box && !boxTab) return;
+  if (!box) { box = boxTab; }
   var lista = rankingPontosJogos().slice(0, 8);
   if (!lista.length) {
-    box.innerHTML = '<p class="sem-dados">Ninguém pontuou ainda. Seja o primeiro na corrida!</p>';
+    var vazio = '<p class="sem-dados">Ninguém pontuou ainda. Seja o primeiro na corrida!</p>';
+    box.innerHTML = vazio;
+    if (boxTab && boxTab !== box) boxTab.innerHTML = vazio;
     return;
   }
   var html = '';
@@ -2498,6 +2623,14 @@ function renderRankingJogos() {
       '<span class="badge-count">' + item.pontos + ' pts</span></div></div>';
   });
   box.innerHTML = html;
+
+  try {
+    var boxTab = $('listaRankingJogosTab');
+    if (boxTab && box) boxTab.innerHTML = box.innerHTML;
+    else if (boxTab && !box) {
+      /* se só a aba existe, reusa a mesma renderização */
+    }
+  } catch (e) {}
 }
 
 function jogarCorrida() {
@@ -2525,13 +2658,24 @@ function jogarCorrida() {
   }, 1300);
 }
 
+function sincronizarNomeJogador(val) {
+  var a = $('nomeJogadorCorrida');
+  var b = $('nomeJogadorTab');
+  if (a && a !== document.activeElement) a.value = val || '';
+  if (b && b !== document.activeElement) b.value = val || '';
+  try { localStorage.setItem('uc_nome_jogador_arcade', (val || '').trim()); } catch (e) {}
+}
 function nomeJogadorArcade() {
-  var campo = $('nomeJogadorCorrida');
-  var nome = (campo && campo.value || '').trim();
-  if (nome.length >= 2) return nome;
-  var aluno = alunoLogado();
-  if (aluno) return aluno.apelido || aluno.nome || '';
-  return '';
+  var a = ($('nomeJogadorCorrida') && $('nomeJogadorCorrida').value) || '';
+  var b = ($('nomeJogadorTab') && $('nomeJogadorTab').value) || '';
+  var n = (a || b || '').trim();
+  if (!n) { try { n = (localStorage.getItem('uc_nome_jogador_arcade') || '').trim(); } catch (e) {} }
+  if (!n) {
+    var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (aluno) n = aluno.apelido || aluno.nome || '';
+  }
+  if (!n) n = 'Jogador';
+  return n;
 }
 
 function registrarPontosJogo(nome, pontos, jogo) {
@@ -2816,22 +2960,28 @@ var ARCADE_NIVEIS_KEY = 'uc_arcade_niveis_v87';
 function carregarNiveisArcade() {
   var data = {};
   try { data = JSON.parse(localStorage.getItem(ARCADE_NIVEIS_KEY) || '{}') || {}; } catch (e) { data = {}; }
-  /* mescla progresso da nuvem (aluno logado ou aparelho) */
+  /* mescla progresso da nuvem: aluno logado → aparelho → nome/apelido do jogador */
   try {
     var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
     var lista = DB.listar('progressoJogos') || [];
+    var ap = '';
+    try { ap = localStorage.getItem('uc_aparelho_id_v87') || ''; } catch (e2) {}
+    var nomeJ = '';
+    try {
+      if (typeof nomeJogadorArcade === 'function') nomeJ = normalizar(nomeJogadorArcade());
+      else nomeJ = normalizar(localStorage.getItem('uc_nome_jogador_arcade') || '');
+    } catch (e3) {}
     lista.forEach(function (p) {
-      if (aluno && p.alunoId && p.alunoId === aluno.id && p.niveis) {
+      if (!p || !p.niveis) return;
+      var match = false;
+      if (aluno && p.alunoId && p.alunoId === aluno.id) match = true;
+      else if (ap && p.aparelhoId && p.aparelhoId === ap) match = true;
+      else if (nomeJ && nomeJ.length >= 2 && p.jogadorNomeNorm && p.jogadorNomeNorm === nomeJ) match = true;
+      else if (nomeJ && nomeJ.length >= 2 && p.alunoNome && normalizar(p.alunoNome) === nomeJ) match = true;
+      if (match) {
         Object.keys(p.niveis).forEach(function (k) {
           data[k] = Math.max(Number(data[k]) || 1, Number(p.niveis[k]) || 1);
         });
-      } else if (!aluno && p.aparelhoId && p.niveis) {
-        var ap = localStorage.getItem('uc_aparelho_id_v87');
-        if (ap && p.aparelhoId === ap) {
-          Object.keys(p.niveis).forEach(function (k) {
-            data[k] = Math.max(Number(data[k]) || 1, Number(p.niveis[k]) || 1);
-          });
-        }
       }
     });
   } catch (e) {}
@@ -2856,21 +3006,36 @@ function salvarNivelArcade(tipo, nivel) {
   if (nivel > atual) {
     data[tipo] = Math.min(10, nivel);
     try { localStorage.setItem(ARCADE_NIVEIS_KEY, JSON.stringify(data)); } catch (e) {}
-    /* salva na nuvem para atualizar rápido em qualquer aparelho */
+    /* salva na nuvem: aluno, aparelho e nome do jogador (troca de celular com mesmo apelido) */
     try {
       var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
       var aparelhoId = idAparelhoJogos();
+      var nomeJ = '';
+      try {
+        if (typeof nomeJogadorArcade === 'function') nomeJ = (nomeJogadorArcade() || '').trim();
+        else nomeJ = (localStorage.getItem('uc_nome_jogador_arcade') || '').trim();
+      } catch (eN) {}
+      if (aluno && (aluno.apelido || aluno.nome)) nomeJ = aluno.apelido || aluno.nome;
+      var nomeNorm = normalizar(nomeJ);
       var lista = DB.listar('progressoJogos') || [];
       var reg = null;
       if (aluno) {
         reg = lista.find(function (p) { return p.alunoId === aluno.id; });
-      } else {
+      }
+      if (!reg && nomeNorm && nomeNorm.length >= 2) {
+        reg = lista.find(function (p) {
+          return (p.jogadorNomeNorm && p.jogadorNomeNorm === nomeNorm) ||
+            (p.alunoNome && normalizar(p.alunoNome) === nomeNorm && !p.alunoId);
+        });
+      }
+      if (!reg) {
         reg = lista.find(function (p) { return p.aparelhoId === aparelhoId && !p.alunoId; });
       }
       var niveis = Object.assign({}, (reg && reg.niveis) || {}, data);
       var payload = {
         alunoId: aluno ? aluno.id : '',
-        alunoNome: aluno ? (aluno.apelido || aluno.nome) : '',
+        alunoNome: nomeJ || (aluno ? (aluno.apelido || aluno.nome) : ''),
+        jogadorNomeNorm: nomeNorm || '',
         aparelhoId: aparelhoId,
         niveis: niveis,
         atualizadoEm: agoraISO()
@@ -2887,73 +3052,99 @@ function nivelMaxDesbloqueado(tipo) {
   return Math.max(1, Math.min(10, n));
 }
 
+function curvaDificuldade(nivel) {
+  /* 0 no nível 1, sobe devagar nos níveis do meio, dispara nos últimos (8, 9, 10) */
+  var n = Math.max(1, Math.min(10, Number(nivel) || 1));
+  return Math.pow((n - 1) / 9, 1.7);
+}
+
 function configNivelArcade(tipo, nivel) {
   nivel = Math.max(1, Math.min(10, Number(nivel) || 1));
+  var curva = curvaDificuldade(nivel);
+  /* scoreParaDesbloquear: pontos na partida para liberar o PRÓXIMO nível (alternativa ao objetivo) */
   if (tipo === 'snake') {
+    var objS = Math.round(6 + 64 * curva);
     return {
       nivel: nivel,
-      objetivo: 10 + nivel * 5,
-      velocidadeMs: Math.max(95, 175 - nivel * 7),
-      label: 'Coma ' + (10 + nivel * 5) + ' comidas'
+      objetivo: objS,
+      velocidadeMs: Math.max(65, Math.round(195 - 130 * curva)),
+      scoreParaDesbloquear: objS * 10 + nivel * 20,
+      label: 'Coma ' + objS + ' comidas · ou ' + (objS * 10 + nivel * 20) + ' pts'
     };
   }
   if (tipo === 'tetris') {
+    var objT = Math.round(3 + 13 * curva);
     return {
       nivel: nivel,
-      objetivo: 4 + Math.round(nivel * 1.5),
-      velocidadeMs: Math.max(160, 460 - nivel * 26),
-      label: 'Complete ' + (4 + Math.round(nivel * 1.5)) + ' linhas'
+      objetivo: objT,
+      velocidadeMs: Math.max(140, Math.round(520 - 380 * curva)),
+      scoreParaDesbloquear: objT * 80 + nivel * 50,
+      label: 'Complete ' + objT + ' linhas · ou ' + (objT * 80 + nivel * 50) + ' pts'
     };
   }
   if (tipo === 'quebra') {
+    var objQ = Math.round(8 + 37 * curva);
     return {
       nivel: nivel,
-      objetivo: 10 + nivel * 4,
+      objetivo: objQ,
       velocidadeMs: 16,
-      label: 'Quebre ' + (10 + nivel * 4) + ' blocos'
+      curva: curva,
+      scoreParaDesbloquear: objQ * 12 + nivel * 30,
+      label: 'Quebre ' + objQ + ' blocos · ou ' + (objQ * 12 + nivel * 30) + ' pts'
     };
   }
   if (tipo === 'pulo') {
+    var objP = Math.round(8 + 32 * curva);
     return {
       nivel: nivel,
-      objetivo: 10 + nivel * 3,
-      velocidadeMs: Math.max(17, 25 - Math.floor(nivel / 4)),
-      label: 'Passe ' + (10 + nivel * 3) + ' obstáculos'
+      objetivo: objP,
+      velocidadeMs: Math.max(15, Math.round(31 - 16 * curva)),
+      scoreParaDesbloquear: objP * 8 + nivel * 25,
+      label: 'Passe ' + objP + ' obstáculos · ou ' + (objP * 8 + nivel * 25) + ' pts'
     };
   }
   if (tipo === 'surfe') {
+    var objSu = Math.round(25 + 195 * curva);
     return {
       nivel: nivel,
-      objetivo: 45 + nivel * 25,
+      objetivo: objSu,
       velocidadeMs: 20,
-      speedBase: 2.4 + nivel * 0.26,
-      label: 'Faça ' + (45 + nivel * 25) + ' pts sem cair'
+      speedBase: +(2.0 + 3.0 * curva).toFixed(2),
+      scoreParaDesbloquear: objSu,
+      label: 'Faça ' + objSu + ' pts sem cair'
     };
   }
   if (tipo === 'mario') {
+    var objM = Math.round(5 + 25 * curva);
     return {
       nivel: nivel,
-      objetivo: 7 + nivel * 3,
+      objetivo: objM,
       velocidadeMs: 20,
-      label: 'Pegue ' + (7 + nivel * 3) + ' moedas / bandeira'
+      scoreParaDesbloquear: objM * 15 + nivel * 20,
+      label: 'Pegue ' + objM + ' moedas · ou ' + (objM * 15 + nivel * 20) + ' pts'
     };
   }
   if (tipo === 'pacman') {
+    /* ~180–220 pastilhas no mapa; objetivo = limpar o labirinto (HUD usa pacDotsTotal real no init) */
+    var dotsEst = 200;
     return {
       nivel: nivel,
-      objetivo: 1,
-      velocidadeMs: Math.max(28, 55 - nivel * 2),
-      label: 'Coma todas as pastilhas · Nv.' + nivel
+      objetivo: dotsEst,
+      velocidadeMs: Math.max(26, Math.round(62 - 36 * curva)),
+      scoreParaDesbloquear: 800 + nivel * 200,
+      label: 'Coma todas as pastilhas (~' + dotsEst + ') · ou ' + (800 + nivel * 200) + ' pts'
     };
   }
   /* corrida */
+  var objC = Math.round(35 + 225 * curva);
   return {
     nivel: nivel,
-    objetivo: 55 + nivel * 30,
+    objetivo: objC,
     velocidadeMs: 50,
-    speedBase: 2.2 + nivel * 0.42,
-    spawnEvery: Math.max(16, 30 - Math.floor(nivel * 0.8)),
-    label: 'Faça ' + (55 + nivel * 30) + ' pts sem bater'
+    speedBase: +(1.8 + 3.2 * curva).toFixed(2),
+    spawnEvery: Math.max(14, Math.round(33 - 19 * curva)),
+    scoreParaDesbloquear: objC,
+    label: 'Faça ' + objC + ' pts sem bater'
   };
 }
 
@@ -2964,7 +3155,10 @@ function atualizarHUDNivelArcade() {
     var cfg = configNivelArcade(arcade.tipo, arcade.nivel);
     var prog = arcade.progresso || 0;
     var obj = arcade.objetivo || cfg.objetivo;
-    $('arcadeObjetivo').textContent = (cfg.label || '') + ' · ' + prog + '/' + obj;
+    var metaPts = Number(cfg.scoreParaDesbloquear) || 0;
+    var txt = (cfg.label || '') + ' · ' + prog + '/' + obj;
+    if (metaPts > 0) txt += ' · pts ' + (arcade.score || 0) + '/' + metaPts;
+    $('arcadeObjetivo').textContent = txt;
   }
 }
 
@@ -3034,8 +3228,60 @@ function subirNivelArcade() {
   if (arcade.tipo === 'tetris') {
     /* velocidade já no interval */
   }
+  /* jogos de mapa: reinicia fase no novo nível (HUD e objetivo alinhados) */
+  if (arcade.tipo === 'pacman') {
+    try { initPacman(); } catch (e) {}
+  } else if (arcade.tipo === 'quebra') {
+    try { initQuebra(); } catch (e) {}
+  } else if (arcade.tipo === 'pulo') {
+    try { initPulo(); } catch (e) {}
+  } else if (arcade.tipo === 'mario') {
+    try { initMario(); } catch (e) {}
+  } else if (arcade.tipo === 'surfe') {
+    try { initSurfe(); } catch (e) {}
+  } else if (arcade.tipo === 'corrida') {
+    try { initCorridaArcade(); } catch (e) {}
+  }
+  arcade._scoreUnlockFeito = false;
   mostrarToast('Nível ' + novo + '! ' + cfg.label);
   atualizarHUDNivelArcade();
+}
+
+function verificarDesbloqueioPorScore() {
+  if (!arcade.tipo || !arcade.rodando) return false;
+  if (arcade._scoreUnlockFeito) return false;
+  var cfg = configNivelArcade(arcade.tipo, arcade.nivel || 1);
+  var meta = Number(cfg.scoreParaDesbloquear) || 0;
+  if (meta <= 0) return false;
+  if ((arcade.score || 0) < meta) return false;
+  /* desbloqueia o PRÓXIMO nível sem exigir o objetivo de missão */
+  var atualSalvo = nivelMaxDesbloqueado(arcade.tipo);
+  var proximo = Math.min(10, (arcade.nivel || 1) + 1);
+  if (proximo > atualSalvo) {
+    salvarNivelArcade(arcade.tipo, proximo);
+    arcade._scoreUnlockFeito = true;
+    mostrarToast('🔓 Nível ' + proximo + ' liberado por pontuação! (' + arcade.score + ' pts)');
+    try { renderSeletorNiveisArcade(); } catch (e) {}
+    return true;
+  }
+  /* já tinha o nível; só marca para não repetir toast */
+  if ((arcade.score || 0) >= meta) arcade._scoreUnlockFeito = true;
+  return false;
+}
+
+function desbloqueioPorScoreNoFim(tipo, score, nivelJogando) {
+  if (!tipo || !(score > 0)) return 0;
+  var n = Math.max(1, Math.min(10, Number(nivelJogando) || 1));
+  var cfg = configNivelArcade(tipo, n);
+  var meta = Number(cfg.scoreParaDesbloquear) || 0;
+  if (meta <= 0 || score < meta) return 0;
+  var atual = nivelMaxDesbloqueado(tipo);
+  var proximo = Math.min(10, n + 1);
+  if (proximo > atual) {
+    salvarNivelArcade(tipo, proximo);
+    return proximo;
+  }
+  return 0;
 }
 
 function registrarProgressoNivel(qtd) {
@@ -3081,10 +3327,8 @@ function toggleArcadeTelaGrande() {
 
 function abrirJogoArcade(tipo, nivelInicio) {
   var nome = nomeJogadorArcade();
-  if (nome.length < 2) {
-    mostrarToast('Digite seu nome no campo acima para jogar.', 'erro');
-    return;
-  }
+  /* permite jogar sem nome — usa "Jogador" */
+
   arcade.telaGrande = false;
   var wrap0 = $('arcadeCanvasWrap');
   var canvas0 = $('arcadeCanvas');
@@ -3113,6 +3357,7 @@ function abrirJogoArcade(tipo, nivelInicio) {
   arcade.rodando = true;
   arcade.powerFood = null;
   arcade.impulsoAte = 0;
+  arcade._scoreUnlockFeito = false;
   var cfg = configNivelArcade(tipo, nv);
   arcade.objetivo = cfg.objetivo;
   var ov = $('arcadeOverlay');
@@ -3123,7 +3368,7 @@ function abrirJogoArcade(tipo, nivelInicio) {
   if ($('arcadeDica')) {
     var dicas = {
       pacman: '◀ ▶ ▲ ▼ fuja dos fantasmas · coma pastilhas e power pellets',
-      tetris: '◀ ▶ um toque vai até a borda · ▼ queda · Girar',
+      tetris: '◀ ▶ move · ▼ desce · Girar / Queda rápida',
       corrida: 'Esquerda / Direita para desviar dos carros',
       snake: 'Dirija a minhoca · coma as maçãs',
       quebra: 'Mova a barra · quebre todos os blocos',
@@ -3281,6 +3526,10 @@ function fecharJogoArcade() {
       });
     }
     salvarNivelArcade(tipo, nivelFinal);
+    var nvScore = desbloqueioPorScoreNoFim(tipo, scoreFinal, nivelFinal);
+    if (nvScore) {
+      mostrarToast('🔓 Nível ' + nvScore + ' liberado por pontuação!');
+    }
     try { registrarScoreDesafio(scoreFinal, tipo); } catch (e) {}
   } else if (desafioAtivoId) {
     try { registrarScoreDesafio(scoreFinal || 0, tipo); } catch (e) {}
@@ -3340,10 +3589,10 @@ function arcadeDir(d) {
     if (nd.x === -arcade.dir.x && nd.y === -arcade.dir.y) return;
     arcade.nextDir = nd;
   } else if (arcade.tipo === 'tetris') {
-    /* um toque leva até a borda (esquerda/direita) ou queda total (baixo) */
-    if (d === 'left') { while (moveTetris(-1, 0)) {} }
-    else if (d === 'right') { while (moveTetris(1, 0)) {} }
-    else if (d === 'down') { while (moveTetris(0, 1)) {} }
+    /* um passo por toque */
+    if (d === 'left') moveTetris(-1, 0);
+    else if (d === 'right') moveTetris(1, 0);
+    else if (d === 'down') moveTetris(0, 1);
     else if (d === 'up') rotateTetris();
   } else if (arcade.tipo === 'corrida') {
     if (d === 'left') arcade.carX = Math.max(0, arcade.carX - 1);
@@ -3401,6 +3650,7 @@ function arcadeLoop() {
   else if (arcade.tipo === 'mario') tickMario();
   else if (arcade.tipo === 'pacman') tickPacman();
   if ($('arcadePlacar')) $('arcadePlacar').textContent = String(arcade.score);
+  try { verificarDesbloqueioPorScore(); } catch (e) {}
 }
 
 function initSnake() {
@@ -3675,7 +3925,24 @@ function rotateTetris() {
     rotated[c] = [];
     for (var r = rows - 1; r >= 0; r--) rotated[c].push(sh[r][c]);
   }
+  /* Wall-kick */
   if (!colisaoTetris(0, 0, rotated)) {
+    arcade.piece.shape = rotated;
+    drawTetris();
+  } else if (!colisaoTetris(-1, 0, rotated)) {
+    arcade.piece.x -= 1;
+    arcade.piece.shape = rotated;
+    drawTetris();
+  } else if (!colisaoTetris(1, 0, rotated)) {
+    arcade.piece.x += 1;
+    arcade.piece.shape = rotated;
+    drawTetris();
+  } else if (!colisaoTetris(-2, 0, rotated)) {
+    arcade.piece.x -= 2;
+    arcade.piece.shape = rotated;
+    drawTetris();
+  } else if (!colisaoTetris(2, 0, rotated)) {
+    arcade.piece.x += 2;
     arcade.piece.shape = rotated;
     drawTetris();
   }
@@ -3896,9 +4163,10 @@ function initQuebra() {
   var w = arcade.canvas.width, h = arcade.canvas.height;
   arcade.paddleW = 70;
   arcade.paddleX = (w - arcade.paddleW) / 2;
-  arcade.ball = { x: w / 2, y: h - 50, vx: 2.2 + arcade.nivel * 0.15, vy: -2.6 - arcade.nivel * 0.12, r: 6 };
+  var curvaQuebra = curvaDificuldade(arcade.nivel);
+  arcade.ball = { x: w / 2, y: h - 50, vx: +(1.8 + 2.4 * curvaQuebra).toFixed(2), vy: -(2.1 + 2.0 * curvaQuebra), r: 6 };
   arcade.bricks = [];
-  var cols = 6, rows = 3 + Math.min(3, Math.floor(arcade.nivel / 3));
+  var cols = 6, rows = 3 + Math.round(3 * curvaQuebra);
   var bw = (w - 20) / cols, bh = 14;
   var cores = ['#ef5350', '#ff9800', '#ffc107', '#00e676', '#42a5f5', '#ab47bc'];
   for (var r = 0; r < rows; r++) {
@@ -4000,14 +4268,15 @@ function tickPulo() {
   bird.vy += 0.28;
   bird.y += bird.vy;
   if (bird.y < 0 || bird.y > h) { gameOverArcade(); return; }
-  var gap = Math.max(100, 150 - arcade.nivel * 4);
-  if (arcade.frame % Math.max(70, 110 - arcade.nivel * 3) === 0) {
+  var curvaPulo = curvaDificuldade(arcade.nivel);
+  var gap = Math.max(95, Math.round(160 - 65 * curvaPulo));
+  if (arcade.frame % Math.max(55, Math.round(120 - 65 * curvaPulo)) === 0) {
     var top = 40 + Math.random() * (h - gap - 100);
     arcade.pipes.push({ x: w + 10, top: top, gap: gap, passed: false });
   }
   for (var i = arcade.pipes.length - 1; i >= 0; i--) {
     var p = arcade.pipes[i];
-    p.x -= 1.7 + arcade.nivel * 0.1;
+    p.x -= 1.5 + 2.0 * curvaPulo;
     if (!p.passed && p.x + 36 < bird.x) {
       p.passed = true;
       arcade.score += 10;
@@ -4130,7 +4399,7 @@ function tickSurfe() {
     }
   }
   /* spawn obstáculos e moedas */
-  if (arcade.frame % Math.max(28, 55 - arcade.nivel * 2) === 0) {
+  if (arcade.frame % Math.max(24, Math.round(60 - 36 * curvaDificuldade(arcade.nivel))) === 0) {
     var lane = Math.floor(Math.random() * 3);
     var tipo = Math.random() < 0.55 ? 'barreira' : 'bloco';
     arcade.surfeObst.push({ lane: lane, z: 1, tipo: tipo });
@@ -4470,12 +4739,13 @@ function initMario() {
   ];
   /* inimigos */
   arcade.enemies = [];
-  for (var e = 0; e < 2 + Math.floor(nivel / 2); e++) {
+  var curvaMario = curvaDificuldade(nivel);
+  for (var e = 0; e < 1 + Math.round(3 * curvaMario); e++) {
     arcade.enemies.push({
       x: 180 + e * 160,
       y: h - 50,
       w: 16, h: 16,
-      vx: (e % 2 ? 1.2 : -1.2) * (1 + nivel * 0.08),
+      vx: (e % 2 ? 1.2 : -1.2) * (0.8 + 0.9 * curvaMario),
       minX: 160 + e * 160,
       maxX: 240 + e * 160
     });
@@ -4669,23 +4939,32 @@ function initPacman() {
   arcade.pacCols = 24;
   arcade.pacRows = 26;
   arcade.pacGrid = PAC_MAPA.map(function (row) { return row.split('').map(Number); });
+  /* abre a porta da casa (linhas 11–12) para os fantasmas saírem */
+  try {
+    arcade.pacGrid[11][11] = 0;
+    arcade.pacGrid[11][12] = 0;
+    arcade.pacGrid[12][11] = 0;
+    arcade.pacGrid[12][12] = 0;
+  } catch (e) {}
   arcade.pacDots = 0;
   arcade.pacGrid.forEach(function (row) {
     row.forEach(function (c) { if (c === 2 || c === 3) arcade.pacDots++; });
   });
+  arcade.pacDotsTotal = arcade.pacDots;
   arcade.pac = { x: 11.5, y: 19.5, dir: 'left', mouth: 0 };
   arcade.pacNext = 'left';
   arcade.pacFright = 0;
   arcade.pacFrame = 0;
   arcade.pacVidas = 3;
+  /* Blinky já fora; demais saem com atraso (release em frames) */
   arcade.pacGhosts = [
-    { x: 11.5, y: 11.5, dir: 'left', color: '#ff0000', name: 'Blinky', home: { x: 21, y: 1 } },
-    { x: 10.5, y: 13.5, dir: 'up', color: '#00ffff', name: 'Inky', home: { x: 2, y: 1 } },
-    { x: 11.5, y: 13.5, dir: 'down', color: '#ffb8ff', name: 'Pinky', home: { x: 2, y: 24 } },
-    { x: 12.5, y: 13.5, dir: 'up', color: '#ffb852', name: 'Clyde', home: { x: 21, y: 24 } }
+    { x: 11.5, y: 9.5, dir: 'left', color: '#ff0000', name: 'Blinky', home: { x: 21, y: 1 }, release: 0, stuck: 0 },
+    { x: 10.5, y: 13.5, dir: 'up', color: '#00ffff', name: 'Inky', home: { x: 2, y: 1 }, release: 80, stuck: 0 },
+    { x: 11.5, y: 13.5, dir: 'up', color: '#ffb8ff', name: 'Pinky', home: { x: 2, y: 24 }, release: 160, stuck: 0 },
+    { x: 12.5, y: 13.5, dir: 'up', color: '#ffb852', name: 'Clyde', home: { x: 21, y: 24 }, release: 240, stuck: 0 }
   ];
   arcade.progresso = 0;
-  arcade.objetivo = 1;
+  arcade.objetivo = arcade.pacDotsTotal || 1;
   drawPacman();
 }
 
@@ -4736,12 +5015,12 @@ function pacMover(ent, vel) {
   }
 }
 
-function pacDirsOk(gx, gy, dirAtual) {
+function pacDirsOk(gx, gy, dirAtual, permitirReverso) {
   var opostos = { left: 'right', right: 'left', up: 'down', down: 'up' };
   var dirs = ['up', 'left', 'down', 'right'];
   var ok = [];
   dirs.forEach(function (d) {
-    if (d === opostos[dirAtual]) return;
+    if (!permitirReverso && d === opostos[dirAtual]) return;
     var tx = Math.floor(gx) + 0.5, ty = Math.floor(gy) + 0.5;
     if (d === 'left') tx -= 1;
     if (d === 'right') tx += 1;
@@ -4749,17 +5028,36 @@ function pacDirsOk(gx, gy, dirAtual) {
     if (d === 'down') ty += 1;
     if (pacPode(tx, ty)) ok.push(d);
   });
-  if (!ok.length) ok.push(opostos[dirAtual] || 'left');
+  if (!ok.length && !permitirReverso) {
+    var rev = opostos[dirAtual];
+    var rx = Math.floor(gx) + 0.5, ry = Math.floor(gy) + 0.5;
+    if (rev === 'left') rx -= 1; else if (rev === 'right') rx += 1;
+    else if (rev === 'up') ry -= 1; else if (rev === 'down') ry += 1;
+    if (pacPode(rx, ry)) ok.push(rev);
+  }
+  if (!ok.length) ok.push(dirAtual || 'left');
   return ok;
 }
 
 function pacEscolherGhost(g) {
-  var noCentro = Math.abs(g.x - pacCentro(g.x)) < 0.16 && Math.abs(g.y - pacCentro(g.y)) < 0.16;
+  var noCentro = Math.abs(g.x - pacCentro(g.x)) < 0.18 && Math.abs(g.y - pacCentro(g.y)) < 0.18;
   if (!noCentro) return;
+
+  /* ainda na casa: sobe para sair pela porta */
+  var naCasa = g.y > 10.5 && g.y < 15.5 && g.x > 9.2 && g.x < 14.8;
+  if (naCasa && (g.release || 0) > 0) {
+    g.next = 'up';
+    return;
+  }
+  if (naCasa) {
+    /* prioriza subir para sair */
+    if (pacPode(g.x, g.y - 1)) { g.next = 'up'; return; }
+  }
+
   var alvoX = arcade.pac.x, alvoY = arcade.pac.y;
   if (arcade.pacFright > 0) {
-    var opts = pacDirsOk(g.x, g.y, g.dir);
-    g.next = opts[Math.floor(Math.random() * opts.length)];
+    var optsF = pacDirsOk(g.x, g.y, g.dir, false);
+    g.next = optsF[Math.floor(Math.random() * optsF.length)];
     return;
   }
   if (g.name === 'Pinky') {
@@ -4771,11 +5069,11 @@ function pacEscolherGhost(g) {
   if (g.name === 'Clyde' && Math.hypot(g.x - arcade.pac.x, g.y - arcade.pac.y) < 8) {
     alvoX = g.home.x; alvoY = g.home.y;
   }
-  if (g.name === 'Inky') {
+  if (g.name === 'Inky' && arcade.pacGhosts[0]) {
     alvoX = arcade.pac.x + (arcade.pac.x - arcade.pacGhosts[0].x);
     alvoY = arcade.pac.y + (arcade.pac.y - arcade.pacGhosts[0].y);
   }
-  var opts = pacDirsOk(g.x, g.y, g.dir);
+  var opts = pacDirsOk(g.x, g.y, g.dir, false);
   var best = opts[0], bestD = 1e9;
   opts.forEach(function (d) {
     var tx = Math.floor(g.x) + 0.5, ty = Math.floor(g.y) + 0.5;
@@ -4784,7 +5082,7 @@ function pacEscolherGhost(g) {
     var dist = Math.hypot(tx - alvoX, ty - alvoY);
     if (dist < bestD) { bestD = dist; best = d; }
   });
-  g.next = best;
+  g.next = best || g.dir;
 }
 
 function tickPacman() {
@@ -4793,7 +5091,7 @@ function tickPacman() {
   arcade.pac.mouth += 0.35;
   if (arcade.pacNext) arcade.pac.next = arcade.pacNext;
   var velP = 0.13 + (arcade.nivel - 1) * 0.006;
-  var velG = 0.10 + (arcade.nivel - 1) * 0.007;
+  var velG = 0.11 + (arcade.nivel - 1) * 0.008;
   if (arcade.pacFright > 0) { velG *= 0.55; arcade.pacFright--; }
 
   pacMover(arcade.pac, velP);
@@ -4804,23 +5102,53 @@ function tickPacman() {
       arcade.pacGrid[pr][pc] = 0;
       arcade.score += 10;
       arcade.pacDots--;
-      arcade.progresso = 1;
+      arcade.progresso = (arcade.pacDotsTotal || 0) - arcade.pacDots;
+      atualizarHUDNivelArcade();
     } else if (arcade.pacGrid[pr][pc] === 3) {
       arcade.pacGrid[pr][pc] = 0;
       arcade.score += 50;
       arcade.pacDots--;
-      arcade.pacFright = Math.max(120, 320 - arcade.nivel * 18);
+      arcade.progresso = (arcade.pacDotsTotal || 0) - arcade.pacDots;
+      arcade.pacFright = Math.max(140, Math.round(340 - 200 * curvaDificuldade(arcade.nivel)));
+      atualizarHUDNivelArcade();
     }
   }
 
   arcade.pacGhosts.forEach(function (g) {
+    if ((g.release || 0) > 0) {
+      g.release--;
+      /* enquanto espera, só sobe um pouco se já liberado parcialmente */
+      if (g.release > 0 && g.y > 12) {
+        /* fica quieto na casa */
+        return;
+      }
+    }
+
+    var ox = g.x, oy = g.y;
     pacEscolherGhost(g);
-    if (g.next) g.dir = g.next;
+    /* só aplica next no centro — pacMover já faz isso; não forçar dir todo frame */
     pacMover(g, velG);
+
+    if (Math.abs(g.x - ox) < 0.001 && Math.abs(g.y - oy) < 0.001) {
+      g.stuck = (g.stuck || 0) + 1;
+      if (g.stuck > 8) {
+        /* destravar: permite reverso e escolhe direção aleatória válida */
+        var opts = pacDirsOk(g.x, g.y, g.dir, true);
+        g.dir = opts[Math.floor(Math.random() * opts.length)];
+        g.next = g.dir;
+        g.x = pacCentro(g.x);
+        g.y = pacCentro(g.y);
+        g.stuck = 0;
+        pacMover(g, velG);
+      }
+    } else {
+      g.stuck = 0;
+    }
+
     if (Math.hypot(g.x - arcade.pac.x, g.y - arcade.pac.y) < 0.7) {
       if (arcade.pacFright > 0) {
         arcade.score += 200;
-        g.x = 11.5; g.y = 13.5;
+        g.x = 11.5; g.y = 13.5; g.dir = 'up'; g.next = 'up'; g.release = 40; g.stuck = 0;
       } else {
         arcade.pacVidas--;
         if (arcade.pacVidas <= 0) {
@@ -4828,21 +5156,22 @@ function tickPacman() {
           return;
         }
         arcade.pac.x = 11.5; arcade.pac.y = 19.5; arcade.pac.dir = 'left'; arcade.pacNext = 'left';
-        arcade.pacGhosts[0].x = 11.5; arcade.pacGhosts[0].y = 11.5;
-        arcade.pacGhosts[1].x = 10.5; arcade.pacGhosts[1].y = 13.5;
-        arcade.pacGhosts[2].x = 11.5; arcade.pacGhosts[2].y = 13.5;
-        arcade.pacGhosts[3].x = 12.5; arcade.pacGhosts[3].y = 13.5;
+        arcade.pacGhosts[0].x = 11.5; arcade.pacGhosts[0].y = 9.5; arcade.pacGhosts[0].dir = 'left'; arcade.pacGhosts[0].release = 0;
+        arcade.pacGhosts[1].x = 10.5; arcade.pacGhosts[1].y = 13.5; arcade.pacGhosts[1].dir = 'up'; arcade.pacGhosts[1].release = 60;
+        arcade.pacGhosts[2].x = 11.5; arcade.pacGhosts[2].y = 13.5; arcade.pacGhosts[2].dir = 'up'; arcade.pacGhosts[2].release = 120;
+        arcade.pacGhosts[3].x = 12.5; arcade.pacGhosts[3].y = 13.5; arcade.pacGhosts[3].dir = 'up'; arcade.pacGhosts[3].release = 180;
         arcade.pacFright = 0;
       }
     }
   });
 
-  if (arcade.pacDots <= 0) {
+  if (arcade.pacDots <= 0 && (arcade.pacDotsTotal || 0) > 0) {
     arcade.score += 500;
-    arcade.nivel++;
-    salvarNivelArcade('pacman', arcade.nivel);
-    initPacman();
-    atualizarHUDNivelArcade();
+    arcade.progresso = arcade.objetivo = arcade.pacDotsTotal;
+    /* evita loop: zera total para não reentrar no mesmo frame */
+    arcade.pacDotsTotal = 0;
+    salvarNivelArcade('pacman', Math.min(10, (arcade.nivel || 1) + 1));
+    subirNivelArcade();
   }
 
   drawPacman();
@@ -8190,12 +8519,164 @@ function toggleAssistente() {
   }
 }
 
+/* ================================================================
+   INDEX DE CONHECIMENTO — Formação de Professor
+   Aquecimento • Alongamento • Mobilidade • Mobilidade de Quadril
+   Fonte: ACSM, revisões sistemáticas, consenso Delphi, fisioterapia
+   ================================================================ */
+var INDEX_FORMACAO_PROFESSOR = {
+  definicoes: {
+    aquecimento: 'Preparação fisiológica e neuromuscular do corpo para o esforço. Foco: temperatura, circulação e sistema nervoso. Sempre ANTES do treino.',
+    alongamento: 'Técnica para aumentar o comprimento dos tecidos moles (músculos e tendões). Amplitude passiva. Ideal pós-treino ou sessão dedicada.',
+    flexibilidade: 'Capacidade PASSIVA de alcançar amplitude máxima. Resultado do alongamento.',
+    mobilidade: 'Capacidade ATIVA de mover a articulação com controle, força e estabilidade. Ideal no aquecimento ou treino específico.'
+  },
+  resumoChave: 'Alongamento = “esticar o músculo”. Mobilidade = “mover a articulação com controle e força”. É possível ser flexível e ter má mobilidade.',
+  aquecimento: {
+    objetivos: [
+      'Elevar temperatura muscular',
+      'Aumentar circulação e lubrificação articular',
+      'Ativar o sistema nervoso',
+      'Preparar o padrão de movimento do treino',
+      'Reduzir risco de lesão e melhorar desempenho'
+    ],
+    estrutura: [
+      '1. Geral (2–4 min): caminhada rápida, bike leve, polichinelos, pular corda',
+      '2. Específico / mobilidade dinâmica (4–8 min): movimentos que imitam o treino (ginga, meia-lua, negativa…)',
+      '3. Ativação (força): séries leves do exercício principal'
+    ],
+    evidencia: [
+      'Alongamento estático prolongado (>45–60 s) antes do treino pode reduzir força e potência temporariamente.',
+      'Alongamento dinâmico de 7–10 min melhora desempenho explosivo (salto, sprint).',
+      'Aquecimento bem estruturado melhora performance; prevenção de lesão fica mais clara com força e equilíbrio no protocolo.'
+    ]
+  },
+  alongamento: {
+    tipos: [
+      'Estático: segura a posição 15–60 s ou mais',
+      'Dinâmico: movimentos controlados pela amplitude (melhor no aquecimento)',
+      'PNF: contrai → relaxa → alonga (muito eficaz)',
+      'Balístico: balanços rápidos (não recomendado para a maioria)'
+    ],
+    recomendacoes: [
+      'Antes do treino: dinâmico (ou estático muito curto ≤ 30–45 s total por músculo)',
+      'Depois do treino ou sessão dedicada: estático ou PNF',
+      'Frequência para ganho: ≥ 2–3x por semana (ideal diário)',
+      'Dose crônica: 2–3 séries de 30–120 s por grupo muscular',
+      'Treino de força em amplitude completa também melhora flexibilidade'
+    ],
+    importante: 'Alongar NÃO é a principal estratégia de prevenção de lesões. Força e controle motor são mais relevantes.'
+  },
+  mobilidade: {
+    oQue: 'Mobilidade = amplitude ativa + estabilidade + controle neuromuscular.',
+    superior: [
+      'Ensina o sistema nervoso a usar a nova amplitude',
+      'Previne compensações (lombar, joelhos…)',
+      'Melhora a qualidade do movimento no dia a dia e no treino'
+    ],
+    principios: [
+      'Movimentos lentos e controlados (CARs – Controlled Articular Rotations)',
+      'Trabalhe a amplitude + controle no final (isometria ou força leve)',
+      'Respire de forma estável; evite forçar dor aguda',
+      'Prefira mobilidade ativa no aquecimento da capoeira'
+    ]
+  },
+  quadril: {
+    importancia: 'O quadril é central na capoeira (ginga, meia-lua, aú, negativa, rolê). Má mobilidade de quadril gera compensação na lombar e nos joelhos.',
+    focos: [
+      'Flexão e extensão controladas',
+      'Abdução / adução e rotações internas e externas',
+      'CARs de quadril em 90/90 ou em pé',
+      'Ponte glútea e ativação de glúteo médio antes da roda'
+    ],
+    dicaAula: 'No aquecimento de capoeira: 2–3 min geral + 4–6 min mobilidade de quadril e coluna (círculos, 90/90, world greatest stretch adaptado) + 2 min ativação (ponte, agachamento leve, ginga lenta).'
+  },
+  protocoloAulaCapoeira: [
+    '1. Aquecimento geral 2–4 min (deslocamentos, polichinelos leves)',
+    '2. Mobilidade dinâmica 4–6 min (quadril, tornozelo, coluna, ombros) — sem alongamento estático longo',
+    '3. Ginga e fundamentos em ritmo baixo 3–5 min',
+    '4. Parte principal (técnica / jogo / força)',
+    '5. Volta à calma: alongamento estático ou PNF 5–8 min (posteriores, adutores, peitoral, flexores de quadril)'
+  ]
+};
+
+function assistenteFormacaoProfessor(texto) {
+  var t = normalizar(texto);
+  var I = INDEX_FORMACAO_PROFESSOR;
+
+  /* só responde formação se a pergunta for do tema OU se for professor pedindo formação */
+  var temaFormacao = /aquec|along|flexib|mobilid|quadril|cars|pnf|protocolo.*aula|estrutura.*aula|preparar.*aula|formacao|formação.*professor|dar aula|aquecer|esticar|dinamico|estatico/.test(t);
+  if (!temaFormacao) return null;
+
+  if (/diferenca|vs|versus|x\s|o que e|definição|definicao|conceito/.test(t) && /aquec|along|mobil|flexib/.test(t)) {
+    return '📚 Definições (Formação de Professor)\n\n' +
+      '🔥 Aquecimento: ' + I.definicoes.aquecimento + '\n\n' +
+      '🧘 Alongamento: ' + I.definicoes.alongamento + '\n\n' +
+      '📏 Flexibilidade: ' + I.definicoes.flexibilidade + '\n\n' +
+      '🎯 Mobilidade: ' + I.definicoes.mobilidade + '\n\n' +
+      '💡 ' + I.resumoChave;
+  }
+
+  if (/aquec/.test(t)) {
+    return '🔥 Aquecimento — Formação de Professor\n\n' +
+      'Objetivos:\n• ' + I.aquecimento.objetivos.join('\n• ') + '\n\n' +
+      'Estrutura (5–12 min):\n' + I.aquecimento.estrutura.join('\n') + '\n\n' +
+      'Evidência:\n• ' + I.aquecimento.evidencia.join('\n• ') + '\n\n' +
+      'Na capoeira: evite alongamento estático longo antes da roda; prefira mobilidade dinâmica + ginga leve.';
+  }
+
+  if (/along|esticar|pnf|estatico|dinamico.*along/.test(t)) {
+    return '🧘 Alongamento — Formação de Professor\n\n' +
+      'Tipos:\n• ' + I.alongamento.tipos.join('\n• ') + '\n\n' +
+      'Recomendações (ACSM / Delphi):\n• ' + I.alongamento.recomendacoes.join('\n• ') + '\n\n' +
+      '⚠️ ' + I.alongamento.importante;
+  }
+
+  if (/quadril/.test(t)) {
+    return '🦴 Mobilidade de Quadril — Capoeira\n\n' +
+      I.quadril.importancia + '\n\n' +
+      'Focos:\n• ' + I.quadril.focos.join('\n• ') + '\n\n' +
+      '💡 Dica de aula:\n' + I.quadril.dicaAula;
+  }
+
+  if (/mobilid|cars|controle motor|amplitude ativa/.test(t)) {
+    return '🎯 Mobilidade — Formação de Professor\n\n' +
+      I.mobilidade.oQue + '\n\n' +
+      'Por que é superior ao alongamento isolado:\n• ' + I.mobilidade.superior.join('\n• ') + '\n\n' +
+      'Princípios:\n• ' + I.mobilidade.principios.join('\n• ');
+  }
+
+  if (/protocolo|estrutura.*aula|como montar|preparar.*aula|inicio.*aula|comecar.*aula/.test(t)) {
+    return '📋 Protocolo de aula de Capoeira (aquecimento → volta à calma)\n\n' +
+      I.protocoloAulaCapoeira.join('\n') + '\n\n' +
+      'Pergunte também: "aquecimento", "alongamento", "mobilidade" ou "quadril" para aprofundar.';
+  }
+
+  if (/formacao|formação.*professor|index|conhecimento|ajuda.*professor|menu formacao/.test(t)) {
+    return '🎓 Formação de Professor — Index de Conhecimento\n\n' +
+      'Temas disponíveis:\n' +
+      '1. Definições (aquecimento × alongamento × mobilidade)\n' +
+      '2. Aquecimento (estrutura 5–12 min + evidência)\n' +
+      '3. Alongamento (tipos, ACSM, PNF)\n' +
+      '4. Mobilidade e CARs\n' +
+      '5. Mobilidade de quadril na capoeira\n' +
+      '6. Protocolo completo de aula\n\n' +
+      'Exemplos: "como aquecer a turma?", "alongamento antes ou depois?", "mobilidade de quadril", "protocolo de aula"';
+  }
+
+  /* fallback genérico do tema */
+  return '🎓 Formação de Professor\n\n' +
+    I.resumoChave + '\n\n' +
+    'Pergunte de forma mais específica:\n' +
+    '• "aquecimento"\n• "alongamento"\n• "mobilidade"\n• "quadril"\n• "protocolo de aula"\n• "diferença alongamento e mobilidade"';
+}
+
 function assistenteMensagemBoasVindas() {
   var aluno = alunoLogado();
   var nome = aluno ? (aluno.apelido || aluno.nome) : '';
   var saudacao = nome ? ('Olá, ' + nome + '! ') : 'Olá! ';
   var extraProfessor = assistenteEhProfessor()
-    ? '\n\n👨‍🏫 Modo equipe: digite "avaliação de [nome do aluno]" ou "ficha de [nome]" que eu abro a ficha dele direto pra você lançar ou corrigir a nota.'
+    ? '\n\n👨‍🏫 Modo equipe:\n• "avaliação de [nome]" ou "ficha de [nome]" — abre a ficha\n• "formação" / "aquecimento" / "mobilidade" / "protocolo de aula" — Index de Formação de Professor'
     : '';
   return saudacao + 'Sou o Assistente Capoeira.\n\n' +
     'Posso ajudar com:\n' +
@@ -8203,7 +8684,8 @@ function assistenteMensagemBoasVindas() {
     '• Status do seu check-in\n' +
     '• Como usar o app (check-in, pedidos de treino, certificados)\n' +
     '• Sua graduação, avaliações e presenças\n' +
-    '• Avisos do professor' + extraProfessor + '\n\n' +
+    '• Avisos do professor\n' +
+    '• Formação de professor (aquecimento, alongamento, mobilidade)' + extraProfessor + '\n\n' +
     'Toque em um atalho ou digite sua pergunta.';
 }
 
@@ -8259,6 +8741,10 @@ function assistenteProcessar(texto) {
   var t = normalizar(texto);
   var aluno = alunoLogado();
 
+  /* --- Formação de Professor (Index científico) --- */
+  var respForm = assistenteFormacaoProfessor(texto);
+  if (respForm) return respForm;
+
   /* --- atalhos e intenções --- */
   if (/ajuda|o que voce faz|comandos|menu/.test(t)) {
     return 'Posso responder sobre:\n\n' +
@@ -8271,8 +8757,9 @@ function assistenteProcessar(texto) {
       '7. Avisos do professor\n' +
       '8. Polos / locais de treino\n' +
       '9. Falar com o professor (mensagem privada)\n' +
-      '10. Feedback da aula e pergunta da semana\n\n' +
-      'Exemplos: "qual a próxima aula?", "falar com o professor", "pergunta da semana"';
+      '10. Feedback da aula e pergunta da semana\n' +
+      '11. Formação de professor (aquecimento, alongamento, mobilidade, quadril, protocolo de aula)\n\n' +
+      'Exemplos: "qual a próxima aula?", "formação", "aquecimento", "mobilidade de quadril"';
   }
 
   if (/proxima aula|aula de hoje|quando e a aula|horario de hoje/.test(t)) {
