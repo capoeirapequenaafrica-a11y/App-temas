@@ -662,6 +662,7 @@ footer a { color: var(--accent-blue); }
       <input id="nomeJogadorCorrida" placeholder="Ex: Formiga">
       <div id="boxNiveisArcade" style="margin:8px 0;"></div>
       <div class="grade-2" style="margin-top:8px;">
+        <button class="btn btn-gold" onclick="abrirJogoArcade('pacman')"><i class="fas fa-ghost"></i> Pac-Man</button>
         <button class="btn btn-secondary" onclick="abrirJogoArcade('snake')"><i class="fas fa-dragon"></i> Minhoca</button>
         <button class="btn btn-gold" onclick="abrirJogoArcade('tetris')"><i class="fas fa-th"></i> Tetris</button>
         <button class="btn btn-secondary" onclick="abrirJogoArcade('corrida')"><i class="fas fa-car"></i> Corrida</button>
@@ -832,6 +833,7 @@ footer a { color: var(--accent-blue); }
       </div>
     </div>
     <div class="arcade-topbar-actions">
+      <button type="button" class="arcade-tech-btn" id="btnArcadePause" onclick="togglePauseArcade()" title="Pausar"><i class="fas fa-pause" id="iconArcadePause"></i></button>
       <button type="button" class="arcade-tech-btn" id="btnArcadeExpand" onclick="toggleArcadeTelaGrande()" title="Aumentar tela"><i class="fas fa-expand"></i></button>
       <button type="button" class="arcade-tech-btn arcade-tech-btn-off" onclick="fecharJogoArcade()" title="Fechar"><i class="fas fa-times"></i></button>
     </div>
@@ -840,7 +842,11 @@ footer a { color: var(--accent-blue); }
   <div id="arcadeCanvasWrap" class="arcade-canvas-wrap-tech">
     <div id="arcadeCanvasFrame" class="arcade-canvas-frame-tech">
       <div class="arcade-scanlines" aria-hidden="true"></div>
-      <canvas id="arcadeCanvas" width="320" height="400" style="display:block; background:#03080c; border-radius:10px; max-width:min(92vw, 340px); max-height:min(48vh, 400px); width:auto; height:auto; touch-action:none; position:relative; z-index:1;"></canvas>
+      <canvas id="arcadeCanvas" width="320" height="400" style="display:block; background:#03080c; border-radius:10px; max-width:min(96vw, 360px); max-height:min(58vh, 440px); width:auto; height:auto; touch-action:none; position:relative; z-index:1;"></canvas>
+      <div id="arcadePauseOverlay" class="arcade-pause-overlay" style="display:none;" onclick="togglePauseArcade()">
+        <span><i class="fas fa-pause"></i> PAUSADO</span>
+        <button type="button" class="arcade-pause-resume-btn" onclick="event.stopPropagation();togglePauseArcade()"><i class="fas fa-play"></i> Continuar</button>
+      </div>
     </div>
   </div>
 
@@ -879,12 +885,57 @@ footer a { color: var(--accent-blue); }
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: max(10px, env(safe-area-inset-top)) 12px max(14px, env(safe-area-inset-bottom));
+  padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,230,118,0.12), transparent 55%),
     radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,180,255,0.1), transparent 50%),
     linear-gradient(180deg, #061018 0%, #020508 100%);
+  /* isola toques do app por baixo — evita cliques em abas/assistente durante o jogo */
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.arcade-pause-overlay {
+  position: absolute;
+  inset: 3px;
+  border-radius: 12px;
+  z-index: 6;
+  background: rgba(2, 8, 12, 0.82);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #00e676;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-shadow: 0 0 12px rgba(0,230,118,0.45);
+  pointer-events: auto;
+}
+.arcade-pause-overlay.visivel { display: flex; }
+.arcade-pause-resume-btn {
+  background: linear-gradient(135deg, #00c853, #00a844);
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 26px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0,200,83,0.4);
+  cursor: pointer;
+}
+.arcade-pause-resume-btn:active { transform: scale(0.96); }
+.arcade-tech-btn.arcade-paused {
+  background: rgba(0, 230, 118, 0.3) !important;
+  border-color: rgba(0, 230, 118, 0.7) !important;
+  color: #00e676 !important;
 }
 .arcade-topbar-tech {
   width: 100%;
@@ -1001,15 +1052,16 @@ footer a { color: var(--accent-blue); }
   opacity: 0.35;
 }
 
-/* Barra de controles — dois polegares, transparente */
+/* Barra de controles — compacta para não roubar espaço do canvas */
 .arcade-controls-bar {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 12px;
-  padding: 4px 8px 2px;
+  gap: 10px;
+  padding: 2px 6px 0;
+  flex-shrink: 0;
   pointer-events: none; /* só os botões recebem toque */
   touch-action: none;
 }
@@ -1020,9 +1072,9 @@ footer a { color: var(--accent-blue); }
 }
 .arcade-dpad {
   display: grid;
-  grid-template-columns: 62px 62px 62px;
-  grid-template-rows: 62px 62px 62px;
-  gap: 5px;
+  grid-template-columns: 52px 52px 52px;
+  grid-template-rows: 52px 52px 52px;
+  gap: 4px;
   grid-template-areas:
     ". up ."
     "left . right"
@@ -1037,28 +1089,28 @@ footer a { color: var(--accent-blue); }
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  min-height: 130px;
+  min-height: 100px;
   flex-shrink: 0;
 }
 .arcade-acoes-col {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
 }
-/* Botões glass / transparentes */
+/* Botões glass / transparentes — menores, não cobrem o jogo */
 .arcade-btn {
-  width: 62px;
-  height: 62px;
-  border: 2px solid rgba(255,255,255,0.35);
+  width: 52px;
+  height: 52px;
+  border: 2px solid rgba(255,255,255,0.4);
   border-radius: 50%;
-  background: rgba(33, 150, 243, 0.28);
+  background: rgba(33, 150, 243, 0.32);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: rgba(255,255,255,0.95);
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.25);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1071,15 +1123,15 @@ footer a { color: var(--accent-blue); }
 }
 .arcade-btn:active,
 .arcade-btn.arcade-pressed {
-  background: rgba(33, 150, 243, 0.55);
-  transform: scale(0.94);
-  border-color: rgba(255,255,255,0.6);
+  background: rgba(33, 150, 243, 0.6);
+  transform: scale(0.92);
+  border-color: rgba(255,255,255,0.7);
 }
 .arcade-btn-gold, .arcade-btn-green {
-  width: 88px;
-  height: 88px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   letter-spacing: 0.02em;
 }
 .arcade-btn-gold {
@@ -1101,35 +1153,36 @@ footer a { color: var(--accent-blue); }
   background: rgba(0, 230, 118, 0.55);
 }
 .arcade-btn-jump {
-  width: 96px !important;
-  height: 96px !important;
-  font-size: 0.95rem !important;
+  width: 76px !important;
+  height: 76px !important;
+  font-size: 0.85rem !important;
 }
 .arcade-btn-side {
-  width: 72px !important;
-  height: 72px !important;
-  background: rgba(144, 202, 249, 0.25) !important;
-  border-color: rgba(255,255,255,0.35) !important;
+  width: 56px !important;
+  height: 56px !important;
+  background: rgba(144, 202, 249, 0.28) !important;
+  border-color: rgba(255,255,255,0.4) !important;
 }
 .arcade-btn-side:active,
 .arcade-btn-side.arcade-pressed {
-  background: rgba(144, 202, 249, 0.5) !important;
+  background: rgba(144, 202, 249, 0.55) !important;
 }
 .arcade-dica {
   text-align: center;
-  margin: 6px 0 0;
-  font-size: 0.68rem;
+  margin: 4px 0 0;
+  font-size: 0.65rem;
   color: rgba(144, 164, 174, 0.9);
   pointer-events: none;
+  flex-shrink: 0;
 }
 @media (max-width: 360px) {
   .arcade-dpad {
-    grid-template-columns: 54px 54px 54px;
-    grid-template-rows: 54px 54px 54px;
+    grid-template-columns: 46px 46px 46px;
+    grid-template-rows: 46px 46px 46px;
   }
-  .arcade-btn { width: 54px; height: 54px; }
-  .arcade-btn-gold, .arcade-btn-green { width: 76px; height: 76px; }
-  .arcade-btn-jump { width: 84px !important; height: 84px !important; }
+  .arcade-btn { width: 46px; height: 46px; }
+  .arcade-btn-gold, .arcade-btn-green { width: 64px; height: 64px; }
+  .arcade-btn-jump { width: 68px !important; height: 68px !important; }
 }
 </style>
 
@@ -1191,7 +1244,7 @@ if (window.caches && caches.keys) {
 /* ---------------------------------------------------------------
    0. CONSTANTES
    --------------------------------------------------------------- */
-var VERSAO_APP = 'v87';
+var VERSAO_APP = 'v88';
 var CHAVE_LOCAL = 'uc_db_v87';
 var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v87';
 
@@ -2393,6 +2446,7 @@ function renderSeletorNiveisArcade() {
   var box = $('boxNiveisArcade');
   if (!box) return;
   var jogos = [
+    { id: 'pacman', nome: 'Pac-Man' },
     { id: 'snake', nome: 'Minhoca' },
     { id: 'tetris', nome: 'Tetris' },
     { id: 'corrida', nome: 'Corrida' },
@@ -2494,6 +2548,7 @@ function registrarPontosJogo(nome, pontos, jogo) {
 /* ===== Desafios de jogos entre alunos ===== */
 var desafioAtivoId = null;
 var JOGOS_DESAFIO = [
+  { id: 'pacman', nome: 'Pac-Man' },
   { id: 'snake', nome: 'Minhoca' },
   { id: 'tetris', nome: 'Tetris' },
   { id: 'corrida', nome: 'Corrida' },
@@ -2883,6 +2938,14 @@ function configNivelArcade(tipo, nivel) {
       label: 'Pegue ' + (7 + nivel * 3) + ' moedas / bandeira'
     };
   }
+  if (tipo === 'pacman') {
+    return {
+      nivel: nivel,
+      objetivo: 1,
+      velocidadeMs: Math.max(28, 55 - nivel * 2),
+      label: 'Coma todas as pastilhas · Nv.' + nivel
+    };
+  }
   /* corrida */
   return {
     nivel: nivel,
@@ -2956,7 +3019,7 @@ function subirNivelArcade() {
   var cfg = configNivelArcade(arcade.tipo, novo);
   arcade.objetivo = cfg.objetivo;
   if (arcade.timer) clearInterval(arcade.timer);
-  var gamesComRampa2 = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe'];
+  var gamesComRampa2 = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman'];
   arcade.rampaAtiva = gamesComRampa2.indexOf(arcade.tipo) >= 0;
   arcade.velAlvo = cfg.velocidadeMs;
   arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 1.6) : cfg.velocidadeMs;
@@ -3008,9 +3071,9 @@ function toggleArcadeTelaGrande() {
     if (btn) btn.innerHTML = '<i class="fas fa-compress"></i>';
     mostrarToast('Tela ampliada');
   } else {
-    wrap.style.maxWidth = '380px';
-    canvas.style.maxWidth = 'min(92vw, 340px)';
-    canvas.style.maxHeight = 'min(48vh, 400px)';
+    wrap.style.maxWidth = '400px';
+    canvas.style.maxWidth = 'min(96vw, 360px)';
+    canvas.style.maxHeight = 'min(58vh, 440px)';
     if (btn) btn.innerHTML = '<i class="fas fa-expand"></i>';
     mostrarToast('Tela normal');
   }
@@ -3028,10 +3091,16 @@ function abrirJogoArcade(tipo, nivelInicio) {
   var btn0 = $('btnArcadeExpand');
   if (wrap0) wrap0.style.maxWidth = '380px';
   if (canvas0) {
-    canvas0.style.maxWidth = 'min(92vw, 340px)';
-    canvas0.style.maxHeight = 'min(48vh, 400px)';
+    canvas0.style.maxWidth = 'min(96vw, 360px)';
+    canvas0.style.maxHeight = 'min(58vh, 440px)';
   }
   if (btn0) btn0.innerHTML = '<i class="fas fa-expand"></i>';
+  /* esconde assistente e dicas para não interferir no jogo */
+  try {
+    var fab = $('assistenteFab'); if (fab) fab.style.display = 'none';
+    var painel = $('assistentePainel'); if (painel) painel.classList.remove('aberto');
+    var dica = $('dicaAssistentePrimeiroAcesso'); if (dica && dica.style.display !== 'none') { dica.dataset.wasShown = '1'; dica.style.display = 'none'; }
+  } catch (e) {}
   var maxLib = nivelMaxDesbloqueado(tipo);
   var nv = Math.max(1, Math.min(maxLib, Number(nivelInicio) || 1));
   arcade.tipo = tipo;
@@ -3049,10 +3118,11 @@ function abrirJogoArcade(tipo, nivelInicio) {
   var ov = $('arcadeOverlay');
   if (ov) ov.style.display = 'flex';
   try { document.body.style.overflow = 'hidden'; } catch (e) {}
-  var titulos = { snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', mario: 'Aventura' };
+  var titulos = { pacman: 'Pac-Man', snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', mario: 'Aventura' };
   if ($('arcadeTitulo')) $('arcadeTitulo').textContent = (titulos[tipo] || 'Jogo') + ' · Nv.' + nv;
   if ($('arcadeDica')) {
     var dicas = {
+      pacman: '◀ ▶ ▲ ▼ fuja dos fantasmas · coma pastilhas e power pellets',
       tetris: '◀ ▶ um toque vai até a borda · ▼ queda · Girar',
       corrida: 'Esquerda / Direita para desviar dos carros',
       snake: 'Dirija a minhoca · coma as maçãs',
@@ -3068,9 +3138,9 @@ function abrirJogoArcade(tipo, nivelInicio) {
   var acoesP = $('arcadeAcoesPulo');
   if (acoesP) acoesP.style.display = (tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario') ? 'flex' : 'none';
   var acoesG = $('arcadeAcoesGeral');
-  /* snake, corrida, quebra: também usam polegar direito (◀ ▶) */
+  /* snake, corrida, quebra, pacman: também usam polegar direito (◀ ▶) */
   if (acoesG) {
-    acoesG.style.display = (tipo === 'snake' || tipo === 'corrida' || tipo === 'quebra') ? 'flex' : 'none';
+    acoesG.style.display = (tipo === 'snake' || tipo === 'corrida' || tipo === 'quebra' || tipo === 'pacman') ? 'flex' : 'none';
   }
   arcade.canvas = $('arcadeCanvas');
   if (!arcade.canvas) return;
@@ -3080,6 +3150,9 @@ function abrirJogoArcade(tipo, nivelInicio) {
   } else if (tipo === 'tetris') {
     arcade.canvas.width = arcade.tCols * arcade.tCell;
     arcade.canvas.height = arcade.tRows * arcade.tCell;
+  } else if (tipo === 'pacman') {
+    arcade.canvas.width = 336;
+    arcade.canvas.height = 364;
   } else if (tipo === 'corrida' || tipo === 'quebra' || tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario') {
     arcade.canvas.width = 280;
     arcade.canvas.height = 400;
@@ -3092,8 +3165,9 @@ function abrirJogoArcade(tipo, nivelInicio) {
   else if (tipo === 'pulo') initPulo();
   else if (tipo === 'surfe') initSurfe();
   else if (tipo === 'mario') initMario();
+  else if (tipo === 'pacman') initPacman();
   if (arcade.timer) clearInterval(arcade.timer);
-  var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe'];
+  var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman'];
   arcade.rampaAtiva = gamesComRampa.indexOf(tipo) >= 0;
   arcade.velAlvo = cfg.velocidadeMs;
   arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 2.2) : cfg.velocidadeMs;
@@ -3155,16 +3229,39 @@ function instalarControlesArcadeTouch() {
   });
 }
 
+function togglePauseArcade() {
+  if (!arcade.rodando) return;
+  arcade.pausado = !arcade.pausado;
+  var icon = $('iconArcadePause');
+  var btn = $('btnArcadePause');
+  var ov = $('arcadePauseOverlay');
+  if (icon) icon.className = arcade.pausado ? 'fas fa-play' : 'fas fa-pause';
+  if (btn) btn.classList.toggle('arcade-paused', !!arcade.pausado);
+  if (ov) {
+    if (arcade.pausado) ov.classList.add('visivel');
+    else ov.classList.remove('visivel');
+    ov.style.display = arcade.pausado ? 'flex' : 'none';
+  }
+}
+
 function fecharJogoArcade() {
   var scoreFinal = arcade.score;
   var tipo = arcade.tipo;
   var nivelFinal = arcade.nivel || 1;
   arcade.rodando = false;
+  arcade.pausado = false;
   if (arcade.timer) { clearInterval(arcade.timer); arcade.timer = null; }
   window.removeEventListener('keydown', arcadeKeyHandler);
   var ov = $('arcadeOverlay');
   if (ov) ov.style.display = 'none';
+  var pov = $('arcadePauseOverlay');
+  if (pov) { pov.classList.remove('visivel'); pov.style.display = 'none'; }
   try { document.body.style.overflow = ''; } catch (e) {}
+  /* restaura assistente e UI do app */
+  try {
+    var fab = $('assistenteFab'); if (fab) fab.style.display = '';
+    var dica = $('dicaAssistentePrimeiroAcesso'); if (dica && dica.dataset.wasShown) dica.style.display = 'block';
+  } catch (e) {}
   if (scoreFinal > 0 && tipo) {
     var pts = scoreFinal;
     if (tipo === 'snake') pts = Math.round(scoreFinal * 3);
@@ -3173,6 +3270,7 @@ function fecharJogoArcade() {
     else if (tipo === 'pulo') pts = Math.round(scoreFinal * 2);
     else if (tipo === 'surfe') pts = Math.round(scoreFinal * 1.8);
     else if (tipo === 'mario') pts = Math.round(scoreFinal * 2);
+    else if (tipo === 'pacman') pts = Math.round(scoreFinal * 1.2);
     /* bônus por nível alcançado (grátis) */
     pts = Math.round(pts * (1 + (nivelFinal - 1) * 0.12));
     pts = Math.max(5, Math.min(800, pts));
@@ -3219,16 +3317,18 @@ function instalarSwipeArcade(canvas) {
 function arcadeKeyHandler(e) {
   if (!arcade.rodando) return;
   var k = e.key;
+  if (k === 'p' || k === 'P') { togglePauseArcade(); e.preventDefault(); return; }
+  if (k === 'Escape') { fecharJogoArcade(); e.preventDefault(); return; }
+  if (arcade.pausado) return; /* só P e Esc funcionam pausado */
   if (k === 'ArrowUp' || k === 'w' || k === 'W') { arcadeDir('up'); e.preventDefault(); }
   else if (k === 'ArrowDown' || k === 's' || k === 'S') { arcadeDir('down'); e.preventDefault(); }
   else if (k === 'ArrowLeft' || k === 'a' || k === 'A') { arcadeDir('left'); e.preventDefault(); }
   else if (k === 'ArrowRight' || k === 'd' || k === 'D') { arcadeDir('right'); e.preventDefault(); }
   else if (k === ' ' || k === 'Enter') {
     if (arcade.tipo === 'tetris') arcadeAcao('rotate');
-    else if (arcade.tipo === 'pulo') arcadeAcao('jump');
+    else if (arcade.tipo === 'pulo' || arcade.tipo === 'surfe' || arcade.tipo === 'mario') arcadeAcao('jump');
     e.preventDefault();
   }
-  else if (k === 'Escape') { fecharJogoArcade(); }
 }
 
 function arcadeDir(d) {
@@ -3261,6 +3361,8 @@ function arcadeDir(d) {
     if (d === 'left') arcade.marioVx = -4.2;
     else if (d === 'right') arcade.marioVx = 4.2;
     else if (d === 'up') marioJump();
+  } else if (arcade.tipo === 'pacman') {
+    if (d === 'left' || d === 'right' || d === 'up' || d === 'down') arcade.pacNext = d;
   }
 }
 
@@ -3297,6 +3399,7 @@ function arcadeLoop() {
   else if (arcade.tipo === 'pulo') tickPulo();
   else if (arcade.tipo === 'surfe') tickSurfe();
   else if (arcade.tipo === 'mario') tickMario();
+  else if (arcade.tipo === 'pacman') tickPacman();
   if ($('arcadePlacar')) $('arcadePlacar').textContent = String(arcade.score);
 }
 
@@ -4525,6 +4628,313 @@ function drawMario() {
   ctx.arc(m.x - cam + m.w / 2, m.y - 4, 7, 0, Math.PI * 2);
   ctx.fill();
   desenharHUDArcade(ctx, w, 'AVENTURA');
+}
+
+/* =========================================================
+   PAC-MAN — labirinto clássico, 4 fantasmas, power pellets
+   (adicionado sem alterar os demais jogos)
+   ========================================================= */
+var PAC_MAPA = [
+  '111111111111111111111111',
+  '122222222221122222222221',
+  '121111211121121112111121',
+  '131111211121121112111131',
+  '122222222222222222222221',
+  '121111211111111112111121',
+  '122222211122211122222221',
+  '111111211121121112111111',
+  '000001211121121112100000',
+  '111101211122222112101111',
+  '000001211100001112100000',
+  '000001210011110012100000',
+  '111101210100001012101111',
+  '000001222100001222100000',
+  '000001210100001012100000',
+  '111101210011110012101111',
+  '000001211100001112100000',
+  '111101211122222112101111',
+  '000001211121121112100000',
+  '111111211121121112111111',
+  '122222222222222222222221',
+  '121111211111111112111121',
+  '132221211122211121222231',
+  '111121211121121112121111',
+  '122222222221122222222221',
+  '111111111111111111111111'
+];
+
+function initPacman() {
+  var TILE = 14;
+  arcade.pacTile = TILE;
+  arcade.pacCols = 24;
+  arcade.pacRows = 26;
+  arcade.pacGrid = PAC_MAPA.map(function (row) { return row.split('').map(Number); });
+  arcade.pacDots = 0;
+  arcade.pacGrid.forEach(function (row) {
+    row.forEach(function (c) { if (c === 2 || c === 3) arcade.pacDots++; });
+  });
+  arcade.pac = { x: 11.5, y: 19.5, dir: 'left', mouth: 0 };
+  arcade.pacNext = 'left';
+  arcade.pacFright = 0;
+  arcade.pacFrame = 0;
+  arcade.pacVidas = 3;
+  arcade.pacGhosts = [
+    { x: 11.5, y: 11.5, dir: 'left', color: '#ff0000', name: 'Blinky', home: { x: 21, y: 1 } },
+    { x: 10.5, y: 13.5, dir: 'up', color: '#00ffff', name: 'Inky', home: { x: 2, y: 1 } },
+    { x: 11.5, y: 13.5, dir: 'down', color: '#ffb8ff', name: 'Pinky', home: { x: 2, y: 24 } },
+    { x: 12.5, y: 13.5, dir: 'up', color: '#ffb852', name: 'Clyde', home: { x: 21, y: 24 } }
+  ];
+  arcade.progresso = 0;
+  arcade.objetivo = 1;
+  drawPacman();
+}
+
+function pacCelula(x, y) {
+  var c = Math.floor(x), r = Math.floor(y);
+  if (r < 0 || r >= arcade.pacRows) return 1;
+  if (c < 0) return arcade.pacGrid[r][arcade.pacCols - 1];
+  if (c >= arcade.pacCols) return arcade.pacGrid[r][0];
+  return arcade.pacGrid[r][c];
+}
+
+function pacPode(x, y) { return pacCelula(x, y) !== 1; }
+
+function pacCentro(v) { return Math.floor(v) + 0.5; }
+
+function pacMover(ent, vel) {
+  var nx = ent.x, ny = ent.y;
+  if (ent.dir === 'left') nx -= vel;
+  if (ent.dir === 'right') nx += vel;
+  if (ent.dir === 'up') ny -= vel;
+  if (ent.dir === 'down') ny += vel;
+  if (nx < -0.5) nx = arcade.pacCols - 0.5;
+  if (nx > arcade.pacCols - 0.5) nx = -0.5;
+  var noCentro = Math.abs(ent.x - pacCentro(ent.x)) < 0.14 && Math.abs(ent.y - pacCentro(ent.y)) < 0.14;
+  if (noCentro && ent.next && ent.next !== ent.dir) {
+    var tx = pacCentro(ent.x), ty = pacCentro(ent.y);
+    var ox = tx, oy = ty;
+    if (ent.next === 'left') ox -= 1;
+    if (ent.next === 'right') ox += 1;
+    if (ent.next === 'up') oy -= 1;
+    if (ent.next === 'down') oy += 1;
+    if (pacPode(ox, oy)) {
+      ent.dir = ent.next;
+      ent.x = tx; ent.y = ty;
+      return;
+    }
+  }
+  var testX = nx, testY = ny;
+  if (ent.dir === 'left') testX = nx - 0.4;
+  if (ent.dir === 'right') testX = nx + 0.4;
+  if (ent.dir === 'up') testY = ny - 0.4;
+  if (ent.dir === 'down') testY = ny + 0.4;
+  if (pacPode(testX, testY)) {
+    ent.x = nx; ent.y = ny;
+  } else {
+    if (ent.dir === 'left' || ent.dir === 'right') ent.x = pacCentro(ent.x);
+    if (ent.dir === 'up' || ent.dir === 'down') ent.y = pacCentro(ent.y);
+  }
+}
+
+function pacDirsOk(gx, gy, dirAtual) {
+  var opostos = { left: 'right', right: 'left', up: 'down', down: 'up' };
+  var dirs = ['up', 'left', 'down', 'right'];
+  var ok = [];
+  dirs.forEach(function (d) {
+    if (d === opostos[dirAtual]) return;
+    var tx = Math.floor(gx) + 0.5, ty = Math.floor(gy) + 0.5;
+    if (d === 'left') tx -= 1;
+    if (d === 'right') tx += 1;
+    if (d === 'up') ty -= 1;
+    if (d === 'down') ty += 1;
+    if (pacPode(tx, ty)) ok.push(d);
+  });
+  if (!ok.length) ok.push(opostos[dirAtual] || 'left');
+  return ok;
+}
+
+function pacEscolherGhost(g) {
+  var noCentro = Math.abs(g.x - pacCentro(g.x)) < 0.16 && Math.abs(g.y - pacCentro(g.y)) < 0.16;
+  if (!noCentro) return;
+  var alvoX = arcade.pac.x, alvoY = arcade.pac.y;
+  if (arcade.pacFright > 0) {
+    var opts = pacDirsOk(g.x, g.y, g.dir);
+    g.next = opts[Math.floor(Math.random() * opts.length)];
+    return;
+  }
+  if (g.name === 'Pinky') {
+    if (arcade.pac.dir === 'left') alvoX -= 4;
+    if (arcade.pac.dir === 'right') alvoX += 4;
+    if (arcade.pac.dir === 'up') alvoY -= 4;
+    if (arcade.pac.dir === 'down') alvoY += 4;
+  }
+  if (g.name === 'Clyde' && Math.hypot(g.x - arcade.pac.x, g.y - arcade.pac.y) < 8) {
+    alvoX = g.home.x; alvoY = g.home.y;
+  }
+  if (g.name === 'Inky') {
+    alvoX = arcade.pac.x + (arcade.pac.x - arcade.pacGhosts[0].x);
+    alvoY = arcade.pac.y + (arcade.pac.y - arcade.pacGhosts[0].y);
+  }
+  var opts = pacDirsOk(g.x, g.y, g.dir);
+  var best = opts[0], bestD = 1e9;
+  opts.forEach(function (d) {
+    var tx = Math.floor(g.x) + 0.5, ty = Math.floor(g.y) + 0.5;
+    if (d === 'left') tx -= 1; if (d === 'right') tx += 1;
+    if (d === 'up') ty -= 1; if (d === 'down') ty += 1;
+    var dist = Math.hypot(tx - alvoX, ty - alvoY);
+    if (dist < bestD) { bestD = dist; best = d; }
+  });
+  g.next = best;
+}
+
+function tickPacman() {
+  if (!arcade.rodando || arcade.pausado) return;
+  arcade.pacFrame++;
+  arcade.pac.mouth += 0.35;
+  if (arcade.pacNext) arcade.pac.next = arcade.pacNext;
+  var velP = 0.13 + (arcade.nivel - 1) * 0.006;
+  var velG = 0.10 + (arcade.nivel - 1) * 0.007;
+  if (arcade.pacFright > 0) { velG *= 0.55; arcade.pacFright--; }
+
+  pacMover(arcade.pac, velP);
+
+  var pc = Math.floor(arcade.pac.x), pr = Math.floor(arcade.pac.y);
+  if (pr >= 0 && pr < arcade.pacRows && pc >= 0 && pc < arcade.pacCols) {
+    if (arcade.pacGrid[pr][pc] === 2) {
+      arcade.pacGrid[pr][pc] = 0;
+      arcade.score += 10;
+      arcade.pacDots--;
+      arcade.progresso = 1;
+    } else if (arcade.pacGrid[pr][pc] === 3) {
+      arcade.pacGrid[pr][pc] = 0;
+      arcade.score += 50;
+      arcade.pacDots--;
+      arcade.pacFright = Math.max(120, 320 - arcade.nivel * 18);
+    }
+  }
+
+  arcade.pacGhosts.forEach(function (g) {
+    pacEscolherGhost(g);
+    if (g.next) g.dir = g.next;
+    pacMover(g, velG);
+    if (Math.hypot(g.x - arcade.pac.x, g.y - arcade.pac.y) < 0.7) {
+      if (arcade.pacFright > 0) {
+        arcade.score += 200;
+        g.x = 11.5; g.y = 13.5;
+      } else {
+        arcade.pacVidas--;
+        if (arcade.pacVidas <= 0) {
+          gameOverArcade();
+          return;
+        }
+        arcade.pac.x = 11.5; arcade.pac.y = 19.5; arcade.pac.dir = 'left'; arcade.pacNext = 'left';
+        arcade.pacGhosts[0].x = 11.5; arcade.pacGhosts[0].y = 11.5;
+        arcade.pacGhosts[1].x = 10.5; arcade.pacGhosts[1].y = 13.5;
+        arcade.pacGhosts[2].x = 11.5; arcade.pacGhosts[2].y = 13.5;
+        arcade.pacGhosts[3].x = 12.5; arcade.pacGhosts[3].y = 13.5;
+        arcade.pacFright = 0;
+      }
+    }
+  });
+
+  if (arcade.pacDots <= 0) {
+    arcade.score += 500;
+    arcade.nivel++;
+    salvarNivelArcade('pacman', arcade.nivel);
+    initPacman();
+    atualizarHUDNivelArcade();
+  }
+
+  drawPacman();
+}
+
+function drawPacman() {
+  var ctx = arcade.ctx;
+  if (!ctx) return;
+  var TILE = arcade.pacTile;
+  var COLS = arcade.pacCols, ROWS = arcade.pacRows;
+  ctx.fillStyle = '#03080c';
+  ctx.fillRect(0, 0, arcade.canvas.width, arcade.canvas.height);
+
+  for (var r = 0; r < ROWS; r++) {
+    for (var c = 0; c < COLS; c++) {
+      var cell = arcade.pacGrid[r][c];
+      if (cell === 1) {
+        ctx.fillStyle = '#1a3a6e';
+        ctx.fillRect(c * TILE + 1, r * TILE + 1, TILE - 2, TILE - 2);
+        ctx.strokeStyle = '#3d7cff';
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(c * TILE + 1.5, r * TILE + 1.5, TILE - 3, TILE - 3);
+      } else if (cell === 2) {
+        ctx.fillStyle = '#ffcc80';
+        ctx.beginPath();
+        ctx.arc(c * TILE + TILE / 2, r * TILE + TILE / 2, 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (cell === 3) {
+        var pulse = 4 + Math.sin(arcade.pacFrame * 0.15) * 1.2;
+        ctx.fillStyle = '#fff8e1';
+        ctx.shadowColor = '#ffeb3b';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(c * TILE + TILE / 2, r * TILE + TILE / 2, pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+
+  /* Pac-Man */
+  var px = arcade.pac.x * TILE, py = arcade.pac.y * TILE;
+  var ang = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[arcade.pac.dir] || 0;
+  var mouth = 0.25 + 0.22 * Math.sin(arcade.pac.mouth);
+  ctx.fillStyle = '#ffe600';
+  ctx.beginPath();
+  ctx.arc(px, py, TILE * 0.42, ang + mouth, ang + Math.PI * 2 - mouth);
+  ctx.lineTo(px, py);
+  ctx.fill();
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.arc(px + Math.cos(ang - 0.6) * TILE * 0.15, py + Math.sin(ang - 0.6) * TILE * 0.15 - 2, 1.6, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* Fantasmas */
+  arcade.pacGhosts.forEach(function (g) {
+    var gx = g.x * TILE, gy = g.y * TILE;
+    var cor = arcade.pacFright > 0
+      ? (arcade.pacFright < 60 && arcade.pacFrame % 10 < 5 ? '#fff' : '#2121ff')
+      : g.color;
+    ctx.fillStyle = cor;
+    ctx.beginPath();
+    ctx.arc(gx, gy - 2, TILE * 0.38, Math.PI, 0);
+    ctx.lineTo(gx + TILE * 0.38, gy + TILE * 0.35);
+    for (var i = 0; i < 4; i++) {
+      var wx = gx - TILE * 0.38 + (i + 0.5) * (TILE * 0.76 / 4);
+      ctx.lineTo(wx, gy + TILE * 0.35 - (i % 2 === 0 ? 4 : 0));
+    }
+    ctx.lineTo(gx - TILE * 0.38, gy + TILE * 0.35);
+    ctx.closePath();
+    ctx.fill();
+    if (arcade.pacFright <= 0) {
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(gx - 4, gy - 4, 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(gx + 4, gy - 4, 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1a237e';
+      var ox = g.dir === 'left' ? -1.2 : (g.dir === 'right' ? 1.2 : 0);
+      var oy = g.dir === 'up' ? -1.2 : (g.dir === 'down' ? 1.2 : 0);
+      ctx.beginPath(); ctx.arc(gx - 4 + ox, gy - 4 + oy, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(gx + 4 + ox, gy - 4 + oy, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+  });
+
+  /* vidas */
+  ctx.fillStyle = '#ffe600';
+  for (var v = 0; v < arcade.pacVidas; v++) {
+    ctx.beginPath();
+    ctx.arc(12 + v * 14, arcade.canvas.height - 10, 5, 0.4, Math.PI * 2 - 0.4);
+    ctx.lineTo(12 + v * 14, arcade.canvas.height - 10);
+    ctx.fill();
+  }
+  desenharHUDArcade(ctx, arcade.canvas.width, 'PAC-MAN');
 }
 
 function gameOverArcade() {
