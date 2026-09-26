@@ -677,7 +677,7 @@ footer a { color: var(--accent-blue); }
     <!-- UX fitness: resumo no Início → detalhe na aba Jogos (nada removido abaixo) -->
     <div class="card card-destaque brilho-verde" id="cardAtalhoArcadeInicio" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-gamepad"></i> Arcade da Academia</h3>
-      <p class="mini" style="margin-bottom:8px;">8 mini-jogos · 10 níveis · ranking grátis. O catálogo completo fica na aba <b>Jogos</b>.</p>
+      <p class="mini" style="margin-bottom:8px;">8 mini-jogos + mascote · 10 níveis · ranking grátis. O catálogo completo fica na aba <b>Jogos</b>.</p>
       <div id="resumoArcadeInicio" class="mini" style="margin-bottom:8px;color:var(--text-sub);">Carregando progresso…</div>
       <button type="button" class="btn btn-gold" onclick="abrirAba('tabJogos')"><i class="fas fa-gamepad"></i> Abrir aba Jogos</button>
     </div>
@@ -701,8 +701,9 @@ footer a { color: var(--accent-blue); }
       <div class="grade-2" style="margin-top:8px;">
         <button class="btn btn-gold" onclick="abrirJogoArcade('pacman')"><i class="fas fa-ghost"></i> Pac-Man</button>
         <button class="btn btn-secondary" onclick="abrirJogoArcade('snake')"><i class="fas fa-dragon"></i> Minhoca</button>
-        <button class="btn btn-gold" onclick="abrirJogoArcade('tetris')"><i class="fas fa-th"></i> Tetris</button>
         <button class="btn btn-secondary" onclick="abrirJogoArcade('corrida')"><i class="fas fa-car"></i> Corrida</button>
+        <button class="btn btn-gold" onclick="abrirJogoArcade('tamagotchi')"><i class="fas fa-robot"></i> Mascote</button>
+        <button class="btn btn-secondary" onclick="abrirJogoArcade('damas')"><i class="fas fa-chess"></i> Damas</button>
         <button class="btn" onclick="abrirJogoArcade('quebra')"><i class="fas fa-cubes"></i> Quebra-Blocos</button>
         <button class="btn btn-secondary" onclick="abrirJogoArcade('pulo')"><i class="fas fa-dove"></i> Pulo</button>
         <button class="btn btn-gold" onclick="abrirJogoArcade('surfe')"><i class="fas fa-running"></i> Surfe</button>
@@ -786,10 +787,15 @@ footer a { color: var(--accent-blue); }
           <strong>Minhoca</strong>
           <span>Coma e cresça</span>
         </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('tetris')">
-          <i class="fas fa-th" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Tetris</strong>
-          <span>Complete as linhas</span>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('tamagotchi')">
+          <i class="fas fa-robot" style="font-size:1.6rem;color:var(--primary-green);"></i>
+          <strong>Mascote</strong>
+          <span>Escolha personagem e cuide</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('damas')">
+          <i class="fas fa-chess" style="font-size:1.6rem;color:var(--gold);"></i>
+          <strong>Damas</strong>
+          <span>Vs assistente ou 2 jogadores</span>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pacman')">
           <i class="fas fa-ghost" style="font-size:1.6rem;color:var(--accent-blue);"></i>
@@ -821,6 +827,12 @@ footer a { color: var(--accent-blue); }
           <strong>Aventura</strong>
           <span>Pegue moedas</span>
         </button>
+      </div>
+      <div class="card" id="cardTerreiroJogos" style="border:1px solid var(--accent-blue);margin-top:8px;">
+        <h3 style="color:var(--accent-blue);"><i class="fas fa-users"></i> Terreiro Virtual</h3>
+        <p class="mini" style="margin-bottom:6px;">Avatares de quem está online ou no treino de hoje. Toque para abrir o ambiente.</p>
+        <div id="listaTerreiroJogos" class="grade-3" style="gap:8px;"></div>
+        <button class="btn btn-secondary btn-mini" style="margin-top:8px;" onclick="entrarTerreiroDoApp()"><i class="fas fa-door-open"></i> Entrar no Terreiro</button>
       </div>
       <div class="card" id="cardRankingJogosTab" style="border:1px solid var(--gold);margin-top:8px;margin-bottom:0;">
         <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking de Pontos</h3>
@@ -1297,6 +1309,7 @@ footer a { color: var(--accent-blue); }
     <h4><i class="fas fa-robot"></i> Assistente Capoeira</h4>
     <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
   </div>
+  <div id="assistenteCompanheiroSlot" style="padding:6px 8px 0;background:#0a1419;"></div>
   <div class="assistente-msgs" id="assistenteMsgs"></div>
   <div class="assistente-atalhos" id="assistenteAtalhos">
     <button class="assistente-atalho" onclick="assistentePerguntar('próxima aula')">Próxima aula</button>
@@ -1344,7 +1357,7 @@ if (window.caches && caches.keys) {
 /* ---------------------------------------------------------------
    0. CONSTANTES
    --------------------------------------------------------------- */
-var VERSAO_APP = 'v88';
+var VERSAO_APP = 'v90';
 var CHAVE_LOCAL = 'uc_db_v87';
 var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v87';
 
@@ -1387,7 +1400,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'avataresOnline'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -2158,6 +2171,7 @@ function renderizarAba(id) {
     var box = $('listaRankingJogosTab');
     var src = $('listaRankingJogos');
     if (box && src && src.innerHTML) box.innerHTML = src.innerHTML;
+    try { publicarPresencaAvatar(); renderTerreiroListas(); } catch (e2) {}
   }
   if (id === 'tab4') renderAbaProfessor();
   if (id === 'tab5') renderAbaAdm();
@@ -2190,11 +2204,13 @@ function autenticarAlunoNuvem(btn) {
     registroLog('auth', 'Aluno entrou: ' + achado.nome);
     $('alunoLoginSenha').value = '';
     renderAluno();
+    try { iniciarHeartbeatPresenca(); publicarPresencaAvatar(); } catch (e) {}
     mostrarToast('Bem-vindo(a), ' + esc(achado.apelido || achado.nome) + '!');
   }, 250);
 }
 
 function sairAluno() {
+  try { limparPresencaAvatar(); } catch (e) {}
   sessaoAlunoId = null;
   renderAluno();
   renderCheckin();
@@ -2558,12 +2574,13 @@ function renderSeletorNiveisArcade() {
   var jogos = [
     { id: 'pacman', nome: 'Pac-Man' },
     { id: 'snake', nome: 'Minhoca' },
-    { id: 'tetris', nome: 'Tetris' },
     { id: 'corrida', nome: 'Corrida' },
     { id: 'quebra', nome: 'Quebra-Blocos' },
     { id: 'pulo', nome: 'Pulo' },
     { id: 'surfe', nome: 'Surfe' },
-    { id: 'mario', nome: 'Aventura' }
+    { id: 'mario', nome: 'Aventura' },
+    { id: 'tamagotchi', nome: 'Mascote' },
+    { id: 'damas', nome: 'Damas' }
   ];
   var html = '<p class="mini" style="margin-bottom:6px;">Níveis na nuvem (e neste aparelho) — grátis:</p>';
   var totalMax = 0;
@@ -2587,7 +2604,7 @@ function renderSeletorNiveisArcade() {
   var resumo = $('resumoArcadeInicio');
   if (resumo) {
     resumo.innerHTML = 'Progresso médio: <b style="color:var(--primary-green);">Nv. ' +
-      Math.max(1, Math.round(totalMax / jogos.length)) + '/10</b> nos 8 jogos · toque em <b>Abrir aba Jogos</b> para jogar.';
+      Math.max(1, Math.round(totalMax / jogos.length)) + '/10</b> nos jogos · toque em <b>Abrir aba Jogos</b> para jogar.';
   }
 }
 
@@ -2694,12 +2711,13 @@ var desafioAtivoId = null;
 var JOGOS_DESAFIO = [
   { id: 'pacman', nome: 'Pac-Man' },
   { id: 'snake', nome: 'Minhoca' },
-  { id: 'tetris', nome: 'Tetris' },
   { id: 'corrida', nome: 'Corrida' },
   { id: 'quebra', nome: 'Quebra-Blocos' },
   { id: 'pulo', nome: 'Pulo' },
   { id: 'surfe', nome: 'Surfe' },
-  { id: 'mario', nome: 'Aventura' }
+  { id: 'mario', nome: 'Aventura' },
+  { id: 'tamagotchi', nome: 'Mascote' },
+  { id: 'damas', nome: 'Damas' }
 ];
 
 function nomeJogoDesafio(id) {
@@ -3052,15 +3070,279 @@ function nivelMaxDesbloqueado(tipo) {
   return Math.max(1, Math.min(10, n));
 }
 
+/* Cenários distintos por nível (visual + nome no HUD) */
+var CENARIOS_ARCADE = {
+  corrida: [
+    { nome: 'Avenida Central', ceu: ['#0a1628', '#1a1a1a'], asfalto: '#1c2333', neon: '#00e676', tema: 'cidade' },
+    { nome: 'Túnel Neon', ceu: ['#0d0221', '#1a0533'], asfalto: '#12082a', neon: '#e040fb', tema: 'neon' },
+    { nome: 'Orla da Baía', ceu: ['#012a4a', '#014f86'], asfalto: '#2b2d42', neon: '#00d2ff', tema: 'agua' },
+    { nome: 'Serra Noturna', ceu: ['#1b4332', '#081c15'], asfalto: '#1d3557', neon: '#95d5b2', tema: 'floresta' },
+    { nome: 'Pista Industrial', ceu: ['#212529', '#343a40'], asfalto: '#495057', neon: '#ffc107', tema: 'industrial' },
+    { nome: 'Deserto Vermelho', ceu: ['#3d0814', '#5c1a1a'], asfalto: '#2b1810', neon: '#ff6b35', tema: 'deserto' },
+    { nome: 'Cidade Chuva', ceu: ['#0b132b', '#1c2541'], asfalto: '#3a506b', neon: '#5bc0be', tema: 'chuva' },
+    { nome: 'Circuito Gelo', ceu: ['#0a1628', '#1b3a4b'], asfalto: '#274c77', neon: '#a8dadc', tema: 'gelo' },
+    { nome: 'Autódromo Solar', ceu: ['#3d2b1f', '#1a120b'], asfalto: '#2d3436', neon: '#fdcb6e', tema: 'sol' },
+    { nome: 'Final Capoeira', ceu: ['#004d40', '#1b5e20'], asfalto: '#0d1b1e', neon: '#00e676', tema: 'axe' }
+  ],
+  pacman: [
+    { nome: 'Labirinto Clássico', bg: ['#03080c', '#0a1628'], parede: '#1a3a6e', accent: '#3d7cff', tema: 'classico' },
+    { nome: 'Roda na Praça', bg: ['#1a0a00', '#3e2723'], parede: '#6d4c41', accent: '#ffc107', tema: 'roda' },
+    { nome: 'Senzala', bg: ['#1b1008', '#3e2723'], parede: '#5d4037', accent: '#ff8f00', tema: 'senzala' },
+    { nome: 'Mercado', bg: ['#0d1b2a', '#1b2838'], parede: '#37474f', accent: '#00bcd4', tema: 'mercado' },
+    { nome: 'Porto', bg: ['#001e3c', '#0a2744'], parede: '#1565c0', accent: '#4fc3f7', tema: 'porto' },
+    { nome: 'Morro', bg: ['#1b2e1b', '#0d1f12'], parede: '#2e7d32', accent: '#81c784', tema: 'morro' },
+    { nome: 'Ilha', bg: ['#004d40', '#00695c'], parede: '#00897b', accent: '#80cbc4', tema: 'ilha' },
+    { nome: 'Arena', bg: ['#311b92', '#1a237e'], parede: '#5e35b1', accent: '#b39ddb', tema: 'arena' },
+    { nome: 'Templo', bg: ['#3e2723', '#4e342e'], parede: '#8d6e63', accent: '#ffcc80', tema: 'templo' },
+    { nome: 'Final Mestre', bg: ['#004d40', '#1b5e20'], parede: '#00c853', accent: '#00e676', tema: 'mestre' }
+  ],
+  snake: [
+    { nome: 'Gramado', bg: ['#041a12', '#0a1f18'], grade: 'rgba(0,230,118,0.08)', corpo: '#00e676', tema: 'grama' },
+    { nome: 'Areia', bg: ['#3e2723', '#5d4037'], grade: 'rgba(255,193,7,0.1)', corpo: '#ffb300', tema: 'areia' },
+    { nome: 'Mata', bg: ['#0d2818', '#1b5e20'], grade: 'rgba(129,199,132,0.12)', corpo: '#69f0ae', tema: 'mata' },
+    { nome: 'Rio', bg: ['#01579b', '#0277bd'], grade: 'rgba(129,212,250,0.12)', corpo: '#4fc3f7', tema: 'rio' },
+    { nome: 'Pedreira', bg: ['#37474f', '#455a64'], grade: 'rgba(176,190,197,0.12)', corpo: '#b0bec5', tema: 'pedra' },
+    { nome: 'Noite', bg: ['#0a0a1a', '#1a1a2e'], grade: 'rgba(179,157,219,0.1)', corpo: '#b39ddb', tema: 'noite' },
+    { nome: 'Neblina', bg: ['#263238', '#37474f'], grade: 'rgba(207,216,220,0.1)', corpo: '#cfd8dc', tema: 'neblina' },
+    { nome: 'Vulcão', bg: ['#3e0000', '#b71c1c'], grade: 'rgba(255,87,34,0.15)', corpo: '#ff5722', tema: 'vulcao' },
+    { nome: 'Gelo', bg: ['#0d47a1', '#1565c0'], grade: 'rgba(187,222,251,0.12)', corpo: '#81d4fa', tema: 'gelo' },
+    { nome: 'Axé Final', bg: ['#004d40', '#1b5e20'], grade: 'rgba(0,230,118,0.15)', corpo: '#00e676', tema: 'axe' }
+  ],
+  pulo: [
+    { nome: 'Canos Verdes', bg: ['#0a1628', '#1b5e20'], cano: '#00c853', tema: 'verde' },
+    { nome: 'Canos Azuis', bg: ['#0d1b2a', '#0d47a1'], cano: '#2196f3', tema: 'azul' },
+    { nome: 'Canos Roxos', bg: ['#1a0533', '#4a148c'], cano: '#ab47bc', tema: 'roxo' },
+    { nome: 'Canos Laranja', bg: ['#3e1700', '#e65100'], cano: '#ff9800', tema: 'laranja' },
+    { nome: 'Canos Neon', bg: ['#0d0221', '#1a0533'], cano: '#e040fb', tema: 'neon' },
+    { nome: 'Canos Ouro', bg: ['#3e2723', '#5d4037'], cano: '#ffc107', tema: 'ouro' },
+    { nome: 'Canos Gelo', bg: ['#0a1628', '#1565c0'], cano: '#81d4fa', tema: 'gelo' },
+    { nome: 'Canos Fogo', bg: ['#3e0000', '#bf360c'], cano: '#ff5722', tema: 'fogo' },
+    { nome: 'Canos Sombra', bg: ['#000', '#212121'], cano: '#616161', tema: 'sombra' },
+    { nome: 'Canos Lenda', bg: ['#004d40', '#1b5e20'], cano: '#00e676', tema: 'lenda' }
+  ],
+  surfe: [
+    { nome: 'Praia', bg: ['#0277bd', '#4fc3f7'], faixa: '#ffe082', tema: 'praia' },
+    { nome: 'Onda Alta', bg: ['#01579b', '#0288d1'], faixa: '#80deea', tema: 'onda' },
+    { nome: 'Mar Aberto', bg: ['#006064', '#00acc1'], faixa: '#b2ebf2', tema: 'aberto' },
+    { nome: 'Tempestade', bg: ['#263238', '#455a64'], faixa: '#90a4ae', tema: 'tempestade' },
+    { nome: 'Pôr do Sol', bg: ['#bf360c', '#ff6f00'], faixa: '#ffcc80', tema: 'por-do-sol' },
+    { nome: 'Noite', bg: ['#0d1b2a', '#1a237e'], faixa: '#5c6bc0', tema: 'noite' },
+    { nome: 'Recife', bg: ['#004d40', '#00695c'], faixa: '#80cbc4', tema: 'recife' },
+    { nome: 'Ilha', bg: ['#1b5e20', '#43a047'], faixa: '#c8e6c9', tema: 'ilha' },
+    { nome: 'Tsunami', bg: ['#0d47a1', '#1565c0'], faixa: '#e3f2fd', tema: 'tsunami' },
+    { nome: 'Final Axé', bg: ['#004d40', '#00c853'], faixa: '#69f0ae', tema: 'axe' }
+  ],
+  mario: [
+    { nome: 'Colina 1', bg: ['#4fc3f7', '#81d4fa'], chao: '#66bb6a', tema: 'colina' },
+    { nome: 'Caverna', bg: ['#212121', '#424242'], chao: '#6d4c41', tema: 'caverna' },
+    { nome: 'Castelo', bg: ['#4a148c', '#6a1b9a'], chao: '#5d4037', tema: 'castelo' },
+    { nome: 'Floresta', bg: ['#1b5e20', '#2e7d32'], chao: '#33691e', tema: 'floresta' },
+    { nome: 'Deserto', bg: ['#ffb74d', '#ffcc80'], chao: '#d84315', tema: 'deserto' },
+    { nome: 'Gelo', bg: ['#b3e5fc', '#e1f5fe'], chao: '#90caf9', tema: 'gelo' },
+    { nome: 'Céu', bg: ['#81d4fa', '#e1f5fe'], chao: '#fff59d', tema: 'ceu' },
+    { nome: 'Subsolo', bg: ['#3e2723', '#5d4037'], chao: '#4e342e', tema: 'subsolo' },
+    { nome: 'Vulcão', bg: ['#bf360c', '#e64a19'], chao: '#3e2723', tema: 'vulcao' },
+    { nome: 'Bandeira Final', bg: ['#00c853', '#69f0ae'], chao: '#1b5e20', tema: 'final' }
+  ],
+  quebra: [
+    { nome: 'Muro 1', bg: ['#1a237e', '#0d1b2a'], cores: ['#ef5350', '#ff9800', '#ffc107', '#00e676', '#42a5f5', '#ab47bc'], tema: 'classico' },
+    { nome: 'Muro Neon', bg: ['#0d0221', '#1a0533'], cores: ['#e040fb', '#00e5ff', '#76ff03', '#ffea00', '#ff1744', '#d500f9'], tema: 'neon' },
+    { nome: 'Muro Praia', bg: ['#01579b', '#0277bd'], cores: ['#ffcc80', '#4fc3f7', '#81c784', '#fff176', '#f48fb1', '#80deea'], tema: 'praia' },
+    { nome: 'Muro Fogo', bg: ['#3e0000', '#bf360c'], cores: ['#ff5722', '#ff9800', '#ffc107', '#f44336', '#e91e63', '#ff6e40'], tema: 'fogo' },
+    { nome: 'Muro Gelo', bg: ['#0d47a1', '#1565c0'], cores: ['#e3f2fd', '#90caf9', '#4fc3f7', '#80deea', '#b3e5fc', '#81d4fa'], tema: 'gelo' },
+    { nome: 'Muro Ouro', bg: ['#3e2723', '#5d4037'], cores: ['#ffc107', '#ffb300', '#ff8f00', '#ffd54f', '#ffe082', '#ffca28'], tema: 'ouro' },
+    { nome: 'Muro Floresta', bg: ['#1b5e20', '#0d2818'], cores: ['#66bb6a', '#43a047', '#2e7d32', '#a5d6a7', '#81c784', '#c5e1a5'], tema: 'floresta' },
+    { nome: 'Muro Sombra', bg: ['#000', '#212121'], cores: ['#616161', '#9e9e9e', '#757575', '#bdbdbd', '#424242', '#eeeeee'], tema: 'sombra' },
+    { nome: 'Muro Arena', bg: ['#311b92', '#1a237e'], cores: ['#7c4dff', '#536dfe', '#448aff', '#40c4ff', '#18ffff', '#ea80fc'], tema: 'arena' },
+    { nome: 'Muro Final', bg: ['#004d40', '#1b5e20'], cores: ['#00e676', '#69f0ae', '#00c853', '#b9f6ca', '#1de9b6', '#64ffda'], tema: 'final' }
+  ],
+  damas: [
+    { nome: 'Tabuleiro Clássico', clara: '#f0d9b5', escura: '#b58863', tema: 'classico' },
+    { nome: 'Tabuleiro Verde', clara: '#e8f5e9', escura: '#2e7d32', tema: 'verde' },
+    { nome: 'Tabuleiro Azul', clara: '#e3f2fd', escura: '#1565c0', tema: 'azul' },
+    { nome: 'Tabuleiro Roxo', clara: '#f3e5f5', escura: '#6a1b9a', tema: 'roxo' },
+    { nome: 'Tabuleiro Areia', clara: '#fff8e1', escura: '#8d6e63', tema: 'areia' },
+    { nome: 'Tabuleiro Neon', clara: '#1a1a2e', escura: '#0f3460', tema: 'neon' },
+    { nome: 'Tabuleiro Fogo', clara: '#fff3e0', escura: '#bf360c', tema: 'fogo' },
+    { nome: 'Tabuleiro Gelo', clara: '#e1f5fe', escura: '#0277bd', tema: 'gelo' },
+    { nome: 'Tabuleiro Noite', clara: '#37474f', escura: '#102027', tema: 'noite' },
+    { nome: 'Tabuleiro Axé', clara: '#e8f5e9', escura: '#1b5e20', tema: 'axe' }
+  ],
+  tamagotchi: [
+    { nome: 'Terreiro ao Sol', bg: ['#0d3d1f', '#0a2a38'], tema: 'sol' },
+    { nome: 'Senzala', bg: ['#3e2723', '#1b1008'], tema: 'senzala' },
+    { nome: 'Praia', bg: ['#0277bd', '#004d40'], tema: 'praia' },
+    { nome: 'Noite de Roda', bg: ['#1a0533', '#0d0221'], tema: 'noite' },
+    { nome: 'Floresta', bg: ['#1b5e20', '#0d2818'], tema: 'floresta' },
+    { nome: 'Porto', bg: ['#01579b', '#0d1b2a'], tema: 'porto' },
+    { nome: 'Arena', bg: ['#4a148c', '#1a0533'], tema: 'arena' },
+    { nome: 'Morro', bg: ['#33691e', '#1b2e1b'], tema: 'morro' },
+    { nome: 'Templo', bg: ['#4e342e', '#3e2723'], tema: 'templo' },
+    { nome: 'Final Axé', bg: ['#004d40', '#1b5e20'], tema: 'axe' }
+  ]
+};
+
+/* Modos especiais a cada 2 níveis (2, 4, 6, 8, 10) — desafiam e evitam repetição */
+var MODOS_ESPECIAIS_ARCADE = {
+  snake: {
+    2:  { id: 'portal',   nome: 'Modo Portal',   desc: 'Atravessa as bordas!', cor: '#00bcd4' },
+    4:  { id: 'dupla',    nome: 'Comida Dupla',  desc: 'Duas comidas na tela', cor: '#ffc107' },
+    6:  { id: 'veneno',   nome: 'Modo Veneno',   desc: 'Evite a comida roxa', cor: '#9c27b0' },
+    8:  { id: 'turbo',    nome: 'Turbo Ginga',   desc: 'Velocidade alta', cor: '#ff5722' },
+    10: { id: 'mestre',   nome: 'Mestre Cobra',  desc: 'Grade menor · hardcore', cor: '#00e676' }
+  },
+  pacman: {
+    2:  { id: 'pressa',   nome: 'Fantasmas Rápidos', desc: 'Eles correm mais', cor: '#ef5350' },
+    4:  { id: 'poder',    nome: 'Super Power', desc: 'Power pellet dura mais', cor: '#ffc107' },
+    6:  { id: 'escuridao',nome: 'Labirinto Escuro', desc: 'Só vê perto de você', cor: '#607d8b' },
+    8:  { id: 'caca',     nome: 'Caça ao Fantasma', desc: 'Power no início', cor: '#e040fb' },
+    10: { id: 'mestre',   nome: 'Final Mestre', desc: 'Velocidade máxima', cor: '#00e676' }
+  },
+  quebra: {
+    2:  { id: 'rapida',   nome: 'Bola Rápida', desc: 'Bola mais veloz', cor: '#ff5722' },
+    4:  { id: 'mini',     nome: 'Raquete Mini', desc: 'Raquete menor', cor: '#ffc107' },
+    6:  { id: 'dupla',    nome: 'Pontos em Dobro', desc: 'Cada bloco vale 2x', cor: '#00bcd4' },
+    8:  { id: 'muro',     nome: 'Muro Grosso', desc: 'Mais fileiras', cor: '#ab47bc' },
+    10: { id: 'mestre',   nome: 'Quebra-Mestre', desc: 'Tudo no limite', cor: '#00e676' }
+  },
+  pulo: {
+    2:  { id: 'estreito', nome: 'Vãos Estreitos', desc: 'Espaço menor entre canos', cor: '#ff9800' },
+    4:  { id: 'vento',    nome: 'Vento Forte', desc: 'Canos mais rápidos', cor: '#00bcd4' },
+    6:  { id: 'baixo',    nome: 'Voo Baixo', desc: 'Gravidade maior', cor: '#ef5350' },
+    8:  { id: 'caos',     nome: 'Canos Caóticos', desc: 'Altura imprevisível', cor: '#e040fb' },
+    10: { id: 'mestre',   nome: 'Pulo Mestre', desc: 'Desafio máximo', cor: '#00e676' }
+  },
+  surfe: {
+    2:  { id: 'onda',     nome: 'Onda Pesada', desc: 'Obstáculos densos', cor: '#0277bd' },
+    4:  { id: 'maré',     nome: 'Maré Alta', desc: 'Velocidade maior', cor: '#00bcd4' },
+    6:  { id: 'recife',   nome: 'Recife Afiado', desc: 'Menos margem de erro', cor: '#ff5722' },
+    8:  { id: 'noite',    nome: 'Surfe Noturno', desc: 'Visão reduzida', cor: '#5c6bc0' },
+    10: { id: 'mestre',   nome: 'Tsunami Final', desc: 'Modo extremo', cor: '#00e676' }
+  },
+  mario: {
+    2:  { id: 'moedas',   nome: 'Chuva de Moedas', desc: 'Mais moedas na fase', cor: '#ffc107' },
+    4:  { id: 'salto',    nome: 'Salto Pesado', desc: 'Pulo mais curto', cor: '#ff9800' },
+    6:  { id: 'inimigos', nome: 'Mais Inimigos', desc: 'Inimigos extras', cor: '#ef5350' },
+    8:  { id: 'gelo',     nome: 'Chão Escorregadio', desc: 'Controle escorrega', cor: '#81d4fa' },
+    10: { id: 'mestre',   nome: 'Castelo Final', desc: 'Desafio máximo', cor: '#00e676' }
+  },
+  corrida: {
+    2:  { id: 'trafego',  nome: 'Tráfego Pesado', desc: 'Mais carros na pista', cor: '#ff5722' },
+    4:  { id: 'noite',    nome: 'Neblina', desc: 'Visão reduzida', cor: '#90a4ae' },
+    6:  { id: 'turbo',    nome: 'Pista Turbo', desc: 'Velocidade alta', cor: '#ffc107' },
+    8:  { id: 'contramao',nome: 'Contramao', desc: 'Obstáculos invertidos', cor: '#e040fb' },
+    10: { id: 'mestre',   nome: 'Grande Prêmio', desc: 'Final épico', cor: '#00e676' }
+  },
+  damas: {
+    2:  { id: 'rapida',   nome: 'IA Ágil', desc: 'IA pensa mais rápido', cor: '#ff9800' },
+    4:  { id: 'agressiva',nome: 'IA Agressiva', desc: 'Prioriza capturas', cor: '#ef5350' },
+    6:  { id: 'tempo',    nome: 'Contra o Tempo', desc: 'Jogue com foco', cor: '#00bcd4' },
+    8:  { id: 'mestre-ia',nome: 'IA Mestre', desc: 'IA bem forte', cor: '#ab47bc' },
+    10: { id: 'lenda',    nome: 'Duelo de Lenda', desc: 'Nível máximo', cor: '#00e676' }
+  },
+  tamagotchi: {
+    2:  { id: 'fome',     nome: 'Dia de Fome', desc: 'Fome sobe mais rápido', cor: '#ff9800' },
+    4:  { id: 'treino',   nome: 'Semana de Treino', desc: 'XP em dobro no treino', cor: '#00bcd4' },
+    6:  { id: 'festa',    nome: 'Festa na Roda', desc: 'Humor rende mais', cor: '#e040fb' },
+    8:  { id: 'desafio',  nome: 'Desafio Fitness', desc: 'Meta de forma alta', cor: '#ff5722' },
+    10: { id: 'mestre',   nome: 'Mascote Mestre', desc: 'Cuidado lendário', cor: '#00e676' }
+  }
+};
+
+function cenarioArcade(tipo, nivel) {
+  var lista = CENARIOS_ARCADE[tipo] || [];
+  var idx = Math.max(0, Math.min(lista.length - 1, (Number(nivel) || 1) - 1));
+  return lista[idx] || { nome: 'Nível ' + (nivel || 1) };
+}
+
+function obterModoEspecial(tipo, nivel) {
+  nivel = Math.max(1, Math.min(10, Number(nivel) || 1));
+  if (nivel % 2 !== 0) return null;
+  var mapa = MODOS_ESPECIAIS_ARCADE[tipo];
+  if (!mapa) return null;
+  return mapa[nivel] || null;
+}
+
+function aplicarModoNoArcade(tipo, nivel) {
+  var modo = obterModoEspecial(tipo, nivel);
+  var cen = cenarioArcade(tipo, nivel);
+  arcade._cenario = cen;
+  arcade._modoEspecial = modo;
+  return { cenario: cen, modo: modo };
+}
+
+function pintarFundoCenario(ctx, w, h, cen) {
+  if (!cen) {
+    ctx.fillStyle = '#03080c';
+    ctx.fillRect(0, 0, w, h);
+    return;
+  }
+  var bg = cen.bg || cen.ceu;
+  if (bg && bg.length >= 2) {
+    var g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, bg[0]);
+    g.addColorStop(1, bg[1]);
+    ctx.fillStyle = g;
+  } else if (typeof bg === 'string') {
+    ctx.fillStyle = bg;
+  } else {
+    ctx.fillStyle = '#03080c';
+  }
+  ctx.fillRect(0, 0, w, h);
+}
+
+function desenharBannerModo(ctx, w, modo, cen) {
+  if (!modo && !cen) return;
+  var y = 28;
+  ctx.save();
+  ctx.textAlign = 'center';
+  if (cen && cen.nome) {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(w / 2 - 90, y - 11, 180, 16);
+    ctx.fillStyle = '#90a4ae';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.fillText(cen.nome, w / 2, y);
+    y += 16;
+  }
+  if (modo) {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(w / 2 - 100, y - 11, 200, 28);
+    ctx.fillStyle = modo.cor || '#ffc107';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillText('⚡ ' + modo.nome, w / 2, y);
+    ctx.fillStyle = '#e0f2f1';
+    ctx.font = '8px sans-serif';
+    ctx.fillText(modo.desc || '', w / 2, y + 12);
+  }
+  ctx.restore();
+}
+
 function curvaDificuldade(nivel) {
   /* 0 no nível 1, sobe devagar nos níveis do meio, dispara nos últimos (8, 9, 10) */
   var n = Math.max(1, Math.min(10, Number(nivel) || 1));
   return Math.pow((n - 1) / 9, 1.7);
 }
 
+function enriquecerConfigNivel(tipo, nivel, cfg) {
+  cfg = cfg || {};
+  cfg.cenario = cenarioArcade(tipo, nivel);
+  cfg.modo = obterModoEspecial(tipo, nivel);
+  if (cfg.modo) {
+    cfg.label = (cfg.label || '') + ' · ⚡ ' + cfg.modo.nome;
+  } else if (cfg.cenario && cfg.cenario.nome) {
+    cfg.label = (cfg.label || '') + ' · ' + cfg.cenario.nome;
+  }
+  return cfg;
+}
+
 function configNivelArcade(tipo, nivel) {
   nivel = Math.max(1, Math.min(10, Number(nivel) || 1));
   var curva = curvaDificuldade(nivel);
+  var _cfg = _configNivelArcadeCore(tipo, nivel, curva);
+  return enriquecerConfigNivel(tipo, nivel, _cfg);
+}
+
+function _configNivelArcadeCore(tipo, nivel, curva) {
   /* scoreParaDesbloquear: pontos na partida para liberar o PRÓXIMO nível (alternativa ao objetivo) */
   if (tipo === 'snake') {
     var objS = Math.round(6 + 64 * curva);
@@ -3135,16 +3417,36 @@ function configNivelArcade(tipo, nivel) {
       label: 'Coma todas as pastilhas (~' + dotsEst + ') · ou ' + (800 + nivel * 200) + ' pts'
     };
   }
-  /* corrida */
-  var objC = Math.round(35 + 225 * curva);
+  if (tipo === 'tamagotchi') {
+    return {
+      nivel: nivel,
+      objetivo: 5 + nivel * 2,
+      velocidadeMs: 500,
+      scoreParaDesbloquear: 20 + nivel * 10,
+      label: 'Cuide do mascote · energia e axé'
+    };
+  }
+  if (tipo === 'damas') {
+    return {
+      nivel: nivel,
+      objetivo: 1,
+      velocidadeMs: 200,
+      scoreParaDesbloquear: 50 + nivel * 20,
+      label: 'Vença a partida · dama + capturas'
+    };
+  }
+  /* corrida — velocidade real desde o nv.1; cenários por nível */
+  var objC = Math.round(40 + 200 * curva);
+  var cenario = cenarioArcade('corrida', nivel);
   return {
     nivel: nivel,
     objetivo: objC,
-    velocidadeMs: 50,
-    speedBase: +(1.8 + 3.2 * curva).toFixed(2),
-    spawnEvery: Math.max(14, Math.round(33 - 19 * curva)),
+    velocidadeMs: 33,
+    speedBase: +(3.2 + 4.5 * curva).toFixed(2),
+    spawnEvery: Math.max(12, Math.round(28 - 14 * curva)),
     scoreParaDesbloquear: objC,
-    label: 'Faça ' + objC + ' pts sem bater'
+    cenario: cenario,
+    label: (cenario.nome || 'Pista') + ' · ' + objC + ' pts sem bater'
   };
 }
 
@@ -3212,11 +3514,12 @@ function subirNivelArcade() {
   salvarNivelArcade(arcade.tipo, novo);
   var cfg = configNivelArcade(arcade.tipo, novo);
   arcade.objetivo = cfg.objetivo;
+  aplicarModoNoArcade(arcade.tipo, novo);
   if (arcade.timer) clearInterval(arcade.timer);
   var gamesComRampa2 = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman'];
   arcade.rampaAtiva = gamesComRampa2.indexOf(arcade.tipo) >= 0;
   arcade.velAlvo = cfg.velocidadeMs;
-  arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 1.6) : cfg.velocidadeMs;
+  arcade.velAtual = cfg.velocidadeMs; /* velocidade real no nível */
   arcade.rampTick = 0;
   arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
   if (arcade.tipo === 'corrida') {
@@ -3240,7 +3543,7 @@ function subirNivelArcade() {
   } else if (arcade.tipo === 'surfe') {
     try { initSurfe(); } catch (e) {}
   } else if (arcade.tipo === 'corrida') {
-    try { initCorridaArcade(); } catch (e) {}
+    try { arcade._keepScoreOnLevel = true; initCorridaArcade(); } catch (e) {}
   }
   arcade._scoreUnlockFeito = false;
   mostrarToast('Nível ' + novo + '! ' + cfg.label);
@@ -3360,16 +3663,27 @@ function abrirJogoArcade(tipo, nivelInicio) {
   arcade._scoreUnlockFeito = false;
   var cfg = configNivelArcade(tipo, nv);
   arcade.objetivo = cfg.objetivo;
+  aplicarModoNoArcade(tipo, nv);
+  if (cfg.modo) {
+    setTimeout(function () {
+      mostrarToast('⚡ ' + cfg.modo.nome + ' — ' + (cfg.modo.desc || ''), 'ok');
+    }, 400);
+  } else if (cfg.cenario && cfg.cenario.nome) {
+    setTimeout(function () {
+      mostrarToast('Cenário: ' + cfg.cenario.nome);
+    }, 350);
+  }
   var ov = $('arcadeOverlay');
   if (ov) ov.style.display = 'flex';
   try { document.body.style.overflow = 'hidden'; } catch (e) {}
-  var titulos = { pacman: 'Pac-Man', snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', mario: 'Aventura' };
+  var titulos = { pacman: 'Pac-Man', snake: 'Minhoca', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', mario: 'Aventura', tamagotchi: 'Mascote Capoeira', damas: 'Damas' };
   if ($('arcadeTitulo')) $('arcadeTitulo').textContent = (titulos[tipo] || 'Jogo') + ' · Nv.' + nv;
   if ($('arcadeDica')) {
     var dicas = {
       pacman: '◀ ▶ ▲ ▼ fuja dos fantasmas · coma pastilhas e power pellets',
-      tetris: '◀ ▶ move · ▼ desce · Girar / Queda rápida',
       corrida: 'Esquerda / Direita para desviar dos carros',
+      tamagotchi: 'Escolha o personagem · alimente · alongue · treine · brinque',
+      damas: 'Toque na peça · depois na casa · Capture · Dama promove no fim',
       snake: 'Dirija a minhoca · coma as maçãs',
       quebra: 'Mova a barra · quebre todos os blocos',
       pulo: 'Toque em Pular ou cima para evitar os canos',
@@ -3379,14 +3693,19 @@ function abrirJogoArcade(tipo, nivelInicio) {
     $('arcadeDica').textContent = dicas[tipo] || 'Deslize ou use as setas';
   }
   var acoesT = $('arcadeAcoesTetris');
-  if (acoesT) acoesT.style.display = (tipo === 'tetris') ? 'flex' : 'none';
+  if (acoesT) acoesT.style.display = 'none';
   var acoesP = $('arcadeAcoesPulo');
   if (acoesP) acoesP.style.display = (tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario') ? 'flex' : 'none';
   var acoesG = $('arcadeAcoesGeral');
-  /* snake, corrida, quebra, pacman: também usam polegar direito (◀ ▶) */
   if (acoesG) {
     acoesG.style.display = (tipo === 'snake' || tipo === 'corrida' || tipo === 'quebra' || tipo === 'pacman') ? 'flex' : 'none';
   }
+  var acoesTama = $('arcadeAcoesTama');
+  if (acoesTama) acoesTama.style.display = (tipo === 'tamagotchi') ? 'flex' : 'none';
+  var acoesDamas = $('arcadeAcoesDamas');
+  if (acoesDamas) acoesDamas.style.display = (tipo === 'damas') ? 'flex' : 'none';
+  var dpad = document.querySelector('.arcade-dpad');
+  if (dpad) dpad.style.display = (tipo === 'damas' || tipo === 'tamagotchi') ? 'none' : '';
   arcade.canvas = $('arcadeCanvas');
   if (!arcade.canvas) return;
   if (tipo === 'snake') {
@@ -3398,24 +3717,28 @@ function abrirJogoArcade(tipo, nivelInicio) {
   } else if (tipo === 'pacman') {
     arcade.canvas.width = 336;
     arcade.canvas.height = 364;
-  } else if (tipo === 'corrida' || tipo === 'quebra' || tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario') {
+  } else if (tipo === 'damas') {
+    arcade.canvas.width = 320;
+    arcade.canvas.height = 400;
+  } else if (tipo === 'corrida' || tipo === 'quebra' || tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario' || tipo === 'tamagotchi') {
     arcade.canvas.width = 280;
     arcade.canvas.height = 400;
   }
   arcade.ctx = arcade.canvas.getContext('2d');
   if (tipo === 'snake') initSnake();
-  else if (tipo === 'tetris') initTetris();
   else if (tipo === 'corrida') initCorridaArcade();
   else if (tipo === 'quebra') initQuebra();
   else if (tipo === 'pulo') initPulo();
   else if (tipo === 'surfe') initSurfe();
   else if (tipo === 'mario') initMario();
   else if (tipo === 'pacman') initPacman();
+  else if (tipo === 'tamagotchi') initTamagotchi();
+  else if (tipo === 'damas') initDamas();
   if (arcade.timer) clearInterval(arcade.timer);
   var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman'];
   arcade.rampaAtiva = gamesComRampa.indexOf(tipo) >= 0;
   arcade.velAlvo = cfg.velocidadeMs;
-  arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 2.2) : cfg.velocidadeMs;
+  arcade.velAtual = cfg.velocidadeMs; /* velocidade real desde o início */
   arcade.rampTick = 0;
   arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
   window.removeEventListener('keydown', arcadeKeyHandler);
@@ -3497,6 +3820,11 @@ function fecharJogoArcade() {
   arcade.pausado = false;
   if (arcade.timer) { clearInterval(arcade.timer); arcade.timer = null; }
   window.removeEventListener('keydown', arcadeKeyHandler);
+  try {
+    var dpad = document.querySelector('.arcade-dpad');
+    if (dpad) dpad.style.display = '';
+    var ad = $('arcadeAcoesDamas'); if (ad) ad.style.display = 'none';
+  } catch (e) {}
   var ov = $('arcadeOverlay');
   if (ov) ov.style.display = 'none';
   var pov = $('arcadePauseOverlay');
@@ -3516,6 +3844,7 @@ function fecharJogoArcade() {
     else if (tipo === 'surfe') pts = Math.round(scoreFinal * 1.8);
     else if (tipo === 'mario') pts = Math.round(scoreFinal * 2);
     else if (tipo === 'pacman') pts = Math.round(scoreFinal * 1.2);
+    else if (tipo === 'damas') pts = Math.round(scoreFinal * 1.5);
     /* bônus por nível alcançado (grátis) */
     pts = Math.round(pts * (1 + (nivelFinal - 1) * 0.12));
     pts = Math.max(5, Math.min(800, pts));
@@ -3618,6 +3947,21 @@ function arcadeDir(d) {
 function arcadeAcao(a) {
   if (!arcade.rodando) return;
   if (arcade.pausado) return;
+  if (arcade.tipo === 'tamagotchi') {
+    if (a === 'tama-feed') tamaAcao('feed');
+    else if (a === 'tama-stretch') tamaAcao('stretch');
+    else if (a === 'tama-train') tamaAcao('train');
+    else if (a === 'tama-play') tamaAcao('play');
+    else if (a === 'tama-trocar') tamaAcao('trocar');
+    else if (a === 'tama-terreiro') tamaAcao('terreiro');
+    return;
+  }
+  if (arcade.tipo === 'damas') {
+    if (a === 'damas-ia') { arcade.damasModo = 'ia'; initDamas(); }
+    else if (a === 'damas-2p') { arcade.damasModo = '2p'; initDamas(); }
+    else if (a === 'damas-novo') initDamas();
+    return;
+  }
   if (arcade.tipo === 'tetris') {
     if (a === 'rotate') rotateTetris();
     else if (a === 'drop') {
@@ -3642,23 +3986,51 @@ function arcadeLoop() {
     }
   }
   if (arcade.tipo === 'snake') tickSnake();
-  else if (arcade.tipo === 'tetris') tickTetris();
   else if (arcade.tipo === 'corrida') tickCorridaArcade();
   else if (arcade.tipo === 'quebra') tickQuebra();
   else if (arcade.tipo === 'pulo') tickPulo();
   else if (arcade.tipo === 'surfe') tickSurfe();
   else if (arcade.tipo === 'mario') tickMario();
   else if (arcade.tipo === 'pacman') tickPacman();
+  else if (arcade.tipo === 'tamagotchi') tickTamagotchi();
+  else if (arcade.tipo === 'damas') tickDamas();
   if ($('arcadePlacar')) $('arcadePlacar').textContent = String(arcade.score);
   try { verificarDesbloqueioPorScore(); } catch (e) {}
 }
 
 function initSnake() {
+  aplicarModoNoArcade('snake', arcade.nivel || 1);
+  var modo = arcade._modoEspecial;
+  if (modo && modo.id === 'mestre') {
+    arcade.cols = 14; arcade.rows = 18;
+    if (arcade.canvas) {
+      arcade.canvas.width = arcade.cols * arcade.grid;
+      arcade.canvas.height = arcade.rows * arcade.grid;
+    }
+  } else {
+    arcade.cols = arcade.cols || 18;
+    arcade.rows = arcade.rows || 22;
+  }
   arcade.snake = [{ x: 8, y: 12 }, { x: 7, y: 12 }, { x: 6, y: 12 }];
   arcade.dir = { x: 1, y: 0 };
   arcade.nextDir = { x: 1, y: 0 };
+  arcade.poisonFood = null;
   spawnFood();
+  if (modo && modo.id === 'dupla') spawnFoodExtra();
+  if (modo && modo.id === 'turbo' && arcade.timer) {
+    arcade.velAtual = Math.max(45, Math.round((arcade.velAlvo || 100) * 0.55));
+    clearInterval(arcade.timer);
+    arcade.timer = setInterval(arcadeLoop, arcade.velAtual);
+  }
   drawSnake();
+}
+function spawnFoodExtra() {
+  for (var t = 0; t < 30; t++) {
+    var fx = Math.floor(Math.random() * arcade.cols), fy = 2 + Math.floor(Math.random() * (arcade.rows - 2));
+    var livre = !arcade.snake.some(function (s) { return s.x === fx && s.y === fy; }) &&
+      !(arcade.food && fx === arcade.food.x && fy === arcade.food.y);
+    if (livre) { arcade.food2 = { x: fx, y: fy }; return; }
+  }
 }
 
 function spawnFood() {
@@ -3682,8 +4054,17 @@ function spawnFood() {
 function tickSnake() {
   arcade.dir = arcade.nextDir;
   var head = { x: arcade.snake[0].x + arcade.dir.x, y: arcade.snake[0].y + arcade.dir.y };
-  if (head.x < 0 || head.y < 0 || head.x >= arcade.cols || head.y >= arcade.rows ||
-      arcade.snake.some(function (s) { return s.x === head.x && s.y === head.y; })) {
+  var modo = arcade._modoEspecial;
+  if (modo && modo.id === 'portal') {
+    if (head.x < 0) head.x = arcade.cols - 1;
+    if (head.x >= arcade.cols) head.x = 0;
+    if (head.y < 0) head.y = arcade.rows - 1;
+    if (head.y >= arcade.rows) head.y = 0;
+  } else if (head.x < 0 || head.y < 0 || head.x >= arcade.cols || head.y >= arcade.rows) {
+    gameOverArcade();
+    return;
+  }
+  if (arcade.snake.some(function (s) { return s.x === head.x && s.y === head.y; })) {
     gameOverArcade();
     return;
   }
@@ -3710,12 +4091,34 @@ function tickSnake() {
     }
     registrarProgressoNivel(2);
     mostrarToast('⚡ Impulso! Crescimento e velocidade extra por alguns segundos.');
-  } else if (head.x === arcade.food.x && head.y === arcade.food.y) {
+  } else if (arcade.poisonFood && head.x === arcade.poisonFood.x && head.y === arcade.poisonFood.y) {
+    gameOverArcade();
+    return;
+  }
+  var comeu = false;
+  if (head.x === arcade.food.x && head.y === arcade.food.y) {
     arcade.score += 10 + arcade.nivel * 2;
     spawnFood();
     registrarProgressoNivel(1);
-  } else {
+    comeu = true;
+  }
+  if (arcade.food2 && head.x === arcade.food2.x && head.y === arcade.food2.y) {
+    arcade.score += 10 + arcade.nivel * 2;
+    arcade.food2 = null;
+    if (arcade._modoEspecial && arcade._modoEspecial.id === 'dupla') spawnFoodExtra();
+    registrarProgressoNivel(1);
+    comeu = true;
+  }
+  if (!comeu) {
     arcade.snake.pop();
+  }
+  /* modo veneno: ocasionalmente spawna comida roxa */
+  if (arcade._modoEspecial && arcade._modoEspecial.id === 'veneno' && !arcade.poisonFood && Math.random() < 0.08) {
+    for (var t = 0; t < 20; t++) {
+      var px = Math.floor(Math.random() * arcade.cols), py = 2 + Math.floor(Math.random() * (arcade.rows - 2));
+      var livre = !arcade.snake.some(function (s) { return s.x === px && s.y === py; });
+      if (livre) { arcade.poisonFood = { x: px, y: py }; break; }
+    }
   }
 
   /* fim do impulso: volta pra velocidade normal do nível */
@@ -3733,15 +4136,12 @@ function tickSnake() {
 
 function drawSnake() {
   var ctx = arcade.ctx, g = arcade.grid, w = arcade.canvas.width, h = arcade.canvas.height;
-  /* fundo tech */
-  var grd = ctx.createLinearGradient(0, 0, 0, h);
-  grd.addColorStop(0, '#041a12');
-  grd.addColorStop(0.5, '#0a1f18');
-  grd.addColorStop(1, '#030d0a');
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, w, h);
+  var cen = arcade._cenario || cenarioArcade('snake', arcade.nivel || 1);
+  var corpoCor = (cen && cen.corpo) || '#00e676';
+  /* fundo do cenário */
+  pintarFundoCenario(ctx, w, h, cen);
   /* grade neon */
-  ctx.strokeStyle = 'rgba(0,230,118,0.07)';
+  ctx.strokeStyle = (cen && cen.grade) || 'rgba(0,230,118,0.07)';
   ctx.lineWidth = 1;
   for (var gx = 0; gx <= arcade.cols; gx++) {
     ctx.beginPath(); ctx.moveTo(gx * g, 0); ctx.lineTo(gx * g, h); ctx.stroke();
@@ -3753,9 +4153,9 @@ function drawSnake() {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     /* glow externo */
-    ctx.shadowColor = '#00e676';
+    ctx.shadowColor = corpoCor;
     ctx.shadowBlur = 12;
-    ctx.strokeStyle = '#1b5e20';
+    ctx.strokeStyle = corpoCor;
     ctx.lineWidth = g - 2;
     ctx.beginPath();
     arcade.snake.forEach(function (s, idx) {
@@ -3764,7 +4164,7 @@ function drawSnake() {
     });
     ctx.stroke();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = '#00e676';
+    ctx.strokeStyle = corpoCor;
     ctx.lineWidth = g - 6;
     ctx.beginPath();
     arcade.snake.forEach(function (s, idx) {
@@ -3780,15 +4180,6 @@ function drawSnake() {
       if (idx === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
     });
     ctx.stroke();
-    /* textura de escamas ao longo do corpo */
-    ctx.fillStyle = 'rgba(0,60,30,0.35)';
-    arcade.snake.forEach(function (s, idx) {
-      if (idx === 0 || idx % 2 === 0) return;
-      var cx = s.x * g + g / 2, cy = s.y * g + g / 2;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, (g - 10) / 2.6, (g - 10) / 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-    });
     var head = arcade.snake[0];
     var hx = head.x * g + g / 2, hy = head.y * g + g / 2;
     ctx.shadowColor = '#69f0ae';
@@ -3846,6 +4237,21 @@ function drawSnake() {
     ctx.restore();
     ctx.shadowBlur = 0;
   }
+  if (arcade.food2) {
+    var f2x = arcade.food2.x * g + g / 2, f2y = arcade.food2.y * g + g / 2;
+    ctx.fillStyle = '#ffc107';
+    ctx.beginPath(); ctx.arc(f2x, f2y, g / 2 - 1, 0, Math.PI * 2); ctx.fill();
+  }
+  if (arcade.poisonFood) {
+    var pox = arcade.poisonFood.x * g + g / 2, poy = arcade.poisonFood.y * g + g / 2;
+    ctx.fillStyle = '#9c27b0';
+    ctx.beginPath(); ctx.arc(pox, poy, g / 2 - 1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('☠', pox, poy + 3);
+  }
+  desenharBannerModo(ctx, w, arcade._modoEspecial, arcade._cenario);
   desenharHUDArcade(ctx, w, 'MINHOCA');
 }
 
@@ -4028,13 +4434,24 @@ function drawTetris() {
 }
 
 function initCorridaArcade() {
+  aplicarModoNoArcade('corrida', arcade.nivel || 1);
   var cfg = configNivelArcade('corrida', arcade.nivel || 1);
   arcade.carX = 1;
   arcade.obstacles = [];
-  arcade.speed = cfg.speedBase || 4;
+  arcade.speed = cfg.speedBase || 3.2;
   arcade.frame = 0;
+  /* não zera score se estiver subindo de nível na mesma partida */
+  if (!arcade._keepScoreOnLevel) arcade.score = 0;
+  arcade._keepScoreOnLevel = false;
   arcade._spawnEvery = cfg.spawnEvery || 25;
-  arcade._lastScoreNivel = 0;
+  arcade._lastScoreNivel = arcade.score || 0;
+  arcade._cenario = cfg.cenario || cenarioArcade('corrida', arcade.nivel || 1);
+  if (arcade._modoEspecial && (arcade._modoEspecial.id === 'trafego' || arcade._modoEspecial.id === 'mestre')) {
+    arcade._spawnMul = 0.6;
+  } else { arcade._spawnMul = 1; }
+  if (arcade._modoEspecial && (arcade._modoEspecial.id === 'turbo' || arcade._modoEspecial.id === 'mestre')) {
+    arcade.speed = (arcade.speed || cfg.speedBase) * 1.2;
+  }
   drawCorridaArcade();
 }
 
@@ -4110,88 +4527,64 @@ function desenharCarroArcade(ctx, x, y, bw, bh, cor1, cor2) {
 function drawCorridaArcade() {
   var ctx = arcade.ctx;
   var w = arcade.canvas.width, h = arcade.canvas.height;
-  /* noite tech */
-  var sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#0a1628');
-  sky.addColorStop(0.4, '#121212');
-  sky.addColorStop(1, '#1a1a1a');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, w, h);
-  /* asfalto neon */
-  var road = ctx.createLinearGradient(0, 0, w, 0);
-  road.addColorStop(0, '#0d1117');
-  road.addColorStop(0.5, '#1c2333');
-  road.addColorStop(1, '#0d1117');
-  ctx.fillStyle = road;
+  var cen = arcade._cenario || cenarioArcade('corrida', arcade.nivel || 1);
+  var ceu0 = (cen.ceu && cen.ceu[0]) || '#0a1628';
+  var ceu1 = (cen.ceu && cen.ceu[1]) || '#1a1a1a';
+  var asf = cen.asfalto || '#1c2333';
+  var neon = cen.neon || '#00e676';
+  /* fundo do cenário do nível (sem muitos gradients = menos lag) */
+  ctx.fillStyle = ceu0;
+  ctx.fillRect(0, 0, w, h * 0.35);
+  ctx.fillStyle = ceu1;
+  ctx.fillRect(0, h * 0.35, w, h * 0.65);
+  ctx.fillStyle = asf;
   ctx.fillRect(8, 0, w - 16, h);
-  /* textura de asfalto (grão) */
-  var texOffset = (arcade.frame * (arcade.speed || 4)) % 40;
-  ctx.fillStyle = 'rgba(255,255,255,0.035)';
-  for (var ty = -40; ty < h + 40; ty += 9) {
-    var yy = ty + texOffset;
-    for (var tx = 10; tx < w - 10; tx += 17) {
-      ctx.fillRect(tx + ((Math.floor(ty / 9)) % 2) * 5, yy, 2, 2);
-    }
-  }
-  /* bordas neon */
-  ctx.fillStyle = '#00e676';
-  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = neon;
+  ctx.globalAlpha = 0.4;
   ctx.fillRect(0, 0, 6, h);
   ctx.fillRect(w - 6, 0, 6, h);
   ctx.globalAlpha = 1;
-  ctx.fillStyle = 'rgba(0,210,255,0.4)';
-  ctx.fillRect(6, 0, 3, h);
-  ctx.fillRect(w - 9, 0, 3, h);
   var laneW = w / 3;
   var offset = (arcade.frame * arcade.speed * 2) % 30;
-  ctx.strokeStyle = 'rgba(255,193,7,0.85)';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = '#ffc107';
-  ctx.shadowBlur = 6;
-  ctx.setLineDash([16, 12]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([14, 12]);
   ctx.lineDashOffset = -offset;
   ctx.beginPath();
   ctx.moveTo(laneW, 0); ctx.lineTo(laneW, h);
   ctx.moveTo(laneW * 2, 0); ctx.lineTo(laneW * 2, h);
   ctx.stroke();
   ctx.setLineDash([]);
-  ctx.shadowBlur = 0;
   var coresRivais = [['#ef5350', '#b71c1c'], ['#42a5f5', '#0d47a1'], ['#ab47bc', '#6a1b9a'], ['#ff9800', '#e65100']];
-  arcade.obstacles.forEach(function (o, idx) {
+  (arcade.obstacles || []).forEach(function (o, idx) {
     var x = o.lane * laneW + 12;
-    var y = o.y;
     var bw = laneW - 24, bh = 40;
     var c = coresRivais[idx % coresRivais.length];
-    /* rastro de velocidade atrás do carro */
-    var trailG = ctx.createLinearGradient(0, y - 26, 0, y);
-    trailG.addColorStop(0, 'rgba(255,255,255,0)');
-    trailG.addColorStop(1, 'rgba(255,255,255,0.18)');
-    ctx.fillStyle = trailG;
-    ctx.fillRect(x + bw * 0.18, y - 26, bw * 0.64, 26);
-    desenharCarroArcade(ctx, x, y, bw, bh, c[0], c[1]);
+    desenharCarroArcade(ctx, x, o.y, bw, bh, c[0], c[1]);
   });
   var px = arcade.carX * laneW + 14;
   var py = h - 64;
-  var pw = laneW - 28, ph = 46;
-  /* glow do carro do jogador */
-  ctx.shadowColor = '#00e676';
-  ctx.shadowBlur = 16;
-  desenharCarroArcade(ctx, px, py, pw, ph, '#69f0ae', '#00c853');
-  ctx.shadowBlur = 0;
-  desenharHUDArcade(ctx, w, 'CORRIDA');
+  desenharCarroArcade(ctx, px, py, laneW - 28, 46, '#69f0ae', '#00c853');
+  desenharHUDArcade(ctx, w, (cen.nome || 'CORRIDA').toUpperCase().slice(0, 14));
 }
 
 /* ===== Quebra-Blocos ===== */
 function initQuebra() {
+  aplicarModoNoArcade('quebra', arcade.nivel || 1);
   var w = arcade.canvas.width, h = arcade.canvas.height;
-  arcade.paddleW = 70;
+  var modo = arcade._modoEspecial;
+  var cen = arcade._cenario || cenarioArcade('quebra', arcade.nivel || 1);
+  arcade.paddleW = (modo && modo.id === 'mini') ? 42 : 70;
   arcade.paddleX = (w - arcade.paddleW) / 2;
   var curvaQuebra = curvaDificuldade(arcade.nivel);
-  arcade.ball = { x: w / 2, y: h - 50, vx: +(1.8 + 2.4 * curvaQuebra).toFixed(2), vy: -(2.1 + 2.0 * curvaQuebra), r: 6 };
+  var velMul = (modo && modo.id === 'rapida') ? 1.45 : ((modo && modo.id === 'mestre') ? 1.6 : 1);
+  arcade.ball = { x: w / 2, y: h - 50, vx: +(1.8 + 2.4 * curvaQuebra).toFixed(2) * velMul, vy: -(2.1 + 2.0 * curvaQuebra) * velMul, r: 6 };
+  arcade._quebraPtsMul = (modo && modo.id === 'dupla') ? 2 : 1;
   arcade.bricks = [];
   var cols = 6, rows = 3 + Math.round(3 * curvaQuebra);
+  if (modo && (modo.id === 'muro' || modo.id === 'mestre')) rows += 2;
   var bw = (w - 20) / cols, bh = 14;
-  var cores = ['#ef5350', '#ff9800', '#ffc107', '#00e676', '#42a5f5', '#ab47bc'];
+  var cores = (cen && cen.cores) || ['#ef5350', '#ff9800', '#ffc107', '#00e676', '#42a5f5', '#ab47bc'];
   for (var r = 0; r < rows; r++) {
     for (var c = 0; c < cols; c++) {
       arcade.bricks.push({ x: 10 + c * bw, y: 36 + r * (bh + 4), w: bw - 4, h: bh, vivo: true, cor: cores[(r + c) % cores.length] });
@@ -4215,7 +4608,7 @@ function tickQuebra() {
     if (b.x > br.x && b.x < br.x + br.w && b.y > br.y && b.y < br.y + br.h) {
       br.vivo = false;
       b.vy *= -1;
-      arcade.score += 15;
+      arcade.score += 15 * (arcade._quebraPtsMul || 1);
       registrarProgressoNivel(1);
     }
   });
@@ -4227,12 +4620,8 @@ function tickQuebra() {
 
 function drawQuebra() {
   var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
-  var bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, '#1a237e');
-  bg.addColorStop(0.5, '#0d1b2a');
-  bg.addColorStop(1, '#0a1620');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, w, h);
+  var cen = arcade._cenario || cenarioArcade('quebra', arcade.nivel || 1);
+  pintarFundoCenario(ctx, w, h, cen);
   /* estrelas de fundo */
   ctx.fillStyle = 'rgba(255,255,255,0.15)';
   for (var s = 0; s < 20; s++) {
@@ -4254,11 +4643,8 @@ function drawQuebra() {
   var pg = ctx.createLinearGradient(arcade.paddleX, h - 16, arcade.paddleX, h - 6);
   pg.addColorStop(0, '#69f0ae');
   pg.addColorStop(1, '#00c853');
-  ctx.shadowColor = 'rgba(105,240,174,0.7)';
-  ctx.shadowBlur = 8;
   ctx.fillStyle = pg;
   ctx.fillRect(arcade.paddleX, h - 16, arcade.paddleW, 11);
-  ctx.shadowBlur = 0;
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.fillRect(arcade.paddleX + 4, h - 14, arcade.paddleW - 8, 3);
   /* bola com brilho */
@@ -4269,11 +4655,13 @@ function drawQuebra() {
   ctx.beginPath();
   ctx.arc(arcade.ball.x, arcade.ball.y, arcade.ball.r, 0, Math.PI * 2);
   ctx.fill();
+  desenharBannerModo(ctx, w, arcade._modoEspecial, arcade._cenario);
   desenharHUDArcade(ctx, w, 'QUEBRA');
 }
 
 /* ===== Pulo (estilo flappy) ===== */
 function initPulo() {
+  aplicarModoNoArcade('pulo', arcade.nivel || 1);
   var h = arcade.canvas.height;
   arcade.bird = { x: 50, y: h / 2, vy: 0, r: 12 };
   arcade.pipes = [];
@@ -4291,18 +4679,26 @@ function tickPulo() {
   var w = arcade.canvas.width, h = arcade.canvas.height;
   var bird = arcade.bird;
   arcade.frame++;
-  bird.vy += 0.28;
+  var modo = arcade._modoEspecial;
+  var grav = (modo && modo.id === 'baixo') ? 0.38 : ((modo && modo.id === 'mestre') ? 0.34 : 0.28);
+  bird.vy += grav;
   bird.y += bird.vy;
   if (bird.y < 0 || bird.y > h) { gameOverArcade(); return; }
   var curvaPulo = curvaDificuldade(arcade.nivel);
   var gap = Math.max(95, Math.round(160 - 65 * curvaPulo));
-  if (arcade.frame % Math.max(55, Math.round(120 - 65 * curvaPulo)) === 0) {
+  if (modo && (modo.id === 'estreito' || modo.id === 'mestre')) gap = Math.max(78, gap - 28);
+  var spawnEvery = Math.max(55, Math.round(120 - 65 * curvaPulo));
+  if (modo && (modo.id === 'vento' || modo.id === 'mestre')) spawnEvery = Math.max(40, Math.round(spawnEvery * 0.7));
+  if (arcade.frame % spawnEvery === 0) {
     var top = 40 + Math.random() * (h - gap - 100);
+    if (modo && modo.id === 'caos') top = 30 + Math.random() * (h - gap - 80);
     arcade.pipes.push({ x: w + 10, top: top, gap: gap, passed: false });
   }
   for (var i = arcade.pipes.length - 1; i >= 0; i--) {
     var p = arcade.pipes[i];
-    p.x -= 1.5 + 2.0 * curvaPulo;
+    var spd = 1.5 + 2.0 * curvaPulo;
+    if (modo && (modo.id === 'vento' || modo.id === 'mestre')) spd *= 1.25;
+    p.x -= spd;
     if (!p.passed && p.x + 36 < bird.x) {
       p.passed = true;
       arcade.score += 10;
@@ -4320,12 +4716,18 @@ function tickPulo() {
 
 function drawPulo() {
   var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
-  var sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#0277bd');
-  sky.addColorStop(0.5, '#4fc3f7');
-  sky.addColorStop(1, '#b3e5fc');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, w, h);
+  var cen = arcade._cenario || cenarioArcade('pulo', arcade.nivel || 1);
+  if (cen && cen.bg) {
+    pintarFundoCenario(ctx, w, h, cen);
+  } else {
+    var sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, '#0277bd');
+    sky.addColorStop(0.5, '#4fc3f7');
+    sky.addColorStop(1, '#b3e5fc');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+  }
+  var canoCor = (cen && cen.cano) || '#00c853';
   /* nuvens */
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
   var sc = (arcade.frame || 0) * 0.5;
@@ -4344,15 +4746,6 @@ function drawPulo() {
   ctx.fillRect(0, h - 28, w, 28);
   ctx.fillStyle = '#8d6e63';
   ctx.fillRect(0, h - 28, w, 4);
-  /* tufos de grama */
-  ctx.fillStyle = 'rgba(255,255,255,0.12)';
-  var gOffset = ((arcade.frame || 0) * 1.5) % 16;
-  for (var tg = -16; tg < w + 16; tg += 16) {
-    var gxp = tg - gOffset;
-    ctx.beginPath();
-    ctx.moveTo(gxp, h - 24); ctx.lineTo(gxp + 3, h - 30); ctx.lineTo(gxp + 6, h - 24);
-    ctx.fill();
-  }
   arcade.pipes.forEach(function (p) {
     var pg = ctx.createLinearGradient(p.x, 0, p.x + 36, 0);
     pg.addColorStop(0, '#1b5e20');
@@ -4361,7 +4754,7 @@ function drawPulo() {
     ctx.fillStyle = pg;
     ctx.fillRect(p.x, 0, 36, p.top);
     ctx.fillRect(p.x, p.top + p.gap, 36, h - (p.top + p.gap) - 28);
-    ctx.fillStyle = '#66bb6a';
+    ctx.fillStyle = canoCor;
     ctx.fillRect(p.x - 3, p.top - 14, 42, 14);
     ctx.fillRect(p.x - 3, p.top + p.gap, 42, 14);
   });
@@ -4385,11 +4778,13 @@ function drawPulo() {
   ctx.lineTo(b.x + b.r + 7, b.y + 2);
   ctx.lineTo(b.x + b.r - 2, b.y + 5);
   ctx.fill();
+  desenharBannerModo(ctx, w, arcade._modoEspecial, arcade._cenario);
   desenharHUDArcade(ctx, w, 'PULO');
 }
 
 /* ===== Surfe (estilo Subway Surfers / corrida com pulo) ===== */
 function initSurfe() {
+  aplicarModoNoArcade('surfe', arcade.nivel || 1);
   var cfg = configNivelArcade('surfe', arcade.nivel || 1);
   arcade.surferLane = 1;
   arcade.surferY = 0;
@@ -4399,6 +4794,7 @@ function initSurfe() {
   arcade.surfeCoins = [];
   arcade.frame = 0;
   arcade.speed = cfg.speedBase || 3.5;
+  arcade.score = 0;
   arcade._lastScoreNivel = 0;
   /* prédios laterais (cenário) */
   arcade.surfeBuildingsL = [];
@@ -4753,12 +5149,14 @@ function drawSurfe() {
 
 /* ===== Aventura (estilo Super Mario / plataforma) ===== */
 function initMario() {
+  aplicarModoNoArcade('mario', arcade.nivel || 1);
   var h = arcade.canvas.height;
   var nivel = arcade.nivel || 1;
   arcade.mario = { x: 40, y: h - 80, w: 18, h: 26, onGround: false };
   arcade.marioVx = 0;
   arcade.marioVy = 0;
   arcade.cameraX = 0;
+  arcade.score = 0;
   /* plataformas */
   arcade.platforms = [
     { x: 0, y: h - 28, w: 900 + nivel * 80, h: 28 },
@@ -4875,159 +5273,1235 @@ function tickMario() {
 function drawMario() {
   var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
   var cam = arcade.cameraX || 0;
-  /* céu com degradê */
+  /* céu */
   var sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#1e88e5');
-  sky.addColorStop(0.6, '#4fc3f7');
-  sky.addColorStop(1, '#bbdefb');
+  sky.addColorStop(0, '#4fc3f7');
+  sky.addColorStop(1, '#b3e5fc');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
-  /* sol */
-  var sunG = ctx.createRadialGradient(w - 34, 30, 2, w - 34, 30, 22);
-  sunG.addColorStop(0, '#fffde7'); sunG.addColorStop(1, 'rgba(255,241,118,0)');
-  ctx.fillStyle = sunG;
-  ctx.beginPath(); ctx.arc(w - 34, 30, 22, 0, Math.PI * 2); ctx.fill();
-  /* nuvens parallax */
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  for (var nc = 0; nc < 4; nc++) {
-    var ncx = ((nc * 110 - cam * 0.15) % (w + 100)) - 50;
-    var ncy = 26 + (nc % 2) * 22;
-    ctx.beginPath();
-    ctx.ellipse(ncx, ncy, 20, 9, 0, 0, Math.PI * 2);
-    ctx.ellipse(ncx + 14, ncy + 3, 15, 7, 0, 0, Math.PI * 2);
-    ctx.ellipse(ncx - 12, ncy + 3, 13, 7, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  /* colinas com sombreamento */
-  var hillG = ctx.createLinearGradient(0, h - 70, 0, h);
-  hillG.addColorStop(0, '#a5d6a7');
-  hillG.addColorStop(1, '#66bb6a');
-  ctx.fillStyle = hillG;
+  /* colinas */
+  ctx.fillStyle = '#81c784';
   ctx.beginPath();
   ctx.ellipse(80 - cam * 0.2, h - 20, 90, 40, 0, 0, Math.PI * 2);
   ctx.ellipse(220 - cam * 0.2, h - 10, 110, 50, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = 'rgba(46,125,50,0.35)';
-  ctx.beginPath();
-  ctx.ellipse(90 - cam * 0.2, h - 6, 80, 20, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  /* plataformas com textura de tijolo/terra e grama */
+  /* plataformas */
   arcade.platforms.forEach(function (p) {
-    var px0 = p.x - cam;
-    if (px0 + p.w < -20 || px0 > w + 20) return;
-    var dirtG = ctx.createLinearGradient(0, p.y, 0, p.y + p.h);
-    dirtG.addColorStop(0, '#8d6e4a');
-    dirtG.addColorStop(1, '#5d4326');
-    ctx.fillStyle = dirtG;
-    ctx.fillRect(px0, p.y, p.w, p.h);
-    /* linhas de tijolo */
-    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-    ctx.lineWidth = 1;
-    for (var bx = 0; bx < p.w; bx += 14) {
-      ctx.beginPath(); ctx.moveTo(px0 + bx, p.y + 4); ctx.lineTo(px0 + bx, p.y + p.h); ctx.stroke();
-    }
-    ctx.beginPath(); ctx.moveTo(px0, p.y + p.h / 2); ctx.lineTo(px0 + p.w, p.y + p.h / 2); ctx.stroke();
-    /* grama por cima com sombra */
-    var grassG = ctx.createLinearGradient(0, p.y - 2, 0, p.y + 6);
-    grassG.addColorStop(0, '#9ccc65');
-    grassG.addColorStop(1, '#558b2f');
-    ctx.fillStyle = grassG;
-    ctx.fillRect(px0, p.y, p.w, 6);
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.fillRect(px0, p.y, p.w, 2);
+    ctx.fillStyle = '#6d4c41';
+    ctx.fillRect(p.x - cam, p.y, p.w, p.h);
+    ctx.fillStyle = '#8bc34a';
+    ctx.fillRect(p.x - cam, p.y, p.w, 5);
   });
-
-  /* bandeira com haste metálica e pano ondulando */
+  /* bandeira */
   var f = arcade.flag;
-  var poleG = ctx.createLinearGradient(f.x - cam, 0, f.x - cam + f.w, 0);
-  poleG.addColorStop(0, '#eceff1'); poleG.addColorStop(0.5, '#b0bec5'); poleG.addColorStop(1, '#78909c');
-  ctx.fillStyle = poleG;
+  ctx.fillStyle = '#fff';
   ctx.fillRect(f.x - cam, f.y, f.w, f.h);
-  var wave = Math.sin((arcade.frame || 0) * 0.15) * 3;
   ctx.fillStyle = '#e53935';
   ctx.beginPath();
   ctx.moveTo(f.x - cam + f.w, f.y);
-  ctx.quadraticCurveTo(f.x - cam + f.w + 22, f.y + 6 + wave, f.x - cam + f.w, f.y + 20);
-  ctx.closePath();
+  ctx.lineTo(f.x - cam + f.w + 22, f.y + 10);
+  ctx.lineTo(f.x - cam + f.w, f.y + 20);
   ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.beginPath(); ctx.arc(f.x - cam + f.w / 2, f.y - 4, 4, 0, Math.PI * 2); ctx.fill();
-
-  /* moedas com brilho giratório */
+  /* moedas */
   arcade.marioCoins.forEach(function (c) {
     if (c.pega) return;
-    var cx0 = c.x - cam;
-    var squeeze = Math.abs(Math.sin((arcade.frame || 0) * 0.08 + c.x));
-    var coinG = ctx.createLinearGradient(cx0 - c.r, c.y - c.r, cx0 + c.r, c.y + c.r);
-    coinG.addColorStop(0, '#fff9c4');
-    coinG.addColorStop(0.5, '#ffc107');
-    coinG.addColorStop(1, '#ff8f00');
-    ctx.fillStyle = coinG;
+    ctx.fillStyle = '#ffc107';
     ctx.beginPath();
-    ctx.ellipse(cx0, c.y, c.r * (0.35 + squeeze * 0.65), c.r, 0, 0, Math.PI * 2);
+    ctx.arc(c.x - cam, c.y, c.r, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
   });
-
-  /* inimigos (goombas) com corpo arredondado e sombra */
+  /* inimigos */
   arcade.enemies.forEach(function (en) {
-    var ex0 = en.x - cam;
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath(); ctx.ellipse(ex0 + en.w / 2, en.y + en.h + 1, en.w * 0.5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-    var goombaG = ctx.createRadialGradient(ex0 + en.w * 0.35, en.y + en.h * 0.3, 1, ex0 + en.w / 2, en.y + en.h / 2, en.w * 0.8);
-    goombaG.addColorStop(0, '#a1887f');
-    goombaG.addColorStop(1, '#5d4037');
-    ctx.fillStyle = goombaG;
-    ctx.beginPath();
-    ctx.ellipse(ex0 + en.w / 2, en.y + en.h * 0.55, en.w / 2, en.h * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#3e2723';
-    ctx.fillRect(ex0 + 1, en.y + en.h - 4, en.w * 0.4, 4);
-    ctx.fillRect(ex0 + en.w * 0.55, en.y + en.h - 4, en.w * 0.4, 4);
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(ex0 + en.w * 0.32, en.y + en.h * 0.42, 2.6, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(ex0 + en.w * 0.68, en.y + en.h * 0.42, 2.6, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#111';
-    ctx.beginPath(); ctx.arc(ex0 + en.w * 0.32, en.y + en.h * 0.44, 1.2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(ex0 + en.w * 0.68, en.y + en.h * 0.44, 1.2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#6d4c41';
+    ctx.fillRect(en.x - cam, en.y, en.w, en.h);
+    ctx.fillStyle = '#ef5350';
+    ctx.fillRect(en.x - cam + 2, en.y + 3, 4, 4);
+    ctx.fillRect(en.x - cam + 10, en.y + 3, 4, 4);
   });
-
-  /* jogador com sombreamento, macacão e rosto */
+  /* jogador */
   var m = arcade.mario;
-  var mx0 = m.x - cam;
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath(); ctx.ellipse(mx0 + m.w / 2, m.y + m.h + 2, m.w * 0.55, 3, 0, 0, Math.PI * 2); ctx.fill();
-  /* boné/camisa */
-  var shirtG = ctx.createLinearGradient(mx0, m.y, mx0 + m.w, m.y);
-  shirtG.addColorStop(0, '#ff6659'); shirtG.addColorStop(1, '#c62828');
-  ctx.fillStyle = shirtG;
-  ctx.fillRect(mx0, m.y, m.w, m.h * 0.45);
-  /* macacão */
-  var overallG = ctx.createLinearGradient(mx0, m.y, mx0 + m.w, m.y);
-  overallG.addColorStop(0, '#5c9ce6'); overallG.addColorStop(1, '#0d47a1');
-  ctx.fillStyle = overallG;
-  ctx.fillRect(mx0, m.y + m.h * 0.45, m.w, m.h * 0.55);
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.fillRect(mx0, m.y + m.h * 0.45, m.w, 2);
-  /* botões */
-  ctx.fillStyle = '#ffca28';
-  ctx.beginPath(); ctx.arc(mx0 + m.w * 0.3, m.y + m.h * 0.55, 1.3, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(mx0 + m.w * 0.7, m.y + m.h * 0.55, 1.3, 0, Math.PI * 2); ctx.fill();
-  /* rosto com sombreamento leve */
-  var faceG = ctx.createRadialGradient(mx0 + m.w / 2 - 2, m.y - 6, 1, mx0 + m.w / 2, m.y - 4, 8);
-  faceG.addColorStop(0, '#ffe0b2');
-  faceG.addColorStop(1, '#ffb74d');
-  ctx.fillStyle = faceG;
+  ctx.fillStyle = '#e53935';
+  ctx.fillRect(m.x - cam, m.y, m.w, m.h * 0.45);
+  ctx.fillStyle = '#1565c0';
+  ctx.fillRect(m.x - cam, m.y + m.h * 0.45, m.w, m.h * 0.55);
+  ctx.fillStyle = '#ffcc80';
   ctx.beginPath();
-  ctx.arc(mx0 + m.w / 2, m.y - 4, 7, 0, Math.PI * 2);
+  ctx.arc(m.x - cam + m.w / 2, m.y - 4, 7, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#111';
-  ctx.beginPath(); ctx.arc(mx0 + m.w / 2 + 3, m.y - 5, 1.1, 0, Math.PI * 2); ctx.fill();
   desenharHUDArcade(ctx, w, 'AVENTURA');
 }
+
+/* =========================================================
+   DAMAS — tabuleiro 8x8, dama (promoção), captura
+   Modos: vs Assistente (IA) · 2 jogadores no mesmo aparelho
+   ========================================================= */
+function initDamas() {
+  aplicarModoNoArcade('damas', arcade.nivel || 1);
+  /* botões de modo */
+  var bar = document.getElementById('arcadeAcoesExtra');
+  if (bar) {
+    var box = document.getElementById('arcadeAcoesDamas');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'arcadeAcoesDamas';
+      box.className = 'arcade-acoes-col';
+      box.innerHTML =
+        '<button type="button" class="arcade-btn arcade-btn-green" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;" data-acao="damas-ia">🤖 Vs Assistente</button>' +
+        '<button type="button" class="arcade-btn arcade-btn-gold" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;" data-acao="damas-2p">👥 2 Jogadores</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;background:rgba(144,202,249,0.35);" data-acao="damas-novo">🔄 Novo</button>';
+      bar.appendChild(box);
+    }
+    box.style.display = 'flex';
+  }
+  var dpad = document.querySelector('.arcade-dpad');
+  if (dpad) dpad.style.display = 'none';
+  var acoesG = $('arcadeAcoesGeral'); if (acoesG) acoesG.style.display = 'none';
+  var acoesP = $('arcadeAcoesPulo'); if (acoesP) acoesP.style.display = 'none';
+
+  arcade.damasModo = arcade.damasModo || 'ia';
+  arcade.damasVez = 'b'; /* b = aluno (brancas), p = assistente/jogador2 (pretas) */
+  arcade.damasSel = null;
+  arcade.damasMsg = arcade.damasModo === 'ia'
+    ? 'Você (claras) × Assistente Capoeira. Toque na peça e na casa.'
+    : '2 jogadores: Claras começam. Alternem no mesmo aparelho.';
+  arcade.damasFim = false;
+  arcade.damasCapturas = { b: 0, p: 0 };
+  arcade.score = 0;
+  /* board[linha][coluna]: null | {cor:'b'|'p', dama:bool} — só casas escuras importam */
+  var board = [];
+  for (var r = 0; r < 8; r++) {
+    board[r] = [];
+    for (var c = 0; c < 8; c++) {
+      board[r][c] = null;
+      if ((r + c) % 2 === 1) {
+        if (r < 3) board[r][c] = { cor: 'p', dama: false };
+        else if (r > 4) board[r][c] = { cor: 'b', dama: false };
+      }
+    }
+  }
+  arcade.damasBoard = board;
+  instalarCliqueDamas();
+  drawDamas();
+}
+
+function instalarCliqueDamas() {
+  if (window._damasClickOk) return;
+  window._damasClickOk = true;
+  var canvas = $('arcadeCanvas');
+  if (!canvas) return;
+  function handle(e) {
+    if (arcade.tipo !== 'damas' || !arcade.rodando || arcade.pausado || arcade.damasFim) return;
+    var rect = canvas.getBoundingClientRect();
+    var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+    var clientY = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
+    var x = (clientX - rect.left) * (canvas.width / rect.width);
+    var y = (clientY - rect.top) * (canvas.height / rect.height);
+    var margem = 8;
+    var size = Math.min(canvas.width - margem * 2, 300);
+    var ox = (canvas.width - size) / 2;
+    var oy = 36;
+    if (x < ox || y < oy || x > ox + size || y > oy + size) return;
+    var c = Math.floor((x - ox) / (size / 8));
+    var r = Math.floor((y - oy) / (size / 8));
+    if (r < 0 || r > 7 || c < 0 || c > 7) return;
+    cliqueDamas(r, c);
+  }
+  canvas.addEventListener('click', handle);
+  canvas.addEventListener('touchend', function (e) {
+    if (arcade.tipo !== 'damas') return;
+    e.preventDefault();
+    if (e.changedTouches && e.changedTouches[0]) {
+      var t = e.changedTouches[0];
+      handle({ clientX: t.clientX, clientY: t.clientY });
+    }
+  }, { passive: false });
+}
+
+function damasPeca(r, c) {
+  if (r < 0 || r > 7 || c < 0 || c > 7) return null;
+  return arcade.damasBoard[r][c];
+}
+
+function damasEscura(r, c) { return (r + c) % 2 === 1; }
+
+/* movimentos simples e capturas de uma peça */
+function damasMovimentos(r, c, soCaptura) {
+  var p = damasPeca(r, c);
+  if (!p) return [];
+  var dirs = [];
+  if (p.dama) {
+    dirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  } else if (p.cor === 'b') {
+    dirs = [[-1, -1], [-1, 1]]; /* brancas sobem */
+  } else {
+    dirs = [[1, -1], [1, 1]]; /* pretas descem */
+  }
+  var moves = [];
+  dirs.forEach(function (d) {
+    var r1 = r + d[0], c1 = c + d[1];
+    var r2 = r + d[0] * 2, c2 = c + d[1] * 2;
+    /* captura */
+    if (r2 >= 0 && r2 < 8 && c2 >= 0 && c2 < 8) {
+      var mid = damasPeca(r1, c1);
+      var dest = damasPeca(r2, c2);
+      if (mid && mid.cor !== p.cor && !dest) {
+        moves.push({ r: r2, c: c2, captura: true, mr: r1, mc: c1 });
+      }
+    }
+    /* passo simples */
+    if (!soCaptura && r1 >= 0 && r1 < 8 && c1 >= 0 && c1 < 8 && !damasPeca(r1, c1) && damasEscura(r1, c1)) {
+      moves.push({ r: r1, c: c1, captura: false });
+    }
+  });
+  /* dama: passos longos em diagonal (versão simplificada: até 2 casas sem peça no caminho) */
+  if (p.dama && !soCaptura) {
+    [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(function (d) {
+      for (var k = 1; k <= 7; k++) {
+        var rr = r + d[0] * k, cc = c + d[1] * k;
+        if (rr < 0 || rr > 7 || cc < 0 || cc > 7) break;
+        if (!damasEscura(rr, cc)) continue;
+        if (damasPeca(rr, cc)) break;
+        if (k > 1) moves.push({ r: rr, c: cc, captura: false });
+      }
+    });
+  }
+  return moves;
+}
+
+function damasTemCaptura(cor) {
+  for (var r = 0; r < 8; r++) {
+    for (var c = 0; c < 8; c++) {
+      var p = damasPeca(r, c);
+      if (p && p.cor === cor) {
+        var m = damasMovimentos(r, c, true);
+        if (m.some(function (x) { return x.captura; })) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function damasTodosMovimentos(cor) {
+  var obrigatorio = damasTemCaptura(cor);
+  var lista = [];
+  for (var r = 0; r < 8; r++) {
+    for (var c = 0; c < 8; c++) {
+      var p = damasPeca(r, c);
+      if (!p || p.cor !== cor) continue;
+      damasMovimentos(r, c, obrigatorio).forEach(function (m) {
+        if (!obrigatorio || m.captura) lista.push({ deR: r, deC: c, para: m });
+      });
+    }
+  }
+  return lista;
+}
+
+function cliqueDamas(r, c) {
+  if (arcade.damasFim) return;
+  /* no modo IA, aluno só joga nas brancas */
+  if (arcade.damasModo === 'ia' && arcade.damasVez === 'p') return;
+
+  var p = damasPeca(r, c);
+  var sel = arcade.damasSel;
+
+  if (p && p.cor === arcade.damasVez) {
+    arcade.damasSel = { r: r, c: c };
+    arcade.damasMsg = 'Peça selecionada · toque na casa de destino';
+    drawDamas();
+    return;
+  }
+
+  if (!sel) {
+    arcade.damasMsg = 'Toque em uma peça da vez (' + (arcade.damasVez === 'b' ? 'claras' : 'escuras') + ')';
+    drawDamas();
+    return;
+  }
+
+  var moves = damasMovimentos(sel.r, sel.c, damasTemCaptura(arcade.damasVez));
+  var escolhido = null;
+  for (var i = 0; i < moves.length; i++) {
+    if (moves[i].r === r && moves[i].c === c) { escolhido = moves[i]; break; }
+  }
+  if (!escolhido) {
+    /* se clicou outra peça própria, troca seleção */
+    if (p && p.cor === arcade.damasVez) {
+      arcade.damasSel = { r: r, c: c };
+      arcade.damasMsg = 'Peça selecionada · toque no destino';
+      drawDamas();
+      return;
+    }
+    arcade.damasMsg = 'Movimento inválido' + (damasTemCaptura(arcade.damasVez) ? ' · captura obrigatória!' : '');
+    drawDamas();
+    return;
+  }
+
+  aplicarMovimentoDamas(sel.r, sel.c, escolhido);
+}
+
+function aplicarMovimentoDamas(deR, deC, mov) {
+  var board = arcade.damasBoard;
+  var p = board[deR][deC];
+  board[deR][deC] = null;
+  board[mov.r][mov.c] = p;
+  if (mov.captura) {
+    board[mov.mr][mov.mc] = null;
+    arcade.damasCapturas[p.cor] = (arcade.damasCapturas[p.cor] || 0) + 1;
+    if (p.cor === 'b') arcade.score += 15;
+  } else {
+    if (p.cor === 'b') arcade.score += 2;
+  }
+  /* promoção a dama */
+  if (!p.dama) {
+    if (p.cor === 'b' && mov.r === 0) { p.dama = true; arcade.damasMsg = '👑 Dama!'; arcade.score += 25; }
+    if (p.cor === 'p' && mov.r === 7) { p.dama = true; arcade.damasMsg = '👑 Dama do adversário!'; }
+  }
+  /* multi-captura: se a mesma peça ainda pode capturar, continua a vez */
+  if (mov.captura) {
+    var mais = damasMovimentos(mov.r, mov.c, true).filter(function (x) { return x.captura; });
+    if (mais.length) {
+      arcade.damasSel = { r: mov.r, c: mov.c };
+      arcade.damasMsg = 'Continue capturando!';
+      drawDamas();
+      verificarFimDamas();
+      return;
+    }
+  }
+  arcade.damasSel = null;
+  arcade.damasVez = arcade.damasVez === 'b' ? 'p' : 'b';
+  if (!arcade.damasMsg || arcade.damasMsg.indexOf('Dama') < 0) {
+    arcade.damasMsg = arcade.damasVez === 'b'
+      ? (arcade.damasModo === 'ia' ? 'Sua vez (claras)' : 'Vez das claras')
+      : (arcade.damasModo === 'ia' ? 'Assistente pensando…' : 'Vez das escuras');
+  }
+  drawDamas();
+  verificarFimDamas();
+  if (!arcade.damasFim && arcade.damasModo === 'ia' && arcade.damasVez === 'p') {
+    setTimeout(jogadaIADamas, 450 + Math.random() * 350);
+  }
+}
+
+function jogadaIADamas() {
+  if (arcade.tipo !== 'damas' || arcade.damasFim || arcade.damasVez !== 'p') return;
+  var lista = damasTodosMovimentos('p');
+  if (!lista.length) {
+    arcade.damasFim = true;
+    arcade.damasMsg = '🎉 Você venceu! Assistente sem movimentos.';
+    arcade.score += 80;
+    salvarNivelArcade('damas', Math.min(10, (arcade.nivel || 1) + 1));
+    drawDamas();
+    return;
+  }
+  /* prioriza captura e promoção; senão aleatório ponderado */
+  var capturas = lista.filter(function (x) { return x.para.captura; });
+  var pool = capturas.length ? capturas : lista;
+  var promo = pool.filter(function (x) {
+    var peca = damasPeca(x.deR, x.deC);
+    return peca && !peca.dama && x.para.r === 7;
+  });
+  if (promo.length) pool = promo;
+  var escolha = pool[Math.floor(Math.random() * pool.length)];
+  /* dificuldade sobe com nível: em níveis altos tenta ficar no centro */
+  if ((arcade.nivel || 1) >= 4 && !escolha.para.captura && Math.random() < 0.45) {
+    pool.sort(function (a, b) {
+      var ca = Math.abs(a.para.r - 3.5) + Math.abs(a.para.c - 3.5);
+      var cb = Math.abs(b.para.r - 3.5) + Math.abs(b.para.c - 3.5);
+      return ca - cb;
+    });
+    escolha = pool[0];
+  }
+  aplicarMovimentoDamas(escolha.deR, escolha.deC, escolha.para);
+}
+
+function verificarFimDamas() {
+  var cont = { b: 0, p: 0 };
+  for (var r = 0; r < 8; r++) {
+    for (var c = 0; c < 8; c++) {
+      var p = damasPeca(r, c);
+      if (p) cont[p.cor]++;
+    }
+  }
+  if (cont.b === 0) {
+    arcade.damasFim = true;
+    arcade.damasMsg = arcade.damasModo === 'ia' ? '🤖 Assistente venceu! Tente de novo.' : 'Escuras venceram!';
+    drawDamas();
+    return;
+  }
+  if (cont.p === 0) {
+    arcade.damasFim = true;
+    arcade.damasMsg = '🎉 Claras venceram! Axé!';
+    arcade.score += 100;
+    salvarNivelArcade('damas', Math.min(10, (arcade.nivel || 1) + 1));
+    drawDamas();
+    return;
+  }
+  var movs = damasTodosMovimentos(arcade.damasVez);
+  if (!movs.length) {
+    arcade.damasFim = true;
+    var vencedor = arcade.damasVez === 'b' ? 'Escuras' : 'Claras';
+    arcade.damasMsg = 'Sem movimentos · ' + vencedor + ' vencem!';
+    if (arcade.damasVez === 'p') {
+      arcade.score += 80;
+      salvarNivelArcade('damas', Math.min(10, (arcade.nivel || 1) + 1));
+    }
+    drawDamas();
+  }
+}
+
+function tickDamas() {
+  /* estático — redesenha só se necessário */
+}
+
+function drawDamas() {
+  var ctx = arcade.ctx;
+  if (!ctx || !arcade.damasBoard) return;
+  var w = arcade.canvas.width, h = arcade.canvas.height;
+  ctx.fillStyle = '#1a120b';
+  ctx.fillRect(0, 0, w, h);
+  var margem = 8;
+  var size = Math.min(w - margem * 2, 300);
+  var ox = (w - size) / 2;
+  var oy = 36;
+  var cell = size / 8;
+  var sel = arcade.damasSel;
+  var moves = [];
+  if (sel) {
+    moves = damasMovimentos(sel.r, sel.c, damasTemCaptura(arcade.damasVez));
+  }
+  for (var r = 0; r < 8; r++) {
+    for (var c = 0; c < 8; c++) {
+      var x = ox + c * cell, y = oy + r * cell;
+      var escura = (r + c) % 2 === 1;
+      ctx.fillStyle = escura ? '#8b5a2b' : '#dfcfb7';
+      ctx.fillRect(x, y, cell, cell);
+      /* destaque destino */
+      var isDest = moves.some(function (m) { return m.r === r && m.c === c; });
+      if (isDest) {
+        ctx.fillStyle = 'rgba(0,230,118,0.35)';
+        ctx.fillRect(x, y, cell, cell);
+      }
+      if (sel && sel.r === r && sel.c === c) {
+        ctx.strokeStyle = '#ffc107';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 2, y + 2, cell - 4, cell - 4);
+      }
+      var p = arcade.damasBoard[r][c];
+      if (p) {
+        var cx = x + cell / 2, cy = y + cell / 2, rad = cell * 0.36;
+        if (p.cor === 'b') {
+          var g = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, rad);
+          g.addColorStop(0, '#fff');
+          g.addColorStop(1, '#bdbdbd');
+          ctx.fillStyle = g;
+        } else {
+          var g2 = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, rad);
+          g2.addColorStop(0, '#555');
+          g2.addColorStop(1, '#111');
+          ctx.fillStyle = g2;
+        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = p.cor === 'b' ? '#757575' : '#000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if (p.dama) {
+          ctx.fillStyle = '#ffc107';
+          ctx.font = 'bold ' + Math.floor(cell * 0.45) + 'px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('♛', cx, cy + 1);
+        }
+      }
+    }
+  }
+  /* moldura */
+  ctx.strokeStyle = '#5c3a21';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(ox - 3, oy - 3, size + 6, size + 6);
+  /* status */
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(8, oy + size + 10, w - 16, 48);
+  ctx.fillStyle = '#e0f2f1';
+  ctx.font = '12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(arcade.damasMsg || '', w / 2, oy + size + 28);
+  ctx.fillStyle = '#90a4ae';
+  ctx.font = '10px sans-serif';
+  var modoTxt = arcade.damasModo === 'ia' ? 'Vs Assistente' : '2 Jogadores';
+  ctx.fillText(modoTxt + ' · Capturas você ' + (arcade.damasCapturas.b || 0) + ' × ' + (arcade.damasCapturas.p || 0) + ' rival', w / 2, oy + size + 46);
+  ctx.textAlign = 'left';
+  desenharHUDArcade(ctx, w, 'DAMAS');
+}
+
+/* =========================================================
+   TAMAGOTCHI — Mascote Capoeira (Assistente Virtual)
+   Escolha um personagem pixel, cuide dele todos os dias.
+   Aparece animado (estilo 3D) na área do Aluno e no Assistente.
+   ========================================================= */
+var TAMA_KEY = 'uc_tamagotchi_v90';
+
+var TAMA_CHARS = [
+  { id: 'roots',   nome: 'Roots Ginga',      cor: '#e53935', cor2: '#fff',     pose: 'ginga',   emoji: '🥋' },
+  { id: 'urban',   nome: 'Urban Skater',     cor: '#7b1fa2', cor2: '#ce93d8', pose: 'handstand', emoji: '🛹' },
+  { id: 'neon',    nome: 'Neon Striker',     cor: '#e91e63', cor2: '#f8bbd0', pose: 'kick',     emoji: '⚡' },
+  { id: 'tribal',  nome: 'Tribal Balance',   cor: '#6d4c41', cor2: '#d7ccc8', pose: 'bow',      emoji: '🏹' },
+  { id: 'elder',   nome: 'Tribal Elder',     cor: '#546e7a', cor2: '#cfd8dc', pose: 'kick',     emoji: '🕶️' },
+  { id: 'stealth', nome: 'Stealth Martial',  cor: '#212121', cor2: '#616161', pose: 'ninja',    emoji: '🥷' },
+  { id: 'futuro',  nome: 'Futuro Bananeira', cor: '#ff6f00', cor2: '#ffe0b2', pose: 'bananeira', emoji: '🤸' },
+  { id: 'classic', nome: 'Classic Chute',    cor: '#1565c0', cor2: '#bbdefb', pose: 'kick',     emoji: '🦵' },
+  { id: 'reggae',  nome: 'Reggae Rhythm',    cor: '#2e7d32', cor2: '#ffeb3b', pose: 'stance',   emoji: '🎵' },
+  { id: 'mystic',  nome: 'Mystic Flow',      cor: '#6a1b9a', cor2: '#e1bee7', pose: 'flow',     emoji: '✨' }
+];
+
+function tamaCharById(id) {
+  for (var i = 0; i < TAMA_CHARS.length; i++) if (TAMA_CHARS[i].id === id) return TAMA_CHARS[i];
+  return TAMA_CHARS[0];
+}
+
+function carregarTama() {
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem(TAMA_KEY) || 'null'); } catch (e) { d = null; }
+  /* migração da chave antiga */
+  if (!d) {
+    try {
+      var old = JSON.parse(localStorage.getItem('uc_tamagotchi_v89') || 'null');
+      if (old) { d = old; d.charId = d.charId || 'roots'; }
+    } catch (e2) {}
+  }
+  var hoje = dataLocalISO();
+  if (!d) {
+    d = {
+      charId: null,
+      nome: 'Axézinho',
+      fome: 60, energia: 70, humor: 75, fitness: 50,
+      nivel: 1, xp: 0,
+      ultimaRefeicao: '', ultimoAlongamento: '', ultimoTreino: '',
+      criadoEm: agoraISO(), diasCuidado: 0, ultimaVisita: hoje,
+      _feedsHoje: 0, _selectMode: true
+    };
+  }
+  if (!d.charId) d._selectMode = true;
+  /* decadência diária se não cuidou */
+  if (d.ultimaVisita && d.ultimaVisita !== hoje) {
+    var dias = 1;
+    try {
+      var a = new Date(d.ultimaVisita + 'T12:00:00');
+      var b = new Date(hoje + 'T12:00:00');
+      dias = Math.max(1, Math.round((b - a) / 86400000));
+    } catch (e3) {}
+    d.fome = Math.max(5, (d.fome || 50) - 18 * dias);
+    d.energia = Math.max(5, (d.energia || 50) - 12 * dias);
+    d.humor = Math.max(5, (d.humor || 50) - 10 * dias);
+    d.fitness = Math.max(5, (d.fitness || 40) - 8 * dias);
+    d.ultimaVisita = hoje;
+    d._feedsHoje = 0;
+    salvarTama(d);
+  }
+  return d;
+}
+
+function salvarTama(d) {
+  try { localStorage.setItem(TAMA_KEY, JSON.stringify(d)); } catch (e) {}
+  arcade._tama = d;
+  try { atualizarCompanheiroUI(); } catch (e4) {}
+}
+
+function tamaMood(d) {
+  var m = ((d.fome || 0) + (d.energia || 0) + (d.humor || 0) + (d.fitness || 0)) / 4;
+  if (m >= 80) return { face: '😄', txt: 'Radiante de axé!' };
+  if (m >= 60) return { face: '🙂', txt: 'Bem e animado' };
+  if (m >= 40) return { face: '😐', txt: 'Precisa de carinho' };
+  if (m >= 20) return { face: '😟', txt: 'Cansado e com fome' };
+  return { face: '😢', txt: 'Cuide de mim, por favor!' };
+}
+
+function tamaEscolherChar(charId) {
+  var ch = tamaCharById(charId);
+  var d = arcade._tama || carregarTama();
+  d.charId = ch.id;
+  d.nome = ch.nome;
+  d._selectMode = false;
+  salvarTama(d);
+  arcade._tamaMsg = 'E aí! Eu sou o ' + ch.nome + ' ' + ch.emoji + ' — vamos treinar juntos?';
+  arcade._tamaAnim = 16;
+  drawTamagotchi();
+  try { atualizarCompanheiroUI(); publicarPresencaAvatar(); renderTerreiroListas(); } catch (e) {}
+}
+
+function initTamagotchi() {
+  arcade._tama = carregarTama();
+  if (!arcade._tamaModo) arcade._tamaModo = 'pet';
+  var d = arcade._tama;
+  try { publicarPresencaAvatar(); } catch (e) {}
+  if (d._selectMode || !d.charId) {
+    arcade._tamaMsg = 'Escolha seu personagem de capoeira!';
+  } else {
+    arcade._tamaMsg = 'Olá! Eu sou o ' + (d.nome || 'Axézinho') + '. Alimente, alongue e treine comigo!';
+  }
+  arcade._tamaAnim = 0;
+  arcade._tamaSelectPage = 0;
+  arcade.score = Math.round(((d.fome || 0) + (d.energia || 0) + (d.humor || 0) + (d.fitness || 0)) / 4);
+  arcade.progresso = 0;
+  arcade.objetivo = 5 + (arcade.nivel || 1) * 2;
+  var bar = document.getElementById('arcadeAcoesExtra');
+  if (bar) {
+    var box = document.getElementById('arcadeAcoesTama');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'arcadeAcoesTama';
+      box.className = 'arcade-acoes-col';
+      box.innerHTML =
+        '<button type="button" class="arcade-btn arcade-btn-green" style="width:auto;min-width:72px;height:48px;border-radius:12px;font-size:0.65rem;padding:4px;" data-acao="tama-feed">🍎 Comer</button>' +
+        '<button type="button" class="arcade-btn arcade-btn-gold" style="width:auto;min-width:72px;height:48px;border-radius:12px;font-size:0.65rem;padding:4px;" data-acao="tama-stretch">🧘 Alongar</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:72px;height:48px;border-radius:12px;font-size:0.65rem;padding:4px;background:rgba(0,210,255,0.35);" data-acao="tama-train">🥋 Treinar</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:72px;height:48px;border-radius:12px;font-size:0.65rem;padding:4px;background:rgba(255,105,180,0.35);" data-acao="tama-play">🎮 Brincar</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:72px;height:48px;border-radius:12px;font-size:0.62rem;padding:4px;background:rgba(255,255,255,0.12);" data-acao="tama-trocar">🔄 Trocar</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:72px;height:48px;border-radius:12px;font-size:0.62rem;padding:4px;background:rgba(255,193,7,0.25);" data-acao="tama-terreiro">👥 Terreiro</button>';
+      bar.appendChild(box);
+    }
+    box.style.display = 'flex';
+  }
+  var acoesT = $('arcadeAcoesTetris'); if (acoesT) acoesT.style.display = 'none';
+  var acoesP = $('arcadeAcoesPulo'); if (acoesP) acoesP.style.display = 'none';
+  var acoesG = $('arcadeAcoesGeral'); if (acoesG) acoesG.style.display = 'none';
+  /* toque no canvas para escolher personagem */
+  if (arcade.canvas && !arcade._tamaClickBound) {
+    arcade._tamaClickBound = true;
+    arcade.canvas.addEventListener('click', function (ev) {
+      if (arcade.tipo !== 'tamagotchi') return;
+      var d2 = arcade._tama || carregarTama();
+      if (!d2._selectMode && d2.charId) return;
+      var rect = arcade.canvas.getBoundingClientRect();
+      var sx = arcade.canvas.width / rect.width;
+      var sy = arcade.canvas.height / rect.height;
+      var mx = (ev.clientX - rect.left) * sx;
+      var my = (ev.clientY - rect.top) * sy;
+      var cols = 5, rows = 2, pad = 8;
+      var cw = (arcade.canvas.width - pad * 2) / cols;
+      var ch = 70;
+      var top = 70;
+      for (var i = 0; i < TAMA_CHARS.length; i++) {
+        var c = i % cols, r = Math.floor(i / cols);
+        var x0 = pad + c * cw, y0 = top + r * (ch + 8);
+        if (mx >= x0 && mx <= x0 + cw - 4 && my >= y0 && my <= y0 + ch) {
+          tamaEscolherChar(TAMA_CHARS[i].id);
+          return;
+        }
+      }
+    });
+  }
+  drawTamagotchi();
+}
+
+function tamaAcao(tipo) {
+  var d = arcade._tama || carregarTama();
+  if (tipo === 'trocar') {
+    d._selectMode = true;
+    d.charId = null;
+    arcade._tamaModo = 'pet';
+    salvarTama(d);
+    arcade._tamaMsg = 'Escolha outro personagem!';
+    drawTamagotchi();
+    return;
+  }
+  if (tipo === 'terreiro') {
+    arcade._tamaModo = (arcade._tamaModo === 'terreiro') ? 'pet' : 'terreiro';
+    publicarPresencaAvatar();
+    arcade._tamaMsg = arcade._tamaModo === 'terreiro' ? 'Bem-vindo ao Terreiro! Quem está online ou no treino aparece aqui.' : 'De volta ao cuidado do mascote.';
+    drawTamagotchi();
+    return;
+  }
+  if (d._selectMode || !d.charId) {
+    arcade._tamaMsg = 'Escolha um personagem primeiro tocando nele!';
+    drawTamagotchi();
+    return;
+  }
+  var hoje = dataLocalISO();
+  var msg = '';
+  if (tipo === 'feed') {
+    if (d.ultimaRefeicao === hoje && (d._feedsHoje || 0) >= 3) {
+      msg = 'Já comi bastante hoje! Amanhã de novo 🍎';
+    } else {
+      d.fome = Math.min(100, (d.fome || 0) + 22);
+      d.humor = Math.min(100, (d.humor || 0) + 8);
+      d.ultimaRefeicao = hoje;
+      d._feedsHoje = (d._feedsHoje || 0) + 1;
+      d.xp = (d.xp || 0) + 10;
+      arcade.score += 10;
+      arcade.progresso = (arcade.progresso || 0) + 1;
+      msg = 'Que delícia! Energia renovada 🍎';
+    }
+  } else if (tipo === 'stretch') {
+    d.energia = Math.min(100, (d.energia || 0) + 15);
+    d.fitness = Math.min(100, (d.fitness || 0) + 6);
+    d.ultimoAlongamento = hoje;
+    d.xp = (d.xp || 0) + 12;
+    arcade.score += 12;
+    arcade.progresso = (arcade.progresso || 0) + 1;
+    msg = 'Alongamento completo — corpo solto pra ginga 🧘';
+  } else if (tipo === 'train') {
+    if ((d.energia || 0) < 20) {
+      msg = 'Estou sem energia… me alimente ou deixe eu descansar!';
+    } else {
+      d.fitness = Math.min(100, (d.fitness || 0) + 16);
+      d.energia = Math.max(10, (d.energia || 0) - 8);
+      d.fome = Math.max(10, (d.fome || 0) - 10);
+      d.humor = Math.min(100, (d.humor || 0) + 12);
+      d.ultimoTreino = hoje;
+      d.xp = (d.xp || 0) + 18;
+      arcade.score += 18;
+      arcade.progresso = (arcade.progresso || 0) + 1;
+      msg = 'Ginga, meia-lua e negativa! Treino de capoeira top 🥋';
+    }
+  } else if (tipo === 'play') {
+    d.humor = Math.min(100, (d.humor || 0) + 18);
+    d.energia = Math.max(5, (d.energia || 0) - 5);
+    d.xp = (d.xp || 0) + 8;
+    arcade.score += 8;
+    arcade.progresso = (arcade.progresso || 0) + 1;
+    msg = 'Haha! Brincadeira boa 🎮';
+  }
+  var xpNeed = 30 + (d.nivel || 1) * 20;
+  if ((d.xp || 0) >= xpNeed) {
+    d.xp -= xpNeed;
+    d.nivel = Math.min(10, (d.nivel || 1) + 1);
+    d.diasCuidado = (d.diasCuidado || 0) + 1;
+    msg += ' · Nível do mascote ' + d.nivel + '!';
+    salvarNivelArcade('tamagotchi', d.nivel);
+    arcade.nivel = d.nivel;
+  }
+  salvarTama(d);
+  arcade._tamaMsg = msg;
+  arcade._tamaAnim = 12;
+  atualizarHUDNivelArcade();
+  if (arcade.progresso >= arcade.objetivo) {
+    try { subirNivelArcade(); } catch (e) {}
+  }
+  drawTamagotchi();
+}
+
+function tickTamagotchi() {
+  arcade._tamaAnim = Math.max(0, (arcade._tamaAnim || 0) - 1);
+  drawTamagotchi();
+}
+
+/* ---- desenho pixel estilizado do personagem ---- */
+function tamaDrawPixelChar(ctx, ch, cx, cy, scale, bob) {
+  scale = scale || 1;
+  bob = bob || 0;
+  cy += bob;
+  var s = 3.2 * scale;
+  ctx.save();
+  /* sombra elíptica */
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 38 * scale, 22 * scale, 6 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* corpo base (retângulos arredondados simulando pixel art) */
+  function box(x, y, w, h, cor) {
+    ctx.fillStyle = cor;
+    ctx.fillRect(cx + x * s - (w * s) / 2, cy + y * s, w * s, h * s);
+  }
+  function circ(x, y, r, cor) {
+    ctx.fillStyle = cor;
+    ctx.beginPath();
+    ctx.arc(cx + x * s, cy + y * s, r * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  var skin = '#c68642';
+  var outfit = ch.cor;
+  var accent = ch.cor2 || '#fff';
+
+  /* cabeça */
+  circ(0, -8, 5.2, skin);
+  /* olhos */
+  circ(-1.8, -8.5, 0.9, '#1a1a1a');
+  circ(1.8, -8.5, 0.9, '#1a1a1a');
+  /* sorriso */
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1.2 * scale;
+  ctx.beginPath();
+  ctx.arc(cx, cy - 6.5 * s, 2.2 * s, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+
+  /* acessórios por personagem */
+  if (ch.id === 'roots') {
+    box(0, -12.5, 7, 1.6, '#c62828'); /* bandana */
+    box(3.2, -12.8, 1.4, 2.5, '#c62828');
+  } else if (ch.id === 'neon') {
+    box(-3.5, -11, 1.2, 3, '#f06292'); /* cabelo neon */
+    box(3.5, -11, 1.2, 3, '#f06292');
+    box(0, -12.8, 5, 1.4, '#ab47bc');
+  } else if (ch.id === 'reggae') {
+    box(0, -12.2, 6.5, 2.2, '#1b5e20');
+    box(0, -13.2, 6.5, 1.1, '#fdd835');
+    box(0, -11.4, 6.5, 1.1, '#c62828');
+  } else if (ch.id === 'stealth') {
+    circ(0, -8, 5.4, '#212121');
+    circ(-1.6, -8.2, 1.1, '#eee');
+    circ(1.6, -8.2, 1.1, '#eee');
+  } else if (ch.id === 'mystic') {
+    box(0, -12.5, 8, 1.5, '#e1bee7');
+    box(-3.5, -10, 1.5, 4, '#e1bee7');
+    box(3.5, -10, 1.5, 4, '#e1bee7');
+  } else if (ch.id === 'elder') {
+    box(0, -11.5, 6, 1.4, '#90a4ae');
+    circ(-2, -8.2, 1.4, '#ffb300'); /* óculos */
+    circ(2, -8.2, 1.4, '#ffb300');
+  } else if (ch.id === 'tribal') {
+    box(0, -12, 5.5, 1.5, '#8d6e63');
+    box(-3, -9, 1.2, 3, '#5d4037'); /* dreads */
+    box(3, -9, 1.2, 3, '#5d4037');
+  }
+
+  /* torso */
+  box(0, -1, 6.5, 7, outfit);
+  /* braços / pernas conforme pose */
+  if (ch.pose === 'kick') {
+    box(-5, 0, 2.2, 5, skin);
+    box(5.5, -2, 2.2, 6, skin);
+    box(-2, 7, 2.4, 5, outfit);
+    box(4, 5, 2.4, 6, '#eee'); /* perna chutando */
+  } else if (ch.pose === 'handstand' || ch.pose === 'bananeira') {
+    box(-4, 6, 2, 5, skin);
+    box(4, 6, 2, 5, skin);
+    box(0, 2, 5, 5, outfit);
+    circ(0, 10, 4, skin);
+  } else if (ch.pose === 'ninja') {
+    box(-5, 0, 2, 6, '#212121');
+    box(5, 0, 2, 6, '#212121');
+    box(-2.5, 7, 2.2, 5, '#212121');
+    box(2.5, 7, 2.2, 5, '#212121');
+  } else if (ch.pose === 'flow') {
+    box(-6, -1, 2, 6, accent);
+    box(6, -1, 2, 6, accent);
+    box(-2.5, 7, 2.2, 5, outfit);
+    box(2.5, 7, 2.2, 5, outfit);
+  } else {
+    /* ginga / stance padrão */
+    box(-5, 0, 2.2, 5.5, skin);
+    box(5, 0, 2.2, 5.5, skin);
+    box(-2.8, 7, 2.4, 5, outfit);
+    box(2.8, 7, 2.4, 5, outfit);
+  }
+
+  /* brilho leve (sensação 3D) */
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.beginPath();
+  ctx.ellipse(cx - 8 * scale, cy - 10 * scale, 10 * scale, 14 * scale, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawTamagotchi() {
+  var ctx = arcade.ctx;
+  if (!ctx) return;
+  var w = arcade.canvas.width, h = arcade.canvas.height;
+  var d = arcade._tama || carregarTama();
+  var mood = tamaMood(d);
+
+  /* modo Terreiro Virtual — todos os avatares online/treino */
+  if (arcade._tamaModo === 'terreiro') {
+    drawTerreiroCanvas();
+    return;
+  }
+
+  /* fundo */
+  var g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#0d3d1f');
+  g.addColorStop(0.5, '#0a2a38');
+  g.addColorStop(1, '#061018');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  /* modo seleção de personagem */
+  if (d._selectMode || !d.charId) {
+    ctx.fillStyle = '#00e676';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ESCOLHA SEU PERSONAGEM', w / 2, 36);
+    ctx.fillStyle = '#90a4ae';
+    ctx.font = '11px sans-serif';
+    ctx.fillText('Toque em um capoeirista', w / 2, 54);
+    var cols = 5, pad = 8;
+    var cw = (w - pad * 2) / cols;
+    var chH = 70;
+    var top = 70;
+    for (var i = 0; i < TAMA_CHARS.length; i++) {
+      var c = i % cols, r = Math.floor(i / cols);
+      var x0 = pad + c * cw, y0 = top + r * (chH + 8);
+      ctx.fillStyle = 'rgba(22,35,43,0.9)';
+      ctx.strokeStyle = TAMA_CHARS[i].cor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x0 + 2, y0, cw - 6, chH, 8);
+      else ctx.rect(x0 + 2, y0, cw - 6, chH);
+      ctx.fill();
+      ctx.stroke();
+      tamaDrawPixelChar(ctx, TAMA_CHARS[i], x0 + cw / 2, y0 + 28, 0.55, 0);
+      ctx.fillStyle = '#e0f2f1';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      var nm = TAMA_CHARS[i].nome.split(' ')[0];
+      ctx.fillText(nm, x0 + cw / 2, y0 + chH - 10);
+    }
+    ctx.textAlign = 'left';
+    desenharHUDArcade(ctx, w, 'MASCOTE');
+    return;
+  }
+
+  /* chão */
+  ctx.fillStyle = 'rgba(0,230,118,0.12)';
+  ctx.fillRect(0, h - 70, w, 70);
+
+  var ch = tamaCharById(d.charId);
+  var bob = arcade._tamaAnim ? Math.sin(arcade._tamaAnim * 0.8) * 5 : Math.sin(Date.now() / 400) * 2;
+  var cx = w / 2, cy = h * 0.36;
+  tamaDrawPixelChar(ctx, ch, cx, cy, 1.35, bob);
+
+  /* nome e humor */
+  ctx.fillStyle = ch.cor;
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText((d.nome || ch.nome) + ' ' + mood.face, cx, cy + 62);
+  ctx.fillStyle = '#90a4ae';
+  ctx.font = '11px sans-serif';
+  ctx.fillText(mood.txt, cx, cy + 78);
+  ctx.fillText('Nv.' + (d.nivel || 1) + ' · XP ' + (d.xp || 0) + ' · ' + ch.emoji, cx, cy + 94);
+
+  /* barras de status */
+  function barra(label, val, y, cor) {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#cfd8dc';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(label, 16, y);
+    ctx.fillStyle = '#1a2a32';
+    ctx.fillRect(70, y - 9, w - 90, 10);
+    ctx.fillStyle = cor;
+    ctx.fillRect(70, y - 9, Math.max(2, (w - 90) * (Math.max(0, Math.min(100, val)) / 100)), 10);
+    ctx.fillStyle = '#fff';
+    ctx.font = '9px sans-serif';
+    ctx.fillText(Math.round(val) + '%', w - 36, y);
+  }
+  barra('Fome', d.fome || 0, h - 52, '#ff9800');
+  barra('Energia', d.energia || 0, h - 38, '#00d2ff');
+  barra('Humor', d.humor || 0, h - 24, '#e040fb');
+  barra('Forma', d.fitness || 0, h - 10, '#00e676');
+
+  if (arcade._tamaMsg) {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(10, 28, w - 20, 36);
+    ctx.fillStyle = '#e0f2f1';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    var linhas = String(arcade._tamaMsg).match(/.{1,36}(\s|$)/g) || [arcade._tamaMsg];
+    linhas.slice(0, 2).forEach(function (ln, i) {
+      ctx.fillText(ln.trim(), w / 2, 42 + i * 14);
+    });
+  }
+  ctx.textAlign = 'left';
+  desenharHUDArcade(ctx, w, 'MASCOTE');
+}
+
+/* ---- Companheiro 3D na área do aluno / assistente ---- */
+function htmlCompanheiro3D(mini) {
+  var d = null;
+  try { d = carregarTama(); } catch (e) { return ''; }
+  if (!d || !d.charId) {
+    return '<div class="card card-interacao" id="cardCompanheiro">' +
+      '<h3 style="color:var(--accent-blue);"><i class="fas fa-robot"></i> Seu Mascote</h3>' +
+      '<p class="mini">Ainda sem personagem. Abra <b>Jogos → Mascote</b> e escolha um capoeirista!</p>' +
+      '<button class="btn btn-secondary btn-mini" onclick="abrirJogoArcade(\'tamagotchi\')"><i class="fas fa-gamepad"></i> Escolher agora</button></div>';
+  }
+  var ch = tamaCharById(d.charId);
+  var mood = tamaMood(d);
+  var size = mini ? 64 : 96;
+  return '<div class="card card-interacao" id="cardCompanheiro">' +
+    '<h3 style="color:' + ch.cor + ';"><i class="fas fa-child-reaching"></i> ' + esc(d.nome || ch.nome) + ' ' + mood.face + '</h3>' +
+    '<div class="companheiro-3d-wrap" style="perspective:600px;display:flex;justify-content:center;margin:8px 0;">' +
+      '<div class="companheiro-3d" style="width:' + size + 'px;height:' + size + 'px;transform-style:preserve-3d;animation:companheiroGira 6s linear infinite, companheiroBob 2.2s ease-in-out infinite;position:relative;">' +
+        '<div style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 30%, ' + ch.cor2 + '55, ' + ch.cor + ' cc);border:3px solid ' + ch.cor + ';box-shadow:0 8px 20px rgba(0,0,0,0.4), inset 0 -8px 16px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:' + (size * 0.45) + 'px;">' +
+          ch.emoji +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<p class="mini" style="text-align:center;">' + esc(mood.txt) + ' · Nv.' + (d.nivel || 1) + '</p>' +
+    '<div class="grade-2" style="margin-top:6px;">' +
+      '<span class="mini">🍎 ' + Math.round(d.fome || 0) + '%</span>' +
+      '<span class="mini">⚡ ' + Math.round(d.energia || 0) + '%</span>' +
+      '<span class="mini">😊 ' + Math.round(d.humor || 0) + '%</span>' +
+      '<span class="mini">🥋 ' + Math.round(d.fitness || 0) + '%</span>' +
+    '</div>' +
+    '<button class="btn btn-secondary btn-mini" style="margin-top:8px;" onclick="abrirJogoArcade(\'tamagotchi\')"><i class="fas fa-heart"></i> Cuidar do mascote</button>' +
+    '</div>';
+}
+
+function atualizarCompanheiroUI() {
+  var box = document.getElementById('cardCompanheiro');
+  if (box && box.parentNode) {
+    var novo = document.createElement('div');
+    novo.innerHTML = htmlCompanheiro3D(false);
+    var el = novo.firstChild;
+    if (el) box.parentNode.replaceChild(el, box);
+  }
+  var ass = document.getElementById('assistenteCompanheiroSlot');
+  if (ass) ass.innerHTML = htmlCompanheiro3D(true);
+}
+
+
+/* =========================================================
+   TERREIRO VIRTUAL — avatares online / na hora do treino
+   ========================================================= */
+var PRESENCA_TTL_MS = 120000; /* 2 min = online */
+var _presencaTimer = null;
+
+function alunoEmHorarioDeTreino() {
+  var aula = typeof aulaDeHoje === 'function' ? aulaDeHoje() : null;
+  if (!aula) return false;
+  var agora = new Date();
+  var hm = (agora.getHours() * 60) + agora.getMinutes();
+  var ini = (typeof minutosDoHM === 'function' ? minutosDoHM(aula.horaInicio) : null);
+  var fim = (typeof minutosDoHM === 'function' ? minutosDoHM(aula.horaFim) : null);
+  if (ini == null) return false;
+  if (fim == null) fim = ini + 90;
+  /* margem de 20 min antes e 30 depois */
+  return hm >= (ini - 20) && hm <= (fim + 30);
+}
+
+function statusPresencaAluno(aluno) {
+  if (!aluno) return 'offline';
+  var ck = typeof obterCheckinDoDia === 'function' ? obterCheckinDoDia(aluno) : null;
+  if (ck && (ck.status === 'aprovado' || ck.status === 'pendente')) return 'treino';
+  if (alunoEmHorarioDeTreino()) return 'treino';
+  return 'online';
+}
+
+function publicarPresencaAvatar() {
+  var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+  if (!aluno || !aluno.id) return;
+  var tama = null;
+  try { tama = carregarTama(); } catch (e) { return; }
+  if (!tama || !tama.charId) return;
+  var ch = tamaCharById(tama.charId);
+  var st = statusPresencaAluno(aluno);
+  var payload = {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome || '',
+    alunoApelido: aluno.apelido || '',
+    charId: tama.charId,
+    charNome: ch.nome,
+    charCor: ch.cor,
+    charEmoji: ch.emoji,
+    nivel: tama.nivel || 1,
+    status: st,
+    lastSeen: agoraISO(),
+    atualizadoEm: agoraISO()
+  };
+  /* id estável = alunoId para sobrescrever */
+  DB.salvar('avataresOnline', payload, aluno.id).catch(function () {});
+}
+
+function limparPresencaAvatar() {
+  var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+  if (!aluno || !aluno.id) return;
+  try { DB.excluir('avataresOnline', aluno.id); } catch (e) {}
+}
+
+function listarAvataresVisiveis() {
+  var agora = Date.now();
+  var lista = DB.listar('avataresOnline') || [];
+  var out = [];
+  lista.forEach(function (a) {
+    if (!a || !a.charId) return;
+    var ts = 0;
+    try { ts = new Date(a.lastSeen || a.atualizadoEm || 0).getTime(); } catch (e) { ts = 0; }
+    if (!ts || (agora - ts) > PRESENCA_TTL_MS) return;
+    out.push(a);
+  });
+  /* se eu estou logado com mascote e ainda não apareci (atraso de sync), me incluo */
+  try {
+    var eu = alunoLogado();
+    var tama = carregarTama();
+    if (eu && tama && tama.charId) {
+      var ja = out.some(function (x) { return x.alunoId === eu.id; });
+      if (!ja) {
+        var ch = tamaCharById(tama.charId);
+        out.push({
+          alunoId: eu.id,
+          alunoNome: eu.nome,
+          alunoApelido: eu.apelido || '',
+          charId: tama.charId,
+          charNome: ch.nome,
+          charCor: ch.cor,
+          charEmoji: ch.emoji,
+          nivel: tama.nivel || 1,
+          status: statusPresencaAluno(eu),
+          lastSeen: agoraISO(),
+          _local: true
+        });
+      }
+    }
+  } catch (e2) {}
+  out.sort(function (a, b) {
+    var sa = a.status === 'treino' ? 0 : 1;
+    var sb = b.status === 'treino' ? 0 : 1;
+    if (sa !== sb) return sa - sb;
+    return String(a.alunoNome || '').localeCompare(String(b.alunoNome || ''));
+  });
+  return out;
+}
+
+function iniciarHeartbeatPresenca() {
+  if (_presencaTimer) return;
+  publicarPresencaAvatar();
+  _presencaTimer = setInterval(function () {
+    publicarPresencaAvatar();
+    try { renderTerreiroListas(); } catch (e) {}
+  }, 25000);
+  /* ao fechar a aba, tenta limpar */
+  try {
+    window.addEventListener('beforeunload', function () {
+      try { limparPresencaAvatar(); } catch (e) {}
+    });
+  } catch (e3) {}
+}
+
+function htmlAvatarChip(a, mini) {
+  var ch = tamaCharById(a.charId);
+  var cor = a.charCor || ch.cor;
+  var emoji = a.charEmoji || ch.emoji;
+  var nome = a.alunoApelido || a.alunoNome || ch.nome;
+  var treino = a.status === 'treino';
+  var size = mini ? 44 : 56;
+  return '<div class="terreiro-chip" title="' + esc(nome) + '" style="text-align:center;">' +
+    '<div style="width:' + size + 'px;height:' + size + 'px;margin:0 auto;border-radius:50%;' +
+      'background:radial-gradient(circle at 35% 30%,' + (ch.cor2 || '#fff') + '66,' + cor + ');' +
+      'border:2px solid ' + (treino ? 'var(--gold)' : cor) + ';' +
+      'box-shadow:0 0 12px ' + (treino ? 'rgba(255,193,7,0.45)' : 'rgba(0,230,118,0.25)') + ';' +
+      'display:flex;align-items:center;justify-content:center;font-size:' + (size * 0.42) + 'px;' +
+      'animation:companheiroBob 2.4s ease-in-out infinite;' +
+      (treino ? 'animation-delay:0.3s;' : '') + '">' + emoji + '</div>' +
+    '<div class="mini" style="margin-top:3px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+      esc(String(nome).split(' ')[0]) + '</div>' +
+    '<span class="pill ' + (treino ? 'pill-ok' : 'pill-info') + '" style="font-size:0.55rem;">' +
+      (treino ? '🥋 Treino' : '🟢 Online') + '</span></div>';
+}
+
+function renderTerreiroListas() {
+  var lista = listarAvataresVisiveis();
+  var box = $('listaTerreiroJogos');
+  if (box) {
+    if (!lista.length) {
+      box.innerHTML = '<p class="sem-dados" style="grid-column:1/-1;">Ninguém no terreiro agora. Faça login, escolha um mascote e fique online!</p>';
+    } else {
+      box.innerHTML = lista.map(function (a) { return htmlAvatarChip(a, true); }).join('');
+    }
+  }
+  var boxAluno = $('listaTerreiroAluno');
+  if (boxAluno) {
+    if (!lista.length) {
+      boxAluno.innerHTML = '<p class="sem-dados">Terreiro vazio no momento.</p>';
+    } else {
+      boxAluno.innerHTML = '<div class="grade-3" style="gap:8px;">' +
+        lista.map(function (a) { return htmlAvatarChip(a, false); }).join('') + '</div>';
+    }
+  }
+}
+
+function htmlCardTerreiroAluno() {
+  return '<div class="card card-interacao" id="cardTerreiroAluno">' +
+    '<h3 style="color:var(--accent-blue);"><i class="fas fa-users"></i> Terreiro Virtual</h3>' +
+    '<p class="mini" style="margin-bottom:6px;">Quem está online ou na hora do treino aparece aqui com o avatar do mascote.</p>' +
+    '<div id="listaTerreiroAluno"></div>' +
+    '<button class="btn btn-secondary btn-mini" style="margin-top:8px;" onclick="entrarTerreiroDoApp()">' +
+    '<i class="fas fa-door-open"></i> Entrar no Terreiro</button></div>';
+}
+function entrarTerreiroDoApp() {
+  abrirJogoArcade('tamagotchi');
+  setTimeout(function () {
+    try {
+      arcade._tamaModo = 'terreiro';
+      publicarPresencaAvatar();
+      drawTamagotchi();
+    } catch (e) {}
+  }, 400);
+}
+
+
+function drawTerreiroCanvas() {
+  var ctx = arcade.ctx;
+  if (!ctx) return;
+  var w = arcade.canvas.width, h = arcade.canvas.height;
+  var g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, '#1a0a00');
+  g.addColorStop(0.4, '#0d2818');
+  g.addColorStop(1, '#061018');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  /* chão do terreiro (círculo da roda) */
+  ctx.strokeStyle = 'rgba(255,193,7,0.35)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(w / 2, h * 0.62, w * 0.38, h * 0.12, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,193,7,0.06)';
+  ctx.fill();
+
+  ctx.fillStyle = '#ffc107';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('TERREIRO VIRTUAL', w / 2, 28);
+  ctx.fillStyle = '#90a4ae';
+  ctx.font = '11px sans-serif';
+  ctx.fillText('Online agora · treino de hoje brilha em dourado', w / 2, 44);
+
+  var lista = listarAvataresVisiveis();
+  if (!lista.length) {
+    ctx.fillStyle = '#90a4ae';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('Aguardando capoeiristas...', w / 2, h * 0.5);
+    ctx.fillText('Faça login e escolha seu mascote', w / 2, h * 0.5 + 18);
+  } else {
+    var n = lista.length;
+    var cols = Math.min(5, Math.max(2, Math.ceil(Math.sqrt(n))));
+    var rows = Math.ceil(n / cols);
+    var cellW = (w - 24) / cols;
+    var cellH = Math.min(90, (h - 100) / rows);
+    lista.forEach(function (a, i) {
+      var c = i % cols, r = Math.floor(i / cols);
+      var cx = 12 + c * cellW + cellW / 2;
+      var cy = 70 + r * cellH + cellH * 0.4;
+      var ch = tamaCharById(a.charId);
+      var bob = Math.sin(Date.now() / 380 + i) * 3;
+      tamaDrawPixelChar(ctx, ch, cx, cy + bob, 0.7, 0);
+      ctx.fillStyle = a.status === 'treino' ? '#ffc107' : '#e0f2f1';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      var nome = (a.alunoApelido || a.alunoNome || ch.nome).split(' ')[0];
+      ctx.fillText(nome, cx, cy + 36);
+      ctx.fillStyle = a.status === 'treino' ? '#ffc107' : '#00e676';
+      ctx.font = '8px sans-serif';
+      ctx.fillText(a.status === 'treino' ? 'treino' : 'online', cx, cy + 46);
+    });
+  }
+  ctx.textAlign = 'left';
+  desenharHUDArcade(ctx, w, 'TERREIRO');
+}
+
+/* CSS keyframes injetados uma vez */
+(function injetarCSSCompanheiro() {
+  if (document.getElementById('cssCompanheiro3d')) return;
+  var st = document.createElement('style');
+  st.id = 'cssCompanheiro3d';
+  st.textContent =
+    '@keyframes companheiroGira{0%{transform:rotateY(0deg)}100%{transform:rotateY(360deg)}}' +
+    '@keyframes companheiroBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}' +
+    '.companheiro-3d-wrap .companheiro-3d{transform-origin:center center;}' +
+    '@media (prefers-reduced-motion:reduce){.companheiro-3d{animation:none!important;}}';
+  document.head.appendChild(st);
+})();
 
 /* =========================================================
    PAC-MAN — labirinto clássico, 4 fantasmas, power pellets
@@ -5063,6 +6537,7 @@ var PAC_MAPA = [
 ];
 
 function initPacman() {
+  aplicarModoNoArcade('pacman', arcade.nivel || 1);
   var TILE = 14;
   arcade.pacTile = TILE;
   arcade.pacCols = 24;
@@ -5094,6 +6569,10 @@ function initPacman() {
   ];
   arcade.progresso = 0;
   arcade.objetivo = arcade.pacDotsTotal || 1;
+  var modo = arcade._modoEspecial;
+  if (modo && modo.id === 'caca') {
+    arcade.pacFright = 220;
+  }
   drawPacman();
 }
 
@@ -5172,14 +6651,19 @@ function pacEscolherGhost(g) {
   var noCentro = Math.abs(g.x - pacCentro(g.x)) < 0.18 && Math.abs(g.y - pacCentro(g.y)) < 0.18;
   if (!noCentro) return;
 
-  /* ainda na casa: alinha com a porta (x=11.5) antes de subir para sair */
+  /* ainda na casa: alinhar com a porta (x≈11.5) e só então subir.
+     Inky (10.5) e Clyde (12.5) não nascem sob a abertura — subir direto
+     esbarra na parede e eles ficam presos. */
   var naCasa = g.y > 10.5 && g.y < 15.5 && g.x > 9.2 && g.x < 14.8;
   if (naCasa) {
-    if (Math.abs(g.x - 11.5) > 0.25) {
-      g.next = (g.x < 11.5) ? 'right' : 'left';
+    var portaX = 11.5;
+    if (Math.abs(g.x - portaX) > 0.25) {
+      g.next = g.x < portaX ? 'right' : 'left';
       return;
     }
-    g.next = 'up';
+    if (pacPode(g.x, g.y - 1)) { g.next = 'up'; return; }
+    var optsCasa = pacDirsOk(g.x, g.y, g.dir, true);
+    g.next = optsCasa.indexOf('up') >= 0 ? 'up' : (optsCasa[0] || 'up');
     return;
   }
 
@@ -5221,6 +6705,8 @@ function tickPacman() {
   if (arcade.pacNext) arcade.pac.next = arcade.pacNext;
   var velP = 0.13 + (arcade.nivel - 1) * 0.006;
   var velG = 0.11 + (arcade.nivel - 1) * 0.008;
+  var modoP = arcade._modoEspecial;
+  if (modoP && (modoP.id === 'pressa' || modoP.id === 'mestre')) velG *= 1.35;
   if (arcade.pacFright > 0) { velG *= 0.55; arcade.pacFright--; }
 
   pacMover(arcade.pac, velP);
@@ -5238,7 +6724,9 @@ function tickPacman() {
       arcade.score += 50;
       arcade.pacDots--;
       arcade.progresso = (arcade.pacDotsTotal || 0) - arcade.pacDots;
-      arcade.pacFright = Math.max(140, Math.round(340 - 200 * curvaDificuldade(arcade.nivel)));
+      var frightBase = Math.max(140, Math.round(340 - 200 * curvaDificuldade(arcade.nivel)));
+      if (modoP && modoP.id === 'poder') frightBase = Math.round(frightBase * 1.6);
+      arcade.pacFright = frightBase;
       atualizarHUDNivelArcade();
     }
   }
@@ -5294,11 +6782,6 @@ function tickPacman() {
     }
   });
 
-  /* gameOverArcade() pode ter sido chamado dentro do forEach acima (perda da
-     última vida); como o return ali só sai do callback, é preciso checar
-     aqui para não sobrescrever a tela de Game Over nem processar mais nada */
-  if (!arcade.rodando) return;
-
   if (arcade.pacDots <= 0 && (arcade.pacDotsTotal || 0) > 0) {
     arcade.score += 500;
     arcade.progresso = arcade.objetivo = arcade.pacDotsTotal;
@@ -5316,130 +6799,85 @@ function drawPacman() {
   if (!ctx) return;
   var TILE = arcade.pacTile;
   var COLS = arcade.pacCols, ROWS = arcade.pacRows;
-  var bg = ctx.createRadialGradient(arcade.canvas.width / 2, arcade.canvas.height / 2, 20,
-    arcade.canvas.width / 2, arcade.canvas.height / 2, arcade.canvas.width * 0.75);
-  bg.addColorStop(0, '#0a1220');
-  bg.addColorStop(1, '#01050a');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, arcade.canvas.width, arcade.canvas.height);
+  var cen = arcade._cenario || cenarioArcade('pacman', arcade.nivel || 1);
+  pintarFundoCenario(ctx, arcade.canvas.width, arcade.canvas.height, cen);
+  var paredeCor = (cen && cen.parede) || '#1a3a6e';
+  var accentCor = (cen && cen.accent) || '#3d7cff';
+  var modoDraw = arcade._modoEspecial;
+  var pxPac = arcade.pac.x * TILE, pyPac = arcade.pac.y * TILE;
 
   for (var r = 0; r < ROWS; r++) {
     for (var c = 0; c < COLS; c++) {
       var cell = arcade.pacGrid[r][c];
       if (cell === 1) {
-        var wx = c * TILE, wy = r * TILE;
-        /* parede com relevo 3D: sombra + gradiente + brilho neon na borda */
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.fillRect(wx + 2, wy + 2, TILE - 1, TILE - 1);
-        var wg = ctx.createLinearGradient(wx, wy, wx + TILE, wy + TILE);
-        wg.addColorStop(0, '#2a56b8');
-        wg.addColorStop(0.5, '#163a7a');
-        wg.addColorStop(1, '#0c1f47');
-        ctx.fillStyle = wg;
-        ctx.fillRect(wx + 1, wy + 1, TILE - 2, TILE - 2);
-        ctx.strokeStyle = 'rgba(120,180,255,0.9)';
-        ctx.lineWidth = 1;
-        ctx.shadowColor = '#3d7cff';
-        ctx.shadowBlur = 4;
-        ctx.strokeRect(wx + 1.5, wy + 1.5, TILE - 3, TILE - 3);
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-        ctx.beginPath();
-        ctx.moveTo(wx + 2, wy + 2);
-        ctx.lineTo(wx + TILE - 2, wy + 2);
-        ctx.stroke();
+        /* modo escuridão: paredes só perto do pac */
+        if (modoDraw && modoDraw.id === 'escuridao') {
+          var distM = Math.hypot(c * TILE + TILE / 2 - pxPac, r * TILE + TILE / 2 - pyPac);
+          if (distM > 70) continue;
+        }
+        ctx.fillStyle = paredeCor;
+        ctx.fillRect(c * TILE + 1, r * TILE + 1, TILE - 2, TILE - 2);
+        ctx.strokeStyle = accentCor;
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(c * TILE + 1.5, r * TILE + 1.5, TILE - 3, TILE - 3);
       } else if (cell === 2) {
         ctx.fillStyle = '#ffcc80';
-        ctx.shadowColor = '#ffcc80';
-        ctx.shadowBlur = 3;
         ctx.beginPath();
         ctx.arc(c * TILE + TILE / 2, r * TILE + TILE / 2, 2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
       } else if (cell === 3) {
         var pulse = 4 + Math.sin(arcade.pacFrame * 0.15) * 1.2;
-        var px3 = c * TILE + TILE / 2, py3 = r * TILE + TILE / 2;
-        var pg3 = ctx.createRadialGradient(px3 - 1.5, py3 - 1.5, 0.5, px3, py3, pulse);
-        pg3.addColorStop(0, '#fffde7');
-        pg3.addColorStop(0.6, '#fff8e1');
-        pg3.addColorStop(1, '#ffb300');
-        ctx.fillStyle = pg3;
+        ctx.fillStyle = '#fff8e1';
         ctx.shadowColor = '#ffeb3b';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
         ctx.beginPath();
-        ctx.arc(px3, py3, pulse, 0, Math.PI * 2);
+        ctx.arc(c * TILE + TILE / 2, r * TILE + TILE / 2, pulse, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
       }
     }
   }
 
-  /* Pac-Man com sombreamento esférico */
+  /* Pac-Man */
   var px = arcade.pac.x * TILE, py = arcade.pac.y * TILE;
   var ang = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[arcade.pac.dir] || 0;
   var mouth = 0.25 + 0.22 * Math.sin(arcade.pac.mouth);
-  var pacG = ctx.createRadialGradient(px - TILE * 0.15, py - TILE * 0.15, 1, px, py, TILE * 0.45);
-  pacG.addColorStop(0, '#fff59d');
-  pacG.addColorStop(0.55, '#ffe600');
-  pacG.addColorStop(1, '#e6a800');
-  ctx.fillStyle = pacG;
-  ctx.shadowColor = 'rgba(255,230,0,0.6)';
-  ctx.shadowBlur = 6;
+  ctx.fillStyle = '#ffe600';
   ctx.beginPath();
   ctx.arc(px, py, TILE * 0.42, ang + mouth, ang + Math.PI * 2 - mouth);
   ctx.lineTo(px, py);
   ctx.fill();
-  ctx.shadowBlur = 0;
   ctx.fillStyle = '#111';
   ctx.beginPath();
   ctx.arc(px + Math.cos(ang - 0.6) * TILE * 0.15, py + Math.sin(ang - 0.6) * TILE * 0.15 - 2, 1.6, 0, Math.PI * 2);
   ctx.fill();
 
-  /* Fantasmas com corpo em gradiente e olhos maiores */
+  /* Fantasmas */
   arcade.pacGhosts.forEach(function (g) {
     var gx = g.x * TILE, gy = g.y * TILE;
-    var assustado = arcade.pacFright > 0;
-    var corBase = assustado
+    var cor = arcade.pacFright > 0
       ? (arcade.pacFright < 60 && arcade.pacFrame % 10 < 5 ? '#fff' : '#2121ff')
       : g.color;
-    var gg = ctx.createRadialGradient(gx - TILE * 0.15, gy - TILE * 0.2, 1, gx, gy, TILE * 0.5);
-    gg.addColorStop(0, corBase);
-    gg.addColorStop(1, assustado ? '#0d0dbf' : 'rgba(0,0,0,0.35)');
-    ctx.save();
+    ctx.fillStyle = cor;
     ctx.beginPath();
     ctx.arc(gx, gy - 2, TILE * 0.38, Math.PI, 0);
     ctx.lineTo(gx + TILE * 0.38, gy + TILE * 0.35);
     for (var i = 0; i < 4; i++) {
-      var wxg = gx - TILE * 0.38 + (i + 0.5) * (TILE * 0.76 / 4);
-      ctx.lineTo(wxg, gy + TILE * 0.35 - (i % 2 === 0 ? 4 : 0));
+      var wx = gx - TILE * 0.38 + (i + 0.5) * (TILE * 0.76 / 4);
+      ctx.lineTo(wx, gy + TILE * 0.35 - (i % 2 === 0 ? 4 : 0));
     }
     ctx.lineTo(gx - TILE * 0.38, gy + TILE * 0.35);
     ctx.closePath();
-    ctx.fillStyle = gg;
     ctx.fill();
-    ctx.restore();
-    /* brilho superior sutil */
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.beginPath();
-    ctx.ellipse(gx - TILE * 0.1, gy - TILE * 0.22, TILE * 0.16, TILE * 0.08, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    if (!assustado) {
+    if (arcade.pacFright <= 0) {
       ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(gx - 4, gy - 4, 3.6, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(gx + 4, gy - 4, 3.6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(gx - 4, gy - 4, 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(gx + 4, gy - 4, 3.2, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#1a237e';
-      var ox = g.dir === 'left' ? -1.4 : (g.dir === 'right' ? 1.4 : 0);
-      var oy = g.dir === 'up' ? -1.4 : (g.dir === 'down' ? 1.4 : 0);
-      ctx.beginPath(); ctx.arc(gx - 4 + ox, gy - 4 + oy, 1.7, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(gx + 4 + ox, gy - 4 + oy, 1.7, 0, Math.PI * 2); ctx.fill();
-    } else {
-      /* rosto assustado */
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.3;
-      ctx.beginPath();
-      ctx.moveTo(gx - 5, gy - 3); ctx.lineTo(gx - 2, gy - 5); ctx.moveTo(gx - 2, gy - 3); ctx.lineTo(gx - 5, gy - 5);
-      ctx.moveTo(gx + 2, gy - 3); ctx.lineTo(gx + 5, gy - 5); ctx.moveTo(gx + 5, gy - 3); ctx.lineTo(gx + 2, gy - 5);
-      ctx.stroke();
+      var ox = g.dir === 'left' ? -1.2 : (g.dir === 'right' ? 1.2 : 0);
+      var oy = g.dir === 'up' ? -1.2 : (g.dir === 'down' ? 1.2 : 0);
+      ctx.beginPath(); ctx.arc(gx - 4 + ox, gy - 4 + oy, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(gx + 4 + ox, gy - 4 + oy, 1.5, 0, Math.PI * 2); ctx.fill();
     }
   });
 
@@ -5451,6 +6889,7 @@ function drawPacman() {
     ctx.lineTo(12 + v * 14, arcade.canvas.height - 10);
     ctx.fill();
   }
+  desenharBannerModo(ctx, arcade.canvas.width, arcade._modoEspecial, arcade._cenario);
   desenharHUDArcade(ctx, arcade.canvas.width, 'PAC-MAN');
 }
 
@@ -6498,6 +7937,12 @@ function renderAluno() {
     htmlCardFeedbackAula(logado) +
     htmlCardPerguntaSemanaAluno(logado) +
 
+    /* ===== MASCOTE COMPANHEIRO (3D) ===== */
+    htmlCompanheiro3D(false) +
+
+    /* ===== TERREIRO VIRTUAL ===== */
+    htmlCardTerreiroAluno() +
+
     /* ===== AULAS E ALONGAMENTOS (professor publica) ===== */
     htmlCardAulasConteudoAluno() +
 
@@ -6566,6 +8011,7 @@ function renderAluno() {
   tornarCardsColapsaveis($('cardAlunoPainel'));
   boasVindasNovoAluno = false;
   setTimeout(atualizarBadgesInteracao, 50);
+  try { renderTerreiroListas(); publicarPresencaAvatar(); } catch (e) {}
 }
 
 function salvarPerfilAluno(btn) {
@@ -7960,7 +9406,8 @@ function renderAbaAdm() {
     '<p class="mini" style="margin-bottom:8px;">Abra qualquer jogo em modo teste. Os pontos ainda entram no ranking se houver nome preenchido na aba Início.</p>' +
     '<div class="grade-2">' +
       '<button class="btn btn-secondary" onclick="testarJogoAdm(\'snake\')"><i class="fas fa-dragon"></i> Minhoca</button>' +
-      '<button class="btn btn-gold" onclick="testarJogoAdm(\'tetris\')"><i class="fas fa-th"></i> Tetris</button>' +
+      '<button class="btn btn-gold" onclick="testarJogoAdm(\'tamagotchi\')"><i class="fas fa-robot"></i> Mascote</button>' +
+      '<button class="btn btn-secondary" onclick="testarJogoAdm(\'damas\')"><i class="fas fa-chess"></i> Damas</button>' +
       '<button class="btn" onclick="testarJogoAdm(\'corrida\')"><i class="fas fa-car"></i> Corrida</button>' +
       '<button class="btn btn-secondary" onclick="testarJogoAdm(\'quebra\')"><i class="fas fa-cubes"></i> Quebra-Blocos</button>' +
       '<button class="btn btn-secondary" onclick="testarJogoAdm(\'pulo\')"><i class="fas fa-dove"></i> Pulo</button>' +
@@ -8700,6 +10147,7 @@ function toggleAssistente() {
     assistenteAdicionarBolha('bot', assistenteMensagemBoasVindas());
   }
   if (assistenteAberto) {
+    try { atualizarCompanheiroUI(); } catch (e) {}
     setTimeout(function () {
       var inp = $('assistenteInput');
       if (inp) inp.focus();
@@ -10212,6 +11660,16 @@ function iniciarApp() {
   registroLog('app', 'App iniciado em modo ' + DB.modo);
   console.log('%cUniverso Capoeira — modo ' + DB.modo, 'color:#00e676;font-weight:bold;');
   setTimeout(atualizarBadgesInteracao, 400);
+  /* Terreiro: publica presença do mascote e atualiza listas */
+  setTimeout(function () {
+    try { iniciarHeartbeatPresenca(); renderTerreiroListas(); } catch (e) {}
+  }, 800);
+  DB.escutar('avataresOnline', function () {
+    try { renderTerreiroListas(); } catch (e) {}
+    if (arcade && arcade.tipo === 'tamagotchi' && arcade._tamaModo === 'terreiro') {
+      try { drawTamagotchi(); } catch (e2) {}
+    }
+  });
 }
 
 /* persiste a sessão do aluno para conveniência */
