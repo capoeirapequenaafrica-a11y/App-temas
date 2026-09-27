@@ -360,8 +360,11 @@ Simulador.renderEscolhaAvatar = function (aluno) {
     var card = document.createElement('div');
     card.style.cssText = 'background:var(--card-bg);border:2px solid var(--card-border);border-radius:8px;padding:4px;text-align:center;cursor:pointer;';
     card.dataset.chave = chave;
-    card.innerHTML = (img ? '<img src="' + img + '" style="width:100%;aspect-ratio:1;object-fit:contain;border-radius:6px;background:#000;">'
-        : '<div style="width:100%;aspect-ratio:1;background:#000;border-radius:6px;"></div>') +
+    card.innerHTML = (img ? '<img src="' + img + '" style="width:100%;aspect-ratio:1;object-fit:contain;border-radius:6px;background:#000;" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{style:\'width:100%;aspect-ratio:1;background:#000;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:28px;\',textContent:\'\\uD83E\\uDD4B\'}))">'
+        /* sem imagem cadastrada para este personagem (ex.: rootsGinga não tem foto em
+           Simulador.imagens): mostra um ícone em vez de um quadrado preto indistinguível,
+           pra ficar claro que falta a imagem em vez de parecer que tudo travou */
+        : '<div style="width:100%;aspect-ratio:1;background:#000;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:28px;">🥋</div>') +
       '<div class="mini" style="margin-top:2px;">' + esc(p.nome) + '</div>';
     card.onclick = function () { marcarCard(card, chave); };
     grid.appendChild(card);
