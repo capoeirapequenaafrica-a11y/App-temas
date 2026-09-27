@@ -2,7 +2,7 @@ const Simulador = {
     canvas: null,
     ctx: null,
     
-    // Lista de avatares com as imagens (arquivos soltos na mesma pasta do mundo.js)
+    // Lista de avatares com as imagens
     listaAvatares: [
         { nome: 'Menina Capoeira', src: 'avatar1.png' },
         { nome: 'Dinossauro', src: 'avatar2.png' },
@@ -19,11 +19,11 @@ const Simulador = {
     ],
     
     avatarIndex: 0,
-    imagensCarregadas: [], // Vai guardar as imagens prontas na memória
+    imagensCarregadas: [], 
     
     // Posição do avatar
     x: 100,
-    y: 110, // Altura ajustada para as imagens 3D
+    y: 110, 
     
     // Status do "Tamagotchi"
     status: {
@@ -37,10 +37,15 @@ const Simulador = {
         if (!this.canvas) return;
         
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = this.canvas.parentElement.clientWidth || 320;
+        
+        // CORREÇÃO: Garante o tamanho da tela mesmo se a aba iniciar escondida
+        let largura = this.canvas.parentElement.clientWidth;
+        if (largura === 0) largura = window.innerWidth - 40;
+        
+        this.canvas.width = largura || 320;
         this.canvas.height = 220;
 
-        // Pre-carregar todas as imagens para não travar
+        // Pre-carregar todas as imagens
         this.carregarImagens();
 
         // Recupera dados salvos de sessões anteriores
@@ -68,11 +73,14 @@ const Simulador = {
 
     entrarMundoAberto() {
         if (typeof abrirAba === 'function') abrirAba('tabSimulador');
+        
+        // Tira a tela preta e mostra o jogo
         document.getElementById('simAreaLogin').style.display = 'none';
         document.getElementById('simAreaJogo').style.display = 'block';
         
         const nome = document.getElementById('nomeJogadorTab')?.value || 'Capoeirista';
-        document.getElementById('simTxtJogador').innerText = nome;
+        const txtJogador = document.getElementById('simTxtJogador');
+        if(txtJogador) txtJogador.innerText = nome;
         
         if (!this.canvas) this.init();
     },
@@ -92,7 +100,7 @@ const Simulador = {
     },
 
     controleFlutuante(acao) {
-        const passo = 15; // Distância do passo de movimentação
+        const passo = 15; 
         
         if (acao === 'esquerda') {
             this.x = Math.max(30, this.x - passo);
@@ -174,18 +182,17 @@ const Simulador = {
         if (!this.ctx) return;
         
         // Efeito RETRÔ / PIXEL 2D ATIVADO
-        // Ele força os modelos 3D a ficarem com aspecto de pixel art / fliperama
         this.ctx.imageSmoothingEnabled = false;
 
-        // 1. Fundo (Céu do Terreiro)
+        // Fundo (Céu do Terreiro)
         this.ctx.fillStyle = '#0b171d';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // 2. Chão (Terreiro)
+        // Chão (Terreiro)
         this.ctx.fillStyle = '#16232b';
         this.ctx.fillRect(0, this.y + 60, this.canvas.width, this.canvas.height);
         
-        // Linha do horizonte / divisa do chão
+        // Linha do horizonte
         this.ctx.strokeStyle = '#2a3f4a';
         this.ctx.lineWidth = 2;
         this.ctx.beginPath();
@@ -193,21 +200,19 @@ const Simulador = {
         this.ctx.lineTo(this.canvas.width, this.y + 60);
         this.ctx.stroke();
 
-        // 3. Sombra escura do Avatar no chão
+        // Sombra escura do Avatar no chão
         this.ctx.fillStyle = 'rgba(0,0,0,0.4)';
         this.ctx.beginPath();
         this.ctx.ellipse(this.x, this.y + 65, 30, 8, 0, 0, Math.PI * 2);
         this.ctx.fill();
 
-        // 4. Desenha a Imagem do Avatar Atual
+        // Desenha a Imagem do Avatar Atual
         const imgAtual = this.imagensCarregadas[this.avatarIndex];
         
         if (imgAtual && imgAtual.complete) {
-            // Tamanho da imagem na tela (100x120 pixels) - Isso que gera o charme Retro!
             const larguraAvatar = 100;
             const alturaAvatar = 120;
             
-            // Desenha a imagem centralizada na posição (X, Y)
             this.ctx.drawImage(
                 imgAtual, 
                 this.x - (larguraAvatar / 2), 
@@ -216,7 +221,7 @@ const Simulador = {
                 alturaAvatar
             );
         } else {
-            // Texto placeholder piscando rapidinho enquanto a internet baixa a foto
+            // Se a internet estiver lenta, mostra isso até a foto carregar
             this.ctx.fillStyle = '#00e676';
             this.ctx.font = '12px monospace';
             this.ctx.textAlign = 'center';
@@ -226,6 +231,28 @@ const Simulador = {
 
     loop() {
         this.draw();
-        requestAnimationFrame(() => this.loop()); // Chama o draw de novo 60 vezes por segundo
+        requestAnimationFrame(() => this.loop());
     }
 };
+
+// ==========================================
+// CORREÇÃO: LIGA O JOGO AO CLICAR NA ABA
+// ==========================================
+setTimeout(() => {
+    // Procura o botão da aba "Mundo" lá em cima
+    const botoesAba = document.querySelectorAll('.tabs button');
+    botoesAba.forEach(btn => {
+        if (btn.innerText.includes('Mundo')) {
+            // Quando clicar na aba, força o jogo a aparecer
+            btn.addEventListener('click', () => {
+                Simulador.entrarMundoAberto();
+            });
+        }
+    });
+    
+    // Se você recarregar a página e já estiver na aba Mundo, liga direto
+    const abaMundoAberta = document.getElementById('tabSimulador');
+    if (abaMundoAberta && abaMundoAberta.classList.contains('active')) {
+        Simulador.entrarMundoAberto();
+    }
+}, 800);
