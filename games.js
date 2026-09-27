@@ -201,6 +201,7 @@ function fecharJogoArcade() {
   var nivelFinal = arcade.nivel || 1;
   arcade.rodando = false;
   arcade.pausado = false;
+  try { damasPararOnline(); } catch (eOff) {}
   if (arcade.timer) { clearInterval(arcade.timer); arcade.timer = null; }
   window.removeEventListener('keydown', arcadeKeyHandler);
   try {
@@ -342,7 +343,12 @@ function arcadeAcao(a) {
   if (arcade.tipo === 'damas') {
     if (a === 'damas-ia') { arcade.damasModo = 'ia'; initDamas(); }
     else if (a === 'damas-2p') { arcade.damasModo = '2p'; initDamas(); }
-    else if (a === 'damas-novo') initDamas();
+    else if (a === 'damas-online-criar') { damasCriarSalaOnline(); }
+    else if (a === 'damas-online-entrar') { damasEntrarSalaOnline(); }
+    else if (a === 'damas-novo') {
+      if (arcade.damasModo === 'online') damasPararOnline();
+      initDamas();
+    }
     return;
   }
   if (arcade.tipo === 'tetris') {
@@ -1715,42 +1721,172 @@ function drawMario() {
 }
 
 /* =========================================================
-   DAMAS — tabuleiro 8x8, dama (promoção), captura
-   Modos: vs Assistente (IA) · 2 jogadores no mesmo aparelho
+   DAMAS — tabuleiro 8x8, dama, captura, multi-captura
+   Modos: vs IA · 2 jogadores (mesmo aparelho) · Online (sala)
    ========================================================= */
-function initDamas() {
-  aplicarModoNoArcade('damas', arcade.nivel || 1);
-  /* botões de modo */
-  var bar = document.getElementById('arcadeAcoesExtra');
-  if (bar) {
-    var box = document.getElementById('arcadeAcoesDamas');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'arcadeAcoesDamas';
-      box.className = 'arcade-acoes-col';
-      box.innerHTML =
-        '<button type="button" class="arcade-btn arcade-btn-green" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;" data-acao="damas-ia">🤖 Vs Assistente</button>' +
-        '<button type="button" class="arcade-btn arcade-btn-gold" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;" data-acao="damas-2p">👥 2 Jogadores</button>' +
-        '<button type="button" class="arcade-btn" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;background:rgba(144,202,249,0.35);" data-acao="damas-novo">🔄 Novo</button>';
-      bar.appendChild(box);
-    }
-    box.style.display = 'flex';
-  }
-  var dpad = document.querySelector('.arcade-dpad');
-  if (dpad) dpad.style.display = 'none';
-  var acoesG = $('arcadeAcoesGeral'); if (acoesG) acoesG.style.display = 'none';
-  var acoesP = $('arcadeAcoesPulo'); if (acoesP) acoesP.style.display = 'none';
+var _damasClickLock = 0;
+var _damasOnlineTimer = null;
 
-  arcade.damasModo = arcade.damasModo || 'ia';
-  arcade.damasVez = 'b'; /* b = aluno (brancas), p = assistente/jogador2 (pretas) */
+function damasPararOnline() {
+  if (_damasOnlineTimer) { clearInterval(_damasOnlineTimer); _damasOnlineTimer = null; }
+  arcade.damasSalaId = null;
+  arcade.damasSouHost = false;
+  arcade.damasOnlineCodigo = null;
+}
+
+function damasSerialBoard(board) {
+  var out = [];
+  for (var r = 0; r < 8; r++) {
+    out[r] = [];
+    for (var c = 0; c < 8; c++) {
+      var p = board[r][c];
+      out[r][c] = p ? { cor: p.cor, dama: !!p.dama } : null;
+    }
+  }
+  return out;
+}
+
+function damasCodigoNovo() {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var s = '';
+  for (var i = 0; i < 5; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+function damasSalvarSala(estado) {
+  if (!arcade.damasSalaId) return;
+  var payload = {
+    tipo: 'damas',
+    codigo: arcade.damasOnlineCodigo,
+    board: damasSerialBoard(arcade.damasBoard),
+    vez: arcade.damasVez,
+    fim: !!arcade.damasFim,
+    msg: arcade.damasMsg || '',
+    capturas: arcade.damasCapturas || { b: 0, p: 0 },
+    hostId: estado && estado.hostId != null ? estado.hostId : (arcade.damasHostId || ''),
+    guestId: estado && estado.guestId != null ? estado.guestId : (arcade.damasGuestId || ''),
+    status: arcade.damasFim ? 'fim' : (arcade.damasGuestId ? 'jogando' : 'aguardando'),
+    atualizadoEm: (typeof agoraISO === 'function') ? agoraISO() : new Date().toISOString()
+  };
+  try {
+    localStorage.setItem('uc_damas_sala_' + arcade.damasOnlineCodigo, JSON.stringify(payload));
+  } catch (e) {}
+  if (typeof DB !== 'undefined' && DB.salvar) {
+    DB.salvar('desafiosJogos', payload, arcade.damasSalaId).catch(function () {});
+  }
+}
+
+function damasLerSalaLocal(codigo) {
+  try {
+    return JSON.parse(localStorage.getItem('uc_damas_sala_' + codigo) || 'null');
+  } catch (e) { return null; }
+}
+
+function damasBuscarSala(codigo) {
+  codigo = String(codigo || '').trim().toUpperCase();
+  if (!codigo) return null;
+  var local = damasLerSalaLocal(codigo);
+  if (local) return local;
+  if (typeof DB !== 'undefined' && DB.listar) {
+    var lista = DB.listar('desafiosJogos') || [];
+    for (var i = 0; i < lista.length; i++) {
+      if (lista[i] && lista[i].tipo === 'damas' && String(lista[i].codigo || '').toUpperCase() === codigo) {
+        return lista[i];
+      }
+    }
+  }
+  return null;
+}
+
+function damasAplicarEstadoRemoto(est) {
+  if (!est || !est.board) return;
+  arcade.damasBoard = est.board;
+  arcade.damasVez = est.vez || 'b';
+  arcade.damasFim = !!est.fim;
+  arcade.damasMsg = est.msg || arcade.damasMsg;
+  arcade.damasCapturas = est.capturas || { b: 0, p: 0 };
+  if (est.guestId) arcade.damasGuestId = est.guestId;
+  if (est.hostId) arcade.damasHostId = est.hostId;
+  drawDamas();
+}
+
+function damasIniciarPollOnline() {
+  if (_damasOnlineTimer) clearInterval(_damasOnlineTimer);
+  _damasOnlineTimer = setInterval(function () {
+    if (arcade.tipo !== 'damas' || arcade.damasModo !== 'online') {
+      damasPararOnline();
+      return;
+    }
+    var est = damasBuscarSala(arcade.damasOnlineCodigo);
+    if (!est) return;
+    /* convidado entrou */
+    if (arcade.damasSouHost && est.guestId && !arcade.damasGuestId) {
+      arcade.damasGuestId = est.guestId;
+      arcade.damasMsg = 'Rival entrou! Você é Claras. Sua vez.';
+    }
+    /* sincroniza se o estado remoto for mais novo (outra pessoa jogou) */
+    var remotoJson = JSON.stringify(est.board) + '|' + est.vez + '|' + (est.fim ? 1 : 0);
+    var localJson = JSON.stringify(arcade.damasBoard) + '|' + arcade.damasVez + '|' + (arcade.damasFim ? 1 : 0);
+    if (remotoJson !== localJson) {
+      damasAplicarEstadoRemoto(est);
+    }
+  }, 1200);
+}
+
+function damasCriarSalaOnline() {
+  var aluno = (typeof alunoLogado === 'function') ? alunoLogado() : null;
+  var codigo = damasCodigoNovo();
+  var id = 'damas_' + codigo;
+  arcade.damasModo = 'online';
+  arcade.damasOnlineCodigo = codigo;
+  arcade.damasSalaId = id;
+  arcade.damasSouHost = true;
+  arcade.damasHostId = aluno ? (aluno.id || aluno.nome || 'host') : 'host';
+  arcade.damasGuestId = '';
+  arcade.damasCorOnline = 'b';
+  initDamasTabuleiroBase();
+  arcade.damasMsg = 'Sala ' + codigo + ' — aguarde o rival entrar (mesmo Wi‑Fi/nuvem). Você é Claras.';
+  damasSalvarSala({});
+  damasIniciarPollOnline();
+  drawDamas();
+  try { mostrarToast('Código da sala: ' + codigo); } catch (e) {}
+}
+
+function damasEntrarSalaOnline() {
+  var codigo = prompt('Digite o código da sala (5 letras):');
+  if (!codigo) return;
+  codigo = String(codigo).trim().toUpperCase();
+  var est = damasBuscarSala(codigo);
+  if (!est) {
+    try { mostrarToast('Sala não encontrada. Confira o código.', 'erro'); } catch (e) { alert('Sala não encontrada'); }
+    return;
+  }
+  if (est.guestId && est.status === 'jogando') {
+    try { mostrarToast('Sala já está cheia.', 'erro'); } catch (e2) {}
+    return;
+  }
+  var aluno = (typeof alunoLogado === 'function') ? alunoLogado() : null;
+  arcade.damasModo = 'online';
+  arcade.damasOnlineCodigo = codigo;
+  arcade.damasSalaId = est.id || ('damas_' + codigo);
+  arcade.damasSouHost = false;
+  arcade.damasHostId = est.hostId || '';
+  arcade.damasGuestId = aluno ? (aluno.id || aluno.nome || 'guest') : 'guest';
+  arcade.damasCorOnline = 'p';
+  damasAplicarEstadoRemoto(est);
+  arcade.damasMsg = 'Você entrou na sala ' + codigo + ' · você joga com as Escuras.';
+  damasSalvarSala({ hostId: arcade.damasHostId, guestId: arcade.damasGuestId });
+  damasIniciarPollOnline();
+  drawDamas();
+  try { mostrarToast('Entrou na sala ' + codigo); } catch (e3) {}
+}
+
+function initDamasTabuleiroBase() {
+  arcade.damasVez = 'b';
   arcade.damasSel = null;
-  arcade.damasMsg = arcade.damasModo === 'ia'
-    ? 'Você (claras) × Assistente Capoeira. Toque na peça e na casa.'
-    : '2 jogadores: Claras começam. Alternem no mesmo aparelho.';
   arcade.damasFim = false;
   arcade.damasCapturas = { b: 0, p: 0 };
   arcade.score = 0;
-  /* board[linha][coluna]: null | {cor:'b'|'p', dama:bool} — só casas escuras importam */
   var board = [];
   for (var r = 0; r < 8; r++) {
     board[r] = [];
@@ -1763,6 +1899,42 @@ function initDamas() {
     }
   }
   arcade.damasBoard = board;
+}
+
+function initDamas() {
+  aplicarModoNoArcade('damas', arcade.nivel || 1);
+  var bar = document.getElementById('arcadeAcoesExtra');
+  if (bar) {
+    var box = document.getElementById('arcadeAcoesDamas');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'arcadeAcoesDamas';
+      box.className = 'arcade-acoes-col';
+      box.innerHTML =
+        '<button type="button" class="arcade-btn arcade-btn-green" style="width:auto;min-width:72px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;" data-acao="damas-ia">🤖 Vs IA</button>' +
+        '<button type="button" class="arcade-btn arcade-btn-gold" style="width:auto;min-width:72px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;" data-acao="damas-2p">👥 2P local</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:72px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;background:rgba(0,210,255,0.3);" data-acao="damas-online-criar">🌐 Criar sala</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:72px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;background:rgba(156,39,176,0.35);" data-acao="damas-online-entrar">🔑 Entrar</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:64px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;background:rgba(144,202,249,0.35);" data-acao="damas-novo">🔄 Novo</button>';
+      bar.appendChild(box);
+    }
+    box.style.display = 'flex';
+  }
+  var dpad = document.querySelector('.arcade-dpad');
+  if (dpad) dpad.style.display = 'none';
+  var acoesG = $('arcadeAcoesGeral'); if (acoesG) acoesG.style.display = 'none';
+  var acoesP = $('arcadeAcoesPulo'); if (acoesP) acoesP.style.display = 'none';
+
+  if (arcade.damasModo !== 'online') {
+    damasPararOnline();
+  }
+  arcade.damasModo = arcade.damasModo || 'ia';
+  if (arcade.damasModo !== 'online') {
+    initDamasTabuleiroBase();
+    arcade.damasMsg = arcade.damasModo === 'ia'
+      ? 'Você (Claras) × Assistente. Toque na peça e na casa.'
+      : '2 jogadores no mesmo aparelho. Claras começam — alternem.';
+  }
   instalarCliqueDamas();
   drawDamas();
 }
@@ -1774,6 +1946,9 @@ function instalarCliqueDamas() {
   if (!canvas) return;
   function handle(e) {
     if (arcade.tipo !== 'damas' || !arcade.rodando || arcade.pausado || arcade.damasFim) return;
+    var now = Date.now();
+    if (now - _damasClickLock < 280) return; /* evita toque+click duplicado */
+    _damasClickLock = now;
     var rect = canvas.getBoundingClientRect();
     var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
     var clientY = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
@@ -1801,13 +1976,12 @@ function instalarCliqueDamas() {
 }
 
 function damasPeca(r, c) {
-  if (r < 0 || r > 7 || c < 0 || c > 7) return null;
+  if (r < 0 || r > 7 || c < 0 || c > 7 || !arcade.damasBoard) return null;
   return arcade.damasBoard[r][c];
 }
 
 function damasEscura(r, c) { return (r + c) % 2 === 1; }
 
-/* movimentos simples e capturas de uma peça */
 function damasMovimentos(r, c, soCaptura) {
   var p = damasPeca(r, c);
   if (!p) return [];
@@ -1815,15 +1989,14 @@ function damasMovimentos(r, c, soCaptura) {
   if (p.dama) {
     dirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
   } else if (p.cor === 'b') {
-    dirs = [[-1, -1], [-1, 1]]; /* brancas sobem */
+    dirs = [[-1, -1], [-1, 1]];
   } else {
-    dirs = [[1, -1], [1, 1]]; /* pretas descem */
+    dirs = [[1, -1], [1, 1]];
   }
   var moves = [];
   dirs.forEach(function (d) {
     var r1 = r + d[0], c1 = c + d[1];
     var r2 = r + d[0] * 2, c2 = c + d[1] * 2;
-    /* captura */
     if (r2 >= 0 && r2 < 8 && c2 >= 0 && c2 < 8) {
       var mid = damasPeca(r1, c1);
       var dest = damasPeca(r2, c2);
@@ -1831,12 +2004,10 @@ function damasMovimentos(r, c, soCaptura) {
         moves.push({ r: r2, c: c2, captura: true, mr: r1, mc: c1 });
       }
     }
-    /* passo simples */
     if (!soCaptura && r1 >= 0 && r1 < 8 && c1 >= 0 && c1 < 8 && !damasPeca(r1, c1) && damasEscura(r1, c1)) {
       moves.push({ r: r1, c: c1, captura: false });
     }
   });
-  /* dama: passos longos em diagonal (versão simplificada: até 2 casas sem peça no caminho) */
   if (p.dama && !soCaptura) {
     [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(function (d) {
       for (var k = 1; k <= 7; k++) {
@@ -1844,11 +2015,18 @@ function damasMovimentos(r, c, soCaptura) {
         if (rr < 0 || rr > 7 || cc < 0 || cc > 7) break;
         if (!damasEscura(rr, cc)) continue;
         if (damasPeca(rr, cc)) break;
-        if (k > 1) moves.push({ r: rr, c: cc, captura: false });
+        if (k >= 1) moves.push({ r: rr, c: cc, captura: false });
       }
     });
   }
-  return moves;
+  /* remove duplicados */
+  var seen = {};
+  return moves.filter(function (m) {
+    var k = m.r + ',' + m.c + ',' + (m.captura ? 1 : 0);
+    if (seen[k]) return false;
+    seen[k] = 1;
+    return true;
+  });
 }
 
 function damasTemCaptura(cor) {
@@ -1856,8 +2034,7 @@ function damasTemCaptura(cor) {
     for (var c = 0; c < 8; c++) {
       var p = damasPeca(r, c);
       if (p && p.cor === cor) {
-        var m = damasMovimentos(r, c, true);
-        if (m.some(function (x) { return x.captura; })) return true;
+        if (damasMovimentos(r, c, true).some(function (x) { return x.captura; })) return true;
       }
     }
   }
@@ -1879,10 +2056,28 @@ function damasTodosMovimentos(cor) {
   return lista;
 }
 
+function damasPodeJogarAgora() {
+  if (arcade.damasModo === 'ia') return arcade.damasVez === 'b';
+  if (arcade.damasModo === '2p') return true;
+  if (arcade.damasModo === 'online') {
+    return arcade.damasVez === arcade.damasCorOnline;
+  }
+  return true;
+}
+
 function cliqueDamas(r, c) {
   if (arcade.damasFim) return;
-  /* no modo IA, aluno só joga nas brancas */
   if (arcade.damasModo === 'ia' && arcade.damasVez === 'p') return;
+  if (arcade.damasModo === 'online' && !damasPodeJogarAgora()) {
+    arcade.damasMsg = 'Aguarde a jogada do rival…';
+    drawDamas();
+    return;
+  }
+  /* online: só mexe nas próprias peças */
+  if (arcade.damasModo === 'online') {
+    var minhaCor = arcade.damasCorOnline;
+    if (arcade.damasVez !== minhaCor) return;
+  }
 
   var p = damasPeca(r, c);
   var sel = arcade.damasSel;
@@ -1906,7 +2101,6 @@ function cliqueDamas(r, c) {
     if (moves[i].r === r && moves[i].c === c) { escolhido = moves[i]; break; }
   }
   if (!escolhido) {
-    /* se clicou outra peça própria, troca seleção */
     if (p && p.cor === arcade.damasVez) {
       arcade.damasSel = { r: r, c: c };
       arcade.damasMsg = 'Peça selecionada · toque no destino';
@@ -1924,6 +2118,7 @@ function cliqueDamas(r, c) {
 function aplicarMovimentoDamas(deR, deC, mov) {
   var board = arcade.damasBoard;
   var p = board[deR][deC];
+  if (!p) return;
   board[deR][deC] = null;
   board[mov.r][mov.c] = p;
   if (mov.captura) {
@@ -1933,35 +2128,42 @@ function aplicarMovimentoDamas(deR, deC, mov) {
   } else {
     if (p.cor === 'b') arcade.score += 2;
   }
-  /* promoção a dama */
   if (!p.dama) {
     if (p.cor === 'b' && mov.r === 0) { p.dama = true; arcade.damasMsg = '👑 Dama!'; arcade.score += 25; }
-    if (p.cor === 'p' && mov.r === 7) { p.dama = true; arcade.damasMsg = '👑 Dama do adversário!'; }
+    if (p.cor === 'p' && mov.r === 7) { p.dama = true; arcade.damasMsg = '👑 Dama!'; }
   }
-  /* multi-captura: se a mesma peça ainda pode capturar, continua a vez */
   if (mov.captura) {
     var mais = damasMovimentos(mov.r, mov.c, true).filter(function (x) { return x.captura; });
     if (mais.length) {
       arcade.damasSel = { r: mov.r, c: mov.c };
-      arcade.damasMsg = (p.cor === 'p') ? 'Assistente continua capturando…' : 'Continue capturando!';
+      arcade.damasMsg = (arcade.damasModo === 'ia' && p.cor === 'p')
+        ? 'Assistente continua capturando…'
+        : 'Continue capturando com a mesma peça!';
       drawDamas();
       verificarFimDamas();
-      /* corrige trava: se quem está em sequência de captura é a IA, ela precisa jogar de novo sozinha */
       if (!arcade.damasFim && arcade.damasModo === 'ia' && p.cor === 'p') {
-        setTimeout(function () { jogadaIADamasContinuacao(mov.r, mov.c); }, 450 + Math.random() * 300);
+        setTimeout(function () { jogadaIADamasContinuacao(mov.r, mov.c); }, 400);
       }
+      if (arcade.damasModo === 'online') damasSalvarSala({});
       return;
     }
   }
   arcade.damasSel = null;
   arcade.damasVez = arcade.damasVez === 'b' ? 'p' : 'b';
   if (!arcade.damasMsg || arcade.damasMsg.indexOf('Dama') < 0) {
-    arcade.damasMsg = arcade.damasVez === 'b'
-      ? (arcade.damasModo === 'ia' ? 'Sua vez (claras)' : 'Vez das claras')
-      : (arcade.damasModo === 'ia' ? 'Assistente pensando…' : 'Vez das escuras');
+    if (arcade.damasModo === 'online') {
+      arcade.damasMsg = (arcade.damasVez === arcade.damasCorOnline)
+        ? 'Sua vez!'
+        : 'Vez do rival…';
+    } else if (arcade.damasModo === 'ia') {
+      arcade.damasMsg = arcade.damasVez === 'b' ? 'Sua vez (claras)' : 'Assistente pensando…';
+    } else {
+      arcade.damasMsg = arcade.damasVez === 'b' ? 'Vez do Jogador 1 (claras)' : 'Vez do Jogador 2 (escuras)';
+    }
   }
   drawDamas();
   verificarFimDamas();
+  if (arcade.damasModo === 'online') damasSalvarSala({});
   if (!arcade.damasFim && arcade.damasModo === 'ia' && arcade.damasVez === 'p') {
     setTimeout(jogadaIADamas, 450 + Math.random() * 350);
   }
@@ -1978,7 +2180,6 @@ function jogadaIADamas() {
     drawDamas();
     return;
   }
-  /* prioriza captura e promoção; senão aleatório ponderado */
   var capturas = lista.filter(function (x) { return x.para.captura; });
   var pool = capturas.length ? capturas : lista;
   var promo = pool.filter(function (x) {
@@ -1987,7 +2188,6 @@ function jogadaIADamas() {
   });
   if (promo.length) pool = promo;
   var escolha = pool[Math.floor(Math.random() * pool.length)];
-  /* dificuldade sobe com nível: em níveis altos tenta ficar no centro */
   if ((arcade.nivel || 1) >= 4 && !escolha.para.captura && Math.random() < 0.45) {
     pool.sort(function (a, b) {
       var ca = Math.abs(a.para.r - 3.5) + Math.abs(a.para.c - 3.5);
@@ -1999,9 +2199,6 @@ function jogadaIADamas() {
   aplicarMovimentoDamas(escolha.deR, escolha.deC, escolha.para);
 }
 
-/* continuação obrigatória de uma multi-captura da IA (a mesma peça precisa
-   seguir capturando) — sem isso o jogo travava esperando uma jogada que
-   nunca chegava */
 function jogadaIADamasContinuacao(r, c) {
   if (arcade.tipo !== 'damas' || arcade.damasFim || arcade.damasVez !== 'p') return;
   var opcoes = damasMovimentos(r, c, true).filter(function (x) { return x.captura; });
@@ -2020,8 +2217,9 @@ function verificarFimDamas() {
   }
   if (cont.b === 0) {
     arcade.damasFim = true;
-    arcade.damasMsg = arcade.damasModo === 'ia' ? '🤖 Assistente venceu! Tente de novo.' : 'Escuras venceram!';
+    arcade.damasMsg = arcade.damasModo === 'ia' ? '🤖 Assistente venceu!' : (arcade.damasModo === 'online' ? 'Escuras venceram!' : 'Jogador 2 (escuras) venceu!');
     drawDamas();
+    if (arcade.damasModo === 'online') damasSalvarSala({});
     return;
   }
   if (cont.p === 0) {
@@ -2030,6 +2228,7 @@ function verificarFimDamas() {
     arcade.score += 100;
     salvarNivelArcade('damas', Math.min(10, (arcade.nivel || 1) + 1));
     drawDamas();
+    if (arcade.damasModo === 'online') damasSalvarSala({});
     return;
   }
   var movs = damasTodosMovimentos(arcade.damasVez);
@@ -2042,11 +2241,12 @@ function verificarFimDamas() {
       salvarNivelArcade('damas', Math.min(10, (arcade.nivel || 1) + 1));
     }
     drawDamas();
+    if (arcade.damasModo === 'online') damasSalvarSala({});
   }
 }
 
 function tickDamas() {
-  /* estático — redesenha só se necessário */
+  /* tabuleiro estático — desenho sob demanda */
 }
 
 function drawDamas() {
@@ -2062,16 +2262,13 @@ function drawDamas() {
   var cell = size / 8;
   var sel = arcade.damasSel;
   var moves = [];
-  if (sel) {
-    moves = damasMovimentos(sel.r, sel.c, damasTemCaptura(arcade.damasVez));
-  }
+  if (sel) moves = damasMovimentos(sel.r, sel.c, damasTemCaptura(arcade.damasVez));
   for (var r = 0; r < 8; r++) {
     for (var c = 0; c < 8; c++) {
       var x = ox + c * cell, y = oy + r * cell;
       var escura = (r + c) % 2 === 1;
       ctx.fillStyle = escura ? '#8b5a2b' : '#dfcfb7';
       ctx.fillRect(x, y, cell, cell);
-      /* destaque destino */
       var isDest = moves.some(function (m) { return m.r === r && m.c === c; });
       if (isDest) {
         ctx.fillStyle = 'rgba(0,230,118,0.35)';
@@ -2099,9 +2296,6 @@ function drawDamas() {
         ctx.beginPath();
         ctx.arc(cx, cy, rad, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = p.cor === 'b' ? '#757575' : '#000';
-        ctx.lineWidth = 2;
-        ctx.stroke();
         if (p.dama) {
           ctx.fillStyle = '#ffc107';
           ctx.font = 'bold ' + Math.floor(cell * 0.45) + 'px serif';
@@ -2112,21 +2306,19 @@ function drawDamas() {
       }
     }
   }
-  /* moldura */
   ctx.strokeStyle = '#5c3a21';
   ctx.lineWidth = 6;
   ctx.strokeRect(ox - 3, oy - 3, size + 6, size + 6);
-  /* status */
   ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  ctx.fillRect(8, oy + size + 10, w - 16, 48);
+  ctx.fillRect(8, oy + size + 10, w - 16, 52);
   ctx.fillStyle = '#e0f2f1';
   ctx.font = '12px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(arcade.damasMsg || '', w / 2, oy + size + 28);
   ctx.fillStyle = '#90a4ae';
   ctx.font = '10px sans-serif';
-  var modoTxt = arcade.damasModo === 'ia' ? 'Vs Assistente' : '2 Jogadores';
-  ctx.fillText(modoTxt + ' · Capturas você ' + (arcade.damasCapturas.b || 0) + ' × ' + (arcade.damasCapturas.p || 0) + ' rival', w / 2, oy + size + 46);
+  var modoTxt = arcade.damasModo === 'ia' ? 'Vs IA' : (arcade.damasModo === 'online' ? ('Online · sala ' + (arcade.damasOnlineCodigo || '—')) : '2P local');
+  ctx.fillText(modoTxt + ' · Capturas ' + (arcade.damasCapturas.b || 0) + ' × ' + (arcade.damasCapturas.p || 0), w / 2, oy + size + 46);
   ctx.textAlign = 'left';
   desenharHUDArcade(ctx, w, 'DAMAS');
 }
