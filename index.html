@@ -14,229 +14,502 @@
 <link rel="apple-touch-icon" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg">
 <title>Universo Capoeira</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-:root {
-  --primary-green: #00e676;
-  --primary-green-dark: #00c853;
-  --accent-blue: #00d2ff;
-  --accent-blue-dark: #0091ea;
-  --card-bg: #16232b;
-  --card-border: #2a3f4a;
-  --text-main: #f5f7fa;
-  --text-sub: #90a4ae;
-  --danger: #ef5350;
-  --gold: #ffc107;
-  --gympass-red: #ff004f;
-  --insta-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-  --shadow-soft: 0 4px 16px rgba(0,0,0,0.35);
-  --radius: 14px;
-}
-html, body {
-  background-color: #050b0e !important;
-  color: var(--text-main) !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  overflow: hidden !important;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.app-frame {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  background: #0f2027;
-  border: 2px solid var(--card-border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-iframe, [class*="appsgeyser"], [id*="appsgeyser"], [id*="banner"], [class*="banner"], div[style*="position: fixed; bottom: 0"] {
-  display: none !important;
-  height: 0 !important;
-  width: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  visibility: hidden !important;
-}
-header {
-  background: #11222a;
-  padding: 6px 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--card-border);
-  width: 100%;
-  flex-shrink: 0;
-  gap: 6px;
-}
-.logos-header-box { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.app-logo-img { height: 36px; max-height: 48px; max-width: 90px; object-fit: contain; border-radius: 6px; display: none; background: rgba(255,255,255,0.06); padding: 2px; }
-.app-title {
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--primary-green);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  min-width: 0;
-  overflow: hidden;
-}
-.tabs-container { padding: 6px 8px 2px 8px; background: #091419; border-bottom: 1px solid var(--card-border); flex-shrink: 0; }
-.tabs {
-  display: flex;
-  overflow-x: auto;
-  background: #0b171d;
-  padding: 4px;
-  gap: 4px;
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-  width: 100%;
-  scrollbar-width: none;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tabs button {
-  flex: 1;
-  min-width: 58px;
-  padding: 7px 3px;
-  background: transparent;
-  border: none;
-  color: var(--text-sub);
-  font-weight: 600;
-  font-size: 0.68rem;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.tabs button.active { color: #fff; background: linear-gradient(135deg, var(--primary-green-dark), #009624); box-shadow: 0 2px 6px rgba(0, 200, 83, 0.3); }
-.tabs-equipe { margin-top: 6px; }
-#btnToggleEquipe.active { background: linear-gradient(135deg, var(--accent-blue-dark), #0277bd); }
-.tab-content { display: none; padding: 10px; flex: 1; width: 100% !important; max-width: 100% !important; overflow-y: auto; }
-.tab-content.active { display: block; }
-.card {
-  background: var(--card-bg) !important;
-  border-radius: var(--radius);
-  padding: 14px 14px;
-  margin-bottom: 12px;
-  border: 1px solid var(--card-border);
-  width: 100% !important;
-  max-width: 100% !important;
-  box-shadow: var(--shadow-soft);
-  transition: border-color 0.2s ease, transform 0.15s ease;
-}
-.card:hover { border-color: rgba(0, 230, 118, 0.35); box-shadow: 0 8px 32px 0 rgba(0, 230, 118, 0.05); }
+/* ================================================================
+   MOTOR GRÁFICO v2 — Universo Capoeira
+   Glass · Glow · Neon · 3D hover · Scanlines · Pulse
+   ================================================================ */
+* { margin:0; padding:0; box-sizing:border-box !important;
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color:transparent; }
 
-.jogo-card-btn { background: rgba(12, 21, 26, 0.85); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px 10px; text-align: center; cursor: pointer; color: var(--text-main); display: flex; flex-direction: column; align-items: center; gap: 6px; transition: border-color 0.2s, transform 0.12s; }
-.jogo-card-btn strong { font-size: 0.88rem; }
-.jogo-card-btn span { font-size: 0.7rem; color: var(--text-sub); }
-.jogo-card-btn:active, .jogo-card-btn:hover { border-color: var(--primary-green); transform: scale(0.97); }
-
-@keyframes brilhoBordaDestaque { 0%, 100% { box-shadow: 0 0 0 rgba(var(--cor-brilho, 255,193,7), 0); } 50% { box-shadow: 0 0 16px rgba(var(--cor-brilho, 255,193,7), 0.55); } }
-.card-destaque { animation: brilhoBordaDestaque 3s ease-in-out infinite; }
-.card-destaque.brilho-azul { --cor-brilho: 0,210,255; }
-.card-destaque.brilho-verde { --cor-brilho: 0,230,118; }
-.card h3 { margin-bottom: 8px; color: var(--primary-green); font-size: 0.9rem; display: flex; align-items: center; gap: 7px; letter-spacing: 0.2px; }
-
-/* ==================== MÁGICA DOS QUADROS ARTICULADOS ==================== */
-.titulo-colapsavel { cursor: pointer; user-select: none; margin-bottom: 0 !important; display: flex; align-items: center; justify-content: space-between; width: 100%; }
-.seta-colapsavel { margin-left: auto; transition: transform 0.28s ease; font-size: 0.85rem; color: var(--text-sub); padding: 4px; }
-.card.fechado .seta-colapsavel { transform: rotate(-90deg); }
-.card-corpo-colapsavel { overflow: hidden; max-height: 2000px; opacity: 1; transition: max-height 0.32s ease, opacity 0.22s ease, margin-top 0.28s ease; margin-top: 12px; }
-.card.fechado .card-corpo-colapsavel { max-height: 0; opacity: 0; margin-top: 0; }
-/* ========================================================================= */
-
-.btn { background: linear-gradient(135deg, var(--primary-green-dark), #00a844); border: none; color: #fff; padding: 11px 10px; border-radius: 10px; cursor: pointer; font-weight: 600; margin: 5px 0; width: 100%; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 7px; text-decoration: none; transition: transform 0.12s ease, box-shadow 0.15s ease; box-shadow: 0 2px 8px rgba(0, 200, 83, 0.25); }
-.btn:active { transform: scale(0.97); }
-.btn-secondary { background: linear-gradient(135deg, var(--accent-blue-dark), #0277bd); box-shadow: 0 2px 8px rgba(0, 145, 234, 0.25); }
-.btn-danger { background: linear-gradient(135deg, #e53935, #c62828); box-shadow: 0 2px 8px rgba(239, 83, 80, 0.25); }
-.btn-whatsapp { background: linear-gradient(135deg, #25d366, #128c7e); }
-.btn-instagram { background: var(--insta-gradient); color: #fff; box-shadow: 0 2px 8px rgba(220, 39, 67, 0.3); }
-.btn-gympass { background: linear-gradient(135deg, var(--gympass-red), #b30037); color: #fff; }
-.btn-gold { background: linear-gradient(135deg, #ffb300, #ff8f00); color: #1a1a1a; box-shadow: 0 2px 8px rgba(255, 179, 0, 0.3); }
-.btn-back { background: #37474f; margin-bottom: 8px; box-shadow: none; }
-.btn.carregando { opacity: 0.7; pointer-events: none; }
-.btn-mini { width: auto; padding: 7px 12px; font-size: 0.72rem; margin: 0; border-radius: 8px; }
-.spinner-btn { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, 0.4); border-top-color: #fff; border-radius: 50%; animation: girarSpinner 0.6s linear infinite; }
-@keyframes girarSpinner { to { transform: rotate(360deg); } }
-.flex-btn { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; }
-.flex-btn .btn { flex: 1 1 110px; min-width: 0; }
-input, select, textarea { width: 100% !important; padding: 8px 10px; margin: 3px 0; border-radius: 8px; border: 1px solid var(--card-border); background: #0a1419; color: #fff; font-size: 0.8rem; outline: none; }
-textarea { min-height: 64px; resize: vertical; }
-.campo-label { font-size: 0.72rem; color: var(--text-sub); margin: 6px 0 2px; display: block; font-weight: 600; }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; }
-.modal-overlay.aberto { display: flex; }
-.modal-card { background: #11222a; border: 1px solid var(--accent-blue); border-radius: 14px; padding: 16px; max-width: 340px; width: 100%; max-height: 82vh; overflow-y: auto; color: #fff; }
-footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text-sub); border-top: 1px solid var(--card-border); margin-top: auto; width: 100%; flex-shrink: 0; }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary-green-dark); color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 0.75rem; z-index: 10000; display: none; text-align: center; max-width: 90%; }
-.toast.erro { background: var(--danger); }
-.alerta-dificuldade { background: rgba(198, 40, 40, 0.2); border-left: 3px solid var(--danger); padding: 4px 6px; margin: 3px 0; border-radius: 4px; font-size: 0.72rem; }
-.aviso-info { background: rgba(0, 210, 255, 0.12); border-left: 3px solid var(--accent-blue); padding: 8px; margin: 6px 0; border-radius: 6px; font-size: 0.75rem; line-height: 1.4;}
-.badge-count { background: var(--gold); color: #000; font-weight: bold; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; }
-.status-firebase { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
-.status-online { background: #1b5e20; color: #a5d6a7; }
-.status-offline { background: #b71c1c; color: #ffcdd2; }
-.lista-item { background: #0c151a; border: 1px solid var(--card-border); border-radius: 11px; padding: 10px 12px; margin: 7px 0; font-size: 0.76rem; }
-.linha { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
-.mini { font-size: 0.68rem; color: var(--text-sub); }
-.pill { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.62rem; font-weight: 700; }
-.pill-ok { background: #1b5e20; color: #a5d6a7; }
-.pill-pend { background: #5d4037; color: #ffe0b2; }
-.pill-no { background: #b71c1c; color: #ffcdd2; }
-.pill-info { background: #01579b; color: #b3e5fc; }
-.sem-dados { font-size: 0.72rem; color: var(--text-sub); font-style: italic; padding: 4px 0; }
-.chat-msg { background: #0a1419; border-left: 3px solid var(--accent-blue); border-radius: 6px; padding: 5px 8px; margin-bottom: 5px; }
-.grade-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.grade-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-
-/* Assistente e Notificações (DINOSSAURO) */
-#assistenteFab {
-  position: fixed; right: 14px; bottom: 18px; width: 56px; height: 56px;
-  border-radius: 50%; border: none; background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
-  color: #fff; font-size: 1.35rem; box-shadow: 0 4px 18px rgba(0, 200, 83, 0.45);
-  z-index: 9500; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: transform 0.15s ease;
+:root{
+  --primary-green:#00e676;
+  --primary-green-dark:#00c853;
+  --primary-green-glow:rgba(0,230,118,.45);
+  --accent-blue:#00d2ff;
+  --accent-blue-dark:#0091ea;
+  --accent-purple:#a855f7;
+  --card-bg:linear-gradient(155deg, #16232b 0%, #0f1a20 100%);
+  --card-border:rgba(42,63,74,.9);
+  --card-border-hi:rgba(0,230,118,.35);
+  --text-main:#f5f7fa;
+  --text-sub:#90a4ae;
+  --danger:#ef5350;
+  --gold:#ffc107;
+  --gold-glow:rgba(255,193,7,.5);
+  --gympass-red:#ff004f;
+  --insta-gradient:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+  --shadow-soft:0 8px 32px rgba(0,0,0,.45);
+  --shadow-hi:0 12px 48px rgba(0,230,118,.15);
+  --radius:16px;
+  --radius-sm:10px;
+  --glass:rgba(22,35,43,.65);
+  --glass-strong:rgba(22,35,43,.85);
+  --blur:blur(14px);
 }
-#assistenteFab:active { transform: scale(0.94); }
-.badge-notif { background: var(--danger); color: #fff; font-weight: 800; font-size: 0.62rem; min-width: 16px; height: 16px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; margin-left: 3px; vertical-align: top; }
 
-/* Estilos do Painel do Assistente */
-#assistentePainel { display: none; position: fixed; right: 12px; bottom: 80px; width: min(340px, calc(100vw - 24px)); max-height: min(70vh, 520px); background: #11222a; border: 1px solid var(--accent-blue); border-radius: 16px; z-index: 9501; flex-direction: column; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.55); }
-#assistentePainel.aberto { display: flex; }
-.assistente-header { background: linear-gradient(135deg, #0d3d1f, #0a2a38); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); }
-.assistente-header h4 { margin: 0; font-size: 0.85rem; color: var(--primary-green); display: flex; align-items: center; gap: 6px; }
-.assistente-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.78rem; background: #0a1419; }
-.assistente-bolha { margin-bottom: 8px; padding: 8px 10px; border-radius: 12px; max-width: 92%; line-height: 1.4; white-space: pre-wrap; }
-.assistente-bolha.bot { background: #1a2a32; border: 1px solid var(--card-border); color: #e0f2f1; border-bottom-left-radius: 4px; }
-.assistente-bolha.user { background: linear-gradient(135deg, #1b5e20, #00a844); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
-.assistente-atalhos { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px; border-top: 1px solid var(--card-border); background: #0d1a20; }
-.assistente-atalho { background: #1a2a32; border: 1px solid var(--card-border); color: var(--text-sub); border-radius: 14px; padding: 4px 9px; font-size: 0.65rem; cursor: pointer; }
-.assistente-atalho:active { background: var(--primary-green-dark); color: #fff; }
-.assistente-input-row { display: flex; gap: 4px; padding: 8px; border-top: 1px solid var(--card-border); background: #11222a; }
-.assistente-input-row input { flex: 1; margin: 0; font-size: 0.78rem; }
-.assistente-input-row button { width: auto; }
+html,body{
+  background:
+    radial-gradient(ellipse 70% 40% at 20% 0%, rgba(0,230,118,.10), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(0,210,255,.08), transparent 55%),
+    linear-gradient(180deg,#050b0e 0%, #0a1419 100%);
+  color:var(--text-main) !important;
+  width:100vw; height:100vh;
+  overflow:hidden;
+  display:flex; justify-content:center; align-items:center;
+}
+
+/* APP FRAME */
+.app-frame{
+  width:100%; height:100%;
+  max-width:100vw; max-height:100vh;
+  background:linear-gradient(180deg, #0f2027 0%, #081419 100%);
+  border:1px solid var(--card-border);
+  display:flex; flex-direction:column; overflow:hidden;
+  padding-bottom:env(safe-area-inset-bottom);
+  position:relative;
+}
+.app-frame::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(1200px 400px at 50% -10%, rgba(0,230,118,.05), transparent 60%),
+    radial-gradient(800px 400px at 100% 100%, rgba(0,210,255,.04), transparent 60%);
+  z-index:0;
+}
+
+iframe,[class*="appsgeyser"],[id*="appsgeyser"],[id*="banner"],[class*="banner"],
+div[style*="position: fixed; bottom: 0"]{
+  display:none !important; height:0 !important; width:0 !important;
+  opacity:0 !important; pointer-events:none !important; visibility:hidden !important;
+}
+
+/* HEADER — glass + glow */
+header{
+  background:linear-gradient(180deg, rgba(17,34,42,.95), rgba(11,22,28,.92));
+  backdrop-filter:var(--blur);
+  -webkit-backdrop-filter:var(--blur);
+  padding:10px 14px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid var(--card-border);
+  width:100%; flex-shrink:0; gap:6px;
+  position:relative; z-index:5;
+  box-shadow:0 1px 0 rgba(255,255,255,.03), 0 8px 24px rgba(0,0,0,.35);
+}
+.logos-header-box{ display:flex; align-items:center; gap:8px; min-width:0; }
+.app-logo-img{ height:36px; max-height:48px; max-width:90px; object-fit:contain;
+  border-radius:8px; display:none; background:rgba(255,255,255,.06); padding:3px; }
+.app-title{
+  font-weight:800; font-size:0.9rem;
+  background:linear-gradient(90deg, #00e676, #00d2ff);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  display:flex; align-items:center; gap:6px;
+  white-space:nowrap; min-width:0; overflow:hidden;
+  letter-spacing:.3px;
+}
+.app-title i{ color:var(--primary-green); -webkit-text-fill-color:var(--primary-green); filter:drop-shadow(0 0 6px var(--primary-green-glow)); }
+
+/* ABAS — chips com brilho */
+.tabs-container{ padding:8px 10px 4px; background:transparent; border-bottom:1px solid var(--card-border); flex-shrink:0; position:relative; z-index:4; }
+.tabs{
+  display:flex; overflow-x:auto;
+  background:rgba(11,23,29,.7); backdrop-filter:var(--blur);
+  padding:5px; gap:4px;
+  border:1px solid var(--card-border); border-radius:12px;
+  width:100%; scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{ display:none; }
+.tabs button{
+  flex:1; min-width:60px; padding:9px 4px;
+  background:transparent; border:none; color:var(--text-sub);
+  font-weight:600; font-size:.68rem; border-radius:10px; cursor:pointer;
+  white-space:nowrap; display:flex; flex-direction:column; align-items:center; gap:3px;
+  transition:all .22s cubic-bezier(.4,0,.2,1);
+}
+.tabs button:hover{ color:#fff; background:rgba(0,230,118,.08); }
+.tabs button.active{
+  color:#fff;
+  background:linear-gradient(135deg, var(--primary-green-dark), #009624);
+  box-shadow:0 4px 18px var(--primary-green-glow), inset 0 1px 0 rgba(255,255,255,.25);
+  transform:translateY(-1px);
+}
+.tabs-equipe{ margin-top:6px; }
+#btnToggleEquipe.active{
+  background:linear-gradient(135deg, var(--accent-blue-dark), #0277bd);
+  box-shadow:0 4px 18px rgba(0,145,234,.4);
+}
+
+/* CONTEÚDO / CARDS */
+.tab-content{
+  display:none; padding:12px; flex:1; width:100%; max-width:100%;
+  overflow-y:auto; overflow-x:hidden;
+  position:relative; z-index:1;
+  animation:fadeInUp .3s ease;
+}
+.tab-content.active{ display:block; }
+@keyframes fadeInUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+.tab-content::-webkit-scrollbar{ width:6px; }
+.tab-content::-webkit-scrollbar-thumb{ background:rgba(0,230,118,.25); border-radius:3px; }
+
+.card{
+  background:var(--card-bg) !important;
+  backdrop-filter:var(--blur); -webkit-backdrop-filter:var(--blur);
+  border-radius:var(--radius); padding:14px;
+  margin-bottom:12px;
+  border:1px solid var(--card-border);
+  width:100%; max-width:100%;
+  box-shadow:var(--shadow-soft);
+  transition:transform .2s ease, border-color .2s ease, box-shadow .3s ease;
+  position:relative; overflow:hidden;
+}
+.card::after{
+  content:''; position:absolute; inset:0; border-radius:var(--radius); pointer-events:none;
+  background:linear-gradient(135deg, rgba(255,255,255,.04), transparent 40%);
+  opacity:.6;
+}
+.card:hover{
+  border-color:var(--card-border-hi);
+  box-shadow:var(--shadow-hi);
+  transform:translateY(-2px);
+}
+.card h3{
+  margin-bottom:8px; color:var(--primary-green); font-size:.9rem;
+  display:flex; align-items:center; gap:7px; letter-spacing:.2px;
+  position:relative; z-index:1;
+}
+.card h3 i{ filter:drop-shadow(0 0 6px var(--primary-green-glow)); }
+
+/* CARD DESTAQUE — brilho pulsante */
+@keyframes brilhoBordaDestaque{
+  0%,100%{ box-shadow:0 0 0 rgba(var(--cor-brilho,255,193,7),0), var(--shadow-soft); }
+  50%    { box-shadow:0 0 24px rgba(var(--cor-brilho,255,193,7),.55), var(--shadow-soft); }
+}
+.card-destaque{ animation:brilhoBordaDestaque 3s ease-in-out infinite; }
+.card-destaque.brilho-azul{ --cor-brilho:0,210,255; }
+.card-destaque.brilho-verde{ --cor-brilho:0,230,118; }
+
+/* ACORDEÃO */
+.titulo-colapsavel{ cursor:pointer; user-select:none; margin-bottom:0 !important; display:flex; align-items:center; justify-content:space-between; width:100%; }
+.seta-colapsavel{ margin-left:auto; transition:transform .3s ease; font-size:.85rem; color:var(--text-sub); padding:4px; }
+.card.fechado .seta-colapsavel{ transform:rotate(-90deg); }
+.card-corpo-colapsavel{
+  overflow:hidden; max-height:4000px; opacity:1;
+  transition:max-height .35s ease, opacity .25s ease, margin-top .3s ease;
+  margin-top:12px;
+}
+.card.fechado .card-corpo-colapsavel{ max-height:0; opacity:0; margin-top:0; }
+
+/* BOTÕES — glow + shine */
+.btn{
+  background:linear-gradient(135deg, var(--primary-green-dark), #00a844);
+  border:none; color:#fff; padding:12px 14px; border-radius:12px;
+  cursor:pointer; font-weight:700; margin:5px 0; width:100%; font-size:.82rem;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  text-decoration:none; letter-spacing:.2px;
+  transition:transform .15s ease, box-shadow .25s ease, filter .2s;
+  box-shadow:0 4px 14px rgba(0,200,83,.3), inset 0 1px 0 rgba(255,255,255,.2);
+  position:relative; overflow:hidden;
+}
+.btn::before{
+  content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  transition:left .5s;
+}
+.btn:hover::before{ left:100%; }
+.btn:hover{ filter:brightness(1.08); }
+.btn:active{ transform:scale(.97); box-shadow:0 2px 8px rgba(0,200,83,.35); }
+.btn-secondary{ background:linear-gradient(135deg, var(--accent-blue-dark), #0277bd); box-shadow:0 4px 14px rgba(0,145,234,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+.btn-danger{ background:linear-gradient(135deg, #e53935, #c62828); box-shadow:0 4px 14px rgba(239,83,80,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+.btn-whatsapp{ background:linear-gradient(135deg, #25d366, #128c7e); }
+.btn-instagram{ background:var(--insta-gradient); color:#fff; box-shadow:0 4px 14px rgba(220,39,67,.35), inset 0 1px 0 rgba(255,255,255,.2); }
+.btn-gympass{ background:linear-gradient(135deg, var(--gympass-red), #b30037); }
+.btn-gold{ background:linear-gradient(135deg, #ffb300, #ff8f00); color:#1a1a1a; box-shadow:0 4px 14px rgba(255,179,0,.35), inset 0 1px 0 rgba(255,255,255,.35); }
+.btn-back{ background:#37474f; box-shadow:none; margin-bottom:8px; }
+.btn.carregando{ opacity:.7; pointer-events:none; }
+.btn-mini{ width:auto; padding:8px 14px; font-size:.72rem; margin:0; border-radius:9px; }
+.spinner-btn{ display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:girarSpinner .6s linear infinite; }
+@keyframes girarSpinner{ to{ transform:rotate(360deg); } }
+.flex-btn{ display:flex; gap:6px; width:100%; flex-wrap:wrap; }
+.flex-btn .btn{ flex:1 1 110px; min-width:0; }
+
+/* INPUTS */
+input,select,textarea{
+  width:100% !important; padding:10px 12px; margin:3px 0;
+  border-radius:10px; border:1px solid var(--card-border);
+  background:rgba(10,20,25,.9); color:#fff; font-size:.82rem; outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--primary-green);
+  box-shadow:0 0 0 3px rgba(0,230,118,.15);
+}
+textarea{ min-height:64px; resize:vertical; }
+.campo-label{ font-size:.72rem; color:var(--text-sub); margin:8px 0 2px; display:block; font-weight:600; letter-spacing:.2px; }
+
+/* MODAL / TOAST */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
+  z-index:9999; display:none; align-items:center; justify-content:center; padding:16px;
+}
+.modal-overlay.aberto{ display:flex; animation:fadeInUp .2s; }
+.modal-card{
+  background:linear-gradient(155deg, #11222a, #0a1a22);
+  border:1px solid var(--accent-blue); border-radius:16px; padding:18px;
+  max-width:340px; width:100%; max-height:82vh; overflow-y:auto; color:#fff;
+  box-shadow:0 20px 60px rgba(0,0,0,.7), 0 0 40px rgba(0,210,255,.15);
+}
+footer{
+  text-align:center; padding:10px; font-size:.68rem; color:var(--text-sub);
+  border-top:1px solid var(--card-border); margin-top:auto; width:100%; flex-shrink:0;
+}
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:linear-gradient(135deg, var(--primary-green-dark), #00a844); color:#fff;
+  padding:11px 20px; border-radius:24px; font-size:.78rem; z-index:10000;
+  display:none; text-align:center; max-width:90%; font-weight:600;
+  box-shadow:0 12px 32px rgba(0,200,83,.4);
+  animation:toastIn .3s cubic-bezier(.4,0,.2,1) forwards;
+}
+.toast.erro{ background:linear-gradient(135deg,#e53935,#c62828); box-shadow:0 12px 32px rgba(239,83,80,.4); }
+@keyframes toastIn{ from{opacity:0; transform:translateX(-50%) translateY(20px);} to{opacity:1; transform:translateX(-50%) translateY(0);} }
+
+/* ALERTAS / LISTAS */
+.alerta-dificuldade{ background:rgba(198,40,40,.15); border-left:3px solid var(--danger); padding:8px 10px; margin:6px 0; border-radius:8px; font-size:.74rem; }
+.aviso-info{ background:rgba(0,210,255,.10); border-left:3px solid var(--accent-blue); padding:10px; margin:8px 0; border-radius:8px; font-size:.76rem; line-height:1.45; }
+.badge-count{ background:linear-gradient(135deg,#ffc107,#ff8f00); color:#000; font-weight:800; padding:2px 8px; border-radius:12px; font-size:.7rem; box-shadow:0 2px 8px var(--gold-glow); }
+.status-firebase{ font-size:.62rem; padding:3px 8px; border-radius:6px; margin-left:6px; font-weight:700; letter-spacing:.4px; }
+.status-online{ background:rgba(27,94,32,.9); color:#a5d6a7; box-shadow:0 0 8px rgba(0,230,118,.4); }
+.status-offline{ background:rgba(183,28,28,.9); color:#ffcdd2; }
+.lista-item{ background:rgba(12,21,26,.75); border:1px solid var(--card-border); border-radius:12px; padding:11px 13px; margin:7px 0; font-size:.78rem; transition:border-color .2s; }
+.lista-item:hover{ border-color:var(--card-border-hi); }
+.linha{ display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap; }
+.mini{ font-size:.68rem; color:var(--text-sub); }
+.pill{ display:inline-block; padding:3px 9px; border-radius:12px; font-size:.62rem; font-weight:700; letter-spacing:.3px; }
+.pill-ok{ background:rgba(27,94,32,.9); color:#a5d6a7; }
+.pill-pend{ background:rgba(93,64,55,.9); color:#ffe0b2; }
+.pill-no{ background:rgba(183,28,28,.9); color:#ffcdd2; }
+.pill-info{ background:rgba(1,87,155,.9); color:#b3e5fc; }
+.sem-dados{ font-size:.72rem; color:var(--text-sub); font-style:italic; padding:6px 0; }
+.chat-msg{ background:rgba(10,20,25,.9); border-left:3px solid var(--accent-blue); border-radius:8px; padding:8px 10px; margin-bottom:6px; }
+.grade-2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.grade-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+
+/* JOGOS CARDS */
+.jogo-card-btn{
+  background:linear-gradient(155deg, rgba(12,21,26,.95), rgba(8,15,20,.9));
+  border:1px solid var(--card-border); border-radius:14px; padding:20px 12px;
+  text-align:center; cursor:pointer; color:var(--text-main);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  transition:border-color .25s, transform .15s, box-shadow .3s;
+}
+.jogo-card-btn strong{ font-size:.9rem; }
+.jogo-card-btn span{ font-size:.7rem; color:var(--text-sub); }
+.jogo-card-btn:hover{ border-color:var(--primary-green); transform:scale(.98); box-shadow:0 8px 28px rgba(0,230,118,.2); }
+.jogo-card-btn:active{ transform:scale(.95); }
+
+/* FAB ASSISTENTE */
+#assistenteFab{
+  position:fixed; right:14px; bottom:18px; width:60px; height:60px;
+  border-radius:50%; border:none;
+  background:linear-gradient(135deg, var(--primary-green-dark), #00a844);
+  color:#fff; font-size:1.35rem;
+  box-shadow:0 6px 24px rgba(0,200,83,.55), 0 0 0 4px rgba(0,230,118,.12);
+  z-index:9500; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:transform .2s ease, box-shadow .3s ease;
+  animation:fabPulse 3s ease-in-out infinite;
+}
+@keyframes fabPulse{ 0%,100%{ box-shadow:0 6px 24px rgba(0,200,83,.55), 0 0 0 4px rgba(0,230,118,.12);} 50%{ box-shadow:0 6px 32px rgba(0,200,83,.75), 0 0 0 10px rgba(0,230,118,.08);} }
+#assistenteFab:hover{ transform:scale(1.08); }
+#assistenteFab:active{ transform:scale(.94); }
+.badge-notif{ background:var(--danger); color:#fff; font-weight:800; font-size:.62rem; min-width:18px; height:18px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; padding:0 5px; margin-left:3px; vertical-align:top; box-shadow:0 0 8px rgba(239,83,80,.5); }
+
+#assistentePainel{
+  display:none; position:fixed; right:12px; bottom:88px;
+  width:min(360px, calc(100vw - 24px)); max-height:min(70vh, 540px);
+  background:linear-gradient(155deg, #11222a, #0a1a22);
+  border:1px solid var(--accent-blue); border-radius:18px;
+  z-index:9501; flex-direction:column; overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.65), 0 0 40px rgba(0,210,255,.15);
+  animation:fadeInUp .25s ease;
+}
+#assistentePainel.aberto{ display:flex; }
+.assistente-header{ background:linear-gradient(135deg,#0d3d1f,#0a2a38); padding:11px 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--card-border); }
+.assistente-header h4{ margin:0; font-size:.85rem; color:var(--primary-green); display:flex; align-items:center; gap:6px; }
+.assistente-msgs{ flex:1; overflow-y:auto; padding:12px; font-size:.78rem; background:rgba(10,20,25,.85); }
+.assistente-bolha{ margin-bottom:8px; padding:9px 12px; border-radius:14px; max-width:92%; line-height:1.45; white-space:pre-wrap; animation:fadeInUp .2s; }
+.assistente-bolha.bot{ background:rgba(26,42,50,.95); border:1px solid var(--card-border); color:#e0f2f1; border-bottom-left-radius:4px; }
+.assistente-bolha.user{ background:linear-gradient(135deg,#1b5e20,#00a844); color:#fff; margin-left:auto; border-bottom-right-radius:4px; box-shadow:0 4px 12px rgba(0,200,83,.3); }
+.assistente-atalhos{ display:flex; flex-wrap:wrap; gap:5px; padding:8px; border-top:1px solid var(--card-border); background:rgba(13,26,32,.9); }
+.assistente-atalho{ background:rgba(26,42,50,.9); border:1px solid var(--card-border); color:var(--text-sub); border-radius:14px; padding:5px 11px; font-size:.65rem; cursor:pointer; transition:all .15s; }
+.assistente-atalho:hover{ background:var(--primary-green-dark); color:#fff; border-color:var(--primary-green); }
+.assistente-input-row{ display:flex; gap:5px; padding:9px; border-top:1px solid var(--card-border); background:#11222a; }
+.assistente-input-row input{ flex:1; margin:0; font-size:.78rem; }
+.assistente-input-row button{ width:auto; }
+
+/* ================================================================
+   ARCADE OVERLAY — neon reforçado
+   ================================================================ */
+.arcade-overlay-tech{
+  display:none; position:fixed; inset:0; z-index:9600; flex-direction:column;
+  align-items:center; justify-content:space-between;
+  padding:max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,230,118,.14), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,180,255,.12), transparent 50%),
+    linear-gradient(180deg, #061018 0%, #020508 100%);
+  touch-action:none; overscroll-behavior:none; user-select:none;
+}
+.arcade-topbar-tech{
+  width:100%; max-width:420px; display:flex; justify-content:space-between; align-items:center;
+  gap:8px; padding:9px 12px; border-radius:16px;
+  background:rgba(8,20,28,.8); border:1px solid rgba(0,230,118,.3);
+  box-shadow:0 0 24px rgba(0,230,118,.12), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter:blur(14px);
+}
+.arcade-topbar-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+.arcade-icon-tech{
+  width:44px; height:44px; border-radius:12px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:1.25rem;
+  background:linear-gradient(145deg, rgba(0,230,118,.4), rgba(0,150,255,.3));
+  border:1px solid rgba(0,230,118,.5);
+  box-shadow:0 0 14px rgba(0,230,118,.3);
+}
+.arcade-titulo-tech{ color:#00e676; font-family:'Orbitron', sans-serif; font-size:.9rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; text-shadow:0 0 12px rgba(0,230,118,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.arcade-meta-tech{ display:flex; gap:6px; margin-top:3px; flex-wrap:wrap; }
+.arcade-chip{ font-size:.62rem; font-weight:800; letter-spacing:.06em; padding:3px 8px; border-radius:6px; background:rgba(0,230,118,.14); border:1px solid rgba(0,230,118,.4); color:#69f0ae; }
+.arcade-chip-gold{ background:rgba(255,193,7,.14); border-color:rgba(255,193,7,.45); color:#ffc107; }
+.arcade-obj-tech{ font-size:.62rem; color:#78909c; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+.arcade-topbar-actions{ display:flex; gap:6px; flex-shrink:0; }
+.arcade-tech-btn{
+  width:42px; height:42px; border-radius:11px;
+  border:1px solid rgba(0,210,255,.4); background:rgba(0,150,200,.18);
+  color:#80d8ff; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; box-shadow:0 0 10px rgba(0,180,255,.2); transition:all .15s;
+}
+.arcade-tech-btn:hover{ background:rgba(0,150,200,.35); }
+.arcade-tech-btn-off{ border-color:rgba(239,83,80,.5); background:rgba(239,83,80,.18); color:#ef9a9a; }
+.arcade-canvas-wrap-tech{ flex:1; display:flex; align-items:center; justify-content:center; width:100%; max-width:420px; margin:8px 0; min-height:0; }
+.arcade-canvas-frame-tech{
+  position:relative; padding:3px; border-radius:18px;
+  background:linear-gradient(135deg, rgba(0,230,118,.6), rgba(0,180,255,.5), rgba(156,39,176,.4));
+  box-shadow:0 0 0 1px rgba(0,230,118,.35), 0 0 32px rgba(0,200,255,.25), 0 14px 44px rgba(0,0,0,.6);
+}
+.arcade-canvas-frame-tech::before{ content:''; position:absolute; inset:3px; border-radius:14px; background:#03080c; z-index:0; }
+#arcadeCanvas{
+  display:block; background:#03080c; border-radius:14px;
+  max-width:min(96vw, 380px); max-height:min(58vh, 460px);
+  width:auto; height:auto; touch-action:none; position:relative; z-index:1;
+  image-rendering:pixelated;
+}
+.arcade-scanlines{ pointer-events:none; position:absolute; inset:3px; border-radius:14px; z-index:2;
+  background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.07) 2px, rgba(0,0,0,.07) 4px);
+  opacity:.35;
+}
+.arcade-pause-overlay{
+  position:absolute; inset:3px; border-radius:14px; z-index:6;
+  background:rgba(2,8,12,.85); display:none; flex-direction:column;
+  align-items:center; justify-content:center; gap:14px;
+  color:#00e676; font-family:'Orbitron', sans-serif; font-weight:800; font-size:1.15rem;
+  letter-spacing:1.5px; cursor:pointer; text-shadow:0 0 14px rgba(0,230,118,.6);
+}
+.arcade-pause-overlay.visivel{ display:flex; }
+.arcade-pause-resume-btn{
+  background:linear-gradient(135deg, #00c853, #00a844); color:#fff; border:none; border-radius:26px;
+  padding:13px 28px; font-size:.92rem; font-weight:800; display:flex; align-items:center; gap:8px;
+  box-shadow:0 6px 20px rgba(0,200,83,.5); cursor:pointer;
+}
+/* --- CONTROLES FLUTUANTES + ZONAS DE TOQUE EM TELA CHEIA --- */
+.arcade-touch-layer{
+  position:absolute; inset:0; z-index:5; pointer-events:auto; touch-action:none;
+  display:none;
+}
+.arcade-overlay-tech.jogando .arcade-touch-layer{ display:block; }
+.arcade-touch-left, .arcade-touch-right{
+  position:absolute; top:0; bottom:0; width:50%;
+}
+.arcade-touch-left{ left:0; }
+.arcade-touch-right{ right:0; }
+
+.arcade-controls-bar{
+  position:relative; z-index:8;
+  width:100%; max-width:420px; display:flex; justify-content:space-between; align-items:flex-end;
+  gap:10px; padding:4px 6px 0; flex-shrink:0; pointer-events:none; touch-action:none;
+}
+.arcade-controls-bar .arcade-dpad,
+.arcade-controls-bar .arcade-acoes-lado,
+.arcade-controls-bar .arcade-btn{ pointer-events:auto; }
+.arcade-dpad{
+  display:grid; grid-template-columns:58px 58px 58px; grid-template-rows:58px 58px 58px; gap:6px;
+  grid-template-areas:". up ." "left . right" ". down ."; flex-shrink:0;
+  filter:drop-shadow(0 4px 16px rgba(0,0,0,.45));
+}
+.arcade-up{grid-area:up;} .arcade-left{grid-area:left;} .arcade-right{grid-area:right;} .arcade-down{grid-area:down;}
+.arcade-acoes-lado{ display:flex; flex-direction:column; justify-content:flex-end; min-height:110px; flex-shrink:0; }
+.arcade-acoes-col{ display:flex; flex-direction:column; gap:12px; align-items:flex-end; }
+.arcade-btn{
+  width:58px; height:58px; border:2px solid rgba(255,255,255,.5); border-radius:50%;
+  background:rgba(33,150,243,.38); backdrop-filter:blur(10px); color:rgba(255,255,255,.95);
+  font-size:1.15rem; font-weight:800;
+  box-shadow:0 4px 16px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.3);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  user-select:none; touch-action:none; transition:background .12s, transform .1s, box-shadow .12s;
+  -webkit-user-select:none;
+}
+.arcade-btn:active, .arcade-btn.arcade-pressed{
+  background:rgba(33,150,243,.75); transform:scale(.9);
+  border-color:rgba(255,255,255,.85);
+  box-shadow:0 0 18px rgba(0,210,255,.45), inset 0 1px 0 rgba(255,255,255,.35);
+}
+.arcade-btn-gold, .arcade-btn-green{ width:76px; height:76px; border-radius:50%; font-size:.78rem; }
+.arcade-btn-gold{ background:rgba(255,193,7,.38); border-color:rgba(255,236,150,.55); color:#fffde7; }
+.arcade-btn-green{ background:rgba(0,230,118,.35); border-color:rgba(105,240,174,.55); color:#e8f5e9; }
+.arcade-dica{ text-align:center; margin:5px 0 0; font-size:.66rem; color:rgba(144,164,174,.9); pointer-events:none; flex-shrink:0; }
+
+/* Seletor de dificuldade IA Minimax */
+.arcade-diff-bar{
+  width:100%; max-width:420px; display:none; justify-content:center; gap:6px;
+  padding:6px 4px 2px; flex-shrink:0; z-index:8; pointer-events:auto;
+}
+.arcade-diff-bar.visivel{ display:flex; }
+.arcade-diff-btn{
+  flex:1; max-width:110px; padding:8px 6px; border-radius:10px; border:1px solid rgba(0,230,118,.3);
+  background:rgba(8,20,28,.75); color:#90a4ae; font-size:.68rem; font-weight:700;
+  cursor:pointer; text-align:center; transition:all .18s; letter-spacing:.02em;
+  backdrop-filter:blur(8px);
+}
+.arcade-diff-btn:active{ transform:scale(.96); }
+.arcade-diff-btn.ativo{
+  color:#fff; border-color:rgba(0,230,118,.65);
+  background:linear-gradient(135deg, rgba(0,200,83,.35), rgba(0,150,255,.25));
+  box-shadow:0 0 14px rgba(0,230,118,.3);
+}
+.arcade-diff-btn[data-diff="facil"].ativo{ border-color:rgba(105,240,174,.7); box-shadow:0 0 12px rgba(0,230,118,.35); }
+.arcade-diff-btn[data-diff="dificil"].ativo{ border-color:rgba(255,193,7,.7); color:#ffecb3; box-shadow:0 0 12px rgba(255,193,7,.3); }
+.arcade-diff-btn[data-diff="impossivel"].ativo{ border-color:rgba(239,83,80,.75); color:#ffcdd2; box-shadow:0 0 14px rgba(239,83,80,.4); background:linear-gradient(135deg, rgba(183,28,28,.4), rgba(0,0,0,.3)); }
+
+/* Companheiro / misc */
+@keyframes companheiroBalanco{ 0%,100%{rotate:-4deg;} 50%{rotate:4deg;} }
+@keyframes companheiroBob{ 0%,100%{transform:translateX(-50%) translateY(0);} 50%{transform:translateX(-50%) translateY(-6px);} }
+@keyframes mascoteAnelPulso{ 0%,100%{opacity:.55; transform:scale(1);} 50%{opacity:.95; transform:scale(1.08);} }
+.msg-priv-bolha{ background:rgba(26,42,50,.9); border:1px solid var(--card-border); border-radius:12px; padding:8px 11px; margin:5px 0; font-size:.76rem; max-width:88%; }
+.msg-priv-bolha.aluno{ background:linear-gradient(135deg,#1b5e20,#00a844); color:#fff; margin-left:auto; border-bottom-right-radius:4px; }
+.msg-priv-bolha.professor{ background:rgba(26,42,50,.9); border-bottom-left-radius:4px; }
+.msg-priv-meta{ font-size:.6rem; color:var(--text-sub); margin-top:3px; }
+.conversa-thread{ background:rgba(10,20,25,.6); border-radius:8px; padding:6px 8px; margin-top:4px; }
+.terreiro-chip{ transition:transform .2s; }
+.terreiro-chip:hover{ transform:translateY(-2px); }
+.feedback-btns{ display:flex; gap:6px; flex-wrap:wrap; margin:6px 0; }
+.feedback-btns .btn{ flex:1 1 auto; }
 </style>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-<!-- Script para a mágica dos quadros fecharem e abrirem -->
 <script>
-  function toggleSanfona(elemento) {
+  function toggleSanfona(elemento){
     var card = elemento.closest('.card');
     if(card) card.classList.toggle('fechado');
   }
@@ -245,7 +518,6 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
 <body>
 <div class="app-frame">
 
-  <!-- ================= CABEÇALHO ================= -->
   <header id="headerAppTopo">
     <div class="logos-header-box">
       <img id="headerLogo1" class="app-logo-img" alt="Logo 1">
@@ -257,7 +529,6 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
     </div>
   </header>
 
-  <!-- ================= ABAS SUPERIORES ================= -->
   <div class="tabs-container">
     <div class="tabs" id="protectedSystemTabs">
       <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-home"></i>Início</button>
@@ -273,30 +544,28 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
     </div>
   </div>
 
-  <p class="mini" style="text-align:center; margin:-4px 0 6px; opacity:0.55;">Área de aluno · toque e segure o logo para acesso da equipe</p>
+  <p class="mini" style="text-align:center; margin:-4px 0 6px; opacity:.55;">Área de aluno · toque e segure o logo para acesso da equipe</p>
 
   <!-- ================= ABA 1 - INÍCIO ================= -->
   <div id="tab1" class="tab-content active">
 
     <div class="card card-destaque brilho-azul" id="cardAvisoAvaliacaoObrigatoria" style="display:none; border:1px solid var(--danger);">
       <h3 style="color:var(--danger);"><i class="fas fa-triangle-exclamation"></i> Avaliação Semanal Pendente</h3>
-      <p id="textoAvisoAvaliacaoObrigatoria" style="font-size:0.78rem; color:#fff; margin-bottom:8px;"></p>
+      <p id="textoAvisoAvaliacaoObrigatoria" style="font-size:.78rem; color:#fff; margin-bottom:8px;"></p>
       <button class="btn btn-danger" onclick="abrirAba('tab3')"><i class="fas fa-graduation-cap"></i> Fazer Agora</button>
     </div>
 
-    <!-- Avisos e Local Notificado (Fechado) -->
     <div class="card fechado" style="border:1px solid var(--gold);">
       <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)" style="color:var(--gold);">
         <span><i class="fas fa-bell"></i> Avisos do Professor</span>
         <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
       </h3>
       <div class="card-corpo-colapsavel">
-        <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
+        <p style="font-size:.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
         <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
       </div>
     </div>
 
-    <!-- Card de Horário (Aberto por padrão para visualização rápida) -->
     <div class="card" id="cardHorarioFixoInicio" style="border:1px solid var(--primary-green); display:none;">
       <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)">
         <span><i class="fas fa-calendar-week"></i> Horários da Semana</span>
@@ -305,25 +574,23 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
       <div class="card-corpo-colapsavel">
         <div id="listaHorarioFixoInicio"></div>
         <button class="btn" id="btnConfirmarPresencaHoje" style="margin-top:8px; display:none;" onclick="confirmarPresencaHoje()"><i class="fas fa-hand-point-up"></i> Vou Comparecer Hoje</button>
-        <p id="txtJaConfirmouHoje" style="display:none; font-size:0.75rem; color:var(--primary-green); margin-top:6px;"><i class="fas fa-check-circle"></i> Presença confirmada para hoje!</p>
+        <p id="txtJaConfirmouHoje" style="display:none; font-size:.75rem; color:var(--primary-green); margin-top:6px;"><i class="fas fa-check-circle"></i> Presença confirmada para hoje!</p>
       </div>
     </div>
 
-    <!-- Instagram da Academia (Fechado por padrão para economizar espaço) -->
     <div class="card fechado" style="border:1px solid #e6683c;">
       <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)" style="color:#f09433;">
         <span><i class="fab fa-instagram"></i> Instagram Oficial</span>
         <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
       </h3>
       <div class="card-corpo-colapsavel">
-        <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe fotos e vídeos:</p>
-        <p style="font-size:0.8rem; font-weight:bold; color:#fff; margin-bottom:8px;" id="handleInstagramAcademiaTxt">@capoeiranapequenaafrica</p>
+        <p style="font-size:.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe fotos e vídeos:</p>
+        <p style="font-size:.8rem; font-weight:bold; color:#fff; margin-bottom:8px;" id="handleInstagramAcademiaTxt">@capoeiranapequenafrica</p>
         <button class="btn btn-instagram" onclick="abrirInstagramOficial()"><i class="fab fa-instagram"></i> Acessar Instagram Oficial</button>
         <div id="feedInstagramInicio" style="margin-top:10px;"></div>
       </div>
     </div>
 
-    <!-- Formação Infantil / Professor (Com o Aviso de Remuneração) -->
     <div class="card fechado" id="cardFormacaoInfantil" style="border:1px solid var(--gold);">
       <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)" style="color:var(--gold);">
         <span><i class="fas fa-chalkboard-teacher"></i> Formação de Professor</span>
@@ -331,26 +598,22 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
       </h3>
       <div class="card-corpo-colapsavel">
         <p class="mini" style="margin-bottom:8px;">Cadastre-se para se tornar professor de crianças.</p>
-        
-        <!-- NOVO AVISO DE REMUNERAÇÃO INSERIDO AQUI -->
-        <div class="aviso-info" style="border-left-color: var(--primary-green); background: rgba(0, 230, 118, 0.15);">
-          <i class="fas fa-hand-holding-dollar" style="color: var(--primary-green);"></i> 
+        <div class="aviso-info" style="border-left-color:var(--primary-green); background:rgba(0,230,118,.15);">
+          <i class="fas fa-hand-holding-dollar" style="color:var(--primary-green);"></i>
           <b style="color:#fff;">Atenção:</b> As aulas que você ministrar através deste programa de formação serão <b>remuneradas</b>!
         </div>
-
         <div id="boxFormacaoInfantilUI"></div>
         <div id="boxMinhaInscricaoFormacao" style="margin-top:8px;"></div>
       </div>
     </div>
 
-    <!-- Mural de Bate Papo (Fechado para deixar a tela limpa) -->
     <div class="card fechado">
       <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)">
         <span><i class="fas fa-comments"></i> Mural & Bate-Papo</span>
         <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
       </h3>
       <div class="card-corpo-colapsavel">
-        <div id="chatMessages" style="max-height:160px; overflow-y:auto; margin-bottom:6px; font-size:0.75rem;"></div>
+        <div id="chatMessages" style="max-height:160px; overflow-y:auto; margin-bottom:6px; font-size:.75rem;"></div>
         <div style="display:flex; gap:4px; align-items:center;">
           <input id="chatInput" placeholder="Digite uma mensagem..." onkeypress="if(event.key==='Enter') enviarMensagemNuvem()" style="flex:1;">
           <button class="btn btn-secondary" style="width:auto; padding:8px 10px; margin:0;" onclick="document.getElementById('inputFotoChat').click()"><i class="fas fa-camera"></i></button>
@@ -359,37 +622,33 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
         <button class="btn" style="margin-top:4px;" onclick="enviarMensagemNuvem()"><i class="fas fa-paper-plane"></i> Publicar Mensagem</button>
       </div>
     </div>
-
-  </div> <!-- Fim Aba Início -->
+  </div>
 
   <!-- ================= ABA 2 - CHECK-IN ================= -->
   <div id="tab2" class="tab-content">
     <div id="boxProfessorNaAulaCheckin"></div>
     <div id="boxGympassCheckin"></div>
-
     <div class="card">
       <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)">
         <span><i class="fas fa-building"></i> Check-in da Aula</span>
         <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
       </h3>
       <div class="card-corpo-colapsavel">
-        <div id="horarioAulaHojeBox" style="font-size:0.75rem; background:#081217; border:1px solid var(--card-border); border-radius:8px; padding:6px 8px; margin-bottom:8px;">
+        <div id="horarioAulaHojeBox" style="font-size:.75rem; background:#081217; border:1px solid var(--card-border); border-radius:10px; padding:8px 10px; margin-bottom:8px;">
           <i class="fas fa-clock"></i> Carregando horário...
         </div>
         <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo" oninput="atualizarEstadoBotaoCheckin()">
         <select id="selectPoloFixoTreino" onchange="avaliarAtrasoHoje()">
           <option value="">Aguardando professor cadastrar local...</option>
         </select>
-        <div id="boxJustificativaAtraso" style="display:none; margin-top:8px; border:1px solid var(--danger); border-radius:8px; padding:8px;">
-          <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo:</p>
+        <div id="boxJustificativaAtraso" style="display:none; margin-top:8px; border:1px solid var(--danger); border-radius:10px; padding:10px;">
+          <p style="font-size:.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo:</p>
           <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, trabalho..."></textarea>
         </div>
-        <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
+        <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:10px; border-radius:10px; border:1px solid var(--primary-green); background:rgba(0,230,118,.1); font-size:.78rem;"></div>
         <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença</button>
       </div>
     </div>
-
-    <!-- Histórico de Check-ins (Fechado para não poluir) -->
     <div class="card fechado" id="cardMinhasPresencasCheckin" style="display:none;">
       <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)">
         <span><i class="fas fa-calendar-check"></i> Meu Histórico</span>
@@ -401,38 +660,43 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
     </div>
   </div>
 
-  <!-- ================= ABA JOGOS E MUNDO ================= -->
+  <!-- ================= ABA JOGOS ================= -->
   <div id="tabJogos" class="tab-content">
     <div class="card">
       <h3 style="color:var(--primary-green);"><i class="fas fa-gamepad"></i> Arcade Capoeira</h3>
-      
-      <!-- Acesso rápido ao Tamagotchi dentro do Arcade também -->
-      <div class="card-destaque" style="border:1px solid var(--gold); border-radius: 12px; padding: 12px; margin-bottom: 12px; text-align: center;">
-        <h4 style="color:var(--gold); margin-bottom: 6px;"><i class="fas fa-dragon"></i> Cuide do seu Mascote!</h4>
+      <div class="card-destaque" style="border:1px solid var(--gold); border-radius:14px; padding:14px; margin-bottom:12px; text-align:center;">
+        <h4 style="color:var(--gold); margin-bottom:6px;"><i class="fas fa-dragon"></i> Cuide do seu Mascote!</h4>
         <button class="btn btn-gold" onclick="abrirJogoArcade('tamagotchi')"><i class="fas fa-robot"></i> Abrir Mascote Virtual</button>
       </div>
-
       <div class="jogos-grid-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;">
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('corrida')">
-          <i class="fas fa-car" style="font-size:1.6rem;color:var(--accent-blue);"></i><strong>Retro Kart</strong>
+          <i class="fas fa-car" style="font-size:1.7rem;color:var(--accent-blue);"></i><strong>Retro Kart</strong>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('damas')">
-          <i class="fas fa-chess" style="font-size:1.6rem;color:var(--gold);"></i><strong>Damas</strong>
+          <i class="fas fa-chess" style="font-size:1.7rem;color:var(--gold);"></i><strong>Damas</strong>
+          <span style="font-size:.62rem;color:var(--gold);">IA Minimax</span>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('snake')">
-          <i class="fas fa-dragon" style="font-size:1.6rem;color:var(--accent-blue);"></i><strong>Minhoca</strong>
+          <i class="fas fa-dragon" style="font-size:1.7rem;color:var(--accent-blue);"></i><strong>Minhoca</strong>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pacman')">
-          <i class="fas fa-ghost" style="font-size:1.6rem;color:var(--accent-blue);"></i><strong>Pac-Man</strong>
+          <i class="fas fa-ghost" style="font-size:1.7rem;color:var(--accent-blue);"></i><strong>Pac-Man</strong>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('quebra')">
+          <i class="fas fa-cubes" style="font-size:1.7rem;color:var(--accent-purple);"></i><strong>Quebra-Blocos</strong>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pulo')">
+          <i class="fas fa-dove" style="font-size:1.7rem;color:var(--primary-green);"></i><strong>Pulo</strong>
         </button>
       </div>
+      <div id="boxNiveisArcadeTab" style="margin-top:12px;"></div>
+      <h3 style="margin-top:12px;font-size:.82rem;"><i class="fas fa-trophy"></i> Ranking dos Jogos</h3>
+      <div id="listaRankingJogosTab"></div>
     </div>
   </div>
 
-  <!-- ================= ABA 3 - ALUNO (LOGIN E PAINEL) ================= -->
+  <!-- ================= ABA 3 - ALUNO ================= -->
   <div id="tab3" class="tab-content">
-    
-    <!-- Tela de Login -->
     <div class="card" id="cardAlunoLogin">
       <h3><i class="fas fa-user-lock"></i> Área do Aluno</h3>
       <label class="campo-label">Nome completo ou apelido</label>
@@ -440,16 +704,12 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
       <label class="campo-label">Senha</label>
       <input id="alunoLoginSenha" type="password" placeholder="Sua senha">
       <button class="btn" onclick="autenticarAlunoNuvem(this)"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</button>
-      
-      <!-- BOTÃO DE TESTE (SEM LOGIN) -->
       <button class="btn btn-secondary" onclick="document.getElementById('cardAlunoLogin').style.display='none'; document.getElementById('cardAlunoPainel').style.display='block'; document.getElementById('cardAlunoPainel').innerHTML='<div class=\'card\'><h3 style=\'color:var(--accent-blue)\'>Painel de Teste</h3><p class=\'mini\'>Você está no modo visitante livre. Nenhum dado será salvo.</p><button class=\'btn btn-back\' onclick=\'location.reload()\'>Sair do Teste</button></div>';"><i class="fas fa-user-secret"></i> Entrar como Teste</button>
-
-      <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:6px;">
+      <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:8px;">
         <button class="btn btn-gold" onclick="toggleAutoCadastroAluno(true)"><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</button>
       </div>
     </div>
 
-    <!-- Tela de Cadastro -->
     <div class="card" id="cardAlunoPrimeiroCadastro" style="display:none;">
       <button class="btn btn-back" onclick="toggleAutoCadastroAluno(false)"><i class="fas fa-arrow-left"></i> Voltar</button>
       <h3><i class="fas fa-user-plus"></i> Cadastro de Aluno</h3>
@@ -477,39 +737,36 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
       <input id="autoCadSenha2" type="password" placeholder="Repita a senha">
       <button class="btn" onclick="cadastrarAlunoNuvem(this)"><i class="fas fa-check"></i> Concluir</button>
     </div>
-
-    <!-- Aqui o JS injetará o painel completo do aluno quando logado -->
     <div id="cardAlunoPainel" style="display:none;"></div>
   </div>
 
-  <!-- ================= ABAS 4, 5 e 6 - EQUIPE ================= -->
   <div id="tab4" class="tab-content"><div id="conteudoProfessor"></div></div>
   <div id="tab5" class="tab-content"><div id="conteudoAdm"></div></div>
   <div id="tab6" class="tab-content"><div id="conteudoDev"></div></div>
 
   <footer>
-    <span id="footerInfo">Universo Capoeira</span> &middot; <i class="fas fa-shield-alt"></i> Pequena África
+    <span id="footerInfo">Universo Capoeira</span> · <i class="fas fa-shield-alt"></i> Pequena África
   </footer>
 </div>
 
-<!-- ================= MODAL E TOAST ================= -->
+<!-- MODAL E TOAST -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-card">
-    <h3 id="modalTitulo" style="color:var(--accent-blue); margin-bottom:8px; font-size:0.9rem; display:flex; align-items:center; gap:6px;"></h3>
-    <div id="modalCorpo" style="font-size:0.78rem;"></div>
+    <h3 id="modalTitulo" style="color:var(--accent-blue); margin-bottom:8px; font-size:.9rem; display:flex; align-items:center; gap:6px;"></h3>
+    <div id="modalCorpo" style="font-size:.78rem;"></div>
     <div id="modalAcoes" style="margin-top:10px;"></div>
   </div>
 </div>
 <div class="toast" id="toastBox"></div>
 
-<!-- ================= ASSISTENTE VIRTUAL (COM O T-REX!) ================= -->
+<!-- ASSISTENTE -->
 <button id="assistenteFab" onclick="toggleAssistente()">
-  <img src="avatar2.png" style="width: 48px; height: 48px; object-fit: contain; margin-top: -2px; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));" alt="Dino Assistente">
+  <img src="avatar2.png" style="width:48px; height:48px; object-fit:contain; margin-top:-2px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));" alt="Dino Assistente" onerror="this.style.display='none'; this.parentNode.innerHTML='🤖';">
 </button>
 
 <div id="assistentePainel">
   <div class="assistente-header">
-    <h4><img src="avatar2.png" style="width: 24px; height: 24px; object-fit: contain; margin-right: 6px;" alt="Dino"> Assistente Capoeira</h4>
+    <h4><img src="avatar2.png" style="width:24px; height:24px; object-fit:contain; margin-right:6px;" alt="Dino" onerror="this.style.display='none';"> Assistente Capoeira</h4>
     <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
   </div>
   <div class="assistente-msgs" id="assistenteMsgs"></div>
@@ -527,8 +784,14 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
   </div>
 </div>
 
-<!-- ================= ARCADE OVERLAY (JOGOS) ================= -->
+<!-- ARCADE OVERLAY -->
 <div id="arcadeOverlay" class="arcade-overlay-tech">
+  <!-- Camada de toque flutuante: metade esquerda = direção, direita = ação -->
+  <div id="arcadeTouchLayer" class="arcade-touch-layer" aria-hidden="true">
+    <div class="arcade-touch-left" id="arcadeTouchLeft"></div>
+    <div class="arcade-touch-right" id="arcadeTouchRight"></div>
+  </div>
+
   <div class="arcade-topbar-tech">
     <div class="arcade-topbar-left">
       <div class="arcade-icon-tech">⚡</div>
@@ -548,71 +811,37 @@ footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text
     </div>
   </div>
 
+  <!-- Dificuldade IA Minimax (aparece em jogos com adversário) -->
+  <div id="arcadeDiffBar" class="arcade-diff-bar">
+    <button type="button" class="arcade-diff-btn" data-diff="facil" onclick="setDificuldadeIA('facil')">Fácil</button>
+    <button type="button" class="arcade-diff-btn ativo" data-diff="dificil" onclick="setDificuldadeIA('dificil')">Difícil</button>
+    <button type="button" class="arcade-diff-btn" data-diff="impossivel" onclick="setDificuldadeIA('impossivel')">Impossível</button>
+  </div>
+
   <div id="arcadeCanvasWrap" class="arcade-canvas-wrap-tech">
     <div id="arcadeCanvasFrame" class="arcade-canvas-frame-tech">
       <div class="arcade-scanlines" aria-hidden="true"></div>
-      <canvas id="arcadeCanvas" width="320" height="400" style="display:block; background:#03080c; border-radius:10px; max-width:min(96vw, 360px); max-height:min(58vh, 440px); width:auto; height:auto; touch-action:none; position:relative; z-index:1;"></canvas>
-      <div id="arcadePauseOverlay" class="arcade-pause-overlay" style="display:none;" onclick="togglePauseArcade()">
+      <canvas id="arcadeCanvas" width="320" height="400"></canvas>
+      <div id="arcadePauseOverlay" class="arcade-pause-overlay" onclick="togglePauseArcade()">
         <span><i class="fas fa-pause"></i> PAUSADO</span>
         <button type="button" class="arcade-pause-resume-btn" onclick="event.stopPropagation();togglePauseArcade()"><i class="fas fa-play"></i> Continuar</button>
       </div>
     </div>
   </div>
-
   <div class="arcade-controls-bar">
-    <div class="arcade-dpad" aria-label="Direção (polegar esquerdo)">
-      <button type="button" class="arcade-btn arcade-up" data-dir="up" aria-label="Cima">▲</button>
-      <button type="button" class="arcade-btn arcade-left" data-dir="left" aria-label="Esquerda">◀</button>
-      <button type="button" class="arcade-btn arcade-right" data-dir="right" aria-label="Direita">▶</button>
-      <button type="button" class="arcade-btn arcade-down" data-dir="down" aria-label="Baixo">▼</button>
+    <div class="arcade-dpad" aria-label="Direção">
+      <button type="button" class="arcade-btn arcade-up" data-dir="up">▲</button>
+      <button type="button" class="arcade-btn arcade-left" data-dir="left">◀</button>
+      <button type="button" class="arcade-btn arcade-right" data-dir="right">▶</button>
+      <button type="button" class="arcade-btn arcade-down" data-dir="down">▼</button>
     </div>
-    <div id="arcadeAcoesExtra" class="arcade-acoes-lado">
-      <!-- Ações extras injetadas pelo JS -->
-    </div>
+    <div id="arcadeAcoesExtra" class="arcade-acoes-lado"></div>
   </div>
-  <p id="arcadeDica" class="arcade-dica">2 dedos · esquerda move · direita ação · transparentes</p>
+  <p id="arcadeDica" class="arcade-dica">Toque em qualquer lugar · esquerda move · direita ação</p>
 </div>
 
-<style>
-/* Estilos Críticos do Overlay do Arcade */
-.arcade-overlay-tech { display: none; position: fixed; inset: 0; z-index: 9600; flex-direction: column; align-items: center; justify-content: space-between; padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); box-sizing: border-box; background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,230,118,0.12), transparent 55%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,180,255,0.1), transparent 50%), linear-gradient(180deg, #061018 0%, #020508 100%); touch-action: none; overscroll-behavior: none; user-select: none; }
-.arcade-pause-overlay { position: absolute; inset: 3px; border-radius: 12px; z-index: 6; background: rgba(2, 8, 12, 0.82); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #00e676; font-weight: 800; font-size: 1.15rem; letter-spacing: 1px; cursor: pointer; text-shadow: 0 0 12px rgba(0,230,118,0.45); pointer-events: auto; }
-.arcade-pause-overlay.visivel { display: flex; }
-.arcade-pause-resume-btn { background: linear-gradient(135deg, #00c853, #00a844); color: #fff; border: none; border-radius: 24px; padding: 12px 26px; font-size: 0.92rem; font-weight: 800; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,200,83,0.4); cursor: pointer; }
-.arcade-pause-resume-btn:active { transform: scale(0.96); }
-.arcade-tech-btn.arcade-paused { background: rgba(0, 230, 118, 0.3) !important; border-color: rgba(0, 230, 118, 0.7) !important; color: #00e676 !important; }
-.arcade-topbar-tech { width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 14px; background: rgba(8, 20, 28, 0.75); border: 1px solid rgba(0, 230, 118, 0.25); box-shadow: 0 0 20px rgba(0, 230, 118, 0.08), inset 0 1px 0 rgba(255,255,255,0.06); backdrop-filter: blur(12px); }
-.arcade-topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.arcade-icon-tech { width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: linear-gradient(145deg, rgba(0,230,118,0.35), rgba(0,150,255,0.25)); border: 1px solid rgba(0,230,118,0.45); box-shadow: 0 0 12px rgba(0,230,118,0.25); }
-.arcade-titulo-tech { color: #00e676; font-size: 0.92rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 10px rgba(0,230,118,0.5); }
-.arcade-meta-tech { display: flex; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
-.arcade-chip { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 6px; background: rgba(0,230,118,0.12); border: 1px solid rgba(0,230,118,0.35); color: #69f0ae; }
-.arcade-chip-gold { background: rgba(255,193,7,0.12); border-color: rgba(255,193,7,0.4); color: #ffc107; }
-.arcade-obj-tech { font-size: 0.62rem; color: #78909c; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-.arcade-topbar-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.arcade-tech-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(0,210,255,0.35); background: rgba(0, 150, 200, 0.15); color: #80d8ff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 8px rgba(0,180,255,0.15); }
-.arcade-tech-btn-off { border-color: rgba(239,83,80,0.45); background: rgba(239,83,80,0.15); color: #ef9a9a; }
-.arcade-canvas-wrap-tech { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 400px; margin: 6px 0; min-height: 0; }
-.arcade-canvas-frame-tech { position: relative; padding: 3px; border-radius: 16px; background: linear-gradient(135deg, rgba(0,230,118,0.55), rgba(0,180,255,0.45), rgba(156,39,176,0.35)); box-shadow: 0 0 0 1px rgba(0,230,118,0.3), 0 0 28px rgba(0,200,255,0.2), 0 12px 40px rgba(0,0,0,0.55); }
-.arcade-canvas-frame-tech::before { content: ''; position: absolute; inset: 3px; border-radius: 12px; background: #03080c; z-index: 0; }
-.arcade-scanlines { pointer-events: none; position: absolute; inset: 3px; border-radius: 12px; z-index: 2; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px); opacity: 0.35; }
-.arcade-controls-bar { width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; padding: 2px 6px 0; flex-shrink: 0; pointer-events: none; touch-action: none; }
-.arcade-controls-bar .arcade-dpad, .arcade-controls-bar .arcade-acoes-lado, .arcade-controls-bar .arcade-btn { pointer-events: auto; }
-.arcade-dpad { display: grid; grid-template-columns: 52px 52px 52px; grid-template-rows: 52px 52px 52px; gap: 4px; grid-template-areas: ". up ." "left . right" ". down ."; flex-shrink: 0; }
-.arcade-up { grid-area: up; } .arcade-left { grid-area: left; } .arcade-right { grid-area: right; } .arcade-down { grid-area: down; }
-.arcade-acoes-lado { display: flex; flex-direction: column; justify-content: flex-end; min-height: 100px; flex-shrink: 0; }
-.arcade-acoes-col { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
-.arcade-btn { width: 52px; height: 52px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; background: rgba(33, 150, 243, 0.32); backdrop-filter: blur(8px); color: rgba(255,255,255,0.95); font-size: 1.05rem; font-weight: 800; box-shadow: 0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; touch-action: none; transition: background 0.1s, transform 0.08s; }
-.arcade-btn:active, .arcade-btn.arcade-pressed { background: rgba(33, 150, 243, 0.6); transform: scale(0.92); border-color: rgba(255,255,255,0.7); }
-.arcade-btn-gold, .arcade-btn-green { width: 72px; height: 72px; border-radius: 50%; font-size: 0.78rem; }
-.arcade-btn-gold { background: rgba(255, 193, 7, 0.32); border-color: rgba(255, 236, 150, 0.45); color: #fffde7; }
-.arcade-btn-green { background: rgba(0, 230, 118, 0.3); border-color: rgba(105, 240, 174, 0.45); color: #e8f5e9; }
-.arcade-dica { text-align: center; margin: 4px 0 0; font-size: 0.65rem; color: rgba(144, 164, 174, 0.9); pointer-events: none; flex-shrink: 0; }
-</style>
-
-<!-- Scripts -->
-<script src="core.js?v=tama4" defer></script>
-<script src="games.js?v=tama4" defer></script>
-<script src="mundo.js?v=tama4" defer></script>
+<script src="core.js?v=tama6" defer></script>
+<script src="games.js?v=tama6" defer></script>
+<script src="mundo.js?v=tama6" defer></script>
 </body>
 </html>
