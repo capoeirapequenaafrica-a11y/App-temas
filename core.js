@@ -446,8 +446,30 @@
   function renderAbaAdm() {
     var box = $('conteudoAdm');
     if (!exigirEquipe(['adm', 'dev'], box, 'adm')) return;
-    box.innerHTML = '<div class="card"><h3>ADM: ' + esc(sessaoEquipe.nome) + '</h3>' +
-      '<button class="btn btn-back" onclick="sairEquipe()">Sair</button></div>';
+    var jogosTeste = [
+      { id: 'snake', n: 'Minhoca', cor: 'btn', icon: 'fa-dragon' },
+      { id: 'tamagotchi', n: 'Mascote', cor: 'btn btn-gold', icon: 'fa-robot' },
+      { id: 'damas', n: 'Damas', cor: 'btn', icon: 'fa-chess' },
+      { id: 'corrida', n: 'Corrida', cor: 'btn', icon: 'fa-car', style: 'background:linear-gradient(135deg,#00c853,#00e676);' },
+      { id: 'quebra', n: 'Quebra-Blocos', cor: 'btn', icon: 'fa-cubes' },
+      { id: 'pulo', n: 'Pulo', cor: 'btn', icon: 'fa-dove' },
+      { id: 'surfe', n: 'Surfe', cor: 'btn btn-gold', icon: 'fa-water' },
+      { id: 'mario', n: 'Aventura', cor: 'btn', icon: 'fa-mountain', style: 'background:linear-gradient(135deg,#00c853,#00e676);' }
+    ];
+    var btns = jogosTeste.map(function (j) {
+      var st = j.style ? ' style="' + j.style + '"' : '';
+      return '<button type="button" class="' + j.cor + '"' + st + ' onclick="abrirJogoArcade(\'' + j.id + '\')"><i class="fas ' + j.icon + '"></i> ' + j.n + '</button>';
+    }).join('');
+    box.innerHTML =
+      '<div class="card">' +
+        '<h3><i class="fas fa-sliders-h"></i> ADM: ' + esc(sessaoEquipe.nome) + '</h3>' +
+        '<p class="mini" style="margin-bottom:12px;">Abra qualquer jogo em modo teste. Os pontos ainda entram no ranking se houver nome preenchido na aba Início.</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' + btns + '</div>' +
+        '<h3 style="font-size:.85rem;margin:12px 0 8px;"><i class="fas fa-trophy"></i> Ranking atual (top 10)</h3>' +
+        '<div id="listaRankingJogosAdm"></div>' +
+        '<button class="btn btn-back" style="margin-top:14px;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair</button>' +
+      '</div>';
+    if (typeof renderRankingJogos === 'function') renderRankingJogos();
   }
   function renderAbaDev() {
     var box = $('conteudoDev');

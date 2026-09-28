@@ -216,9 +216,16 @@
      ABRIR / FECHAR / PAUSE
      ================================================================ */
   global.abrirJogoArcade = function (tipo, nivel) {
-    if (tipo === 'tamagotchi') {
-      if (typeof Simulador !== 'undefined' && Simulador.entrarMundoAberto) Simulador.entrarMundoAberto();
-      else if (typeof abrirAba === 'function') abrirAba('tabSimulador');
+    // Mascote — abre overlay de teste (funciona sempre)
+    if (tipo === 'tamagotchi' || tipo === 'mascote') {
+      if (typeof Tama !== 'undefined' && Tama.abrir) Tama.abrir();
+      else if (typeof Simulador !== 'undefined' && Simulador.entrarMundoAberto) Simulador.entrarMundoAberto();
+      else if (typeof mostrarToast === 'function') mostrarToast('Mascote ainda carregando...');
+      return;
+    }
+    // Jogos ainda não implementados
+    if (tipo === 'surfe' || tipo === 'mario') {
+      if (typeof mostrarToast === 'function') mostrarToast((tipo === 'surfe' ? 'Surfe' : 'Aventura') + ' em breve!');
       return;
     }
     var ov = $('arcadeOverlay');
@@ -843,7 +850,7 @@
     var box = $('boxNiveisArcadeTab'); if (!box) return;
     var jogos = [
       { id: 'snake', n: 'Minhoca' }, { id: 'pacman', n: 'Pac-Man' },
-      { id: 'corrida', n: 'Corrida' }, { id: 'quebra', n: 'Quebra-Blocos' },
+      { id: 'corrida', n: 'Retro Kart' }, { id: 'quebra', n: 'Quebra-Blocos' },
       { id: 'pulo', n: 'Pulo' }, { id: 'damas', n: 'Damas' }
     ];
     var h = '';
@@ -855,7 +862,21 @@
   };
   global.renderRankingJogos = function () {
     var box = $('listaRankingJogosTab'); if (!box) return;
-    box.innerHTML = '<p class="sem-dados">Jogue para pontuar!</p>';
+    // Ranking unificado (também usado na área ADM)
+    var boxAdm = document.getElementById('listaRankingJogosAdm');
+    var html = '<p class="sem-dados">Jogue para pontuar! Os pontos entram no ranking quando houver nome na aba Início.</p>';
+    try {
+      var rank = JSON.parse(localStorage.getItem('uc_arcade_ranking') || '[]');
+      if (Array.isArray(rank) && rank.length) {
+        rank = rank.sort(function (a, b) { return (b.pts || 0) - (a.pts || 0); }).slice(0, 10);
+        html = rank.map(function (r, i) {
+          var medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i + 1) + 'º'));
+          return '<div class="lista-item"><div class="linha"><span>' + medal + ' ' + (r.nome || 'Jogador') + '</span><span class="badge-count">' + (r.pts || 0) + ' pts</span></div></div>';
+        }).join('');
+      }
+    } catch (e) {}
+    box.innerHTML = html;
+    if (boxAdm) boxAdm.innerHTML = html;
   };
 
   /* Init */
