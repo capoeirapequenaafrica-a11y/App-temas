@@ -47,6 +47,7 @@
         '<button type="button" onclick="Tama.fechar()" style="position:absolute;top:12px;right:12px;background:rgba(239,83,80,.2);border:1px solid #ef5350;color:#ef5350;width:36px;height:36px;border-radius:50%;font-size:1.1rem;cursor:pointer;">×</button>' +
         '<div style="text-align:center;margin-bottom:14px;">' +
           '<div id="mascoteEmoji" style="font-size:4.2rem;line-height:1;margin:8px 0;">🐉</div>' +
+          '<div id="mascote3D" style="display:none;height:220px;width:100%;margin:0 auto 4px;"></div>' +
           '<h3 id="mascoteNome" style="color:var(--gold,#ffc107);margin:0 0 4px;">Ginga</h3>' +
           '<p id="mascoteStatus" class="mini" style="color:#90a4ae;margin:0;">Seu mascote virtual</p>' +
         '</div>' +
@@ -73,14 +74,23 @@
       if (ov) {
         ov.style.display = 'flex';
         Tama.atualizarUI();
+        if (global.Gfx3D) {
+          global.Gfx3D.mascoteAbrir('mascote3D', function (ok) {
+            var em = document.getElementById('mascoteEmoji');
+            if (em) em.style.display = ok ? 'none' : '';
+            if (ok) Tama.atualizarUI();
+          });
+        }
       }
     },
     fechar: function () {
       var ov = document.getElementById('mascoteOverlay');
       if (ov) ov.style.display = 'none';
+      if (global.Gfx3D) global.Gfx3D.mascoteFechar();
     },
     atualizarUI: function () {
       var t = decayTama(loadTama());
+      if (global.Gfx3D) global.Gfx3D.mascoteHumor(t);
       var emoji = document.getElementById('mascoteEmoji');
       var nome = document.getElementById('mascoteNome');
       var status = document.getElementById('mascoteStatus');
@@ -129,6 +139,7 @@
       }
       t.ultimo = Date.now();
       saveTama(t);
+      if (global.Gfx3D) global.Gfx3D.mascoteAnim(tipo);
       Tama.atualizarUI();
     },
     render: function () {
