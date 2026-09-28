@@ -92,27 +92,6 @@ header {
   min-width: 0;
   overflow: hidden;
 }
-.cronometro-box {
-  background: #081217;
-  padding: 4px 6px;
-  border-radius: 8px;
-  border: 1px solid var(--accent-blue);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
-.cronometro-display { font-family: monospace; font-size: 0.95rem; color: var(--accent-blue); font-weight: 700; }
-.cronometro-controls { display: flex; gap: 2px; margin-top: 2px; }
-.cronometro-btn {
-  background: #1a2a32;
-  border: 1px solid var(--card-border);
-  color: #fff;
-  border-radius: 4px;
-  padding: 2px 4px;
-  font-size: 0.6rem;
-  cursor: pointer;
-}
 .tabs-container { padding: 6px 8px 2px 8px; background: #091419; border-bottom: 1px solid var(--card-border); flex-shrink: 0; }
 .tabs {
   display: flex;
@@ -160,68 +139,28 @@ header {
   box-shadow: var(--shadow-soft);
   transition: border-color 0.2s ease, transform 0.15s ease;
 }
-.card:hover {
-  border-color: rgba(0, 230, 118, 0.35);
-  box-shadow: 0 8px 32px 0 rgba(0, 230, 118, 0.05);
-}
+.card:hover { border-color: rgba(0, 230, 118, 0.35); box-shadow: 0 8px 32px 0 rgba(0, 230, 118, 0.05); }
 
-.jogo-card-btn {
-  background: rgba(12, 21, 26, 0.85);
-  border: 1px solid var(--card-border);
-  border-radius: 12px;
-  padding: 18px 10px;
-  text-align: center;
-  cursor: pointer;
-  color: var(--text-main);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  transition: border-color 0.2s, transform 0.12s;
-  -webkit-tap-highlight-color: transparent;
-}
+.jogo-card-btn { background: rgba(12, 21, 26, 0.85); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px 10px; text-align: center; cursor: pointer; color: var(--text-main); display: flex; flex-direction: column; align-items: center; gap: 6px; transition: border-color 0.2s, transform 0.12s; }
 .jogo-card-btn strong { font-size: 0.88rem; }
 .jogo-card-btn span { font-size: 0.7rem; color: var(--text-sub); }
-.jogo-card-btn:active,
-.jogo-card-btn:hover {
-  border-color: var(--primary-green);
-  transform: scale(0.97);
-}
+.jogo-card-btn:active, .jogo-card-btn:hover { border-color: var(--primary-green); transform: scale(0.97); }
 
-@keyframes brilhoBordaDestaque {
-  0%, 100% { box-shadow: 0 0 0 rgba(var(--cor-brilho, 255,193,7), 0); }
-  50% { box-shadow: 0 0 16px rgba(var(--cor-brilho, 255,193,7), 0.55); }
-}
+@keyframes brilhoBordaDestaque { 0%, 100% { box-shadow: 0 0 0 rgba(var(--cor-brilho, 255,193,7), 0); } 50% { box-shadow: 0 0 16px rgba(var(--cor-brilho, 255,193,7), 0.55); } }
 .card-destaque { animation: brilhoBordaDestaque 3s ease-in-out infinite; }
 .card-destaque.brilho-azul { --cor-brilho: 0,210,255; }
 .card-destaque.brilho-verde { --cor-brilho: 0,230,118; }
-@media (prefers-reduced-motion: reduce) { .card-destaque { animation: none; } }
 .card h3 { margin-bottom: 8px; color: var(--primary-green); font-size: 0.9rem; display: flex; align-items: center; gap: 7px; letter-spacing: 0.2px; }
-.titulo-colapsavel { cursor: pointer; user-select: none; margin-bottom: 0; }
-.seta-colapsavel { margin-left: auto; transition: transform 0.28s ease; font-size: 0.78rem; color: var(--text-sub); }
+
+/* ==================== MÁGICA DOS QUADROS ARTICULADOS ==================== */
+.titulo-colapsavel { cursor: pointer; user-select: none; margin-bottom: 0 !important; display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.seta-colapsavel { margin-left: auto; transition: transform 0.28s ease; font-size: 0.85rem; color: var(--text-sub); padding: 4px; }
 .card.fechado .seta-colapsavel { transform: rotate(-90deg); }
-.card-corpo-colapsavel { overflow: hidden; max-height: 2000px; opacity: 1; transition: max-height 0.32s ease, opacity 0.22s ease, margin-top 0.28s ease; margin-top: 8px; }
+.card-corpo-colapsavel { overflow: hidden; max-height: 2000px; opacity: 1; transition: max-height 0.32s ease, opacity 0.22s ease, margin-top 0.28s ease; margin-top: 12px; }
 .card.fechado .card-corpo-colapsavel { max-height: 0; opacity: 0; margin-top: 0; }
-@media (prefers-reduced-motion: reduce) { .card-corpo-colapsavel, .seta-colapsavel { transition: none; } }
-.btn {
-  background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
-  border: none;
-  color: #fff;
-  padding: 11px 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  margin: 5px 0;
-  width: 100%;
-  font-size: 0.82rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  text-decoration: none;
-  transition: transform 0.12s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 8px rgba(0, 200, 83, 0.25);
-}
+/* ========================================================================= */
+
+.btn { background: linear-gradient(135deg, var(--primary-green-dark), #00a844); border: none; color: #fff; padding: 11px 10px; border-radius: 10px; cursor: pointer; font-weight: 600; margin: 5px 0; width: 100%; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; gap: 7px; text-decoration: none; transition: transform 0.12s ease, box-shadow 0.15s ease; box-shadow: 0 2px 8px rgba(0, 200, 83, 0.25); }
 .btn:active { transform: scale(0.97); }
 .btn-secondary { background: linear-gradient(135deg, var(--accent-blue-dark), #0277bd); box-shadow: 0 2px 8px rgba(0, 145, 234, 0.25); }
 .btn-danger { background: linear-gradient(135deg, #e53935, #c62828); box-shadow: 0 2px 8px rgba(239, 83, 80, 0.25); }
@@ -232,350 +171,76 @@ header {
 .btn-back { background: #37474f; margin-bottom: 8px; box-shadow: none; }
 .btn.carregando { opacity: 0.7; pointer-events: none; }
 .btn-mini { width: auto; padding: 7px 12px; font-size: 0.72rem; margin: 0; border-radius: 8px; }
-.spinner-btn {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: girarSpinner 0.6s linear infinite;
-}
+.spinner-btn { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255, 255, 255, 0.4); border-top-color: #fff; border-radius: 50%; animation: girarSpinner 0.6s linear infinite; }
 @keyframes girarSpinner { to { transform: rotate(360deg); } }
 .flex-btn { display: flex; gap: 6px; width: 100%; flex-wrap: wrap; }
 .flex-btn .btn { flex: 1 1 110px; min-width: 0; }
-input, select, textarea {
-  width: 100% !important;
-  padding: 8px 10px;
-  margin: 3px 0;
-  border-radius: 8px;
-  border: 1px solid var(--card-border);
-  background: #0a1419;
-  color: #fff;
-  font-size: 0.8rem;
-  outline: none;
-}
+input, select, textarea { width: 100% !important; padding: 8px 10px; margin: 3px 0; border-radius: 8px; border: 1px solid var(--card-border); background: #0a1419; color: #fff; font-size: 0.8rem; outline: none; }
 textarea { min-height: 64px; resize: vertical; }
-.lado-flex { display: flex; gap: 4px; margin: 2px 0; }
-.lado-flex input { flex: 1; }
 .campo-label { font-size: 0.72rem; color: var(--text-sub); margin: 6px 0 2px; display: block; font-weight: 600; }
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(8px);
-  z-index: 9999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
+.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 16px; }
 .modal-overlay.aberto { display: flex; }
-.modal-card {
-  background: #11222a;
-  border: 1px solid var(--accent-blue);
-  border-radius: 14px;
-  padding: 16px;
-  max-width: 340px;
-  width: 100%;
-  max-height: 82vh;
-  overflow-y: auto;
-  color: #fff;
-}
-#overlayTimerGrande {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.95);
-  z-index: 9999;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-#overlayTimerGrande.aberto { display: flex; }
-footer {
-  text-align: center;
-  padding: 8px;
-  font-size: 0.68rem;
-  color: var(--text-sub);
-  border-top: 1px solid var(--card-border);
-  margin-top: auto;
-  width: 100%;
-  flex-shrink: 0;
-}
-footer a { color: var(--accent-blue); }
-.toast {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--primary-green-dark);
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  z-index: 10000;
-  display: none;
-  text-align: center;
-  max-width: 90%;
-}
+.modal-card { background: #11222a; border: 1px solid var(--accent-blue); border-radius: 14px; padding: 16px; max-width: 340px; width: 100%; max-height: 82vh; overflow-y: auto; color: #fff; }
+footer { text-align: center; padding: 8px; font-size: 0.68rem; color: var(--text-sub); border-top: 1px solid var(--card-border); margin-top: auto; width: 100%; flex-shrink: 0; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary-green-dark); color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 0.75rem; z-index: 10000; display: none; text-align: center; max-width: 90%; }
 .toast.erro { background: var(--danger); }
-.alerta-dificuldade {
-  background: rgba(198, 40, 40, 0.2);
-  border-left: 3px solid var(--danger);
-  padding: 4px 6px;
-  margin: 3px 0;
-  border-radius: 4px;
-  font-size: 0.72rem;
-}
-.aviso-info {
-  background: rgba(0, 210, 255, 0.12);
-  border-left: 3px solid var(--accent-blue);
-  padding: 4px 6px;
-  margin: 6px 0;
-  border-radius: 4px;
-  font-size: 0.72rem;
-}
+.alerta-dificuldade { background: rgba(198, 40, 40, 0.2); border-left: 3px solid var(--danger); padding: 4px 6px; margin: 3px 0; border-radius: 4px; font-size: 0.72rem; }
+.aviso-info { background: rgba(0, 210, 255, 0.12); border-left: 3px solid var(--accent-blue); padding: 8px; margin: 6px 0; border-radius: 6px; font-size: 0.75rem; line-height: 1.4;}
 .badge-count { background: var(--gold); color: #000; font-weight: bold; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; }
 .status-firebase { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
 .status-online { background: #1b5e20; color: #a5d6a7; }
 .status-offline { background: #b71c1c; color: #ffcdd2; }
-.lista-item {
-  background: #0c151a;
-  border: 1px solid var(--card-border);
-  border-radius: 11px;
-  padding: 10px 12px;
-  margin: 7px 0;
-  font-size: 0.76rem;
-  transition: border-color 0.15s ease;
-}
-.lista-item:hover { border-color: rgba(0, 210, 255, 0.25); }
-.lista-item b { color: var(--primary-green); }
+.lista-item { background: #0c151a; border: 1px solid var(--card-border); border-radius: 11px; padding: 10px 12px; margin: 7px 0; font-size: 0.76rem; }
 .linha { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
 .mini { font-size: 0.68rem; color: var(--text-sub); }
-.pill { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.3px; }
+.pill { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.62rem; font-weight: 700; }
 .pill-ok { background: #1b5e20; color: #a5d6a7; }
 .pill-pend { background: #5d4037; color: #ffe0b2; }
 .pill-no { background: #b71c1c; color: #ffcdd2; }
 .pill-info { background: #01579b; color: #b3e5fc; }
 .sem-dados { font-size: 0.72rem; color: var(--text-sub); font-style: italic; padding: 4px 0; }
 .chat-msg { background: #0a1419; border-left: 3px solid var(--accent-blue); border-radius: 6px; padding: 5px 8px; margin-bottom: 5px; }
-.chat-msg img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; }
-.lock-card { border: 1px solid var(--gold) !important; }
-.timer-grande-btn { width: 60px; height: 60px; font-size: 1.4rem; }
 .grade-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .grade-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-.preview-foto { max-width: 92px; border-radius: 50%; border: 2px solid var(--primary-green); display: block; margin: 4px auto; }
-.certificado-area {
-  background: #fff9e6;
-  color: #1a2a32;
-  border-radius: 8px;
-  padding: 14px;
-  text-align: center;
-  font-size: 0.7rem;
-}
-.certificado-area h2 { color: #8d6e00; font-size: 1rem; margin-bottom: 6px; }
-.certificado-area .nome { font-size: 1rem; font-weight: 800; color: #1b5e20; margin: 6px 0; }
 
-
-/* ===== Interação aluno-professor ===== */
-.badge-notif {
-  background: var(--danger);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.62rem;
-  min-width: 16px;
-  height: 16px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  margin-left: 3px;
-  vertical-align: top;
-}
-.card-interacao { border: 1px solid var(--accent-blue) !important; }
-.msg-priv-bolha {
-  padding: 7px 10px;
-  border-radius: 10px;
-  margin: 5px 0;
-  font-size: 0.75rem;
-  max-width: 92%;
-  line-height: 1.35;
-  white-space: pre-wrap;
-}
-.msg-priv-bolha.aluno {
-  background: linear-gradient(135deg, #1b5e20, #00a844);
-  color: #fff;
-  margin-left: auto;
-  border-bottom-right-radius: 3px;
-}
-.msg-priv-bolha.professor {
-  background: #1a2a32;
-  border: 1px solid var(--card-border);
-  color: #e0f2f1;
-  border-bottom-left-radius: 3px;
-}
-.msg-priv-meta { font-size: 0.62rem; color: var(--text-sub); margin-top: 2px; }
-.feedback-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-.feedback-btns .btn { flex: 1 1 90px; }
-.conversa-thread {
-  background: #0a1419;
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-  padding: 6px 8px;
-  margin-top: 6px;
-  max-height: 140px;
-  overflow-y: auto;
-}
-
-/* ===== Assistente Virtual ===== */
+/* Assistente e Notificações (DINOSSAURO) */
 #assistenteFab {
-  position: fixed;
-  right: 14px;
-  bottom: 18px;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
-  color: #fff;
-  font-size: 1.35rem;
-  box-shadow: 0 4px 18px rgba(0, 200, 83, 0.45);
-  z-index: 9500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; right: 14px; bottom: 18px; width: 56px; height: 56px;
+  border-radius: 50%; border: none; background: linear-gradient(135deg, var(--primary-green-dark), #00a844);
+  color: #fff; font-size: 1.35rem; box-shadow: 0 4px 18px rgba(0, 200, 83, 0.45);
+  z-index: 9500; cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: transform 0.15s ease;
 }
 #assistenteFab:active { transform: scale(0.94); }
-.dica-assistente-bolha {
-  position: fixed;
-  right: 14px;
-  bottom: 78px;
-  background: #fff;
-  color: #0d1a1f;
-  padding: 8px 14px;
-  border-radius: 16px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-  z-index: 9499;
-  cursor: pointer;
-  animation: dicaAssistentePulso 1.6s ease-in-out infinite;
-}
-.dica-assistente-bolha::after {
-  content: '';
-  position: absolute;
-  right: 20px;
-  bottom: -6px;
-  width: 12px;
-  height: 12px;
-  background: #fff;
-  transform: rotate(45deg);
-}
-@keyframes dicaAssistentePulso {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-#assistentePainel {
-  display: none;
-  position: fixed;
-  right: 12px;
-  bottom: 80px;
-  width: min(340px, calc(100vw - 24px));
-  max-height: min(70vh, 520px);
-  background: #11222a;
-  border: 1px solid var(--accent-blue);
-  border-radius: 16px;
-  z-index: 9501;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.55);
-}
+.badge-notif { background: var(--danger); color: #fff; font-weight: 800; font-size: 0.62rem; min-width: 16px; height: 16px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; margin-left: 3px; vertical-align: top; }
+
+/* Estilos do Painel do Assistente */
+#assistentePainel { display: none; position: fixed; right: 12px; bottom: 80px; width: min(340px, calc(100vw - 24px)); max-height: min(70vh, 520px); background: #11222a; border: 1px solid var(--accent-blue); border-radius: 16px; z-index: 9501; flex-direction: column; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.55); }
 #assistentePainel.aberto { display: flex; }
-.assistente-header {
-  background: linear-gradient(135deg, #0d3d1f, #0a2a38);
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--card-border);
-}
-.assistente-header h4 {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--primary-green);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.assistente-msgs {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-  font-size: 0.78rem;
-  background: #0a1419;
-}
-.assistente-bolha {
-  margin-bottom: 8px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  max-width: 92%;
-  line-height: 1.4;
-  white-space: pre-wrap;
-}
-.assistente-bolha.bot {
-  background: #1a2a32;
-  border: 1px solid var(--card-border);
-  color: #e0f2f1;
-  border-bottom-left-radius: 4px;
-}
-.assistente-bolha.user {
-  background: linear-gradient(135deg, #1b5e20, #00a844);
-  color: #fff;
-  margin-left: auto;
-  border-bottom-right-radius: 4px;
-}
-.assistente-atalhos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 6px 8px;
-  border-top: 1px solid var(--card-border);
-  background: #0d1a20;
-}
-.assistente-atalho {
-  background: #1a2a32;
-  border: 1px solid var(--card-border);
-  color: var(--text-sub);
-  border-radius: 14px;
-  padding: 4px 9px;
-  font-size: 0.65rem;
-  cursor: pointer;
-}
+.assistente-header { background: linear-gradient(135deg, #0d3d1f, #0a2a38); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); }
+.assistente-header h4 { margin: 0; font-size: 0.85rem; color: var(--primary-green); display: flex; align-items: center; gap: 6px; }
+.assistente-msgs { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.78rem; background: #0a1419; }
+.assistente-bolha { margin-bottom: 8px; padding: 8px 10px; border-radius: 12px; max-width: 92%; line-height: 1.4; white-space: pre-wrap; }
+.assistente-bolha.bot { background: #1a2a32; border: 1px solid var(--card-border); color: #e0f2f1; border-bottom-left-radius: 4px; }
+.assistente-bolha.user { background: linear-gradient(135deg, #1b5e20, #00a844); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+.assistente-atalhos { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 8px; border-top: 1px solid var(--card-border); background: #0d1a20; }
+.assistente-atalho { background: #1a2a32; border: 1px solid var(--card-border); color: var(--text-sub); border-radius: 14px; padding: 4px 9px; font-size: 0.65rem; cursor: pointer; }
 .assistente-atalho:active { background: var(--primary-green-dark); color: #fff; }
-.assistente-input-row {
-  display: flex;
-  gap: 4px;
-  padding: 8px;
-  border-top: 1px solid var(--card-border);
-  background: #11222a;
-}
-.assistente-input-row input {
-  flex: 1;
-  margin: 0;
-  font-size: 0.78rem;
-}
-.assistente-input-row button {
-  width: auto;
-.sim-touch-btn { width:42px; height:42px; background:rgba(255,255,255,0.12); border:2px solid rgba(255,255,255,0.4); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; pointer-events:auto; user-select:none; }
-.sim-touch-btn:active { background:rgba(0,230,118,0.4); }
+.assistente-input-row { display: flex; gap: 4px; padding: 8px; border-top: 1px solid var(--card-border); background: #11222a; }
+.assistente-input-row input { flex: 1; margin: 0; font-size: 0.78rem; }
+.assistente-input-row button { width: auto; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+<!-- Script para a mágica dos quadros fecharem e abrirem -->
+<script>
+  function toggleSanfona(elemento) {
+    var card = elemento.closest('.card');
+    if(card) card.classList.toggle('fechado');
+  }
+</script>
 </head>
 <body>
 <div class="app-frame">
@@ -586,29 +251,19 @@ footer a { color: var(--accent-blue); }
       <img id="headerLogo1" class="app-logo-img" alt="Logo 1">
       <img id="headerLogo2" class="app-logo-img" alt="Logo 2">
       <div class="app-title" id="headerAppTitle">
-        <i class="fas fa-child-reaching"></i>
-        <span id="headerTituloTexto">Universo Capoeira</span>
+        <i class="fas fa-child-reaching"></i> Universo Capoeira
         <span id="firebaseStatus" class="status-firebase status-offline">OFFLINE</span>
       </div>
     </div>
-    <!-- cronômetro removido a pedido do usuário -->
-    <div class="cronometro-box" id="cronometroBox" style="display:none !important;" aria-hidden="true">
-      <div class="cronometro-display" id="timerDisplay">01:30</div>
-    </div>
   </header>
 
-  <div id="overlayTimerGrande" style="display:none !important;" aria-hidden="true">
-    <div id="timerDisplayGrande">01:30</div>
-  </div>
-
-  <!-- ================= ABAS ================= -->
+  <!-- ================= ABAS SUPERIORES ================= -->
   <div class="tabs-container">
     <div class="tabs" id="protectedSystemTabs">
       <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-home"></i>Início</button>
       <button onclick="abrirAba('tab2', this)"><i class="fas fa-map-marker-alt"></i>Check-in</button>
       <button onclick="abrirAba('tab3', this)"><i class="fas fa-user-graduate"></i>Aluno</button>
       <button onclick="abrirAba('tabJogos', this)"><i class="fas fa-gamepad"></i>Jogos</button>
-      <button onclick="abrirAba('tabSimulador', this)"><i class="fas fa-globe"></i>Mundo</button>
       <button onclick="toggleMenuEquipe()" id="btnToggleEquipe" style="display:none;"><i class="fas fa-users-cog"></i>Equipe</button>
     </div>
     <div class="tabs tabs-equipe" id="tabsEquipe" style="display:none;">
@@ -618,7 +273,7 @@ footer a { color: var(--accent-blue); }
     </div>
   </div>
 
-  <p class="mini" id="dicaAcessoEquipe" style="text-align:center; margin:-4px 0 6px; opacity:0.55;">Área de aluno · toque e segure o logo para acesso da equipe</p>
+  <p class="mini" style="text-align:center; margin:-4px 0 6px; opacity:0.55;">Área de aluno · toque e segure o logo para acesso da equipe</p>
 
   <!-- ================= ABA 1 - INÍCIO ================= -->
   <div id="tab1" class="tab-content active">
@@ -629,227 +284,172 @@ footer a { color: var(--accent-blue); }
       <button class="btn btn-danger" onclick="abrirAba('tab3')"><i class="fas fa-graduation-cap"></i> Fazer Agora</button>
     </div>
 
-    <div class="card card-destaque" style="border:1px solid var(--gold);">
-      <h3 style="color:var(--gold);"><i class="fas fa-bell"></i> Avisos do Professor</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
-      <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
-    </div>
-
-    <div class="card" id="cardHorarioFixoInicio" style="border:1px solid var(--primary-green); display:none;">
-      <h3><i class="fas fa-calendar-week"></i> Horário Fixo da Semana</h3>
-      <div id="listaHorarioFixoInicio"></div>
-      <button class="btn" id="btnConfirmarPresencaHoje" style="margin-top:8px; display:none;" onclick="confirmarPresencaHoje()"><i class="fas fa-hand-point-up"></i> Vou Comparecer Hoje</button>
-      <p id="txtJaConfirmouHoje" style="display:none; font-size:0.75rem; color:var(--primary-green); margin-top:6px;"><i class="fas fa-check-circle"></i> Presença confirmada para hoje!</p>
-    </div>
-
-    <div class="card fechado" style="border:1px solid #e6683c;">
-      <h3 style="color:#f09433;"><i class="fab fa-instagram"></i> Instagram da Academia</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe as fotos, vídeos e novidades no nosso perfil oficial:</p>
-      <p style="font-size:0.8rem; font-weight:bold; color:#fff; margin-bottom:8px;" id="handleInstagramAcademiaTxt">@capoeiranapequenaafrica</p>
-      <button class="btn btn-instagram" onclick="abrirInstagramOficial()"><i class="fab fa-instagram"></i> Acessar Instagram Oficial</button>
-      <div id="feedInstagramInicio" style="margin-top:10px;"></div>
-    </div>
-
-    <div class="card card-destaque brilho-azul" id="boxNotificacaoAluno" style="display:none; border:1px solid var(--accent-blue);">
-      <h3><i class="fas fa-broadcast-tower" style="color:var(--accent-blue);"></i> Local Notificado pelo Professor</h3>
-      <p id="textoNotificacaoLocal" style="font-size:0.75rem; color:#fff;"></p>
-      <a id="linkGmapsNotificacao" href="#" target="_blank" rel="noopener" style="display:none; color:var(--primary-green); font-size:0.7rem; text-decoration:underline; margin-top:4px;">Ver no Google Maps</a>
-    </div>
-
-    <div class="card card-destaque" id="cardRankingInicio" style="border:1px solid var(--gold); display:none;">
-      <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking dos Alunos</h3>
-      <div id="conteudoRankingInicio"></div>
-    </div>
-
-    <div class="card card-destaque" id="cardRankingCompletoInicio" style="border:1px solid var(--gold); display:none;">
-      <h3 style="color:var(--gold);"><i class="fas fa-list-ol"></i> Classificação Geral de Avaliações</h3>
-      <p style="font-size:0.68rem; color:var(--text-sub); margin-bottom:6px;">Ordenado pela média da avaliação completa mais recente de cada aluno.</p>
-      <div id="listaRankingCompletoInicio"></div>
-    </div>
-
-    <!-- Certificados removidos da aba Início a pedido do usuário -->
-    <div class="card" id="cardCertificadosAluno" style="display:none !important;" aria-hidden="true">
-      <div id="listaCertificadosAluno"></div>
-    </div>
-
-
-    <!-- UX fitness: resumo no Início → detalhe na aba Jogos (nada removido abaixo) -->
-    <div class="card card-destaque brilho-verde" id="cardAtalhoArcadeInicio" style="border:1px solid var(--gold);">
-      <h3 style="color:var(--gold);"><i class="fas fa-gamepad"></i> Arcade da Academia</h3>
-      <p class="mini" style="margin-bottom:8px;">8 mini-jogos + mascote · 10 níveis · ranking grátis. O catálogo completo fica na aba <b>Jogos</b>.</p>
-      <div id="resumoArcadeInicio" class="mini" style="margin-bottom:8px;color:var(--text-sub);">Carregando progresso…</div>
-      <button type="button" class="btn btn-gold" onclick="abrirAba('tabJogos')"><i class="fas fa-gamepad"></i> Abrir aba Jogos</button>
-    </div>
-
-    <div class="card fechado" id="cardJogosGrupo" data-colapsavel-pronto="1">
-      <h3 class="titulo-colapsavel" onclick="toggleCardColapsavel($('cardJogosGrupo'))" style="color:var(--gold);"><i class="fas fa-gamepad"></i> Jogos &amp; Mini-Games <span class="mini" style="font-weight:500;opacity:0.7;">(atalho no Início)</span><span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span></h3>
+    <!-- Avisos e Local Notificado (Fechado) -->
+    <div class="card fechado" style="border:1px solid var(--gold);">
+      <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)" style="color:var(--gold);">
+        <span><i class="fas fa-bell"></i> Avisos do Professor</span>
+        <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
+      </h3>
       <div class="card-corpo-colapsavel">
-
-    <div class="card" id="cardRankingJogos" style="border:1px solid var(--gold);">
-      <h3 style="color:var(--gold);"><i class="fas fa-gamepad"></i> Ranking dos Mini-Jogos</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Pontuação acumulada nos desafios e na corrida:</p>
-      <div id="listaRankingJogos"></div>
-    </div>
-
-    <div class="card" style="border:1px solid var(--accent-blue);">
-      <h3 style="color:var(--accent-blue);"><i class="fas fa-gamepad"></i> Arcade Clássico</h3>
-      <p class="mini" style="margin-bottom:8px;">100% grátis · 10 níveis por jogo · pontos no ranking da academia</p>
-      <label class="campo-label">Seu nome / apelido (para o ranking)</label>
-      <input id="nomeJogadorCorrida" placeholder="Ex: Formiga" oninput="sincronizarNomeJogador(this.value)">
-      <div id="boxNiveisArcade" style="margin:8px 0;"></div>
-      <div class="grade-2" style="margin-top:8px;">
-        <button class="btn btn-gold" onclick="abrirJogoArcade('pacman')"><i class="fas fa-ghost"></i> Pac-Man</button>
-        <button class="btn btn-secondary" onclick="abrirJogoArcade('snake')"><i class="fas fa-dragon"></i> Minhoca</button>
-        <button class="btn btn-secondary" onclick="abrirJogoArcade('corrida')"><i class="fas fa-car"></i> Corrida</button>
-        <button class="btn btn-gold" onclick="Simulador.entrarMundoAberto()"><i class="fas fa-globe"></i> Mundo Aberto</button>
-        <button class="btn btn-secondary" onclick="abrirJogoArcade('damas')"><i class="fas fa-chess"></i> Damas</button>
-        <button class="btn" onclick="abrirJogoArcade('quebra')"><i class="fas fa-cubes"></i> Quebra-Blocos</button>
-        <button class="btn btn-secondary" onclick="abrirJogoArcade('pulo')"><i class="fas fa-dove"></i> Pulo</button>
-        <button class="btn btn-gold" onclick="abrirJogoArcade('surfe')"><i class="fas fa-running"></i> Surfe</button>
-        <button class="btn" onclick="abrirJogoArcade('mario')"><i class="fas fa-mountain"></i> Aventura</button>
+        <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
+        <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
       </div>
     </div>
 
+    <!-- Card de Horário (Aberto por padrão para visualização rápida) -->
+    <div class="card" id="cardHorarioFixoInicio" style="border:1px solid var(--primary-green); display:none;">
+      <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)">
+        <span><i class="fas fa-calendar-week"></i> Horários da Semana</span>
+        <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
+      </h3>
+      <div class="card-corpo-colapsavel">
+        <div id="listaHorarioFixoInicio"></div>
+        <button class="btn" id="btnConfirmarPresencaHoje" style="margin-top:8px; display:none;" onclick="confirmarPresencaHoje()"><i class="fas fa-hand-point-up"></i> Vou Comparecer Hoje</button>
+        <p id="txtJaConfirmouHoje" style="display:none; font-size:0.75rem; color:var(--primary-green); margin-top:6px;"><i class="fas fa-check-circle"></i> Presença confirmada para hoje!</p>
       </div>
     </div>
 
+    <!-- Instagram da Academia (Fechado por padrão para economizar espaço) -->
+    <div class="card fechado" style="border:1px solid #e6683c;">
+      <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)" style="color:#f09433;">
+        <span><i class="fab fa-instagram"></i> Instagram Oficial</span>
+        <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
+      </h3>
+      <div class="card-corpo-colapsavel">
+        <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Acompanhe fotos e vídeos:</p>
+        <p style="font-size:0.8rem; font-weight:bold; color:#fff; margin-bottom:8px;" id="handleInstagramAcademiaTxt">@capoeiranapequenaafrica</p>
+        <button class="btn btn-instagram" onclick="abrirInstagramOficial()"><i class="fab fa-instagram"></i> Acessar Instagram Oficial</button>
+        <div id="feedInstagramInicio" style="margin-top:10px;"></div>
+      </div>
+    </div>
 
+    <!-- Formação Infantil / Professor (Com o Aviso de Remuneração) -->
     <div class="card fechado" id="cardFormacaoInfantil" style="border:1px solid var(--gold);">
-      <h3 style="color:var(--gold);"><i class="fas fa-chalkboard-teacher"></i> Formação — Dar aula de Capoeira para Crianças</h3>
-      <p class="mini" style="margin-bottom:8px;">Aluno já cadastrado usa o <b>mesmo login</b> da aba Aluno. Ao ser aprovado, aparece um ícone especial no check-in e no painel.</p>
-      <div id="boxFormacaoInfantilUI"></div>
-      <div id="boxMinhaInscricaoFormacao" style="margin-top:8px;"></div>
+      <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)" style="color:var(--gold);">
+        <span><i class="fas fa-chalkboard-teacher"></i> Formação de Professor</span>
+        <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
+      </h3>
+      <div class="card-corpo-colapsavel">
+        <p class="mini" style="margin-bottom:8px;">Cadastre-se para se tornar professor de crianças.</p>
+        
+        <!-- NOVO AVISO DE REMUNERAÇÃO INSERIDO AQUI -->
+        <div class="aviso-info" style="border-left-color: var(--primary-green); background: rgba(0, 230, 118, 0.15);">
+          <i class="fas fa-hand-holding-dollar" style="color: var(--primary-green);"></i> 
+          <b style="color:#fff;">Atenção:</b> As aulas que você ministrar através deste programa de formação serão <b>remuneradas</b>!
+        </div>
+
+        <div id="boxFormacaoInfantilUI"></div>
+        <div id="boxMinhaInscricaoFormacao" style="margin-top:8px;"></div>
+      </div>
     </div>
 
+    <!-- Mural de Bate Papo (Fechado para deixar a tela limpa) -->
     <div class="card fechado">
-      <h3><i class="fas fa-comments"></i> Mural &amp; Bate-Papo da Academia</h3>
-      <div id="chatMessages" style="max-height:160px; overflow-y:auto; margin-bottom:6px; font-size:0.75rem;"></div>
-      <div style="display:flex; gap:4px; align-items:center;">
-        <input id="chatInput" placeholder="Digite uma mensagem..." onkeypress="if(event.key==='Enter') enviarMensagemNuvem()" style="flex:1;">
-        <button class="btn btn-secondary" style="width:auto; padding:8px 10px; margin:0;" onclick="document.getElementById('inputFotoChat').click()"><i class="fas fa-camera"></i></button>
-        <input type="file" id="inputFotoChat" accept="image/*" style="display:none;" onchange="uploadFotoChat(this)">
+      <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)">
+        <span><i class="fas fa-comments"></i> Mural & Bate-Papo</span>
+        <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
+      </h3>
+      <div class="card-corpo-colapsavel">
+        <div id="chatMessages" style="max-height:160px; overflow-y:auto; margin-bottom:6px; font-size:0.75rem;"></div>
+        <div style="display:flex; gap:4px; align-items:center;">
+          <input id="chatInput" placeholder="Digite uma mensagem..." onkeypress="if(event.key==='Enter') enviarMensagemNuvem()" style="flex:1;">
+          <button class="btn btn-secondary" style="width:auto; padding:8px 10px; margin:0;" onclick="document.getElementById('inputFotoChat').click()"><i class="fas fa-camera"></i></button>
+          <input type="file" id="inputFotoChat" accept="image/*" style="display:none;" onchange="uploadFotoChat(this)">
+        </div>
+        <button class="btn" style="margin-top:4px;" onclick="enviarMensagemNuvem()"><i class="fas fa-paper-plane"></i> Publicar Mensagem</button>
       </div>
-      <button class="btn" style="margin-top:4px;" onclick="enviarMensagemNuvem()"><i class="fas fa-paper-plane"></i> Publicar Mensagem</button>
     </div>
-  </div>
+
+  </div> <!-- Fim Aba Início -->
 
   <!-- ================= ABA 2 - CHECK-IN ================= -->
   <div id="tab2" class="tab-content">
-
     <div id="boxProfessorNaAulaCheckin"></div>
     <div id="boxGympassCheckin"></div>
 
     <div class="card">
-      <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
-      <div id="horarioAulaHojeBox" style="font-size:0.75rem; background:#081217; border:1px solid var(--card-border); border-radius:8px; padding:6px 8px; margin-bottom:8px;">
-        <i class="fas fa-clock"></i> Carregando horário da aula de hoje...
+      <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)">
+        <span><i class="fas fa-building"></i> Check-in da Aula</span>
+        <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
+      </h3>
+      <div class="card-corpo-colapsavel">
+        <div id="horarioAulaHojeBox" style="font-size:0.75rem; background:#081217; border:1px solid var(--card-border); border-radius:8px; padding:6px 8px; margin-bottom:8px;">
+          <i class="fas fa-clock"></i> Carregando horário...
+        </div>
+        <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo" oninput="atualizarEstadoBotaoCheckin()">
+        <select id="selectPoloFixoTreino" onchange="avaliarAtrasoHoje()">
+          <option value="">Aguardando professor cadastrar local...</option>
+        </select>
+        <div id="boxJustificativaAtraso" style="display:none; margin-top:8px; border:1px solid var(--danger); border-radius:8px; padding:8px;">
+          <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo:</p>
+          <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, trabalho..."></textarea>
+        </div>
+        <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
+        <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença</button>
       </div>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Selecione o polo cadastrado pelo professor:</p>
-      <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo" oninput="atualizarEstadoBotaoCheckin()">
-      <select id="selectPoloFixoTreino" onchange="avaliarAtrasoHoje()">
-        <option value="">Aguardando professor cadastrar local...</option>
-      </select>
-      <div id="boxJustificativaAtraso" style="display:none; margin-top:8px; border:1px solid var(--danger); border-radius:8px; padding:8px;">
-        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo (o professor irá avaliar):</p>
-        <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto no trabalho..."></textarea>
-      </div>
-      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação. <strong>Só é permitido 1 check-in por aula/dia.</strong></p>
-      <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
-      <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
-      <button class="btn btn-secondary" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
     </div>
 
-    <div class="card" id="cardMinhasPresencasCheckin" style="display:none;">
-      <h3><i class="fas fa-calendar-check"></i> Minhas Aulas e Check-ins</h3>
-      <p class="mini" style="margin-bottom:6px;">Aqui você vê as aulas confirmadas pelo professor e os check-ins ainda pendentes.</p>
-      <div id="listaMinhasPresencasCheckin"></div>
-    </div>
-
-    <!-- Formação usa o login do aluno (card no Início) — card antigo oculto -->
-    <div class="card" id="cardFormacaoProfessor" style="display:none !important;" aria-hidden="true">
-      <div id="boxFormacaoProfConteudo"></div>
+    <!-- Histórico de Check-ins (Fechado para não poluir) -->
+    <div class="card fechado" id="cardMinhasPresencasCheckin" style="display:none;">
+      <h3 class="titulo-colapsavel" onclick="toggleSanfona(this)">
+        <span><i class="fas fa-calendar-check"></i> Meu Histórico</span>
+        <span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span>
+      </h3>
+      <div class="card-corpo-colapsavel">
+        <div id="listaMinhasPresencasCheckin"></div>
+      </div>
     </div>
   </div>
 
-
-  <!-- ================= ABA JOGOS ================= -->
+  <!-- ================= ABA JOGOS E MUNDO ================= -->
   <div id="tabJogos" class="tab-content">
     <div class="card">
-      <h3 style="color:var(--primary-green);"><i class="fas fa-gamepad"></i> Jogos da Capoeira</h3>
-      <label class="campo-label">Seu Nome / Apelido</label>
-      <input type="text" id="nomeJogadorTab" placeholder="Ex: Formiga" oninput="sincronizarNomeJogador(this.value)">
-      <p class="mini" style="margin:8px 0 4px;">Toque em um jogo ou escolha o nível abaixo:</p>
-      <div id="boxNiveisArcadeTab" style="margin:8px 0;"></div>
+      <h3 style="color:var(--primary-green);"><i class="fas fa-gamepad"></i> Arcade Capoeira</h3>
+      
+      <!-- Acesso rápido ao Tamagotchi dentro do Arcade também -->
+      <div class="card-destaque" style="border:1px solid var(--gold); border-radius: 12px; padding: 12px; margin-bottom: 12px; text-align: center;">
+        <h4 style="color:var(--gold); margin-bottom: 6px;"><i class="fas fa-dragon"></i> Cuide do seu Mascote!</h4>
+        <button class="btn btn-gold" onclick="abrirJogoArcade('tamagotchi')"><i class="fas fa-robot"></i> Abrir Mascote Virtual</button>
+      </div>
+
       <div class="jogos-grid-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;">
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('snake')">
-          <i class="fas fa-dragon" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Minhoca</strong>
-          <span>Coma e cresça</span>
-        </button>
-        <button type="button" class="jogo-card-btn" onclick="Simulador.entrarMundoAberto()">
-          <i class="fas fa-globe" style="font-size:1.6rem;color:var(--primary-green);"></i>
-          <strong>Mundo Aberto</strong>
-          <span>Avatar · Terreiro · Treino</span>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('corrida')">
+          <i class="fas fa-car" style="font-size:1.6rem;color:var(--accent-blue);"></i><strong>Retro Kart</strong>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('damas')">
-          <i class="fas fa-chess" style="font-size:1.6rem;color:var(--gold);"></i>
-          <strong>Damas</strong>
-          <span>Vs assistente ou 2 jogadores</span>
+          <i class="fas fa-chess" style="font-size:1.6rem;color:var(--gold);"></i><strong>Damas</strong>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('snake')">
+          <i class="fas fa-dragon" style="font-size:1.6rem;color:var(--accent-blue);"></i><strong>Minhoca</strong>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pacman')">
-          <i class="fas fa-ghost" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Pac-Man</strong>
-          <span>Fuja dos fantasmas</span>
+          <i class="fas fa-ghost" style="font-size:1.6rem;color:var(--accent-blue);"></i><strong>Pac-Man</strong>
         </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('corrida')">
-          <i class="fas fa-car" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Corrida</strong>
-          <span>Desvie dos carros</span>
-        </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('quebra')">
-          <i class="fas fa-cubes" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Quebra-Blocos</strong>
-          <span>Destrua tudo</span>
-        </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pulo')">
-          <i class="fas fa-dove" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Pulo</strong>
-          <span>Esquive os obstáculos</span>
-        </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('surfe')">
-          <i class="fas fa-running" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Surfe</strong>
-          <span>Mude de faixa</span>
-        </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('mario')">
-          <i class="fas fa-mountain" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Aventura</strong>
-          <span>Pegue moedas</span>
-        </button>
-      </div>
-      <div class="card" id="cardRankingJogosTab" style="border:1px solid var(--gold);margin-top:8px;margin-bottom:0;">
-        <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking de Pontos</h3>
-        <div id="listaRankingJogosTab"></div>
-        <p class="mini" style="text-align:center;margin-top:6px;">Jogue para aparecer no ranking!</p>
       </div>
     </div>
   </div>
 
-  <!-- ================= ABA 3 - ALUNO ================= -->
+  <!-- ================= ABA 3 - ALUNO (LOGIN E PAINEL) ================= -->
   <div id="tab3" class="tab-content">
-
+    
+    <!-- Tela de Login -->
     <div class="card" id="cardAlunoLogin">
-      <h3><i class="fas fa-user-lock"></i> Área do Aluno (Login)</h3>
+      <h3><i class="fas fa-user-lock"></i> Área do Aluno</h3>
       <label class="campo-label">Nome completo ou apelido</label>
       <input id="alunoLoginNome" placeholder="Ex: João da Silva">
       <label class="campo-label">Senha</label>
       <input id="alunoLoginSenha" type="password" placeholder="Sua senha">
       <button class="btn" onclick="autenticarAlunoNuvem(this)"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</button>
+      
+      <!-- BOTÃO DE TESTE (SEM LOGIN) -->
+      <button class="btn btn-secondary" onclick="document.getElementById('cardAlunoLogin').style.display='none'; document.getElementById('cardAlunoPainel').style.display='block'; document.getElementById('cardAlunoPainel').innerHTML='<div class=\'card\'><h3 style=\'color:var(--accent-blue)\'>Painel de Teste</h3><p class=\'mini\'>Você está no modo visitante livre. Nenhum dado será salvo.</p><button class=\'btn btn-back\' onclick=\'location.reload()\'>Sair do Teste</button></div>';"><i class="fas fa-user-secret"></i> Entrar como Teste</button>
+
       <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:6px;">
-        <button class="btn btn-secondary" onclick="toggleAutoCadastroAluno(true)"><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</button>
+        <button class="btn btn-gold" onclick="toggleAutoCadastroAluno(true)"><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</button>
       </div>
     </div>
 
+    <!-- Tela de Cadastro -->
     <div class="card" id="cardAlunoPrimeiroCadastro" style="display:none;">
       <button class="btn btn-back" onclick="toggleAutoCadastroAluno(false)"><i class="fas fa-arrow-left"></i> Voltar</button>
       <h3><i class="fas fa-user-plus"></i> Cadastro de Aluno</h3>
@@ -875,102 +475,24 @@ footer a { color: var(--accent-blue); }
       <input id="autoCadSenha" type="password" placeholder="Mínimo 4 caracteres">
       <label class="campo-label">Repita a senha</label>
       <input id="autoCadSenha2" type="password" placeholder="Repita a senha">
-      <button class="btn" onclick="cadastrarAlunoNuvem(this)"><i class="fas fa-check"></i> Concluir Cadastro</button>
-      <p class="mini" style="margin-top:6px;"><i class="fas fa-info-circle"></i> A senha é apenas um controle simples de acesso ao painel — não é autenticação de segurança.</p>
+      <button class="btn" onclick="cadastrarAlunoNuvem(this)"><i class="fas fa-check"></i> Concluir</button>
     </div>
 
-    <div class="card" id="cardAlunoPainel" style="display:none;"></div>
-
-    <div class="card" id="cardTesteConhecimento" style="display:none;">
-      <h3><i class="fas fa-graduation-cap"></i> Teste de Conhecimentos Gerais</h3>
-      <p class="mini" style="margin-bottom:6px;">Um teste rápido por semana, gerado pela IA, pra chegar afiado na próxima avaliação.</p>
-      <div id="areaTesteConhecimento"></div>
-    </div>
+    <!-- Aqui o JS injetará o painel completo do aluno quando logado -->
+    <div id="cardAlunoPainel" style="display:none;"></div>
   </div>
 
-
-  <!-- ABA MUNDO -->
-  <div id="tabSimulador" class="tab-content">
-    <div id="simAreaLogin"></div>
-    <div id="simAreaJogo" style="display:none;">
-      <div class="card" style="position:relative; overflow:hidden;">
-        <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:6px;">
-          <span id="simTxtJogador">-</span>
-          <span id="simTxtGraduacao">Corda: Crua (Nivel 1)</span>
-        </div>
-        <canvas id="simCanvas" style="width:100%; height:220px; background:#0b171d; border-radius:10px; display:block;"></canvas>
-        <div style="position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:space-between; padding:0 10px; pointer-events:none;">
-          <div style="display:flex; gap:8px;">
-            <div class="sim-touch-btn" onclick="Simulador.controleFlutuante('esquerda')">◀</div>
-            <div class="sim-touch-btn" onclick="Simulador.controleFlutuante('direita')">▶</div>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <div class="sim-touch-btn" style="background:rgba(239,83,80,0.35);" onclick="Simulador.controleFlutuante('golpe')">A</div>
-            <div class="sim-touch-btn" style="background:rgba(0,210,255,0.35);" onclick="Simulador.controleFlutuante('defesa')">D</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <h3><i class="fas fa-brain"></i> Aprendizado do Avatar</h3>
-        <p class="mini" id="simTxtAprendizado" style="margin-bottom:6px;">O avatar aprende com você: treinos, combates e cuidados moldam o estilo dele.</p>
-        <div id="simBarrasAprendizado" style="font-size:0.7rem;color:var(--text-sub);"></div>
-      </div>
-      <div class="card">
-        <h3><i class="fas fa-heart"></i> Cuidar do Avatar <span class="mini">(Tamagotchi)</span></h3>
-        <label class="campo-label">Fome</label>
-        <div style="background:#0b171d;height:10px;border-radius:6px;overflow:hidden;border:1px solid var(--card-border);"><div id="simBarFome" style="height:100%;width:100%;background:#ffb300;transition:width .3s;"></div></div>
-        <label class="campo-label" style="margin-top:6px;">Humor</label>
-        <div style="background:#0b171d;height:10px;border-radius:6px;overflow:hidden;border:1px solid var(--card-border);"><div id="simBarHumor" style="height:100%;width:100%;background:#ff4fa3;transition:width .3s;"></div></div>
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button class="btn btn-gold" style="flex:1;" onclick="Simulador.alimentar()"><i class="fas fa-apple-alt"></i> Alimentar</button>
-          <button class="btn btn-azul" style="flex:1;" onclick="Simulador.alongar()"><i class="fas fa-person-walking-arrow-loop-left"></i> Alongar</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3><i class="fas fa-dumbbell"></i> Treino</h3>
-        <label class="campo-label">Repeticoes diarias</label>
-        <input type="number" id="simNumReps" value="10" min="0">
-        <button class="btn" onclick="Simulador.treinar()"><i class="fas fa-check"></i> Confirmar Treino</button>
-        <label class="campo-label" style="margin-top:8px;">Energia</label>
-        <div style="background:#0b171d;height:10px;border-radius:6px;overflow:hidden;border:1px solid var(--card-border);">
-          <div id="simBarEnergia" style="height:100%;width:100%;background:var(--accent-blue);transition:width .3s;"></div>
-        </div>
-      </div>
-      <div class="card">
-        <h3><i class="fas fa-fist-raised"></i> Combate</h3>
-        <div id="simBoxCombate" style="display:flex;flex-direction:column;gap:6px;"></div>
-        <div id="simConsole" style="background:#050b0e;border:1px solid var(--card-border);color:var(--primary-green);padding:8px;font-size:0.72rem;height:70px;overflow-y:auto;margin-top:8px;border-radius:8px;">Assistente pronto.</div>
-      </div>
-      <div class="card" id="cardTerreiroSimulador" style="border:1px solid var(--accent-blue);">
-        <h3 style="color:var(--accent-blue);"><i class="fas fa-users"></i> Terreiro Virtual</h3>
-        <p class="mini" style="margin-bottom:6px;">Alunos online ou em treino aparecem aqui com o avatar do Simulador.</p>
-        <div id="listaTerreiroSimulador" class="grade-3" style="gap:8px;"></div>
-      </div>
-      <button class="btn btn-secondary" onclick="Simulador.trocarAvatar()"><i class="fas fa-user-edit"></i> Trocar avatar / apelido</button>
-    </div>
-  </div>
-
-  <!-- ================= ABA 4 - PROFESSOR ================= -->
-  <div id="tab4" class="tab-content">
-    <div id="conteudoProfessor"></div>
-  </div>
-
-  <!-- ================= ABA 5 - ADM ================= -->
-  <div id="tab5" class="tab-content">
-    <div id="conteudoAdm"></div>
-  </div>
-
-  <!-- ================= ABA 6 - DEV ================= -->
-  <div id="tab6" class="tab-content">
-    <div id="conteudoDev"></div>
-  </div>
+  <!-- ================= ABAS 4, 5 e 6 - EQUIPE ================= -->
+  <div id="tab4" class="tab-content"><div id="conteudoProfessor"></div></div>
+  <div id="tab5" class="tab-content"><div id="conteudoAdm"></div></div>
+  <div id="tab6" class="tab-content"><div id="conteudoDev"></div></div>
 
   <footer>
-    <span id="footerInfo">Universo Capoeira</span> &middot; <i class="fas fa-shield-alt"></i> Capoeira na Pequena África
+    <span id="footerInfo">Universo Capoeira</span> &middot; <i class="fas fa-shield-alt"></i> Pequena África
   </footer>
 </div>
 
-<!-- ================= MODAL GENÉRICO ================= -->
+<!-- ================= MODAL E TOAST ================= -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-card">
     <h3 id="modalTitulo" style="color:var(--accent-blue); margin-bottom:8px; font-size:0.9rem; display:flex; align-items:center; gap:6px;"></h3>
@@ -978,10 +500,34 @@ footer a { color: var(--accent-blue); }
     <div id="modalAcoes" style="margin-top:10px;"></div>
   </div>
 </div>
-
 <div class="toast" id="toastBox"></div>
 
-<!-- Overlay jogos arcade — interface tech (Canvas 2D grátis) -->
+<!-- ================= ASSISTENTE VIRTUAL (COM O T-REX!) ================= -->
+<button id="assistenteFab" onclick="toggleAssistente()">
+  <img src="avatar2.png" style="width: 48px; height: 48px; object-fit: contain; margin-top: -2px; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));" alt="Dino Assistente">
+</button>
+
+<div id="assistentePainel">
+  <div class="assistente-header">
+    <h4><img src="avatar2.png" style="width: 24px; height: 24px; object-fit: contain; margin-right: 6px;" alt="Dino"> Assistente Capoeira</h4>
+    <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="assistente-msgs" id="assistenteMsgs"></div>
+  <div class="assistente-atalhos" id="assistenteAtalhos">
+    <button class="assistente-atalho" onclick="assistentePerguntar('próxima aula')">Próxima aula</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('meu check-in')">Meu check-in</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('como fazer check-in')">Como check-in</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('pedir treino')">Pedir treino</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('minha graduação')">Graduação</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('ajuda')">Ajuda</button>
+  </div>
+  <div class="assistente-input-row">
+    <input id="assistenteInput" placeholder="Fale com o Dino..." onkeypress="if(event.key==='Enter') assistenteEnviar()">
+    <button class="btn btn-secondary" onclick="assistenteEnviar()"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- ================= ARCADE OVERLAY (JOGOS) ================= -->
 <div id="arcadeOverlay" class="arcade-overlay-tech">
   <div class="arcade-topbar-tech">
     <div class="arcade-topbar-left">
@@ -1013,7 +559,6 @@ footer a { color: var(--accent-blue); }
     </div>
   </div>
 
-  <!-- Controles: dois polegares — esquerda direção, direita ações (transparentes) -->
   <div class="arcade-controls-bar">
     <div class="arcade-dpad" aria-label="Direção (polegar esquerdo)">
       <button type="button" class="arcade-btn arcade-up" data-dir="up" aria-label="Cima">▲</button>
@@ -1022,417 +567,52 @@ footer a { color: var(--accent-blue); }
       <button type="button" class="arcade-btn arcade-down" data-dir="down" aria-label="Baixo">▼</button>
     </div>
     <div id="arcadeAcoesExtra" class="arcade-acoes-lado">
-      <div id="arcadeAcoesTetris" style="display:none;" class="arcade-acoes-col">
-        <button type="button" class="arcade-btn arcade-btn-gold" data-acao="rotate">Girar</button>
-        <button type="button" class="arcade-btn arcade-btn-green" data-acao="drop">Queda</button>
-      </div>
-      <div id="arcadeAcoesPulo" style="display:none;" class="arcade-acoes-col">
-        <button type="button" class="arcade-btn arcade-btn-green arcade-btn-jump" data-acao="jump">⬆ Pular</button>
-      </div>
-      <div id="arcadeAcoesGeral" style="display:none;" class="arcade-acoes-col">
-        <button type="button" class="arcade-btn arcade-btn-side" data-dir="left" aria-label="Esquerda">◀</button>
-        <button type="button" class="arcade-btn arcade-btn-side" data-dir="right" aria-label="Direita">▶</button>
-      </div>
+      <!-- Ações extras injetadas pelo JS -->
     </div>
   </div>
   <p id="arcadeDica" class="arcade-dica">2 dedos · esquerda move · direita ação · transparentes</p>
 </div>
 
 <style>
-/* ===== Interface tecnológica dos jogos (grátis, CSS + Canvas) ===== */
-.arcade-overlay-tech {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9600;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
-  box-sizing: border-box;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,230,118,0.12), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,180,255,0.1), transparent 50%),
-    linear-gradient(180deg, #061018 0%, #020508 100%);
-  /* isola toques do app por baixo — evita cliques em abas/assistente durante o jogo */
-  touch-action: none;
-  overscroll-behavior: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-.arcade-pause-overlay {
-  position: absolute;
-  inset: 3px;
-  border-radius: 12px;
-  z-index: 6;
-  background: rgba(2, 8, 12, 0.82);
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #00e676;
-  font-weight: 800;
-  font-size: 1.15rem;
-  letter-spacing: 1px;
-  cursor: pointer;
-  text-shadow: 0 0 12px rgba(0,230,118,0.45);
-  pointer-events: auto;
-}
+/* Estilos Críticos do Overlay do Arcade */
+.arcade-overlay-tech { display: none; position: fixed; inset: 0; z-index: 9600; flex-direction: column; align-items: center; justify-content: space-between; padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); box-sizing: border-box; background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(0,230,118,0.12), transparent 55%), radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,180,255,0.1), transparent 50%), linear-gradient(180deg, #061018 0%, #020508 100%); touch-action: none; overscroll-behavior: none; user-select: none; }
+.arcade-pause-overlay { position: absolute; inset: 3px; border-radius: 12px; z-index: 6; background: rgba(2, 8, 12, 0.82); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #00e676; font-weight: 800; font-size: 1.15rem; letter-spacing: 1px; cursor: pointer; text-shadow: 0 0 12px rgba(0,230,118,0.45); pointer-events: auto; }
 .arcade-pause-overlay.visivel { display: flex; }
-.arcade-pause-resume-btn {
-  background: linear-gradient(135deg, #00c853, #00a844);
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  padding: 12px 26px;
-  font-size: 0.92rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 16px rgba(0,200,83,0.4);
-  cursor: pointer;
-}
+.arcade-pause-resume-btn { background: linear-gradient(135deg, #00c853, #00a844); color: #fff; border: none; border-radius: 24px; padding: 12px 26px; font-size: 0.92rem; font-weight: 800; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,200,83,0.4); cursor: pointer; }
 .arcade-pause-resume-btn:active { transform: scale(0.96); }
-.arcade-tech-btn.arcade-paused {
-  background: rgba(0, 230, 118, 0.3) !important;
-  border-color: rgba(0, 230, 118, 0.7) !important;
-  color: #00e676 !important;
-}
-.arcade-topbar-tech {
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 14px;
-  background: rgba(8, 20, 28, 0.75);
-  border: 1px solid rgba(0, 230, 118, 0.25);
-  box-shadow: 0 0 20px rgba(0, 230, 118, 0.08), inset 0 1px 0 rgba(255,255,255,0.06);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
+.arcade-tech-btn.arcade-paused { background: rgba(0, 230, 118, 0.3) !important; border-color: rgba(0, 230, 118, 0.7) !important; color: #00e676 !important; }
+.arcade-topbar-tech { width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 14px; background: rgba(8, 20, 28, 0.75); border: 1px solid rgba(0, 230, 118, 0.25); box-shadow: 0 0 20px rgba(0, 230, 118, 0.08), inset 0 1px 0 rgba(255,255,255,0.06); backdrop-filter: blur(12px); }
 .arcade-topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.arcade-icon-tech {
-  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-  background: linear-gradient(145deg, rgba(0,230,118,0.35), rgba(0,150,255,0.25));
-  border: 1px solid rgba(0,230,118,0.45);
-  box-shadow: 0 0 12px rgba(0,230,118,0.25);
-}
-.arcade-titulo-tech {
-  color: #00e676;
-  font-size: 0.92rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 0 0 10px rgba(0,230,118,0.5);
-}
+.arcade-icon-tech { width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: linear-gradient(145deg, rgba(0,230,118,0.35), rgba(0,150,255,0.25)); border: 1px solid rgba(0,230,118,0.45); box-shadow: 0 0 12px rgba(0,230,118,0.25); }
+.arcade-titulo-tech { color: #00e676; font-size: 0.92rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 10px rgba(0,230,118,0.5); }
 .arcade-meta-tech { display: flex; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
-.arcade-chip {
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: rgba(0,230,118,0.12);
-  border: 1px solid rgba(0,230,118,0.35);
-  color: #69f0ae;
-}
-.arcade-chip-gold {
-  background: rgba(255,193,7,0.12);
-  border-color: rgba(255,193,7,0.4);
-  color: #ffc107;
-}
-.arcade-obj-tech {
-  font-size: 0.62rem;
-  color: #78909c;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-}
+.arcade-chip { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 6px; background: rgba(0,230,118,0.12); border: 1px solid rgba(0,230,118,0.35); color: #69f0ae; }
+.arcade-chip-gold { background: rgba(255,193,7,0.12); border-color: rgba(255,193,7,0.4); color: #ffc107; }
+.arcade-obj-tech { font-size: 0.62rem; color: #78909c; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 .arcade-topbar-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.arcade-tech-btn {
-  width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(0,210,255,0.35);
-  background: rgba(0, 150, 200, 0.15); color: #80d8ff;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; box-shadow: 0 0 8px rgba(0,180,255,0.15);
-}
-.arcade-tech-btn-off {
-  border-color: rgba(239,83,80,0.45);
-  background: rgba(239,83,80,0.15);
-  color: #ef9a9a;
-}
-.arcade-canvas-wrap-tech {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 400px;
-  margin: 6px 0;
-  min-height: 0;
-}
-.arcade-canvas-frame-tech {
-  position: relative;
-  padding: 3px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(0,230,118,0.55), rgba(0,180,255,0.45), rgba(156,39,176,0.35));
-  box-shadow:
-    0 0 0 1px rgba(0,230,118,0.3),
-    0 0 28px rgba(0,200,255,0.2),
-    0 12px 40px rgba(0,0,0,0.55);
-}
-.arcade-canvas-frame-tech::before {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border-radius: 12px;
-  background: #03080c;
-  z-index: 0;
-}
-.arcade-scanlines {
-  pointer-events: none;
-  position: absolute;
-  inset: 3px;
-  border-radius: 12px;
-  z-index: 2;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.06) 2px,
-    rgba(0,0,0,0.06) 4px
-  );
-  opacity: 0.35;
-}
-
-/* Barra de controles — compacta para não roubar espaço do canvas */
-.arcade-controls-bar {
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 10px;
-  padding: 2px 6px 0;
-  flex-shrink: 0;
-  pointer-events: none; /* só os botões recebem toque */
-  touch-action: none;
-}
-.arcade-controls-bar .arcade-dpad,
-.arcade-controls-bar .arcade-acoes-lado,
-.arcade-controls-bar .arcade-btn {
-  pointer-events: auto;
-}
-.arcade-dpad {
-  display: grid;
-  grid-template-columns: 52px 52px 52px;
-  grid-template-rows: 52px 52px 52px;
-  gap: 4px;
-  grid-template-areas:
-    ". up ."
-    "left . right"
-    ". down .";
-  flex-shrink: 0;
-}
-.arcade-up { grid-area: up; }
-.arcade-left { grid-area: left; }
-.arcade-right { grid-area: right; }
-.arcade-down { grid-area: down; }
-.arcade-acoes-lado {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-height: 100px;
-  flex-shrink: 0;
-}
-.arcade-acoes-col {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
-}
-/* Botões glass / transparentes — menores, não cobrem o jogo */
-.arcade-btn {
-  width: 52px;
-  height: 52px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-radius: 50%;
-  background: rgba(33, 150, 243, 0.32);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: rgba(255,255,255,0.95);
-  font-size: 1.05rem;
-  font-weight: 800;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: none;
-  transition: background 0.1s, transform 0.08s;
-}
-.arcade-btn:active,
-.arcade-btn.arcade-pressed {
-  background: rgba(33, 150, 243, 0.6);
-  transform: scale(0.92);
-  border-color: rgba(255,255,255,0.7);
-}
-.arcade-btn-gold, .arcade-btn-green {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  font-size: 0.78rem;
-  letter-spacing: 0.02em;
-}
-.arcade-btn-gold {
-  background: rgba(255, 193, 7, 0.32);
-  border-color: rgba(255, 236, 150, 0.45);
-  color: #fffde7;
-}
-.arcade-btn-gold:active,
-.arcade-btn-gold.arcade-pressed {
-  background: rgba(255, 193, 7, 0.6);
-}
-.arcade-btn-green {
-  background: rgba(0, 230, 118, 0.3);
-  border-color: rgba(105, 240, 174, 0.45);
-  color: #e8f5e9;
-}
-.arcade-btn-green:active,
-.arcade-btn-green.arcade-pressed {
-  background: rgba(0, 230, 118, 0.55);
-}
-.arcade-btn-jump {
-  width: 76px !important;
-  height: 76px !important;
-  font-size: 0.85rem !important;
-}
-.arcade-btn-side {
-  width: 56px !important;
-  height: 56px !important;
-  background: rgba(144, 202, 249, 0.28) !important;
-  border-color: rgba(255,255,255,0.4) !important;
-}
-.arcade-btn-side:active,
-.arcade-btn-side.arcade-pressed {
-  background: rgba(144, 202, 249, 0.55) !important;
-}
-.arcade-dica {
-  text-align: center;
-  margin: 4px 0 0;
-  font-size: 0.65rem;
-  color: rgba(144, 164, 174, 0.9);
-  pointer-events: none;
-  flex-shrink: 0;
-}
-@media (max-width: 360px) {
-  .arcade-dpad {
-    grid-template-columns: 46px 46px 46px;
-    grid-template-rows: 46px 46px 46px;
-  }
-  .arcade-btn { width: 46px; height: 46px; }
-  .arcade-btn-gold, .arcade-btn-green { width: 64px; height: 64px; }
-  .arcade-btn-jump { width: 68px !important; height: 68px !important; }
-}
+.arcade-tech-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(0,210,255,0.35); background: rgba(0, 150, 200, 0.15); color: #80d8ff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 8px rgba(0,180,255,0.15); }
+.arcade-tech-btn-off { border-color: rgba(239,83,80,0.45); background: rgba(239,83,80,0.15); color: #ef9a9a; }
+.arcade-canvas-wrap-tech { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 400px; margin: 6px 0; min-height: 0; }
+.arcade-canvas-frame-tech { position: relative; padding: 3px; border-radius: 16px; background: linear-gradient(135deg, rgba(0,230,118,0.55), rgba(0,180,255,0.45), rgba(156,39,176,0.35)); box-shadow: 0 0 0 1px rgba(0,230,118,0.3), 0 0 28px rgba(0,200,255,0.2), 0 12px 40px rgba(0,0,0,0.55); }
+.arcade-canvas-frame-tech::before { content: ''; position: absolute; inset: 3px; border-radius: 12px; background: #03080c; z-index: 0; }
+.arcade-scanlines { pointer-events: none; position: absolute; inset: 3px; border-radius: 12px; z-index: 2; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px); opacity: 0.35; }
+.arcade-controls-bar { width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; padding: 2px 6px 0; flex-shrink: 0; pointer-events: none; touch-action: none; }
+.arcade-controls-bar .arcade-dpad, .arcade-controls-bar .arcade-acoes-lado, .arcade-controls-bar .arcade-btn { pointer-events: auto; }
+.arcade-dpad { display: grid; grid-template-columns: 52px 52px 52px; grid-template-rows: 52px 52px 52px; gap: 4px; grid-template-areas: ". up ." "left . right" ". down ."; flex-shrink: 0; }
+.arcade-up { grid-area: up; } .arcade-left { grid-area: left; } .arcade-right { grid-area: right; } .arcade-down { grid-area: down; }
+.arcade-acoes-lado { display: flex; flex-direction: column; justify-content: flex-end; min-height: 100px; flex-shrink: 0; }
+.arcade-acoes-col { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+.arcade-btn { width: 52px; height: 52px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; background: rgba(33, 150, 243, 0.32); backdrop-filter: blur(8px); color: rgba(255,255,255,0.95); font-size: 1.05rem; font-weight: 800; box-shadow: 0 2px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; touch-action: none; transition: background 0.1s, transform 0.08s; }
+.arcade-btn:active, .arcade-btn.arcade-pressed { background: rgba(33, 150, 243, 0.6); transform: scale(0.92); border-color: rgba(255,255,255,0.7); }
+.arcade-btn-gold, .arcade-btn-green { width: 72px; height: 72px; border-radius: 50%; font-size: 0.78rem; }
+.arcade-btn-gold { background: rgba(255, 193, 7, 0.32); border-color: rgba(255, 236, 150, 0.45); color: #fffde7; }
+.arcade-btn-green { background: rgba(0, 230, 118, 0.3); border-color: rgba(105, 240, 174, 0.45); color: #e8f5e9; }
+.arcade-dica { text-align: center; margin: 4px 0 0; font-size: 0.65rem; color: rgba(144, 164, 174, 0.9); pointer-events: none; flex-shrink: 0; }
 </style>
 
-<div id="bannerAtualizacaoApp" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:linear-gradient(135deg, var(--primary-green-dark), #00a844); color:#fff; padding:10px 12px; text-align:center; z-index:9998; font-size:0.78rem; box-shadow:0 -2px 10px rgba(0,0,0,0.4); align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;">
-  <span>🚀 Há uma atualização disponível!</span>
-  <button class="btn" style="width:auto; padding:6px 14px; margin:0;" onclick="aplicarAtualizacaoAppAgora()"><i class="fas fa-sync"></i> Atualizar Agora</button>
-</div>
-
-<!-- Assistente Virtual -->
-<div id="dicaAssistentePrimeiroAcesso" class="dica-assistente-bolha" style="display:none;" onclick="toggleAssistente()">Precisa de ajuda? 👋</div>
-<button id="assistenteFab" onclick="toggleAssistente()" title="Assistente Capoeira" aria-label="Abrir assistente">
-  <i class="fas fa-robot"></i>
-</button>
-<div id="assistentePainel">
-  <div class="assistente-header">
-    <h4><i class="fas fa-robot"></i> Assistente Capoeira</h4>
-    <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
-  </div>
-  <div id="assistenteCompanheiroSlot" style="padding:6px 8px 0;background:#0a1419;"></div>
-  <div class="assistente-msgs" id="assistenteMsgs"></div>
-  <div class="assistente-atalhos" id="assistenteAtalhos">
-    <button class="assistente-atalho" onclick="assistentePerguntar('meu progresso')">Meu progresso</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('dica')">Dica</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('mundo')">Mundo</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('próxima aula')">Próxima aula</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('meu check-in')">Meu check-in</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('como fazer check-in')">Como fazer check-in</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('check-in deu erro')">Check-in com erro</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('esqueci minha senha')">Esqueci a senha</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('pedir treino')">Pedir treino</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('minha graduação')">Minha graduação</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('meu desempenho')">Desempenho</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('horários')">Horários</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('avaliação semanal')">Avaliação Semanal</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('formação')">Formação Prof.</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('aquecimento')">Aquecimento</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('mobilidade')">Mobilidade</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('protocolo de aula')">Protocolo de aula</button>
-    <button class="assistente-atalho" onclick="assistentePerguntar('ajuda')">Ajuda</button>
-  </div>
-  <div class="assistente-input-row">
-    <input id="assistenteInput" placeholder="Pergunte algo..." onkeypress="if(event.key==='Enter') assistenteEnviar()">
-    <button class="btn btn-secondary" onclick="assistenteEnviar()"><i class="fas fa-paper-plane"></i></button>
-  </div>
-</div>
-
-<!-- Fallback: abas funcionam mesmo se os JS demorarem a carregar -->
-<script>
-(function () {
-  /* abrirAba mínimo — substituído quando core.js carregar */
-  if (typeof window.abrirAba !== 'function') {
-    window.abrirAba = function (id, btn) {
-      try {
-        document.querySelectorAll('.tab-content').forEach(function (el) {
-          el.classList.remove('active');
-        });
-        var alvo = document.getElementById(id);
-        if (alvo) alvo.classList.add('active');
-        var pai = btn || null;
-        if (!pai) {
-          document.querySelectorAll('.tabs button').forEach(function (b) {
-            var oc = b.getAttribute('onclick') || '';
-            if (oc.indexOf("'" + id + "'") >= 0) pai = b;
-          });
-        }
-        if (pai) {
-          var container = pai.closest('.tabs');
-          if (container) {
-            container.querySelectorAll('button').forEach(function (b) {
-              b.classList.remove('active');
-            });
-          }
-          pai.classList.add('active');
-        }
-        if (typeof window.renderizarAba === 'function') {
-          try { window.renderizarAba(id); } catch (e) {}
-        }
-      } catch (err) {
-        console.error('abrirAba', err);
-      }
-    };
-  }
-})();
-</script>
-<!-- Scripts na raiz do repo (GitHub Pages: core.js, games.js, mundo.js) -->
-<script src="core.js" defer></script>
-<script src="games.js" defer></script>
-<script src="mundo.js" defer></script>
+<!-- Scripts -->
+<script src="core.js?v=tama4" defer></script>
+<script src="games.js?v=tama4" defer></script>
+<script src="mundo.js?v=tama4" defer></script>
 </body>
 </html>

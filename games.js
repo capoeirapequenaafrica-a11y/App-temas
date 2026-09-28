@@ -201,7 +201,6 @@ function fecharJogoArcade() {
   var nivelFinal = arcade.nivel || 1;
   arcade.rodando = false;
   arcade.pausado = false;
-  try { damasPararOnline(); } catch (eOff) {}
   if (arcade.timer) { clearInterval(arcade.timer); arcade.timer = null; }
   window.removeEventListener('keydown', arcadeKeyHandler);
   try {
@@ -343,12 +342,7 @@ function arcadeAcao(a) {
   if (arcade.tipo === 'damas') {
     if (a === 'damas-ia') { arcade.damasModo = 'ia'; initDamas(); }
     else if (a === 'damas-2p') { arcade.damasModo = '2p'; initDamas(); }
-    else if (a === 'damas-online-criar') { damasCriarSalaOnline(); }
-    else if (a === 'damas-online-entrar') { damasEntrarSalaOnline(); }
-    else if (a === 'damas-novo') {
-      if (arcade.damasModo === 'online') damasPararOnline();
-      initDamas();
-    }
+    else if (a === 'damas-novo') initDamas();
     return;
   }
   if (arcade.tipo === 'tetris') {
@@ -1721,172 +1715,42 @@ function drawMario() {
 }
 
 /* =========================================================
-   DAMAS — tabuleiro 8x8, dama, captura, multi-captura
-   Modos: vs IA · 2 jogadores (mesmo aparelho) · Online (sala)
+   DAMAS — tabuleiro 8x8, dama (promoção), captura
+   Modos: vs Assistente (IA) · 2 jogadores no mesmo aparelho
    ========================================================= */
-var _damasClickLock = 0;
-var _damasOnlineTimer = null;
-
-function damasPararOnline() {
-  if (_damasOnlineTimer) { clearInterval(_damasOnlineTimer); _damasOnlineTimer = null; }
-  arcade.damasSalaId = null;
-  arcade.damasSouHost = false;
-  arcade.damasOnlineCodigo = null;
-}
-
-function damasSerialBoard(board) {
-  var out = [];
-  for (var r = 0; r < 8; r++) {
-    out[r] = [];
-    for (var c = 0; c < 8; c++) {
-      var p = board[r][c];
-      out[r][c] = p ? { cor: p.cor, dama: !!p.dama } : null;
+function initDamas() {
+  aplicarModoNoArcade('damas', arcade.nivel || 1);
+  /* botões de modo */
+  var bar = document.getElementById('arcadeAcoesExtra');
+  if (bar) {
+    var box = document.getElementById('arcadeAcoesDamas');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'arcadeAcoesDamas';
+      box.className = 'arcade-acoes-col';
+      box.innerHTML =
+        '<button type="button" class="arcade-btn arcade-btn-green" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;" data-acao="damas-ia">🤖 Vs Assistente</button>' +
+        '<button type="button" class="arcade-btn arcade-btn-gold" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;" data-acao="damas-2p">👥 2 Jogadores</button>' +
+        '<button type="button" class="arcade-btn" style="width:auto;min-width:78px;height:44px;border-radius:12px;font-size:0.62rem;padding:4px;background:rgba(144,202,249,0.35);" data-acao="damas-novo">🔄 Novo</button>';
+      bar.appendChild(box);
     }
+    box.style.display = 'flex';
   }
-  return out;
-}
+  var dpad = document.querySelector('.arcade-dpad');
+  if (dpad) dpad.style.display = 'none';
+  var acoesG = $('arcadeAcoesGeral'); if (acoesG) acoesG.style.display = 'none';
+  var acoesP = $('arcadeAcoesPulo'); if (acoesP) acoesP.style.display = 'none';
 
-function damasCodigoNovo() {
-  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  var s = '';
-  for (var i = 0; i < 5; i++) s += chars[Math.floor(Math.random() * chars.length)];
-  return s;
-}
-
-function damasSalvarSala(estado) {
-  if (!arcade.damasSalaId) return;
-  var payload = {
-    tipo: 'damas',
-    codigo: arcade.damasOnlineCodigo,
-    board: damasSerialBoard(arcade.damasBoard),
-    vez: arcade.damasVez,
-    fim: !!arcade.damasFim,
-    msg: arcade.damasMsg || '',
-    capturas: arcade.damasCapturas || { b: 0, p: 0 },
-    hostId: estado && estado.hostId != null ? estado.hostId : (arcade.damasHostId || ''),
-    guestId: estado && estado.guestId != null ? estado.guestId : (arcade.damasGuestId || ''),
-    status: arcade.damasFim ? 'fim' : (arcade.damasGuestId ? 'jogando' : 'aguardando'),
-    atualizadoEm: (typeof agoraISO === 'function') ? agoraISO() : new Date().toISOString()
-  };
-  try {
-    localStorage.setItem('uc_damas_sala_' + arcade.damasOnlineCodigo, JSON.stringify(payload));
-  } catch (e) {}
-  if (typeof DB !== 'undefined' && DB.salvar) {
-    DB.salvar('desafiosJogos', payload, arcade.damasSalaId).catch(function () {});
-  }
-}
-
-function damasLerSalaLocal(codigo) {
-  try {
-    return JSON.parse(localStorage.getItem('uc_damas_sala_' + codigo) || 'null');
-  } catch (e) { return null; }
-}
-
-function damasBuscarSala(codigo) {
-  codigo = String(codigo || '').trim().toUpperCase();
-  if (!codigo) return null;
-  var local = damasLerSalaLocal(codigo);
-  if (local) return local;
-  if (typeof DB !== 'undefined' && DB.listar) {
-    var lista = DB.listar('desafiosJogos') || [];
-    for (var i = 0; i < lista.length; i++) {
-      if (lista[i] && lista[i].tipo === 'damas' && String(lista[i].codigo || '').toUpperCase() === codigo) {
-        return lista[i];
-      }
-    }
-  }
-  return null;
-}
-
-function damasAplicarEstadoRemoto(est) {
-  if (!est || !est.board) return;
-  arcade.damasBoard = est.board;
-  arcade.damasVez = est.vez || 'b';
-  arcade.damasFim = !!est.fim;
-  arcade.damasMsg = est.msg || arcade.damasMsg;
-  arcade.damasCapturas = est.capturas || { b: 0, p: 0 };
-  if (est.guestId) arcade.damasGuestId = est.guestId;
-  if (est.hostId) arcade.damasHostId = est.hostId;
-  drawDamas();
-}
-
-function damasIniciarPollOnline() {
-  if (_damasOnlineTimer) clearInterval(_damasOnlineTimer);
-  _damasOnlineTimer = setInterval(function () {
-    if (arcade.tipo !== 'damas' || arcade.damasModo !== 'online') {
-      damasPararOnline();
-      return;
-    }
-    var est = damasBuscarSala(arcade.damasOnlineCodigo);
-    if (!est) return;
-    /* convidado entrou */
-    if (arcade.damasSouHost && est.guestId && !arcade.damasGuestId) {
-      arcade.damasGuestId = est.guestId;
-      arcade.damasMsg = 'Rival entrou! Você é Claras. Sua vez.';
-    }
-    /* sincroniza se o estado remoto for mais novo (outra pessoa jogou) */
-    var remotoJson = JSON.stringify(est.board) + '|' + est.vez + '|' + (est.fim ? 1 : 0);
-    var localJson = JSON.stringify(arcade.damasBoard) + '|' + arcade.damasVez + '|' + (arcade.damasFim ? 1 : 0);
-    if (remotoJson !== localJson) {
-      damasAplicarEstadoRemoto(est);
-    }
-  }, 1200);
-}
-
-function damasCriarSalaOnline() {
-  var aluno = (typeof alunoLogado === 'function') ? alunoLogado() : null;
-  var codigo = damasCodigoNovo();
-  var id = 'damas_' + codigo;
-  arcade.damasModo = 'online';
-  arcade.damasOnlineCodigo = codigo;
-  arcade.damasSalaId = id;
-  arcade.damasSouHost = true;
-  arcade.damasHostId = aluno ? (aluno.id || aluno.nome || 'host') : 'host';
-  arcade.damasGuestId = '';
-  arcade.damasCorOnline = 'b';
-  initDamasTabuleiroBase();
-  arcade.damasMsg = 'Sala ' + codigo + ' — aguarde o rival entrar (mesmo Wi‑Fi/nuvem). Você é Claras.';
-  damasSalvarSala({});
-  damasIniciarPollOnline();
-  drawDamas();
-  try { mostrarToast('Código da sala: ' + codigo); } catch (e) {}
-}
-
-function damasEntrarSalaOnline() {
-  var codigo = prompt('Digite o código da sala (5 letras):');
-  if (!codigo) return;
-  codigo = String(codigo).trim().toUpperCase();
-  var est = damasBuscarSala(codigo);
-  if (!est) {
-    try { mostrarToast('Sala não encontrada. Confira o código.', 'erro'); } catch (e) { alert('Sala não encontrada'); }
-    return;
-  }
-  if (est.guestId && est.status === 'jogando') {
-    try { mostrarToast('Sala já está cheia.', 'erro'); } catch (e2) {}
-    return;
-  }
-  var aluno = (typeof alunoLogado === 'function') ? alunoLogado() : null;
-  arcade.damasModo = 'online';
-  arcade.damasOnlineCodigo = codigo;
-  arcade.damasSalaId = est.id || ('damas_' + codigo);
-  arcade.damasSouHost = false;
-  arcade.damasHostId = est.hostId || '';
-  arcade.damasGuestId = aluno ? (aluno.id || aluno.nome || 'guest') : 'guest';
-  arcade.damasCorOnline = 'p';
-  damasAplicarEstadoRemoto(est);
-  arcade.damasMsg = 'Você entrou na sala ' + codigo + ' · você joga com as Escuras.';
-  damasSalvarSala({ hostId: arcade.damasHostId, guestId: arcade.damasGuestId });
-  damasIniciarPollOnline();
-  drawDamas();
-  try { mostrarToast('Entrou na sala ' + codigo); } catch (e3) {}
-}
-
-function initDamasTabuleiroBase() {
-  arcade.damasVez = 'b';
+  arcade.damasModo = arcade.damasModo || 'ia';
+  arcade.damasVez = 'b'; /* b = aluno (brancas), p = assistente/jogador2 (pretas) */
   arcade.damasSel = null;
+  arcade.damasMsg = arcade.damasModo === 'ia'
+    ? 'Você (claras) × Assistente Capoeira. Toque na peça e na casa.'
+    : '2 jogadores: Claras começam. Alternem no mesmo aparelho.';
   arcade.damasFim = false;
   arcade.damasCapturas = { b: 0, p: 0 };
   arcade.score = 0;
+  /* board[linha][coluna]: null | {cor:'b'|'p', dama:bool} — só casas escuras importam */
   var board = [];
   for (var r = 0; r < 8; r++) {
     board[r] = [];
@@ -1899,42 +1763,6 @@ function initDamasTabuleiroBase() {
     }
   }
   arcade.damasBoard = board;
-}
-
-function initDamas() {
-  aplicarModoNoArcade('damas', arcade.nivel || 1);
-  var bar = document.getElementById('arcadeAcoesExtra');
-  if (bar) {
-    var box = document.getElementById('arcadeAcoesDamas');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'arcadeAcoesDamas';
-      box.className = 'arcade-acoes-col';
-      box.innerHTML =
-        '<button type="button" class="arcade-btn arcade-btn-green" style="width:auto;min-width:72px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;" data-acao="damas-ia">🤖 Vs IA</button>' +
-        '<button type="button" class="arcade-btn arcade-btn-gold" style="width:auto;min-width:72px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;" data-acao="damas-2p">👥 2P local</button>' +
-        '<button type="button" class="arcade-btn" style="width:auto;min-width:72px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;background:rgba(0,210,255,0.3);" data-acao="damas-online-criar">🌐 Criar sala</button>' +
-        '<button type="button" class="arcade-btn" style="width:auto;min-width:72px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;background:rgba(156,39,176,0.35);" data-acao="damas-online-entrar">🔑 Entrar</button>' +
-        '<button type="button" class="arcade-btn" style="width:auto;min-width:64px;height:44px;border-radius:12px;font-size:0.6rem;padding:4px;background:rgba(144,202,249,0.35);" data-acao="damas-novo">🔄 Novo</button>';
-      bar.appendChild(box);
-    }
-    box.style.display = 'flex';
-  }
-  var dpad = document.querySelector('.arcade-dpad');
-  if (dpad) dpad.style.display = 'none';
-  var acoesG = $('arcadeAcoesGeral'); if (acoesG) acoesG.style.display = 'none';
-  var acoesP = $('arcadeAcoesPulo'); if (acoesP) acoesP.style.display = 'none';
-
-  if (arcade.damasModo !== 'online') {
-    damasPararOnline();
-  }
-  arcade.damasModo = arcade.damasModo || 'ia';
-  if (arcade.damasModo !== 'online') {
-    initDamasTabuleiroBase();
-    arcade.damasMsg = arcade.damasModo === 'ia'
-      ? 'Você (Claras) × Assistente. Toque na peça e na casa.'
-      : '2 jogadores no mesmo aparelho. Claras começam — alternem.';
-  }
   instalarCliqueDamas();
   drawDamas();
 }
@@ -1946,9 +1774,6 @@ function instalarCliqueDamas() {
   if (!canvas) return;
   function handle(e) {
     if (arcade.tipo !== 'damas' || !arcade.rodando || arcade.pausado || arcade.damasFim) return;
-    var now = Date.now();
-    if (now - _damasClickLock < 280) return; /* evita toque+click duplicado */
-    _damasClickLock = now;
     var rect = canvas.getBoundingClientRect();
     var clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
     var clientY = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
@@ -1976,12 +1801,13 @@ function instalarCliqueDamas() {
 }
 
 function damasPeca(r, c) {
-  if (r < 0 || r > 7 || c < 0 || c > 7 || !arcade.damasBoard) return null;
+  if (r < 0 || r > 7 || c < 0 || c > 7) return null;
   return arcade.damasBoard[r][c];
 }
 
 function damasEscura(r, c) { return (r + c) % 2 === 1; }
 
+/* movimentos simples e capturas de uma peça */
 function damasMovimentos(r, c, soCaptura) {
   var p = damasPeca(r, c);
   if (!p) return [];
@@ -1989,14 +1815,15 @@ function damasMovimentos(r, c, soCaptura) {
   if (p.dama) {
     dirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
   } else if (p.cor === 'b') {
-    dirs = [[-1, -1], [-1, 1]];
+    dirs = [[-1, -1], [-1, 1]]; /* brancas sobem */
   } else {
-    dirs = [[1, -1], [1, 1]];
+    dirs = [[1, -1], [1, 1]]; /* pretas descem */
   }
   var moves = [];
   dirs.forEach(function (d) {
     var r1 = r + d[0], c1 = c + d[1];
     var r2 = r + d[0] * 2, c2 = c + d[1] * 2;
+    /* captura */
     if (r2 >= 0 && r2 < 8 && c2 >= 0 && c2 < 8) {
       var mid = damasPeca(r1, c1);
       var dest = damasPeca(r2, c2);
@@ -2004,10 +1831,12 @@ function damasMovimentos(r, c, soCaptura) {
         moves.push({ r: r2, c: c2, captura: true, mr: r1, mc: c1 });
       }
     }
+    /* passo simples */
     if (!soCaptura && r1 >= 0 && r1 < 8 && c1 >= 0 && c1 < 8 && !damasPeca(r1, c1) && damasEscura(r1, c1)) {
       moves.push({ r: r1, c: c1, captura: false });
     }
   });
+  /* dama: passos longos em diagonal (versão simplificada: até 2 casas sem peça no caminho) */
   if (p.dama && !soCaptura) {
     [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(function (d) {
       for (var k = 1; k <= 7; k++) {
@@ -2015,18 +1844,11 @@ function damasMovimentos(r, c, soCaptura) {
         if (rr < 0 || rr > 7 || cc < 0 || cc > 7) break;
         if (!damasEscura(rr, cc)) continue;
         if (damasPeca(rr, cc)) break;
-        if (k >= 1) moves.push({ r: rr, c: cc, captura: false });
+        if (k > 1) moves.push({ r: rr, c: cc, captura: false });
       }
     });
   }
-  /* remove duplicados */
-  var seen = {};
-  return moves.filter(function (m) {
-    var k = m.r + ',' + m.c + ',' + (m.captura ? 1 : 0);
-    if (seen[k]) return false;
-    seen[k] = 1;
-    return true;
-  });
+  return moves;
 }
 
 function damasTemCaptura(cor) {
@@ -2034,7 +1856,8 @@ function damasTemCaptura(cor) {
     for (var c = 0; c < 8; c++) {
       var p = damasPeca(r, c);
       if (p && p.cor === cor) {
-        if (damasMovimentos(r, c, true).some(function (x) { return x.captura; })) return true;
+        var m = damasMovimentos(r, c, true);
+        if (m.some(function (x) { return x.captura; })) return true;
       }
     }
   }
@@ -2056,28 +1879,10 @@ function damasTodosMovimentos(cor) {
   return lista;
 }
 
-function damasPodeJogarAgora() {
-  if (arcade.damasModo === 'ia') return arcade.damasVez === 'b';
-  if (arcade.damasModo === '2p') return true;
-  if (arcade.damasModo === 'online') {
-    return arcade.damasVez === arcade.damasCorOnline;
-  }
-  return true;
-}
-
 function cliqueDamas(r, c) {
   if (arcade.damasFim) return;
+  /* no modo IA, aluno só joga nas brancas */
   if (arcade.damasModo === 'ia' && arcade.damasVez === 'p') return;
-  if (arcade.damasModo === 'online' && !damasPodeJogarAgora()) {
-    arcade.damasMsg = 'Aguarde a jogada do rival…';
-    drawDamas();
-    return;
-  }
-  /* online: só mexe nas próprias peças */
-  if (arcade.damasModo === 'online') {
-    var minhaCor = arcade.damasCorOnline;
-    if (arcade.damasVez !== minhaCor) return;
-  }
 
   var p = damasPeca(r, c);
   var sel = arcade.damasSel;
@@ -2101,6 +1906,7 @@ function cliqueDamas(r, c) {
     if (moves[i].r === r && moves[i].c === c) { escolhido = moves[i]; break; }
   }
   if (!escolhido) {
+    /* se clicou outra peça própria, troca seleção */
     if (p && p.cor === arcade.damasVez) {
       arcade.damasSel = { r: r, c: c };
       arcade.damasMsg = 'Peça selecionada · toque no destino';
@@ -2118,7 +1924,6 @@ function cliqueDamas(r, c) {
 function aplicarMovimentoDamas(deR, deC, mov) {
   var board = arcade.damasBoard;
   var p = board[deR][deC];
-  if (!p) return;
   board[deR][deC] = null;
   board[mov.r][mov.c] = p;
   if (mov.captura) {
@@ -2128,255 +1933,37 @@ function aplicarMovimentoDamas(deR, deC, mov) {
   } else {
     if (p.cor === 'b') arcade.score += 2;
   }
+  /* promoção a dama */
   if (!p.dama) {
     if (p.cor === 'b' && mov.r === 0) { p.dama = true; arcade.damasMsg = '👑 Dama!'; arcade.score += 25; }
-    if (p.cor === 'p' && mov.r === 7) { p.dama = true; arcade.damasMsg = '👑 Dama!'; }
+    if (p.cor === 'p' && mov.r === 7) { p.dama = true; arcade.damasMsg = '👑 Dama do adversário!'; }
   }
+  /* multi-captura: se a mesma peça ainda pode capturar, continua a vez */
   if (mov.captura) {
     var mais = damasMovimentos(mov.r, mov.c, true).filter(function (x) { return x.captura; });
     if (mais.length) {
       arcade.damasSel = { r: mov.r, c: mov.c };
-      arcade.damasMsg = (arcade.damasModo === 'ia' && p.cor === 'p')
-        ? 'Assistente continua capturando…'
-        : 'Continue capturando com a mesma peça!';
+      arcade.damasMsg = (p.cor === 'p') ? 'Assistente continua capturando…' : 'Continue capturando!';
       drawDamas();
       verificarFimDamas();
+      /* corrige trava: se quem está em sequência de captura é a IA, ela precisa jogar de novo sozinha */
       if (!arcade.damasFim && arcade.damasModo === 'ia' && p.cor === 'p') {
-        setTimeout(function () { jogadaIADamasContinuacao(mov.r, mov.c); }, 400);
+        setTimeout(function () { jogadaIADamasContinuacao(mov.r, mov.c); }, 450 + Math.random() * 300);
       }
-      if (arcade.damasModo === 'online') damasSalvarSala({});
       return;
     }
   }
   arcade.damasSel = null;
   arcade.damasVez = arcade.damasVez === 'b' ? 'p' : 'b';
   if (!arcade.damasMsg || arcade.damasMsg.indexOf('Dama') < 0) {
-    if (arcade.damasModo === 'online') {
-      arcade.damasMsg = (arcade.damasVez === arcade.damasCorOnline)
-        ? 'Sua vez!'
-        : 'Vez do rival…';
-    } else if (arcade.damasModo === 'ia') {
-      arcade.damasMsg = arcade.damasVez === 'b' ? 'Sua vez (claras)' : 'Assistente pensando…';
-    } else {
-      arcade.damasMsg = arcade.damasVez === 'b' ? 'Vez do Jogador 1 (claras)' : 'Vez do Jogador 2 (escuras)';
-    }
+    arcade.damasMsg = arcade.damasVez === 'b'
+      ? (arcade.damasModo === 'ia' ? 'Sua vez (claras)' : 'Vez das claras')
+      : (arcade.damasModo === 'ia' ? 'Assistente pensando…' : 'Vez das escuras');
   }
   drawDamas();
   verificarFimDamas();
-  if (arcade.damasModo === 'online') damasSalvarSala({});
   if (!arcade.damasFim && arcade.damasModo === 'ia' && arcade.damasVez === 'p') {
     setTimeout(jogadaIADamas, 450 + Math.random() * 350);
-  }
-}
-
-/* =========================================================
-   IA DAMAS — Minimax + poda alfa-beta
-   Profundidade sobe com o nível do arcade (1–10)
-   ========================================================= */
-function damasCloneBoard(board) {
-  var out = [];
-  for (var r = 0; r < 8; r++) {
-    out[r] = [];
-    for (var c = 0; c < 8; c++) {
-      var p = board[r][c];
-      out[r][c] = p ? { cor: p.cor, dama: !!p.dama } : null;
-    }
-  }
-  return out;
-}
-
-function damasPecaB(board, r, c) {
-  if (r < 0 || r > 7 || c < 0 || c > 7) return null;
-  return board[r][c];
-}
-
-function damasMovimentosB(board, r, c, soCaptura) {
-  var p = damasPecaB(board, r, c);
-  if (!p) return [];
-  var dirs = p.dama ? [[-1, -1], [-1, 1], [1, -1], [1, 1]]
-    : (p.cor === 'b' ? [[-1, -1], [-1, 1]] : [[1, -1], [1, 1]]);
-  var moves = [];
-  dirs.forEach(function (d) {
-    var r1 = r + d[0], c1 = c + d[1];
-    var r2 = r + d[0] * 2, c2 = c + d[1] * 2;
-    if (r2 >= 0 && r2 < 8 && c2 >= 0 && c2 < 8) {
-      var mid = damasPecaB(board, r1, c1);
-      var dest = damasPecaB(board, r2, c2);
-      if (mid && mid.cor !== p.cor && !dest) {
-        moves.push({ r: r2, c: c2, captura: true, mr: r1, mc: c1 });
-      }
-    }
-    if (!soCaptura && r1 >= 0 && r1 < 8 && c1 >= 0 && c1 < 8 && !damasPecaB(board, r1, c1) && ((r1 + c1) % 2 === 1)) {
-      moves.push({ r: r1, c: c1, captura: false });
-    }
-  });
-  if (p.dama && !soCaptura) {
-    [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(function (d) {
-      for (var k = 1; k <= 7; k++) {
-        var rr = r + d[0] * k, cc = c + d[1] * k;
-        if (rr < 0 || rr > 7 || cc < 0 || cc > 7) break;
-        if ((rr + cc) % 2 !== 1) continue;
-        if (damasPecaB(board, rr, cc)) break;
-        moves.push({ r: rr, c: cc, captura: false });
-      }
-    });
-  }
-  var seen = {};
-  return moves.filter(function (m) {
-    var k = m.r + ',' + m.c + ',' + (m.captura ? 1 : 0) + ',' + (m.mr || '') + ',' + (m.mc || '');
-    if (seen[k]) return false;
-    seen[k] = 1;
-    return true;
-  });
-}
-
-function damasTemCapturaB(board, cor) {
-  for (var r = 0; r < 8; r++) {
-    for (var c = 0; c < 8; c++) {
-      var p = damasPecaB(board, r, c);
-      if (p && p.cor === cor) {
-        if (damasMovimentosB(board, r, c, true).some(function (x) { return x.captura; })) return true;
-      }
-    }
-  }
-  return false;
-}
-
-function damasTodosMovimentosB(board, cor) {
-  var obrigatorio = damasTemCapturaB(board, cor);
-  var lista = [];
-  for (var r = 0; r < 8; r++) {
-    for (var c = 0; c < 8; c++) {
-      var p = damasPecaB(board, r, c);
-      if (!p || p.cor !== cor) continue;
-      damasMovimentosB(board, r, c, obrigatorio).forEach(function (m) {
-        if (!obrigatorio || m.captura) lista.push({ deR: r, deC: c, para: m });
-      });
-    }
-  }
-  return lista;
-}
-
-/** Aplica movimento numa cópia; se multi-captura possível, continua = {r,c} */
-function damasApplyB(board, deR, deC, mov) {
-  var b = damasCloneBoard(board);
-  var p = b[deR][deC];
-  if (!p) return { board: b, continua: null };
-  b[deR][deC] = null;
-  b[mov.r][mov.c] = p;
-  if (mov.captura) b[mov.mr][mov.mc] = null;
-  if (!p.dama) {
-    if (p.cor === 'b' && mov.r === 0) p.dama = true;
-    if (p.cor === 'p' && mov.r === 7) p.dama = true;
-  }
-  var continua = null;
-  if (mov.captura) {
-    var mais = damasMovimentosB(b, mov.r, mov.c, true).filter(function (x) { return x.captura; });
-    if (mais.length) continua = { r: mov.r, c: mov.c };
-  }
-  return { board: b, continua: continua };
-}
-
-/** Avaliação: positivo favorece pretas (IA) */
-function damasAvaliar(board) {
-  var score = 0;
-  var pb = 0, pp = 0;
-  for (var r = 0; r < 8; r++) {
-    for (var c = 0; c < 8; c++) {
-      var p = board[r][c];
-      if (!p) continue;
-      var base = p.dama ? 280 : 100;
-      /* centro e avanço */
-      var centro = 4.5 - Math.abs(r - 3.5) - Math.abs(c - 3.5);
-      var avanc = p.cor === 'p' ? r : (7 - r);
-      var val = base + centro * 6 + avanc * 4;
-      if (p.cor === 'p') { score += val; pp++; }
-      else { score -= val; pb++; }
-    }
-  }
-  if (pb === 0) score += 10000;
-  if (pp === 0) score -= 10000;
-  return score;
-}
-
-function damasProfundidadeIA() {
-  var nv = arcade.nivel || 1;
-  if (nv <= 2) return 2;
-  if (nv <= 5) return 3;
-  if (nv <= 8) return 4;
-  return 5;
-}
-
-/**
- * Minimax com alfa-beta.
- * maximizing = true → joga pretas (IA)
- * cont = {r,c} se for continuação de multi-captura da cor da vez
- */
-function damasMinimax(board, depth, alpha, beta, maximizing, cont) {
-  var cor = maximizing ? 'p' : 'b';
-  var lista;
-  if (cont) {
-    lista = damasMovimentosB(board, cont.r, cont.c, true)
-      .filter(function (m) { return m.captura; })
-      .map(function (m) { return { deR: cont.r, deC: cont.c, para: m }; });
-  } else {
-    lista = damasTodosMovimentosB(board, cor);
-  }
-
-  if (depth <= 0 || !lista.length) {
-    var ev = damasAvaliar(board);
-    if (!lista.length) {
-      /* quem deveria jogar não tem movimento → adversário ganha */
-      ev += maximizing ? -8000 : 8000;
-    }
-    return { score: ev, move: null };
-  }
-
-  /* ordena: capturas primeiro (melhor poda) */
-  lista.sort(function (a, b) {
-    return (b.para.captura ? 1 : 0) - (a.para.captura ? 1 : 0);
-  });
-
-  var melhorMov = lista[0];
-  if (maximizing) {
-    var maxEval = -Infinity;
-    for (var i = 0; i < lista.length; i++) {
-      var m = lista[i];
-      var res = damasApplyB(board, m.deR, m.deC, m.para);
-      var filho;
-      if (res.continua) {
-        /* mesma cor continua capturando */
-        filho = damasMinimax(res.board, depth, alpha, beta, maximizing, res.continua);
-      } else {
-        filho = damasMinimax(res.board, depth - 1, alpha, beta, false, null);
-      }
-      if (filho.score > maxEval) {
-        maxEval = filho.score;
-        melhorMov = m;
-      }
-      alpha = Math.max(alpha, maxEval);
-      if (beta <= alpha) break;
-    }
-    return { score: maxEval, move: melhorMov };
-  } else {
-    var minEval = Infinity;
-    for (var j = 0; j < lista.length; j++) {
-      var m2 = lista[j];
-      var res2 = damasApplyB(board, m2.deR, m2.deC, m2.para);
-      var filho2;
-      if (res2.continua) {
-        filho2 = damasMinimax(res2.board, depth, alpha, beta, maximizing, res2.continua);
-      } else {
-        filho2 = damasMinimax(res2.board, depth - 1, alpha, beta, true, null);
-      }
-      if (filho2.score < minEval) {
-        minEval = filho2.score;
-        melhorMov = m2;
-      }
-      beta = Math.min(beta, minEval);
-      if (beta <= alpha) break;
-    }
-    return { score: minEval, move: melhorMov };
   }
 }
 
@@ -2391,38 +1978,36 @@ function jogadaIADamas() {
     drawDamas();
     return;
   }
-  var depth = damasProfundidadeIA();
-  var resultado = damasMinimax(
-    damasCloneBoard(arcade.damasBoard),
-    depth,
-    -Infinity,
-    Infinity,
-    true,
-    null
-  );
-  var escolha = resultado.move || lista[0];
-  arcade.damasMsg = 'Assistente (minimax nv' + depth + ')…';
-  drawDamas();
+  /* prioriza captura e promoção; senão aleatório ponderado */
+  var capturas = lista.filter(function (x) { return x.para.captura; });
+  var pool = capturas.length ? capturas : lista;
+  var promo = pool.filter(function (x) {
+    var peca = damasPeca(x.deR, x.deC);
+    return peca && !peca.dama && x.para.r === 7;
+  });
+  if (promo.length) pool = promo;
+  var escolha = pool[Math.floor(Math.random() * pool.length)];
+  /* dificuldade sobe com nível: em níveis altos tenta ficar no centro */
+  if ((arcade.nivel || 1) >= 4 && !escolha.para.captura && Math.random() < 0.45) {
+    pool.sort(function (a, b) {
+      var ca = Math.abs(a.para.r - 3.5) + Math.abs(a.para.c - 3.5);
+      var cb = Math.abs(b.para.r - 3.5) + Math.abs(b.para.c - 3.5);
+      return ca - cb;
+    });
+    escolha = pool[0];
+  }
   aplicarMovimentoDamas(escolha.deR, escolha.deC, escolha.para);
 }
 
+/* continuação obrigatória de uma multi-captura da IA (a mesma peça precisa
+   seguir capturando) — sem isso o jogo travava esperando uma jogada que
+   nunca chegava */
 function jogadaIADamasContinuacao(r, c) {
   if (arcade.tipo !== 'damas' || arcade.damasFim || arcade.damasVez !== 'p') return;
   var opcoes = damasMovimentos(r, c, true).filter(function (x) { return x.captura; });
   if (!opcoes.length) return;
-  var depth = Math.max(2, damasProfundidadeIA() - 1);
-  var resultado = damasMinimax(
-    damasCloneBoard(arcade.damasBoard),
-    depth,
-    -Infinity,
-    Infinity,
-    true,
-    { r: r, c: c }
-  );
-  var escolha = (resultado.move && resultado.move.para) ? resultado.move.para : opcoes[0];
-  var deR = (resultado.move && resultado.move.deR != null) ? resultado.move.deR : r;
-  var deC = (resultado.move && resultado.move.deC != null) ? resultado.move.deC : c;
-  aplicarMovimentoDamas(deR, deC, escolha);
+  var escolha = opcoes[Math.floor(Math.random() * opcoes.length)];
+  aplicarMovimentoDamas(r, c, escolha);
 }
 
 function verificarFimDamas() {
@@ -2435,9 +2020,8 @@ function verificarFimDamas() {
   }
   if (cont.b === 0) {
     arcade.damasFim = true;
-    arcade.damasMsg = arcade.damasModo === 'ia' ? '🤖 Assistente venceu!' : (arcade.damasModo === 'online' ? 'Escuras venceram!' : 'Jogador 2 (escuras) venceu!');
+    arcade.damasMsg = arcade.damasModo === 'ia' ? '🤖 Assistente venceu! Tente de novo.' : 'Escuras venceram!';
     drawDamas();
-    if (arcade.damasModo === 'online') damasSalvarSala({});
     return;
   }
   if (cont.p === 0) {
@@ -2446,7 +2030,6 @@ function verificarFimDamas() {
     arcade.score += 100;
     salvarNivelArcade('damas', Math.min(10, (arcade.nivel || 1) + 1));
     drawDamas();
-    if (arcade.damasModo === 'online') damasSalvarSala({});
     return;
   }
   var movs = damasTodosMovimentos(arcade.damasVez);
@@ -2459,86 +2042,91 @@ function verificarFimDamas() {
       salvarNivelArcade('damas', Math.min(10, (arcade.nivel || 1) + 1));
     }
     drawDamas();
-    if (arcade.damasModo === 'online') damasSalvarSala({});
   }
 }
 
 function tickDamas() {
-  /* tabuleiro estático — desenho sob demanda */
+  /* estático — redesenha só se necessário */
 }
 
 function drawDamas() {
   var ctx = arcade.ctx;
   if (!ctx || !arcade.damasBoard) return;
   var w = arcade.canvas.width, h = arcade.canvas.height;
-  ctx.fillStyle = '#1a120b';
-  ctx.fillRect(0, 0, w, h);
-  var margem = 8;
-  var size = Math.min(w - margem * 2, 300);
-  var ox = (w - size) / 2;
-  var oy = 36;
-  var cell = size / 8;
+
+  // Fundo de Madeira Escura
+  ctx.fillStyle = '#1e1108'; ctx.fillRect(0, 0, w, h);
+
+  var margem = 10, size = Math.min(w - margem * 2, 300);
+  var ox = (w - size) / 2, oy = 40, cell = size / 8;
+
+  // Borda do Tabuleiro de Ouro/Madeira
+  ctx.shadowColor = '#000'; ctx.shadowBlur = 15;
+  ctx.strokeStyle = '#8b5a2b'; ctx.lineWidth = 8;
+  ctx.strokeRect(ox - 4, oy - 4, size + 8, size + 8);
+  ctx.shadowBlur = 0;
+
   var sel = arcade.damasSel;
-  var moves = [];
-  if (sel) moves = damasMovimentos(sel.r, sel.c, damasTemCaptura(arcade.damasVez));
+  var moves = sel ? damasMovimentos(sel.r, sel.c, damasTemCaptura(arcade.damasVez)) : [];
+
   for (var r = 0; r < 8; r++) {
     for (var c = 0; c < 8; c++) {
       var x = ox + c * cell, y = oy + r * cell;
       var escura = (r + c) % 2 === 1;
-      ctx.fillStyle = escura ? '#8b5a2b' : '#dfcfb7';
+
+      ctx.fillStyle = escura ? '#3e2723' : '#d7ccc8';
       ctx.fillRect(x, y, cell, cell);
-      var isDest = moves.some(function (m) { return m.r === r && m.c === c; });
-      if (isDest) {
-        ctx.fillStyle = 'rgba(0,230,118,0.35)';
+
+      // Casas possíveis de movimento (Brilho Verde)
+      if (moves.some(function (m) { return m.r === r && m.c === c; })) {
+        ctx.fillStyle = 'rgba(0, 230, 118, 0.5)';
         ctx.fillRect(x, y, cell, cell);
       }
+      // Casa selecionada (Brilho Ouro)
       if (sel && sel.r === r && sel.c === c) {
-        ctx.strokeStyle = '#ffc107';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ffc107'; ctx.lineWidth = 3;
         ctx.strokeRect(x + 2, y + 2, cell - 4, cell - 4);
       }
+
       var p = arcade.damasBoard[r][c];
       if (p) {
-        var cx = x + cell / 2, cy = y + cell / 2, rad = cell * 0.36;
+        var cx = x + cell / 2, cy = y + cell / 2, rad = cell * 0.38;
+
+        // Sombra da Peça (Efeito 3D)
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 3;
+
+        var g = ctx.createRadialGradient(cx - 3, cy - 3, 2, cx, cy, rad);
         if (p.cor === 'b') {
-          var g = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, rad);
-          g.addColorStop(0, '#fff');
-          g.addColorStop(1, '#bdbdbd');
-          ctx.fillStyle = g;
+          g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#9e9e9e');
         } else {
-          var g2 = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, rad);
-          g2.addColorStop(0, '#555');
-          g2.addColorStop(1, '#111');
-          ctx.fillStyle = g2;
+          g.addColorStop(0, '#616161'); g.addColorStop(1, '#000000');
         }
-        ctx.beginPath();
-        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+        // Se for Dama, coroa de ouro
         if (p.dama) {
-          ctx.fillStyle = '#ffc107';
-          ctx.font = 'bold ' + Math.floor(cell * 0.45) + 'px serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('♛', cx, cy + 1);
+          ctx.fillStyle = '#ffc107'; ctx.font = 'bold ' + Math.floor(cell * 0.5) + 'px serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('♛', cx, cy + 2);
         }
       }
     }
   }
-  ctx.strokeStyle = '#5c3a21';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(ox - 3, oy - 3, size + 6, size + 6);
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  ctx.fillRect(8, oy + size + 10, w - 16, 52);
-  ctx.fillStyle = '#e0f2f1';
-  ctx.font = '12px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(arcade.damasMsg || '', w / 2, oy + size + 28);
-  ctx.fillStyle = '#90a4ae';
-  ctx.font = '10px sans-serif';
-  var modoTxt = arcade.damasModo === 'ia' ? 'Vs IA' : (arcade.damasModo === 'online' ? ('Online · sala ' + (arcade.damasOnlineCodigo || '—')) : '2P local');
-  ctx.fillText(modoTxt + ' · Capturas ' + (arcade.damasCapturas.b || 0) + ' × ' + (arcade.damasCapturas.p || 0), w / 2, oy + size + 46);
-  ctx.textAlign = 'left';
-  desenharHUDArcade(ctx, w, 'DAMAS');
+
+  // Painel de Informações Inferior
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(10, oy + size + 15, w - 20, 40, 10) : ctx.fillRect(10, oy + size + 15, w - 20, 40);
+  ctx.fill();
+
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#00d2ff'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(arcade.damasMsg || '', w / 2, oy + size + 35);
+
+  ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif';
+  var modoTxt = arcade.damasModo === 'ia' ? 'Você vs IA (Minimax)' : '2 Jogadores Local';
+  ctx.fillText(modoTxt + ' • Capturas: Claras ' + (arcade.damasCapturas.b || 0) + ' x Escuras ' + (arcade.damasCapturas.p || 0), w / 2, oy + size + 50);
 }
 
 /* =========================================================
@@ -3001,107 +2589,109 @@ function drawTamagotchi() {
   var d = arcade._tama || carregarTama();
   var mood = tamaMood(d);
 
-  /* modo Terreiro Virtual — todos os avatares online/treino */
-  if (arcade._tamaModo === 'terreiro') {
-    drawTerreiroCanvas();
-    return;
-  }
-
-  /* fundo */
+  /* Fundo em gradiente */
   var g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, '#0d3d1f');
-  g.addColorStop(0.5, '#0a2a38');
-  g.addColorStop(1, '#061018');
+  g.addColorStop(0, '#0f2027');
+  g.addColorStop(0.5, '#203a43');
+  g.addColorStop(1, '#2c5364');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
-  /* modo seleção de personagem */
+  /* Grade cibernética no fundo */
+  ctx.strokeStyle = 'rgba(0, 210, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (var i = 0; i < w; i += 20) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+  for (var j = 0; j < h; j += 20) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(w, j); ctx.stroke(); }
+
+  /* Tela de Escolha */
   if (d._selectMode || !d.charId) {
-    ctx.fillStyle = '#00e676';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('ESCOLHA SEU PERSONAGEM', w / 2, 36);
-    ctx.fillStyle = '#90a4ae';
-    ctx.font = '11px sans-serif';
-    ctx.fillText('Toque em um capoeirista', w / 2, 54);
-    var cols = 5, pad = 8;
-    var cw = (w - pad * 2) / cols;
-    var chH = 70;
-    var top = 70;
-    for (var i = 0; i < TAMA_CHARS.length; i++) {
-      var c = i % cols, r = Math.floor(i / cols);
-      var x0 = pad + c * cw, y0 = top + r * (chH + 8);
-      ctx.fillStyle = 'rgba(22,35,43,0.9)';
-      ctx.strokeStyle = TAMA_CHARS[i].cor;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x0 + 2, y0, cw - 6, chH, 8);
-      else ctx.rect(x0 + 2, y0, cw - 6, chH);
-      ctx.fill();
-      ctx.stroke();
-      tamaDrawPixelChar(ctx, TAMA_CHARS[i], x0 + cw / 2, y0 + 28, 0.55, 0);
-      ctx.fillStyle = '#e0f2f1';
-      ctx.font = 'bold 8px sans-serif';
-      ctx.textAlign = 'center';
-      var nm = TAMA_CHARS[i].nome.split(' ')[0];
-      ctx.fillText(nm, x0 + cw / 2, y0 + chH - 10);
+    ctx.fillStyle = '#00d2ff'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('ESCOLHA SEU MASCOTE', w / 2, 36);
+    var cols = 5, cw = (w - 16) / cols, chH = 65, top = 70;
+    for (var k = 0; k < TAMA_CHARS.length; k++) {
+      var c = k % cols, r = Math.floor(k / cols);
+      var x0 = 8 + c * cw, y0 = top + r * (chH + 10);
+
+      ctx.fillStyle = 'rgba(10, 20, 30, 0.8)';
+      ctx.strokeStyle = TAMA_CHARS[k].cor; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0 + 2, y0, cw - 4, chH, 8) : ctx.rect(x0 + 2, y0, cw - 4, chH);
+      ctx.fill(); ctx.stroke();
+
+      ctx.font = '28px sans-serif';
+      ctx.fillText(TAMA_CHARS[k].emoji, x0 + cw / 2, y0 + 35);
+
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 8px sans-serif';
+      ctx.fillText(TAMA_CHARS[k].nome.split(' ')[0], x0 + cw / 2, y0 + chH - 8);
     }
-    ctx.textAlign = 'left';
-    desenharHUDArcade(ctx, w, 'MASCOTE');
     return;
   }
 
-  /* chão */
-  ctx.fillStyle = 'rgba(0,230,118,0.12)';
-  ctx.fillRect(0, h - 70, w, 70);
-
+  /* Mascote ativo, flutuando */
   var ch = tamaCharById(d.charId);
-  var bob = arcade._tamaAnim ? Math.sin(arcade._tamaAnim * 0.8) * 5 : Math.sin(Date.now() / 400) * 2;
-  var cx = w / 2, cy = h * 0.36;
-  tamaDrawPixelChar(ctx, ch, cx, cy, 1.35, bob);
+  var cx = w / 2, cy = h * 0.38;
+  var bob = Math.sin(Date.now() / 300) * 8;
 
-  /* nome e humor */
-  ctx.fillStyle = ch.cor;
-  ctx.font = 'bold 14px sans-serif';
+  ctx.shadowColor = ch.cor;
+  ctx.shadowBlur = 40;
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.beginPath(); ctx.arc(cx, cy + bob, 40, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.font = '70px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText((d.nome || ch.nome) + ' ' + mood.face, cx, cy + 62);
-  ctx.fillStyle = '#90a4ae';
-  ctx.font = '11px sans-serif';
-  ctx.fillText(mood.txt, cx, cy + 78);
-  ctx.fillText('Nv.' + (d.nivel || 1) + ' · XP ' + (d.xp || 0) + ' · ' + ch.emoji, cx, cy + 94);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(ch.emoji, cx, cy + bob);
+  ctx.textBaseline = 'alphabetic';
 
-  /* barras de status */
-  function barra(label, val, y, cor) {
+  // Sombra no chão
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 60, Math.max(4, 25 + bob / 2), 6, 0, 0, Math.PI * 2); ctx.fill();
+
+  /* Textos de Status */
+  ctx.fillStyle = ch.cor; ctx.font = 'bold 18px sans-serif';
+  ctx.fillText((d.nome || ch.nome) + ' ' + mood.face, cx, cy + 85);
+  ctx.fillStyle = '#b0bec5'; ctx.font = '12px sans-serif';
+  ctx.fillText(mood.txt, cx, cy + 105);
+  ctx.fillStyle = '#ffc107'; ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('Nível ' + (d.nivel || 1) + '  •  XP: ' + (d.xp || 0), cx, cy + 120);
+
+  /* Barras de Status */
+  function barraPremium(label, val, y, cor, icon) {
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#cfd8dc';
-    ctx.font = '10px sans-serif';
-    ctx.fillText(label, 16, y);
-    ctx.fillStyle = '#1a2a32';
-    ctx.fillRect(70, y - 9, w - 90, 10);
-    ctx.fillStyle = cor;
-    ctx.fillRect(70, y - 9, Math.max(2, (w - 90) * (Math.max(0, Math.min(100, val)) / 100)), 10);
-    ctx.fillStyle = '#fff';
-    ctx.font = '9px sans-serif';
-    ctx.fillText(Math.round(val) + '%', w - 36, y);
-  }
-  barra('Fome', d.fome || 0, h - 52, '#ff9800');
-  barra('Energia', d.energia || 0, h - 38, '#00d2ff');
-  barra('Humor', d.humor || 0, h - 24, '#e040fb');
-  barra('Forma', d.fitness || 0, h - 10, '#00e676');
+    ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif';
+    ctx.fillText(icon + ' ' + label, 15, y);
 
-  if (arcade._tamaMsg) {
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(10, 28, w - 20, 36);
-    ctx.fillStyle = '#e0f2f1';
-    ctx.font = '11px sans-serif';
-    ctx.textAlign = 'center';
-    var linhas = String(arcade._tamaMsg).match(/.{1,36}(\s|$)/g) || [arcade._tamaMsg];
-    linhas.slice(0, 2).forEach(function (ln, i) {
-      ctx.fillText(ln.trim(), w / 2, 42 + i * 14);
-    });
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(85, y - 10, w - 135, 12, 6) : ctx.rect(85, y - 10, w - 135, 12);
+    ctx.fill();
+
+    var fillW = Math.max(8, (w - 135) * (Math.max(0, Math.min(100, val)) / 100));
+    ctx.shadowColor = cor; ctx.shadowBlur = 10;
+    ctx.fillStyle = cor;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(85, y - 10, fillW, 12, 6) : ctx.rect(85, y - 10, fillW, 12);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif';
+    ctx.fillText(Math.round(val) + '%', w - 40, y);
   }
-  ctx.textAlign = 'left';
-  desenharHUDArcade(ctx, w, 'MASCOTE');
+
+  barraPremium('Fome', d.fome || 0, h - 55, '#ff9800', '🍎');
+  barraPremium('Energia', d.energia || 0, h - 38, '#00d2ff', '⚡');
+  barraPremium('Humor', d.humor || 0, h - 21, '#e040fb', '🎮');
+  barraPremium('Forma', d.fitness || 0, h - 4, '#00e676', '🥋');
+
+  /* Mensagem do Mascote */
+  if (arcade._tamaMsg) {
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(10, 20, w - 20, 45, 8) : ctx.rect(10, 20, w - 20, 45);
+    ctx.fill();
+    ctx.strokeStyle = ch.cor; ctx.lineWidth = 1; ctx.stroke();
+
+    ctx.fillStyle = '#fff'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    var linhas = String(arcade._tamaMsg).match(/.{1,40}(\s|$)/g) || [arcade._tamaMsg];
+    linhas.slice(0, 2).forEach(function (ln, i) { ctx.fillText(ln.trim(), w / 2, 38 + i * 16); });
+  }
 }
 
 /* ---- Companheiro 3D na área do aluno / assistente ---- */
@@ -3719,38 +3309,13 @@ function pacEscolherGhost(g) {
     alvoY = arcade.pac.y + (arcade.pac.y - arcade.pacGhosts[0].y);
   }
   var opts = pacDirsOk(g.x, g.y, g.dir, false);
-  /* Minimax 1–2 ply: avalia direção que mais aproxima do alvo
-     (e prevê 1 passo do pac-man quando nível >= 4) */
-  var best = opts[0], bestS = -1e9;
-  var nv = arcade.nivel || 1;
+  var best = opts[0], bestD = 1e9;
   opts.forEach(function (d) {
     var tx = Math.floor(g.x) + 0.5, ty = Math.floor(g.y) + 0.5;
     if (d === 'left') tx -= 1; if (d === 'right') tx += 1;
     if (d === 'up') ty -= 1; if (d === 'down') ty += 1;
     var dist = Math.hypot(tx - alvoX, ty - alvoY);
-    var score = -dist;
-    /* 2º ply: se pac continuar na direção atual, onde fica a distância */
-    if (nv >= 4) {
-      var px = arcade.pac.x, py = arcade.pac.y;
-      if (arcade.pac.dir === 'left') px -= 1;
-      else if (arcade.pac.dir === 'right') px += 1;
-      else if (arcade.pac.dir === 'up') py -= 1;
-      else if (arcade.pac.dir === 'down') py += 1;
-      score = -Math.hypot(tx - px, ty - py) * 1.15 - dist * 0.25;
-    }
-    /* nível alto: prefere interceptar (mínimo da distância futura) */
-    if (nv >= 7) {
-      var opts2 = pacDirsOk(tx, ty, d, false);
-      var minD2 = 1e9;
-      opts2.forEach(function (d2) {
-        var t2x = Math.floor(tx) + 0.5, t2y = Math.floor(ty) + 0.5;
-        if (d2 === 'left') t2x -= 1; if (d2 === 'right') t2x += 1;
-        if (d2 === 'up') t2y -= 1; if (d2 === 'down') t2y += 1;
-        minD2 = Math.min(minD2, Math.hypot(t2x - alvoX, t2y - alvoY));
-      });
-      score = -minD2;
-    }
-    if (score > bestS) { bestS = score; best = d; }
+    if (dist < bestD) { bestD = dist; best = d; }
   });
   g.next = best || g.dir;
 }
@@ -4144,6 +3709,7 @@ function renderAvisoLocal() {
     return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
   });
   var box = $('boxNotificacaoAluno');
+  if (!box) return;
   if (!avisos.length) { box.style.display = 'none'; return; }
   var a = avisos[0];
   box.style.display = 'block';
@@ -5184,6 +4750,24 @@ function enviarSolicitacaoTreino(btn) {
 /* ---------------------------------------------------------------
    12. ABA PROFESSOR
    --------------------------------------------------------------- */
+/* --- Formação infantil: aprovar / revogar (mantém a inscrição da coleção em sincronia) --- */
+function aprovarAlunoFormacao(id) {
+  DB.salvar('alunos', { formacaoInfantil: 'aprovado' }, id).then(function () {
+    var insc = inscricaoFormacaoDoAluno(DB.buscar('alunos', id));
+    if (insc) DB.atualizar('formacaoInfantil', insc.id, { status: 'aprovado' });
+    mostrarToast('Aluno aprovado para a Formação!');
+    renderAbaProfessor();
+  });
+}
+function removerAlunoFormacao(id) {
+  DB.salvar('alunos', { formacaoInfantil: '' }, id).then(function () {
+    var insc = inscricaoFormacaoDoAluno(DB.buscar('alunos', id));
+    if (insc) DB.atualizar('formacaoInfantil', insc.id, { status: 'revogado' });
+    mostrarToast('Permissão de Formação revogada.');
+    renderAbaProfessor();
+  });
+}
+
 function renderAbaProfessor() {
   var box = $('conteudoProfessor');
   if (!exigirEquipe(['professor', 'adm', 'dev'], box)) return;
@@ -5203,6 +4787,38 @@ function renderAbaProfessor() {
   html += '<div class="card" style="border:1px solid var(--accent-blue);">' +
     '<h3><i class="fas fa-user-shield"></i> Sessão: ' + esc(sessaoEquipe.nome) + ' <span class="pill pill-info">' + esc(sessaoEquipe.papel) + '</span></h3>' +
     '<button class="btn btn-back" style="margin:0;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button></div>';
+
+  /* --- MÓDULO FORMAÇÃO INFANTIL (PROFESSOR VÊ OS INSCRITOS) --- */
+  var alunosFormacao = DB.listar('alunos').filter(function (a) {
+    var insc = inscricaoFormacaoDoAluno(a);
+    return a.formacaoInfantil === 'pendente' || a.formacaoInfantil === 'aprovado' ||
+      (insc && insc.status === 'pendente' && !a.formacaoInfantil);
+  });
+
+  html += '<div class="card" style="border:1px solid var(--gold);">';
+  html += '<h3 class="titulo-colapsavel" onclick="this.parentElement.classList.toggle(\'fechado\')" style="color:var(--gold);">';
+  html += '<span><i class="fas fa-chalkboard-teacher"></i> Inscritos na Formação</span>';
+  html += '<span class="seta-colapsavel"><i class="fas fa-chevron-down"></i></span></h3>';
+  html += '<div class="card-corpo-colapsavel">';
+  html += '<p class="mini" style="margin-bottom:8px;">Alunos que se candidataram para dar aulas (remuneradas).</p>';
+
+  if (!alunosFormacao.length) {
+    html += '<p class="sem-dados">Nenhuma inscrição no momento.</p>';
+  } else {
+    alunosFormacao.forEach(function (a) {
+      var aprovado = (a.formacaoInfantil === 'aprovado');
+      html += '<div class="lista-item" style="border-color:' + (aprovado ? 'var(--primary-green)' : 'var(--gold)') + ';">';
+      html += '<div class="linha"><b>' + esc(a.nome) + '</b> <span class="pill ' + (aprovado ? 'pill-ok' : 'pill-pend') + '">' + (aprovado ? 'APROVADO' : 'PENDENTE') + '</span></div>';
+      html += '<span class="mini">' + esc(a.graduacao) + '</span>';
+      if (!aprovado) {
+        html += '<button class="btn btn-gold btn-mini" style="margin-top:6px;" onclick="aprovarAlunoFormacao(\'' + a.id + '\')"><i class="fas fa-check"></i> Aprovar Candidato</button>';
+      } else {
+        html += '<button class="btn btn-danger btn-mini" style="margin-top:6px;" onclick="removerAlunoFormacao(\'' + a.id + '\')"><i class="fas fa-times"></i> Revogar Permissão</button>';
+      }
+      html += '</div>';
+    });
+  }
+  html += '</div></div>';
 
   /* --- Atalho Portal de Parceiros Wellhub/Gympass --- */
   html += '<div class="card" style="border:1px solid var(--gympass-red);">' +
@@ -7374,133 +6990,21 @@ function assistenteFormacaoProfessor(texto) {
     '• "aquecimento"\n• "alongamento"\n• "mobilidade"\n• "quadril"\n• "protocolo de aula"\n• "diferença alongamento e mobilidade"';
 }
 
-
-/** Resumo personalizado do aluno (histórico do app — não altera avaliações/graduações) */
-function assistenteColetarHistorico(aluno) {
-  var h = {
-    nome: '',
-    checkinHoje: null,
-    presencasOk: 0,
-    presencasPend: 0,
-    nivelMundo: 1,
-    treinosMundo: 0,
-    fome: 100,
-    humor: 100,
-    estilo: 'iniciante',
-    golpesTop: [],
-    temAvatar: false,
-    niveisJogos: {},
-    dicas: []
-  };
-  if (!aluno) return h;
-  h.nome = aluno.apelido || aluno.nome || '';
-  h.temAvatar = !!(aluno.avatarSimulador);
-  h.nivelMundo = aluno.nivelSimulador || 1;
-  h.treinosMundo = aluno.treinosSimulador || 0;
-  h.fome = (aluno.fomeSimulador != null) ? aluno.fomeSimulador : 100;
-  h.humor = (aluno.humorSimulador != null) ? aluno.humorSimulador : 100;
-  try {
-    if (typeof obterCheckinDoDia === 'function') h.checkinHoje = obterCheckinDoDia(aluno);
-  } catch (e) {}
-  try {
-    var lista = (DB.listar('presencas') || []).filter(function (p) {
-      return p.alunoId === aluno.id || normalizar(p.alunoNome) === normalizar(aluno.nome);
-    });
-    h.presencasOk = lista.filter(function (p) { return p.status === 'aprovado'; }).length;
-    h.presencasPend = lista.filter(function (p) { return p.status === 'pendente'; }).length;
-  } catch (e2) {}
-  try {
-    var apr = aluno.avatarAprendizado || {};
-    h.estilo = apr.estilo || 'iniciante';
-    var golpes = apr.golpes || {};
-    h.golpesTop = Object.keys(golpes).sort(function (a, b) { return golpes[b] - golpes[a]; }).slice(0, 3);
-  } catch (e3) {}
-  try {
-    if (typeof carregarNiveisArcade === 'function') h.niveisJogos = carregarNiveisArcade() || {};
-  } catch (e4) {
-    try {
-      h.niveisJogos = JSON.parse(localStorage.getItem('uc_arcade_niveis') || '{}');
-    } catch (e5) {}
-  }
-  if (!h.checkinHoje) h.dicas.push('Ainda sem check-in hoje — vale registrar na aba Check-in se for treinar.');
-  else if (h.checkinHoje.status === 'pendente') h.dicas.push('Seu check-in de hoje está pendente de aprovação do professor.');
-  if (!h.temAvatar) h.dicas.push('Escolha seu avatar no Mundo para treinar, cuidar e lutar vs IA.');
-  if (h.fome < 40) h.dicas.push('Seu avatar está com fome (' + Math.round(h.fome) + '%) — alimente no Mundo.');
-  if (h.humor < 40) h.dicas.push('Humor do avatar baixo (' + Math.round(h.humor) + '%) — alongue ou brinque no Mundo.');
-  if (h.treinosMundo < 3) h.dicas.push('Faça alguns treinos no Mundo para o avatar evoluir de estilo.');
-  if (h.estilo === 'iniciante' && h.treinosMundo >= 1) h.dicas.push('Continue treinando e combatendo — o estilo do avatar sobe com a prática.');
-  var jogoFraco = null, menor = 99;
-  Object.keys(h.niveisJogos || {}).forEach(function (k) {
-    var nv = Number(h.niveisJogos[k]) || 1;
-    if (nv < menor) { menor = nv; jogoFraco = k; }
-  });
-  if (jogoFraco && menor <= 2) h.dicas.push('No arcade, experimente subir o nível de ' + jogoFraco + ' (está no nv.' + menor + ').');
-  if (!h.dicas.length) h.dicas.push('Você está em dia! Que tal um combate vs IA no Mundo ou uma partida de damas?');
-  return h;
-}
-
-function assistenteResumoProgresso(aluno) {
-  if (!aluno) return 'Faça login na aba Aluno (ou cadastre-se no Mundo) para eu personalizar com o seu histórico.';
-  var h = assistenteColetarHistorico(aluno);
-  var linhas = [];
-  linhas.push('📊 Seu progresso no app, ' + h.nome + ':');
-  linhas.push('');
-  linhas.push('🥋 Mundo: nível ' + h.nivelMundo + ' · treinos ' + h.treinosMundo + (h.temAvatar ? ' · avatar ativo' : ' · sem avatar'));
-  linhas.push('🎭 Estilo do avatar: ' + String(h.estilo).toUpperCase());
-  if (h.golpesTop.length) linhas.push('⚡ Golpes mais usados: ' + h.golpesTop.join(', '));
-  linhas.push('💚 Cuidado: fome ' + Math.round(h.fome) + '% · humor ' + Math.round(h.humor) + '%');
-  linhas.push('✅ Presenças aprovadas: ' + h.presencasOk + (h.presencasPend ? ' · pendentes: ' + h.presencasPend : ''));
-  if (h.checkinHoje) {
-    linhas.push('📍 Check-in hoje: ' + String(h.checkinHoje.status).toUpperCase());
-  } else {
-    linhas.push('📍 Check-in hoje: ainda não registrado');
-  }
-  var jogos = Object.keys(h.niveisJogos || {});
-  if (jogos.length) {
-    linhas.push('🎮 Jogos: ' + jogos.slice(0, 6).map(function (k) {
-      return k + ' nv.' + (h.niveisJogos[k] || 1);
-    }).join(' · '));
-  }
-  linhas.push('');
-  linhas.push('💡 Dica: ' + h.dicas[0]);
-  if (h.dicas[1]) linhas.push('💡 ' + h.dicas[1]);
-  return linhas.join('\n');
-}
-
-function assistenteDicaDoDia(aluno) {
-  var h = assistenteColetarHistorico(aluno);
-  if (!aluno) {
-    return 'Dica: entre na aba Aluno ou abra o Mundo e cadastre-se — aí eu personalizo as dicas com o seu histórico.';
-  }
-  return '💡 Dica personalizada para ' + h.nome + ':\n\n' + h.dicas[0] +
-    (h.dicas[1] ? '\n\nTambém: ' + h.dicas[1] : '') +
-    '\n\nPergunte "meu progresso" para o resumo completo.';
-}
-
 function assistenteMensagemBoasVindas() {
   var aluno = alunoLogado();
-  var h = assistenteColetarHistorico(aluno);
-  var nome = h.nome;
+  var nome = aluno ? (aluno.apelido || aluno.nome) : '';
   var saudacao = nome ? ('Olá, ' + nome + '! ') : 'Olá! ';
   var extraProfessor = assistenteEhProfessor()
     ? '\n\n👨‍🏫 Modo equipe:\n• "avaliação de [nome]" ou "ficha de [nome]" — abre a ficha\n• "formação" / "aquecimento" / "mobilidade" / "protocolo de aula" — Index de Formação de Professor'
     : '';
-  var personal = '';
-  if (aluno) {
-    personal = '\n\n📌 Agora, no seu ritmo:\n• ' + h.dicas[0];
-    if (h.temAvatar) {
-      personal += '\n• Mundo: nível ' + h.nivelMundo + ' · estilo ' + h.estilo;
-    }
-    personal += '\n\nAtalhos úteis: "meu progresso" · "dica" · "mundo" · "meu check-in"';
-  } else {
-    personal = '\n\nEntre na aba Aluno ou abra o Mundo e cadastre-se para eu personalizar com o seu histórico.';
-  }
-  return saudacao + 'Sou o Assistente Capoeira.' + personal + '\n\n' +
-    'Também ajudo com:\n' +
+  return saudacao + 'Sou o Assistente Capoeira.\n\n' +
+    'Posso ajudar com:\n' +
     '• Próxima aula e horários\n' +
-    '• Check-in e presenças\n' +
-    '• Pedidos de treino e avisos\n' +
-    '• Formação de professor (aquecimento, mobilidade…)' + extraProfessor + '\n\n' +
+    '• Status do seu check-in\n' +
+    '• Como usar o app (check-in, pedidos de treino, certificados)\n' +
+    '• Sua graduação, avaliações e presenças\n' +
+    '• Avisos do professor\n' +
+    '• Formação de professor (aquecimento, alongamento, mobilidade)' + extraProfessor + '\n\n' +
     'Toque em um atalho ou digite sua pergunta.';
 }
 
@@ -7575,33 +7079,6 @@ function assistenteProcessar(texto) {
       '10. Feedback da aula e pergunta da semana\n' +
       '11. Formação de professor (aquecimento, alongamento, mobilidade, quadril, protocolo de aula)\n\n' +
       'Exemplos: "qual a próxima aula?", "formação", "aquecimento", "mobilidade de quadril"';
-  }
-
-  if (/meu progresso|meu historico|minha evolucao|como estou|resumo|desempenho no app/.test(t)) {
-    return assistenteResumoProgresso(aluno);
-  }
-  if (/^dica|dica do dia|o que fazer|sugestao|me orienta|proximo passo/.test(t)) {
-    return assistenteDicaDoDia(aluno);
-  }
-  if (/\bmundo\b|simulador|avatar|tamagotchi|cuidar do mascote|lutar vs ia/.test(t)) {
-    var h2 = assistenteColetarHistorico(aluno);
-    if (!aluno) {
-      return 'No Mundo Aberto você cuida do avatar, treina e luta vs IA (minimax).\n\nAbra a aba Mundo e cadastre-se / entre para começar.';
-    }
-    var msg = '🌍 Mundo Aberto — personalizado para você:\n\n';
-    if (!h2.temAvatar) {
-      msg += 'Você ainda não escolheu avatar. Abra a aba Mundo e escolha um personagem.\n';
-    } else {
-      msg += 'Avatar ativo · nível ' + h2.nivelMundo + ' · estilo ' + h2.estilo + '\n';
-      msg += 'Fome ' + Math.round(h2.fome) + '% · humor ' + Math.round(h2.humor) + '% · treinos ' + h2.treinosMundo + '\n';
-      if (h2.golpesTop.length) msg += 'Golpes favoritos: ' + h2.golpesTop.join(', ') + '\n';
-      msg += '\nSugestão: ';
-      if (h2.fome < 50) msg += 'alimente o avatar, depois treine.';
-      else if (h2.humor < 50) msg += 'alongue ou brinque para subir o humor.';
-      else msg += 'toque em "Lutar vs IA (minimax)" para um combate com a IA.';
-    }
-    msg += '\n\n💡 ' + h2.dicas[0];
-    return msg;
   }
 
   if (/proxima aula|aula de hoje|quando e a aula|horario de hoje/.test(t)) {
