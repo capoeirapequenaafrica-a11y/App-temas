@@ -117,10 +117,173 @@ Simulador.personagens = (function () {
 Simulador.estadoBatalha = {};
 Simulador.resetarEstadoBatalha = function () {
   var e = {};
-  Object.keys(Simulador.personagens).forEach(function (k) { e[k] = { energia: 100 }; });
+  Object.keys(Simulador.personagens).forEach(function (k) { e[k] = { energia: 100, vida: 100 }; });
   Simulador.estadoBatalha = e;
+  Simulador.iaRival = null;
 };
 Simulador.resetarEstadoBatalha();
+
+/** Rival de IA no Mundo (combate por turnos + minimax) */
+Simulador.iniciarCombateIA = function () {
+  var aluno = alunoLogado();
+  if (!aluno || !aluno.avatarSimulador) {
+    try { mostrarToast('Escolha um avatar antes.', 'erro'); } catch (e) {}
+    return;
+  }
+  var chave = aluno.avatarSimulador;
+  if (!Simulador.estadoBatalha[chave]) Simulador.estadoBatalha[chave] = { energia: 100, vida: 100 };
+  Simulador.estadoBatalha[chave].energia = 100;
+  Simulador.estadoBatalha[chave].vida = 100;
+  /* escolhe rival diferente do jogador */
+  var keys = Object.keys(Simulador.personagens).filter(function (k) { return k !== chave; });
+  if (!keys.length) keys = Object.keys(Simulador.personagens);
+  var rivalKey = keys[Math.floor(Math.random() * keys.length)];
+  var nivel = aluno.nivelSimulador || 1;
+  try {
+    var aprx = aluno.avatarAprendizado || {};
+    if (aprx.estilo === 'avancado') nivel = Math.max(nivel, 5);
+    if (aprx.estilo === 'mestre') nivel = Math.max(nivel, 8);
+    if ((aprx.totalCombates || 0) > 15) nivel = Math.min(10, nivel + 1);
+  } catch (eNv) {}
+  Simulador.iaRival = {
+    chave: rivalKey,
+    vida: 100,
+    energia: 100,
+    nivel: nivel
+  };
+  if (!Simulador.estadoBatalha[rivalKey]) Simulador.estadoBatalha[rivalKey] = { energia: 100, vida: 100 };
+  Simulador.estadoBatalha[rivalKey].energia = 100;
+  Simulador.estadoBatalha[rivalKey].vida = 100;
+  var nomeR = (Simulador.personagens[rivalKey] && Simulador.personagens[rivalKey].nome) || 'Rival';
+  var cons = $('simConsole');
+  if (cons) cons.innerHTML = '🥋 Combate vs IA (minimax)! Rival: <b>' + nomeR + '</b>. Escolha um golpe.';
+  if ($('simBarVidaJogador')) $('simBarVidaJogador').style.width = '100%';
+  if ($('simBarVidaIA')) $('simBarVidaIA').style.width = '100%';
+  var label = $('simLabelRivalIA');
+  if (label) label.textContent = 'Rival IA: ' + nomeR;
+  try { mostrarToast('Combate vs IA iniciado'); } catch (e2) {}
+};
+
+Simulador._simularGolpe = function (estado, indice, isIA) {
+  /* estado: { jVida, jEnergia, iVida, iEnergia, jChave, iChave } */
+  var e = {
+    jVida: estado.jVida, jEnergia: estado.jEnergia,
+    iVida: estado.iVida, iEnergia: estado.iEnergia,
+    jChave: estado.jChave, iChave: estado.iChave
+  };
+  var chave = isIA ? e.iChave : e.jChave;
+  var p = Simulador.obterPersonagem(chave) || Simulador.personagens[chave];
+  if (!p) return e;
+  var energia = isIA ? e.iEnergia : e.jEnergia;
+  if (indice === -2) {
+    /* descansar */
+    if (isIA) e.iEnergia = Math.min(100, energia + 25);
+    else e.jEnergia = Math.min(100, energia + 25);
+    return e;
+  }
+  var golpe = (indice === -1) ? p.especial : (p.movimentos[indice] || p.movimentos[0]);
+  var custo = (indice === -1) ? 30 : 15;
+  if (energia < custo) {
+    /* sem energia: descanso forçado */
+    if (isIA) e.iEnergia = Math.min(100, energia + 15);
+    else e.jEnergia = Math.min(100, energia + 15);
+    return e;
+  }
+  if (isIA) e.iEnergia = Math.max(0, energia - custo);
+  else e.jEnergia = Math.max(0, energia - custo);
+  var impacto = 12 + Math.floor(Math.random() * 10);
+  if (indice === -1) impacto += 8;
+  if (indice === 2) impacto = Math.floor(impacto * 0.6); /* guarda: menos dano */
+  if (isIA) e.jVida = Math.max(0, e.jVida - impacto);
+  else e.iVida = Math.max(0, e.iVida - impacto);
+  return e;
+};
+
+Simulador._avaliarCombate = function (estado) {
+  /* maior = melhor para IA */
+  return (estado.iVida - estado.jVida) * 3 + (estado.iEnergia - estado.jEnergia) * 0.3;
+};
+
+Simulador.turnoIAMinimax = function () {
+  if (!Simulador.iaRival) return;
+  var aluno = alunoLogado();
+  if (!aluno) return;
+  var jChave = aluno.avatarSimulador;
+  var iChave = Simulador.iaRival.chave;
+  var jEst = Simulador.estadoBatalha[jChave] || { energia: 100, vida: 100 };
+  var iEst = Simulador.estadoBatalha[iChave] || { energia: 100, vida: 100 };
+  var estado0 = {
+    jVida: jEst.vida != null ? jEst.vida : 100,
+    jEnergia: jEst.energia != null ? jEst.energia : 100,
+    iVida: iEst.vida != null ? iEst.vida : 100,
+    iEnergia: iEst.energia != null ? iEst.energia : 100,
+    jChave: jChave,
+    iChave: iChave
+  };
+  var depth = (typeof MinimaxIA !== 'undefined')
+    ? Math.min(3, MinimaxIA.profundidadePorNivel(Simulador.iaRival.nivel || 1))
+    : 2;
+
+  function gerarAcoes(est, maximizing) {
+    if (est.jVida <= 0 || est.iVida <= 0) return [];
+    return [0, 1, 2, -1, -2]; /* golpes + especial + descanso */
+  }
+  function aplicar(est, acao) {
+    /* no ply da IA (maximizing) aplica como IA; no do jogador como jogador */
+    /* A busca alterna: maximizing=true → IA joga */
+    return Simulador._simularGolpe(est, acao, true); /* simplificado: avalia só resposta da IA em 1–2 ply */
+  }
+  /* 1 ply forte + avaliação: testa cada ação da IA */
+  var melhor = -2, melhorScore = -Infinity;
+  var acoes = [0, 1, 2, -1, -2];
+  acoes.forEach(function (a) {
+    var depois = Simulador._simularGolpe(estado0, a, true);
+    /* adversário responde com melhor golpe egoísta (mini) */
+    var piorParaIA = Infinity;
+    [0, 1, 2, -1, -2].forEach(function (a2) {
+      var resp = Simulador._simularGolpe(depois, a2, false);
+      var sc = Simulador._avaliarCombate(resp);
+      if (sc < piorParaIA) piorParaIA = sc;
+    });
+    if (piorParaIA > melhorScore) {
+      melhorScore = piorParaIA;
+      melhor = a;
+    }
+  });
+  /* aplica ação real no estado vivo */
+  var p = Simulador.obterPersonagem(iChave) || Simulador.personagens[iChave];
+  var nomeR = (p && p.nome) || 'Rival';
+  var cons = $('simConsole');
+  if (melhor === -2) {
+    iEst.energia = Math.min(100, (iEst.energia || 0) + 25);
+    if (cons) cons.innerHTML = (cons.innerHTML || '') + '<br>🤖 ' + nomeR + ' descansou na ginga (minimax).';
+  } else {
+    var res = Simulador.executarMovimento(iChave, melhor);
+    if (typeof res !== 'string') {
+      var dmg = res.impacto || 10;
+      jEst.vida = Math.max(0, (jEst.vida != null ? jEst.vida : 100) - dmg);
+      iEst.energia = res.energiaRestante;
+      if (cons) cons.innerHTML = (cons.innerHTML || '') + '<br>🤖 ' + res.texto + ' (−' + dmg + ' vida)';
+      Simulador.setPose('chute', 700);
+    } else if (cons) {
+      cons.innerHTML = (cons.innerHTML || '') + '<br>🤖 ' + res;
+    }
+  }
+  Simulador.estadoBatalha[jChave] = jEst;
+  Simulador.estadoBatalha[iChave] = iEst;
+  if ($('simBarVidaJogador')) $('simBarVidaJogador').style.width = (jEst.vida || 0) + '%';
+  if ($('simBarVidaIA')) $('simBarVidaIA').style.width = (iEst.vida || 0) + '%';
+  if ($('simBarEnergia')) $('simBarEnergia').style.width = (jEst.energia || 0) + '%';
+  if (jEst.vida <= 0) {
+    Simulador.iaRival = null;
+    if (cons) cons.innerHTML += '<br><b style="color:#ff5252;">IA venceu o combate.</b>';
+  } else if (iEst.vida <= 0) {
+    Simulador.iaRival = null;
+    if (cons) cons.innerHTML += '<br><b style="color:#00e676;">Você venceu a IA! Axé!</b>';
+    Simulador.registrarAprendizado('combate', 'vitoria_ia');
+  }
+};
+
 
 Simulador.executarMovimento = function (chave, indice) {
   var p = Simulador.personagens[chave];
@@ -469,9 +632,35 @@ Simulador.iniciarJogo = function (aluno) {
   Simulador.atualizarBarrasCuidado(aluno);
   Simulador.atualizarUIAprendizado();
 
+  /* Boas-vindas personalizadas no Mundo (histórico do aluno) */
+  try {
+    var cons0 = $('simConsole');
+    if (cons0 && typeof assistenteColetarHistorico === 'function') {
+      var hx = assistenteColetarHistorico(aluno);
+      var bits = [];
+      bits.push('Bem-vindo ao Mundo, ' + (hx.nome || 'capoeirista') + '!');
+      bits.push('Nível ' + hx.nivelMundo + ' · estilo ' + hx.estilo + ' · treinos ' + hx.treinosMundo);
+      bits.push('Fome ' + Math.round(hx.fome) + '% · humor ' + Math.round(hx.humor) + '%');
+      if (hx.golpesTop.length) bits.push('Golpes em alta: ' + hx.golpesTop.join(', '));
+      bits.push('💡 ' + hx.dicas[0]);
+      bits.push('Use os botões de combate ou "Lutar vs IA (minimax)".');
+      cons0.innerHTML = bits.join('<br>');
+    }
+  } catch (eHist) {}
+
   var box = $('simBoxCombate');
   if (box) {
     box.innerHTML = '';
+    /* barras de vida do combate vs IA */
+    var hud = document.createElement('div');
+    hud.style.cssText = 'width:100%;margin-bottom:8px;';
+    hud.innerHTML =
+      '<div class="mini" id="simLabelRivalIA" style="margin-bottom:4px;">Rival IA: — (toque em Lutar vs IA)</div>' +
+      '<div class="mini">Sua vida</div>' +
+      '<div style="height:8px;background:#333;border-radius:4px;overflow:hidden;margin-bottom:4px;"><div id="simBarVidaJogador" style="height:100%;width:100%;background:#00e676;"></div></div>' +
+      '<div class="mini">Vida da IA</div>' +
+      '<div style="height:8px;background:#333;border-radius:4px;overflow:hidden;margin-bottom:6px;"><div id="simBarVidaIA" style="height:100%;width:100%;background:#ff5252;"></div></div>';
+    box.appendChild(hud);
     p.movimentos.forEach(function (mov, idx) {
       var btn = document.createElement('button');
       btn.className = 'btn';
@@ -487,6 +676,12 @@ Simulador.iniciarJogo = function (aluno) {
       btnEsp.onclick = function () { Simulador.jogarTurno(chave, -1); };
       box.appendChild(btnEsp);
     }
+    var btnIA = document.createElement('button');
+    btnIA.className = 'btn';
+    btnIA.style.background = '#6a1b9a';
+    btnIA.innerHTML = '<i class="fas fa-robot"></i> Lutar vs IA (minimax)';
+    btnIA.onclick = function () { Simulador.iniciarCombateIA(); };
+    box.appendChild(btnIA);
   }
 
   var srcImg = Simulador.obterImagem(chave);
@@ -642,7 +837,6 @@ Simulador.jogarTurno = function (chave, indice) {
   if (typeof r === 'string') {
     if (cons) cons.innerHTML = r;
   } else {
-    /* anima pose no canvas conforme o golpe */
     if (indice === -1) Simulador.setPose('bananeira', 1200);
     else if (indice === 2) Simulador.setPose('guarda', 900);
     else if (indice === 1) Simulador.setPose('danca', 900);
@@ -650,7 +844,29 @@ Simulador.jogarTurno = function (chave, indice) {
 
     if (cons) cons.innerHTML = r.texto + ' Impacto: ' + r.impacto + ' | Precisão: ' + r.precisao;
     if ($('simBarEnergia')) $('simBarEnergia').style.width = r.energiaRestante + '%';
-    Simulador.registrarAprendizado('combate', r.golpe).then(function (apr) {
+    /* dano no rival de IA, se combate ativo */
+    if (Simulador.iaRival) {
+      var iChave = Simulador.iaRival.chave;
+      var iEst = Simulador.estadoBatalha[iChave] || { energia: 100, vida: 100 };
+      var jEst = Simulador.estadoBatalha[chave] || { energia: 100, vida: 100 };
+      if (jEst.vida == null) jEst.vida = 100;
+      if (iEst.vida == null) iEst.vida = 100;
+      jEst.energia = r.energiaRestante;
+      iEst.vida = Math.max(0, iEst.vida - (r.impacto || 10));
+      Simulador.estadoBatalha[chave] = jEst;
+      Simulador.estadoBatalha[iChave] = iEst;
+      if ($('simBarVidaJogador')) $('simBarVidaJogador').style.width = jEst.vida + '%';
+      if ($('simBarVidaIA')) $('simBarVidaIA').style.width = iEst.vida + '%';
+      if (iEst.vida <= 0) {
+        Simulador.iaRival = null;
+        if (cons) cons.innerHTML += '<br><b style="color:#00e676;">Você venceu a IA! Axé!</b>';
+        Simulador.registrarAprendizado('combate', 'vitoria_ia');
+      } else {
+        setTimeout(function () { Simulador.turnoIAMinimax(); }, 550);
+      }
+    }
+    var nomeGolpe = r.golpe || (r.texto || '').replace(/^.*\[/, '').replace(/\].*$/, '') || 'golpe';
+    Simulador.registrarAprendizado('combate', nomeGolpe).then(function (apr) {
       if (cons && apr) {
         cons.innerHTML += '<br><span style="color:var(--gold);">Avatar aprendeu! Estilo: ' + apr.estilo +
           ' · Bônus precisão +' + apr.bonusPrecisao + '%</span>';
@@ -733,207 +949,4 @@ Simulador.controleFlutuante = function (comando) {
 };
 
 /* persiste a sessão do aluno para conveniência */
-
-/* ============================================================
-   MUNDO = TAMAGOTCHI CAPOEIRA (substitui a antiga tela do Simulador)
-   Tudo no objeto Tama. Salva no cadastro do aluno logado (aluno.tamagotchi)
-   e no aparelho (localStorage) como reserva.
-   ============================================================ */
-var Tama = {
-  KEY: 'uc_tama_v1',
-  lutaAtiva: null,
-  AV: [
-    { id: 'ginga', nome: 'Ginginha', e: '🥋', a: 'a1' }, { id: 'berimbau', nome: 'Berimbauzinho', e: '🎼', a: 'a2' },
-    { id: 'angola', nome: 'Angolinha', e: '🤸', a: 'a4' }, { id: 'regional', nome: 'Regionalzinho', e: '🥊', a: 'a3' },
-    { id: 'mestre', nome: 'Mestrinho', e: '👑', a: 'a4' }, { id: 'leao', nome: 'Leãozinho', e: '🦁', a: 'a3' },
-    { id: 'mago', nome: 'Magozinho', e: '🧙', a: 'a4' }, { id: 'ninja', nome: 'Ninjinha', e: '🥷', a: 'a2' }
-  ],
-  MOV: [
-    { nome: 'Rasteira', custo: 10, dano: 15 }, { nome: 'Meia-Lua', custo: 14, dano: 22 },
-    { nome: 'Armada', custo: 16, dano: 25 }, { nome: 'Cabeçada', custo: 22, dano: 35 },
-    { nome: 'Aú (esquiva)', custo: 8, dano: 0, defesa: true }
-  ]
-};
-Tama.av = function (m) { return Tama.AV.filter(function (a) { return a.id === m.charId; })[0] || Tama.AV[0]; };
-
-Tama.carregar = function () {
-  var m = null, aluno = (typeof alunoLogado === 'function') ? alunoLogado() : null;
-  if (aluno && aluno.tamagotchi) m = aluno.tamagotchi;
-  else { try { m = JSON.parse(localStorage.getItem(Tama.KEY) || 'null'); } catch (e) {} }
-  if (!m) return null;
-  m = JSON.parse(JSON.stringify(m));
-  /* com o tempo, os status caem (a cada 3 min); só em memória até uma ação salvar */
-  var blocos = Math.floor((Date.now() - new Date(m.ultimoCuidado).getTime()) / 180000);
-  if (blocos > 0 && m.status !== 'morto') {
-    m.fome = Math.max(0, m.fome - blocos * 3); m.energia = Math.max(0, m.energia - blocos * 2);
-    m.humor = Math.max(0, m.humor - blocos * 2); m.forma = Math.max(0, m.forma - blocos);
-    m.ultimoCuidado = new Date().toISOString();
-    if (m.fome <= 0 || m.energia <= 0) m.status = 'doente';
-    if (m.fome <= 0 && m.energia <= 0 && m.humor <= 0) m.status = 'morto';
-  }
-  return m;
-};
-Tama.salvar = function (m) {
-  try { localStorage.setItem(Tama.KEY, JSON.stringify(m)); } catch (e) {}
-  var aluno = (typeof alunoLogado === 'function') ? alunoLogado() : null;
-  if (aluno) { try { DB.atualizar('alunos', aluno.id, { tamagotchi: m }); } catch (e2) {} }
-};
-
-Tama.emoji = function (m) {
-  var av = Tama.av(m);
-  if (m.status === 'morto') return '👻';
-  if (m.status === 'doente') return '🤒';
-  if (m.fome < 25) return '😿'; if (m.energia < 25) return '😴';
-  if (m.humor < 25) return '😾'; if (m.forma < 25) return '😰';
-  return av.e;
-};
-Tama.texto = function (m) {
-  if (m.status === 'morto') return 'Inativo. Troque de mascote.';
-  if (m.status === 'doente') return 'Estou doente… preciso de remédio!';
-  if (m.fome < 25) return 'Fome intensa!'; if (m.energia < 25) return 'Sono profundo.';
-  if (m.humor < 25) return 'Entediado.'; if (m.forma < 25) return 'Preciso treinar!';
-  return (m.fome + m.energia + m.humor + m.forma) / 4 >= 85 ? 'Axé total! 💚' : 'Pronto para a ginga.';
-};
-
-Tama.render = function () {
-  var root = $('tamaRoot'); if (!root) return;
-  var m = Tama.carregar();
-  if (!m || !m.charId) { root.innerHTML = Tama.htmlEscolha(); return; }
-  var av = Tama.av(m), L = Tama.lutaAtiva, arena = '';
-  if (L) {
-    arena = '<div class="tm-arena"><div class="tm-hud"><span style="color:#00e676">Você: HP ' + L.hpP + '%</span>' +
-      '<span style="color:#ff5252">Rival: HP ' + L.hpR + '%</span></div>' +
-      '<div class="mini" style="margin-bottom:6px">Energia: ' + L.enP + '</div><div class="tm-moves">' +
-      Tama.MOV.map(function (mv, i) {
-        return '<button class="btn btn-mini" ' + (L.enP < mv.custo ? 'disabled ' : '') + 'onclick="Tama.turno(' + i + ')">' + mv.nome + '</button>';
-      }).join('') + '</div><button class="btn btn-mini" style="margin-top:8px" onclick="Tama.fugir()">Desistir</button></div>';
-  }
-  root.innerHTML =
-    '<div class="card"><div class="tm-stats">' +
-    ['Fome', 'Energia', 'Humor', 'Forma'].map(function (n) { return '<div class="tm-stat">' + n + '<div class="tm-bar"><i id="tmb' + n + '"></i></div></div>'; }).join('') +
-    '</div><div class="tm-stage"><div id="tmPet" class="tm-pet ' + av.a + (m.status === 'morto' ? ' morto' : '') + '">' + Tama.emoji(m) + '</div>' +
-    '<div id="tmAct" class="tm-act">' + esc(Tama.texto(m)) + '</div></div>' +
-    '<div class="linha mini" style="margin-top:10px;display:flex;justify-content:space-between"><span><b>' + esc(m.nome) + '</b> · Nv.' + m.nivel + '</span><span id="tmXp">XP ' + m.xp + '/' + (m.nivel * 100) + ' · 🏆 ' + m.vitorias + '</span></div>' +
-    '<div class="tm-ctl">' +
-    '<button class="tm-btn" onclick="Tama.acao(\'feed\')"><i class="fas fa-apple-alt"></i>Alimentar</button>' +
-    '<button class="tm-btn" onclick="Tama.acao(\'train\')"><i class="fas fa-dumbbell"></i>Treinar</button>' +
-    '<button class="tm-btn" onclick="Tama.acao(\'sleep\')"><i class="fas fa-moon"></i>Dormir</button>' +
-    '<button class="tm-btn" onclick="Tama.acao(\'play\')"><i class="fas fa-gamepad"></i>Brincar</button>' +
-    '<button class="tm-btn" onclick="Tama.iniciarLuta()"><i class="fas fa-fist-raised"></i>Lutar</button>' +
-    '<button class="tm-btn" onclick="Tama.acao(\'med\')"><i class="fas fa-pills"></i>Remédio</button>' +
-    '<button class="tm-btn tm-wide" onclick="Tama.trocar()"><i class="fas fa-user-edit"></i>Trocar mascote</button></div>' +
-    arena + '<div class="tm-log" id="tmLog">Bem-vindo ao Mundo! ▸</div></div>';
-  Tama.barras(m);
-};
-
-Tama.barras = function (m) {
-  [['Fome', m.fome], ['Energia', m.energia], ['Humor', m.humor], ['Forma', m.forma]].forEach(function (p) {
-    var el = $('tmb' + p[0]); if (!el) return;
-    el.style.width = Math.max(0, Math.min(100, p[1])) + '%';
-    el.style.background = p[1] > 50 ? '#10b981' : (p[1] > 20 ? '#f59e0b' : '#ef4444');
-  });
-};
-Tama.refresh = function () {
-  var m = Tama.carregar(), tab = $('tabSimulador');
-  if (!m || !tab || !tab.classList.contains('active') || Tama.lutaAtiva) return;
-  Tama.barras(m);
-  if ($('tmPet')) $('tmPet').textContent = Tama.emoji(m);
-  if ($('tmAct')) $('tmAct').textContent = Tama.texto(m);
-};
-Tama.log = function (t) { var el = $('tmLog'); if (el) el.innerHTML = '<div>▸ ' + esc(t) + '</div>' + el.innerHTML; };
-
-Tama.htmlEscolha = function () {
-  return '<div class="card"><h3><i class="fas fa-dog"></i> Escolha seu Mascote</h3>' +
-    '<div class="tm-pick">' + Tama.AV.map(function (a) {
-      return '<div class="tm-card" data-id="' + a.id + '" onclick="Tama.pick(this)"><b>' + a.e + '</b><span>' + a.nome + '</span></div>';
-    }).join('') + '</div><label class="campo-label" style="margin-top:12px;display:block">Apelido</label>' +
-    '<input id="tmApelido" maxlength="20" placeholder="Ex: Ginginha"><button class="btn btn-gold" style="margin-top:10px" onclick="Tama.adotar()">Adotar</button></div>';
-};
-Tama.pick = function (el) {
-  Array.prototype.forEach.call(document.querySelectorAll('.tm-card'), function (c) { c.classList.remove('sel'); });
-  el.classList.add('sel');
-};
-Tama.adotar = function () {
-  var sel = document.querySelector('.tm-card.sel');
-  if (!sel) return mostrarToast('Selecione um mascote.', 'erro');
-  var av = Tama.AV.filter(function (a) { return a.id === sel.getAttribute('data-id'); })[0];
-  var ap = (($('tmApelido') || {}).value || '').trim();
-  var alu = (typeof alunoLogado === 'function') ? alunoLogado() : null;
-  Tama.salvar({ charId: av.id, nome: ap || (alu && alu.apelido) || av.nome, fome: 85, energia: 85, humor: 85, forma: 70,
-    nivel: 1, xp: 0, treinos: 0, vitorias: 0, status: 'vivo', ultimoCuidado: new Date().toISOString() });
-  mostrarToast('Mascote adotado! 💚'); Tama.render();
-};
-Tama.trocar = function () {
-  var m = Tama.carregar(); if (!m) return;
-  m.charId = null; Tama.lutaAtiva = null; Tama.salvar(m); Tama.render();
-};
-
-Tama.nivel = function (m) {
-  while (m.xp >= m.nivel * 100 && m.nivel < 50) { m.xp -= m.nivel * 100; m.nivel++; mostrarToast('⬆️ Nível ' + m.nivel + '!'); }
-};
-Tama.acao = function (t) {
-  var m = Tama.carregar(); if (!m) return;
-  if (m.status === 'morto' && t !== 'med') return mostrarToast('Mascote inativo. Troque de mascote.', 'erro');
-  if (t === 'feed') m.fome = Math.min(100, m.fome + 28);
-  if (t === 'train') { m.forma = Math.min(100, m.forma + 20); m.energia = Math.max(0, m.energia - 12); m.treinos++; m.xp += 8; }
-  if (t === 'sleep') m.energia = Math.min(100, m.energia + 40);
-  if (t === 'play') m.humor = Math.min(100, m.humor + 25);
-  if (t === 'med') { m.status = 'vivo'; m.fome = Math.max(m.fome, 30); m.energia = Math.max(m.energia, 30); }
-  if (m.status === 'doente' && m.fome > 40 && m.energia > 40) m.status = 'vivo';
-  Tama.nivel(m); m.ultimoCuidado = new Date().toISOString();
-  Tama.salvar(m); Tama.barras(m);
-  if ($('tmPet')) $('tmPet').textContent = Tama.emoji(m);
-  if ($('tmAct')) $('tmAct').textContent = Tama.texto(m);
-  if ($('tmXp')) $('tmXp').textContent = 'XP ' + m.xp + '/' + (m.nivel * 100) + ' · 🏆 ' + m.vitorias;
-  Tama.log({ feed: 'Comeu bem!', train: 'Treinou a ginga (+XP).', sleep: 'Descansou.', play: 'Brincou na roda!', med: 'Tomou o remédio.' }[t]);
-};
-
-/* ---- Luta: o rival usa Minimax (profundidade 3) ---- */
-Tama.minimax = function (hpP, hpR, enP, enR, prof, vezRival) {
-  if (prof === 0 || hpP <= 0 || hpR <= 0) return { s: (hpR - hpP) * 2 + (enR - enP) * 0.5 };
-  var melhor = { s: vezRival ? -Infinity : Infinity }, algum = false;
-  Tama.MOV.forEach(function (mv) {
-    var en = vezRival ? enR : enP; if (en < mv.custo) return;
-    algum = true;
-    var r = vezRival
-      ? Tama.minimax(mv.defesa ? hpP : hpP - mv.dano, hpR, enP, enR - mv.custo + 10, prof - 1, false)
-      : Tama.minimax(hpP, mv.defesa ? hpR : hpR - mv.dano, enP - mv.custo + 10, enR, prof - 1, true);
-    if (vezRival ? r.s > melhor.s : r.s < melhor.s) melhor = { s: r.s, mv: mv };
-  });
-  return algum ? melhor : { s: (hpR - hpP) * 2 + (enR - enP) * 0.5 };
-};
-Tama.iniciarLuta = function () {
-  var m = Tama.carregar();
-  if (!m || m.status === 'morto') return mostrarToast('Mascote inativo.', 'erro');
-  if (m.energia < 20) return mostrarToast('Precisa de pelo menos 20 de energia.', 'erro');
-  Tama.lutaAtiva = { hpP: 100, hpR: 100, enP: m.energia, enR: 100, guarda: false };
-  Tama.render(); Tama.log('⚡ Roda iniciada contra o Mestre Rival 🦊!');
-};
-Tama.fugir = function () { Tama.lutaAtiva = null; Tama.render(); };
-Tama.turno = function (i) {
-  var L = Tama.lutaAtiva, mv = Tama.MOV[i]; if (!L || L.enP < mv.custo) return;
-  var m = Tama.carregar(); L.enP -= mv.custo;
-  if (mv.defesa) { L.guarda = true; L.enP = Math.min(100, L.enP + 10); Tama.log('Você se esquivou! Próximo golpe enfraquecido.'); }
-  else { L.hpR = Math.max(0, L.hpR - mv.dano); Tama.log('Você usou ' + mv.nome + '! Dano ' + mv.dano + '.'); }
-  if (L.hpR <= 0) {
-    m.vitorias++; m.xp += 50; m.energia = Math.max(0, L.enP); m.humor = Math.min(100, m.humor + 10);
-    Tama.nivel(m); m.ultimoCuidado = new Date().toISOString(); Tama.salvar(m);
-    Tama.lutaAtiva = null; Tama.render(); Tama.log('🏆 Vitória! +50 XP'); return;
-  }
-  var d = Tama.minimax(L.hpP, L.hpR, L.enP, L.enR, 3, true), g = d.mv || Tama.MOV[0];
-  if (L.enR < g.custo) g = { nome: 'Ginga', custo: 0, dano: 0 };
-  var dano = g.defesa ? 0 : Math.round(g.dano * (L.guarda ? 0.5 : 1));
-  L.guarda = false; L.hpP = Math.max(0, L.hpP - dano); L.enR = Math.min(100, Math.max(0, L.enR - g.custo) + 10);
-  if (L.hpP <= 0) {
-    m.humor = Math.max(0, m.humor - 15); m.xp += 15; m.energia = Math.max(0, L.enP);
-    m.ultimoCuidado = new Date().toISOString(); Tama.nivel(m); Tama.salvar(m);
-    Tama.lutaAtiva = null; Tama.render(); Tama.log('❌ Derrotado pelo Minimax. +15 XP'); return;
-  }
-  Tama.render(); Tama.log('🤖 Rival usou ' + g.nome + (dano ? '! Dano ' + dano + '.' : '.'));
-};
-
-/* A aba Mundo passa a mostrar o Tamagotchi */
-Simulador.render = function () { Tama.render(); };
-setInterval(Tama.refresh, 30000);
-
 iniciarApp();

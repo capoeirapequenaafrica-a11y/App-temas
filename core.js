@@ -2295,3 +2295,76 @@ function toggleArcadeTelaGrande() {
   }
 }
 
+
+
+/* =========================================================
+   MinimaxIA — motor genérico (jogos + Mundo)
+   Usado em: damas, combate do Mundo, fantasmas (1–2 ply), etc.
+   ========================================================= */
+var MinimaxIA = {
+  /** Profundidade sugerida por nível 1–10 */
+  profundidadePorNivel: function (nivel) {
+    var n = nivel || 1;
+    if (n <= 2) return 2;
+    if (n <= 5) return 3;
+    if (n <= 8) return 4;
+    return 5;
+  },
+
+  /**
+   * Minimax genérico com alfa-beta.
+   * @param {object} estado - estado imutável (a função aplicar deve clonar)
+   * @param {number} depth
+   * @param {boolean} maximizing - true = IA maximiza avaliar()
+   * @param {function} gerarAcoes - (estado, maximizing) => array de ações
+   * @param {function} aplicar - (estado, acao) => novoEstado
+   * @param {function} avaliar - (estado) => number (maior = melhor para IA)
+   * @param {number} alpha
+   * @param {number} beta
+   * @returns {{ score:number, acao:* }}
+   */
+  buscar: function (estado, depth, maximizing, gerarAcoes, aplicar, avaliar, alpha, beta) {
+    if (alpha == null) alpha = -Infinity;
+    if (beta == null) beta = Infinity;
+    var acoes = gerarAcoes(estado, maximizing) || [];
+    if (depth <= 0 || !acoes.length) {
+      return { score: avaliar(estado), acao: null };
+    }
+    var melhorAcao = acoes[0];
+    if (maximizing) {
+      var maxEval = -Infinity;
+      for (var i = 0; i < acoes.length; i++) {
+        var filho = MinimaxIA.buscar(aplicar(estado, acoes[i]), depth - 1, false, gerarAcoes, aplicar, avaliar, alpha, beta);
+        if (filho.score > maxEval) {
+          maxEval = filho.score;
+          melhorAcao = acoes[i];
+        }
+        alpha = Math.max(alpha, maxEval);
+        if (beta <= alpha) break;
+      }
+      return { score: maxEval, acao: melhorAcao };
+    }
+    var minEval = Infinity;
+    for (var j = 0; j < acoes.length; j++) {
+      var filho2 = MinimaxIA.buscar(aplicar(estado, acoes[j]), depth - 1, true, gerarAcoes, aplicar, avaliar, alpha, beta);
+      if (filho2.score < minEval) {
+        minEval = filho2.score;
+        melhorAcao = acoes[j];
+      }
+      beta = Math.min(beta, minEval);
+      if (beta <= alpha) break;
+    }
+    return { score: minEval, acao: melhorAcao };
+  },
+
+  /** Escolhe a melhor ação de 1 ply (útil em jogos em tempo real) */
+  melhorAcao: function (acoes, pontuar) {
+    if (!acoes || !acoes.length) return null;
+    var best = acoes[0], bestS = -Infinity;
+    for (var i = 0; i < acoes.length; i++) {
+      var s = pontuar(acoes[i]);
+      if (s > bestS) { bestS = s; best = acoes[i]; }
+    }
+    return best;
+  }
+};
