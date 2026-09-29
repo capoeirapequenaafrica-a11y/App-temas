@@ -1,0 +1,11 @@
+# Bloqueia publicar se alguma aba protegida (Início, Check-in, Aluno, Jogos, Professor, ADM, Dev) perder função, botão ou arquivo.
+name: Verificar abas protegidas
+on: [push, pull_request]
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node verificar-abas.js .
