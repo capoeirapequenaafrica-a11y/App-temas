@@ -724,6 +724,7 @@ footer a { color: var(--accent-blue); }
         <button class="btn" onclick="abrirJogoArcade('quebra')"><i class="fas fa-cubes"></i> Quebra-Blocos</button>
         <button class="btn btn-secondary" onclick="abrirJogoArcade('pulo')"><i class="fas fa-dove"></i> Pulo</button>
         <button class="btn btn-gold" onclick="abrirJogoArcade('surfe')"><i class="fas fa-running"></i> Surfe</button>
+        <button class="btn btn-secondary" onclick="abrirJogoArcade('estrada')"><i class="fas fa-car-side"></i> Estrada</button>
         <button class="btn" onclick="abrirJogoArcade('mario')"><i class="fas fa-mountain"></i> Aventura</button>
       </div>
     </div>
@@ -837,6 +838,11 @@ footer a { color: var(--accent-blue); }
           <i class="fas fa-running" style="font-size:1.6rem;color:var(--accent-blue);"></i>
           <strong>Surfe</strong>
           <span>Mude de faixa</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('estrada')">
+          <i class="fas fa-car-side" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Estrada</strong>
+          <span>Desvie e acelere</span>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('mario')">
           <i class="fas fa-mountain" style="font-size:1.6rem;color:var(--accent-blue);"></i>
@@ -983,6 +989,9 @@ footer a { color: var(--accent-blue); }
       </div>
       <div id="arcadeAcoesPulo" style="display:none;" class="arcade-acoes-col">
         <button type="button" class="arcade-btn arcade-btn-green arcade-btn-jump" data-acao="jump">⬆ Pular</button>
+      </div>
+      <div id="arcadeAcoesEstrada" style="display:none;" class="arcade-acoes-col">
+        <button type="button" class="arcade-btn arcade-btn-gold arcade-btn-jump" data-acao="turbo">⚡ TURBO</button>
       </div>
       <div id="arcadeAcoesGeral" style="display:none;" class="arcade-acoes-col">
         <button type="button" class="arcade-btn arcade-btn-side" data-dir="left" aria-label="Esquerda">◀</button>
@@ -1205,6 +1214,7 @@ footer a { color: var(--accent-blue); }
 #arcadeOverlay[data-jogo="tetris"] .arcade-up { visibility: hidden; }                     /* Tetris: ◀ ▶ ▼ + Girar / Queda */
 #arcadeOverlay[data-jogo="surfe"] .arcade-dpad .arcade-up, #arcadeOverlay[data-jogo="surfe"] .arcade-dpad .arcade-down,
 #arcadeOverlay[data-jogo="mario"] .arcade-dpad .arcade-up, #arcadeOverlay[data-jogo="mario"] .arcade-dpad .arcade-down { visibility: hidden; }   /* ◀ ▶ + Pular */
+#arcadeOverlay[data-jogo="estrada"] .arcade-dpad .arcade-up, #arcadeOverlay[data-jogo="estrada"] .arcade-dpad .arcade-down { visibility: visible; }
 #arcadeOverlay[data-jogo="corrida"] .arcade-dpad,
 #arcadeOverlay[data-jogo="quebra"] .arcade-dpad,
 #arcadeOverlay[data-jogo="pulo"] .arcade-dpad { display: none; }                          /* só ◀ ▶ grandes (ou só Pular) */
@@ -1369,8 +1379,8 @@ footer a { color: var(--accent-blue); }
    ================================================================ */
 (function (g) {
   'use strict';
-  var ABAS = [{"id":"tab1","nome":"Início","icone":"fa-home","grupo":"protectedSystemTabs","conteudo":null,"arquivos":["aba-inicio.js","aba-inicio-2.js"],"elementos":["boxFormacaoInfantilUI","boxMinhaInscricaoFormacao","boxNiveisArcade","boxNiveisArcadeTab","boxNotificacaoAluno","btnAtivarNotificacao","btnConfirmarPresencaHoje","cardCertificadosAluno","cardHorarioFixoInicio","cardRankingCompletoInicio","cardRankingInicio","chatInput","chatMessages","checkinFixoNomeAluno","conteudoRankingInicio","feedInstagramInicio","headerTituloTexto","linkGmapsNotificacao","listaHorarioFixoInicio","listaRankingCompletoInicio","listaRankingJogos","listaRankingJogosTab","nomeJogadorCorrida","nomeJogadorTab","resumoArcadeInicio","tab2","textoNotificacaoLocal","txtJaConfirmouHoje"],"funcoes":["abrirInstagramOficial","alunoEmFormacaoAprovado","analisarDesempenhoAtletico","atualizarIconeFormadorUI","aulaDeHoje","baixarCertificado","certificadosDoAluno","comprimirImagem","confirmarPresencaHoje","encontrarAlunoPorNome","enviarAdvertenciaAluno","enviarMensagemNuvem","gerarAdvertenciaIA","htmlAnaliseDesempenho","htmlBarraHabilidade","htmlIconeFormador","identificarAlunosParaAdvertencia","inscreverFormacaoInfantil","inscricaoFormacaoDoAluno","jaFezCheckinHoje","jogarCorrida","mediaAvaliacao","nomeCheckinAtual","nomeJogadorArcade","obterCheckinDoDia","preencherFormacaoInfantilCampos","preencherNomeJogadorCorrida","rankingPontosJogos","registrarPontosJogo","renderAvisoLocal","renderBannerProfessorInicio","renderCertificadosAluno","renderFeedInstagramNota","renderFormacaoInfantilUI","renderHorarioFixoInicio","renderInicio","renderMinhaInscricaoFormacao","renderMural","renderPerguntaSemanaInicio","renderRanking","renderRankingCompleto","renderRankingJogos","renderSeletorNiveisArcade","sincronizarNomeJogador","uploadFotoChat"]},{"id":"tab2","nome":"Check-in","icone":"fa-map-marker-alt","grupo":"protectedSystemTabs","conteudo":null,"arquivos":["aba-checkin.js"],"elementos":["boxGympassCheckin","boxJaCheckinHoje","boxJustificativaAtraso","boxProfessorNaAulaCheckin","btnConfirmarCheckinLocal","cardMinhasPresencasCheckin","checkinFixoNomeAluno","horarioAulaHojeBox","justificativaAtrasoInput","listaMinhasPresencasCheckin","selectPoloFixoTreino"],"funcoes":["alunoCheckinLocalFixoSimples","atualizarEstadoBotaoCheckin","avaliarAtrasoHoje","htmlCardGympassAluno","pillStatus","renderCheckin","renderHorarioAulaHoje","renderMinhasPresencasCheckin","renderSelectPolos"]},{"id":"tab3","nome":"Aluno","icone":"fa-user-graduate","grupo":"protectedSystemTabs","conteudo":null,"arquivos":["aba-aluno.js"],"elementos":["cardAlunoLogin","cardAlunoPainel","cardAlunoPrimeiroCadastro","cardTesteConhecimento"],"funcoes":["baixarMeusDados","enviarSolicitacaoTreino","pillStatusSolicitacao","renderAluno","salvarPerfilAluno","trocarSenhaAluno","uploadFotoPerfil"]},{"id":"tabJogos","nome":"Jogos","icone":"fa-gamepad","grupo":"protectedSystemTabs","conteudo":null,"arquivos":["desafios.js","jogos-arcade.js","jogo-quebra.js","jogo-pulo.js","jogo-surfe.js","jogo-aventura.js","jogo-pacman.js"],"elementos":["arcadeAcoesGeral","arcadeAcoesPulo","arcadeAcoesTetris","arcadeCanvas","arcadeCanvasWrap","arcadeDica","arcadeNivel","arcadeObjetivo","arcadeOverlay","arcadePauseOverlay","arcadePlacar","arcadeTitulo","assistenteFab","assistentePainel","btnArcadeExpand","btnArcadePause","dicaAssistentePrimeiroAcesso","iconArcadePause","nomeJogadorCorrida"],"funcoes":["abrirJogoArcade","aceitarDesafioJogo","arcadeAcao","arcadeDir","arcadeKeyHandler","arcadeLoop","atualizarHUDNivelArcade","cancelarDesafioJogo","carregarNiveisArcade","colisaoTetris","configNivelArcade","curvaDificuldade","desbloqueioPorScoreNoFim","desenharBlocoTetris","desenharCarroArcade","desenharHUDArcade","drawCorridaArcade","drawMario","drawPacman","drawPulo","drawQuebra","drawSnake","drawSurfe","drawTetris","fecharJogoArcade","gameOverArcade","htmlCardDesafiosJogos","idAparelhoJogos","initCorridaArcade","initMario","initPacman","initPulo","initQuebra","initSnake","initSurfe","initTetris","instalarControlesArcadeTouch","instalarSwipeArcade","jogarDesafioAtivo","lancarDesafioJogo","marioJump","mergeTetris","moveTetris","nivelMaxDesbloqueado","nomeJogoDesafio","pacCelula","pacCentro","pacDirsOk","pacEscolherGhost","pacMover","pacPode","puloJump","registrarProgressoNivel","registrarScoreDesafio","rotateTetris","salvarNivelArcade","spawnFood","spawnTetris","subirNivelArcade","surfeJump","tickCorridaArcade","tickMario","tickPacman","tickPulo","tickQuebra","tickSnake","tickSurfe","tickTetris","toggleArcadeTelaGrande","togglePauseArcade","verificarDesbloqueioPorScore"]},{"id":"tab4","nome":"Professor","icone":"fa-chalkboard-teacher","grupo":"tabsEquipe","conteudo":"conteudoProfessor","arquivos":["aba-professor.js","avaliacao-semanal.js","interacao-aluno-professor.js"],"elementos":["btnToggleEquipe","cardAvisoAvaliacaoObrigatoria","conteudoProfessor","textoAvisoAvaliacaoObrigatoria"],"funcoes":["abrirFotoAulaAmpliada","alunoLeuAviso","apagarCertificado","assistenteEhProfessor","assistenteInfoAvaliacoes","assistenteInfoAvisos","assistenteInfoCertificados","assistenteInfoCheckin","assistenteInfoHorarios","assistenteInfoPedidos","assistenteInfoPolos","assistenteInfoPresencas","assistenteInfoProximaAula","assistenteInterceptarAvaliacaoSemanal","assistenteInterceptarGerenciarAluno","atualizarBadgesInteracao","atualizarCargaCertificado","avaliacoesDoAluno","cadastrarAlunoPeloProfessor","calcularCargaHorariaAluno","carregarAulaConteudoEdicao","carregarDesenvolvimentoAluno","compartilharCertificadoWhatsApp","confirmarApagarCertificado","confirmarEmissaoCertificado","confirmarExcluirAulaConteudo","confirmarExcluirPolo","contagemLeiturasAviso","contarNaoLidosAluno","contarNaoLidosProfessor","decidirPresenca","decidirSolicitacao","emitirCertificado","enviarFeedbackAula","enviarMensagemPrivadaAluno","enviarMensagemPrivadaProfessor","enviarMsgSolicitacao","excluirAulaConteudo","excluirHorario","excluirPolo","formatarCargaHoraria","gerarImagemCertificado","gerarSenhaProvisoria","gerarTesteSemanalTurma","horasPorAulaConfig","htmlAvaliacoesComComentario","htmlBannerProfessorNaAula","htmlCardAulasConteudoAluno","htmlCardFeedbackAula","htmlCardMensagensAluno","htmlCardPerguntaSemanaAluno","htmlConversaSolicitacao","htmlPainelAulasConteudoProfessor","htmlPainelInteracaoProfessor","htmlPedidosComConversa","htmlThreadMensagens","lancarPresencaManual","limparFormAulaConteudo","marcarAvaliacaoVista","marcarAvisoLido","marcarFeedbacksVistos","marcarMensagensLidasAluno","marcarMensagensLidasProfessor","marcarRespostasPerguntaVistas","mensagensDoAluno","notificarLocalAlunos","perguntaAtiva","prepararFotosAula","professorCheckinAula","professorCheckoutAula","professorForcarCheckinManual","professorPresenteHoje","professorRegistrarCheckinManual","proximoDomingo2359ISO","publicarAviso","publicarPerguntaSemana","publicarTesteSemanalTurma","removerFotoAula","renderAbaProfessor","renderAvisoAvaliacaoObrigatoria","renderPreviewFotosAula","responderPerguntaSemana","salvarAulaConteudo","salvarAvaliacao","salvarCheckinManualProfessor","salvarComentarioAvaliacao","salvarHorario","salvarPolo","semanaISOAtual","testeSemanalDaTurmaAtual","usarGpsParaPolo"]},{"id":"tab5","nome":"ADM","icone":"fa-sliders-h","grupo":"tabsEquipe","conteudo":"conteudoAdm","arquivos":["aba-adm.js"],"elementos":["conteudoAdm","nomeJogadorCorrida"],"funcoes":["alterarGraduacao","confirmarExcluirAluno","confirmarImportacao","confirmarLimparMural","confirmarLimparPontosJogos","confirmarLimparTudo","confirmarNovaGraduacao","excluirAlunoDefinitivo","exportarBackup","filtrarAlunosAdm","htmlListaAlunosAdm","importarBackup","limparMural","limparPontosJogosAgora","limparTudoDefinitivo","removerLogoApp","renderAbaAdm","resetarSenhaAluno","salvarConfiguracaoAdm","testarJogoAdm","uploadLogoApp"]},{"id":"tab6","nome":"Dev","icone":"fa-code","grupo":"tabsEquipe","conteudo":"conteudoDev","arquivos":["aba-dev.js"],"elementos":["areaTesteConhecimento","conteudoDev"],"funcoes":["capitalizarSlug","confirmarLimparCache","confirmarRemoverFirebase","criarAcessoEquipe","enviarRespostasQuiz","excluirAcessoEquipe","gerarParecerIA","gerarTesteConhecimento","importarDadosAntigos","iniciarQuizTurma","inspecionarColecao","limparCacheLocal","limparLogs","mostrarDadosBrutos","removerFirebaseDev","renderAbaDev","renderAreaTesteConhecimento","renderizarQuizConhecimento","salvarFirebaseDev","semanaAtualISO"]}];
-  var NUCLEO = {"arquivos":["core-base.js","core-dados.js","core-nav.js","assistente.js","abas-retrateis.js","init.js"],"funcoes":["$","abrirAba","abrirModal","abrirTimerTelaCheia","agoraEmMinutos","agoraISO","alunoLogado","aplicarAtualizacaoAppAgora","aplicarConfig","assistenteAdicionarBolha","assistenteEnviar","assistenteFormacaoProfessor","assistenteMensagemBoasVindas","assistentePerguntar","assistenteProcessar","atualizarPainelTelemetria","atualizarStatusFirebase","atualizarTimerUI","autenticarAlunoNuvem","autenticarEquipe","baixarArquivo","cadastrarAlunoNuvem","carregarConfigApp","carregarConfigFirebase","chamarAssistenteIA","chaveDoCard","dataBR","dataHoraBR","dataLocalISO","dentroJanelaCheckin","doisDigitos","esc","exigirEquipe","fecharModal","fecharTimerTelaCheia","formatarTempo","hashSenha","horaLocalHM","iniciarApp","iniciarPausarTimer","instalarGestoAcessoEquipe","janelaCheckin","limparTelemetriaErros","minutosDoHM","minutosParaHM","montarContextoAluno","montarLoginEquipe","mostrarDicaAssistentePrimeiroAcesso","mostrarToast","normalizar","notificacaoAtiva","notificar","pedirPermissaoNotificacao","perguntarIASobreErros","publicarNovaVersaoDev","registrarTelemetriaErro","registroLog","renderGraduacoes","renderizarAba","resetarTimer","revelarAcessoEquipe","sairAluno","sairEquipe","salvarConfigApp","salvarConfigFirebase","tocarAlarmeTimer","toggleAssistente","toggleAutoCadastroAluno","toggleCardColapsavel","toggleMenuEquipe","tornarCardsColapsaveis","uid","urlSegura","verificarNovaVersaoPublicada"]};
+  var ABAS = [{"id":"tab1","nome":"Início","icone":"fa-home","grupo":"protectedSystemTabs","conteudo":null,"arquivos":["aba-inicio.js","aba-inicio-2.js"],"elementos":["boxFormacaoInfantilUI","boxMinhaInscricaoFormacao","boxNiveisArcade","boxNiveisArcadeTab","boxNotificacaoAluno","btnAtivarNotificacao","btnConfirmarPresencaHoje","cardCertificadosAluno","cardHorarioFixoInicio","cardRankingCompletoInicio","cardRankingInicio","chatInput","chatMessages","checkinFixoNomeAluno","conteudoRankingInicio","feedInstagramInicio","headerTituloTexto","linkGmapsNotificacao","listaHorarioFixoInicio","listaRankingCompletoInicio","listaRankingJogos","listaRankingJogosTab","nomeJogadorCorrida","nomeJogadorTab","resumoArcadeInicio","tab2","textoNotificacaoLocal","txtJaConfirmouHoje"],"funcoes":["abrirInstagramOficial","alunoEmFormacaoAprovado","analisarDesempenhoAtletico","atualizarIconeFormadorUI","aulaDeHoje","baixarCertificado","certificadosDoAluno","comprimirImagem","confirmarPresencaHoje","encontrarAlunoPorNome","enviarAdvertenciaAluno","enviarMensagemNuvem","gerarAdvertenciaIA","htmlAnaliseDesempenho","htmlBarraHabilidade","htmlIconeFormador","identificarAlunosParaAdvertencia","inscreverFormacaoInfantil","inscricaoFormacaoDoAluno","jaFezCheckinHoje","jogarCorrida","mediaAvaliacao","nomeCheckinAtual","nomeJogadorArcade","obterCheckinDoDia","preencherFormacaoInfantilCampos","preencherNomeJogadorCorrida","rankingPontosJogos","registrarPontosJogo","renderAvisoLocal","renderBannerProfessorInicio","renderCertificadosAluno","renderFeedInstagramNota","renderFormacaoInfantilUI","renderHorarioFixoInicio","renderInicio","renderMinhaInscricaoFormacao","renderMural","renderPerguntaSemanaInicio","renderRanking","renderRankingCompleto","renderRankingJogos","renderSeletorNiveisArcade","sincronizarNomeJogador","uploadFotoChat"]},{"id":"tab2","nome":"Check-in","icone":"fa-map-marker-alt","grupo":"protectedSystemTabs","conteudo":null,"arquivos":["aba-checkin.js","calendario-treino.js"],"elementos":["boxGympassCheckin","boxJaCheckinHoje","boxJustificativaAtraso","boxProfessorNaAulaCheckin","btnConfirmarCheckinLocal","cardMinhasPresencasCheckin","checkinFixoNomeAluno","horarioAulaHojeBox","justificativaAtrasoInput","listaMinhasPresencasCheckin","selectPoloFixoTreino"],"funcoes":["alunoCheckinLocalFixoSimples","atualizarEstadoBotaoCheckin","avaliarAtrasoHoje","htmlCardGympassAluno","pillStatus","renderCheckin","renderHorarioAulaHoje","renderMinhasPresencasCheckin","renderSelectPolos","trCalDia","trCalEstadoDia","trCalInserirCheckin","trCalMes","trCalMontar","trCalPedirAjuste","trCalProf","trCalRender","trCalRenderTodos","trEditarItensDia","trEquipeLogada","trHtmlItensDia","trSalvarItensDia"]},{"id":"tab3","nome":"Aluno","icone":"fa-user-graduate","grupo":"protectedSystemTabs","conteudo":null,"arquivos":["aba-aluno.js","treino-aluno.js","aluno-acesso.js"],"elementos":["alunoLoginNome","cardAlunoLogin","cardAlunoPainel","cardAlunoPrimeiroCadastro","cardTesteConhecimento"],"funcoes":["baixarMeusDados","bioAtivar","bioB64","bioConfig","bioDeB64","bioDesafio","bioDesativar","bioEntrar","bioHtmlCard","bioInjetarLogin","bioSuportado","bioTexto","enviarSolicitacaoTreino","pillStatusSolicitacao","renderAluno","salvarPerfilAluno","trAlunoInjetar","trEnviarPedido","trHtmlPedidoAluno","trHtmlSemanaAluno","trPedToggle","trSemNav","trocarSenhaAluno","uploadFotoPerfil"]},{"id":"tabJogos","nome":"Jogos","icone":"fa-gamepad","grupo":"protectedSystemTabs","conteudo":null,"arquivos":["desafios.js","jogos-arcade.js","jogo-quebra.js","jogo-pulo.js","jogo-surfe.js","jogo-aventura.js","jogo-pacman.js"],"elementos":["arcadeAcoesEstrada","arcadeAcoesGeral","arcadeAcoesPulo","arcadeAcoesTetris","arcadeCanvas","arcadeCanvasWrap","arcadeDica","arcadeNivel","arcadeObjetivo","arcadeOverlay","arcadePauseOverlay","arcadePlacar","arcadeTitulo","assistenteFab","assistentePainel","btnArcadeExpand","btnArcadePause","dicaAssistentePrimeiroAcesso","iconArcadePause","nomeJogadorCorrida"],"funcoes":["abrirJogoArcade","aceitarDesafioJogo","arcadeAcao","arcadeDir","arcadeKeyHandler","arcadeLoop","arcadeSegurar","arcadeSoltarTudo","atualizarHUDNivelArcade","cancelarDesafioJogo","carregarNiveisArcade","colisaoTetris","configNivelArcade","curvaDificuldade","desbloqueioPorScoreNoFim","desenharBlocoTetris","desenharCarroArcade","desenharHUDArcade","drawCorridaArcade","drawMario","drawPacman","drawPulo","drawQuebra","drawSnake","drawSurfe","drawTetris","fecharJogoArcade","gameOverArcade","htmlCardDesafiosJogos","idAparelhoJogos","initCorridaArcade","initMario","initPacman","initPulo","initQuebra","initSnake","initSurfe","initTetris","instalarControlesArcadeTouch","instalarSwipeArcade","jogarDesafioAtivo","lancarDesafioJogo","marioJump","mergeTetris","moveTetris","nivelMaxDesbloqueado","nomeJogoDesafio","pacCelula","pacCentro","pacDirsOk","pacEscolherGhost","pacMover","pacPode","puloJump","quebraLigarDedo","quebraRR","quebraSegurar","quebraToque","registrarProgressoNivel","registrarScoreDesafio","rotateTetris","salvarNivelArcade","spawnFood","spawnTetris","subirNivelArcade","surfeJump","tickCorridaArcade","tickMario","tickPacman","tickPulo","tickQuebra","tickSnake","tickSurfe","tickTetris","toggleArcadeTelaGrande","togglePauseArcade","verificarDesbloqueioPorScore"]},{"id":"tab4","nome":"Professor","icone":"fa-chalkboard-teacher","grupo":"tabsEquipe","conteudo":"conteudoProfessor","arquivos":["aba-professor.js","avaliacao-semanal.js","interacao-aluno-professor.js","treino-semanal.js","treino-professor.js"],"elementos":["btnToggleEquipe","cardAvisoAvaliacaoObrigatoria","conteudoProfessor","textoAvisoAvaliacaoObrigatoria"],"funcoes":["abrirFotoAulaAmpliada","alunoLeuAviso","apagarCertificado","assistenteEhProfessor","assistenteInfoAvaliacoes","assistenteInfoAvisos","assistenteInfoCertificados","assistenteInfoCheckin","assistenteInfoHorarios","assistenteInfoPedidos","assistenteInfoPolos","assistenteInfoPresencas","assistenteInfoProximaAula","assistenteInterceptarAvaliacaoSemanal","assistenteInterceptarGerenciarAluno","atualizarBadgesInteracao","atualizarCargaCertificado","avaliacoesDoAluno","cadastrarAlunoPeloProfessor","calcularCargaHorariaAluno","carregarAulaConteudoEdicao","carregarDesenvolvimentoAluno","compartilharCertificadoWhatsApp","confirmarApagarCertificado","confirmarEmissaoCertificado","confirmarExcluirAulaConteudo","confirmarExcluirPolo","contagemLeiturasAviso","contarNaoLidosAluno","contarNaoLidosProfessor","decidirPresenca","decidirSolicitacao","emitirCertificado","enviarFeedbackAula","enviarMensagemPrivadaAluno","enviarMensagemPrivadaProfessor","enviarMsgSolicitacao","excluirAulaConteudo","excluirHorario","excluirPolo","formatarCargaHoraria","gerarImagemCertificado","gerarSenhaProvisoria","gerarTesteSemanalTurma","horasPorAulaConfig","htmlAvaliacoesComComentario","htmlBannerProfessorNaAula","htmlCardAulasConteudoAluno","htmlCardFeedbackAula","htmlCardMensagensAluno","htmlCardPerguntaSemanaAluno","htmlConversaSolicitacao","htmlPainelAulasConteudoProfessor","htmlPainelInteracaoProfessor","htmlPedidosComConversa","htmlThreadMensagens","lancarPresencaManual","limparFormAulaConteudo","marcarAvaliacaoVista","marcarAvisoLido","marcarFeedbacksVistos","marcarMensagensLidasAluno","marcarMensagensLidasProfessor","marcarRespostasPerguntaVistas","mensagensDoAluno","notificarLocalAlunos","perguntaAtiva","prepararFotosAula","professorCheckinAula","professorCheckoutAula","professorForcarCheckinManual","professorPresenteHoje","professorRegistrarCheckinManual","proximoDomingo2359ISO","publicarAviso","publicarPerguntaSemana","publicarTesteSemanalTurma","removerFotoAula","renderAbaProfessor","renderAvisoAvaliacaoObrigatoria","renderPreviewFotosAula","responderPerguntaSemana","salvarAulaConteudo","salvarAvaliacao","salvarCheckinManualProfessor","salvarComentarioAvaliacao","salvarHorario","salvarPolo","semanaISOAtual","testeSemanalDaTurmaAtual","trAdvDispensar","trAjusteResolver","trAlunoDeTeste","trAulasPrevistas","trBolLerForm","trBoletim","trBoletimGerar","trBoletimTestar","trCalcularPlano","trCat","trHoras","trHtmlAdvertencias","trHtmlBoletim","trHtmlBoletimProf","trHtmlCalProf","trHtmlPedidos","trHtmlTestes","trISO","trIconeCat","trImprimir","trImprimirBoletimAluno","trIrPara","trItensDoDia","trLinhaFixa","trMinParaTexto","trMontar","trNomeCat","trOrdenarMeio","trParseISO","trPedIncluir","trPedRecusar","trPedidosDoDia","trPlanoAdd","trPlanoCarregar","trPlanoCopiar","trPlanoData","trPlanoDoDia","trPlanoHtmlInterno","trPlanoLerDom","trPlanoRedesenhar","trPlanoRem","trPlanoSalvar","trPlanoSelDia","trPlanoTemplate","trPrefs","trPresencaDoDia","trPresencasAluno","trProfInjetar","trProximaDataAula","trSalvarPrefs","trSalvarSemana","trSalvarSemanasRecentes","trSegunda","trSemana","trSomaDias","trTestarAdvertencia","trTestarBio","trTestarBoletim","trTestarCat","trTestarDia","trTestarFixo","trTestarItem","trTestarSemana","trToggleAdvertencias","trVerBoletimAluno","usarGpsParaPolo"]},{"id":"tab5","nome":"ADM","icone":"fa-sliders-h","grupo":"tabsEquipe","conteudo":"conteudoAdm","arquivos":["aba-adm.js"],"elementos":["conteudoAdm","nomeJogadorCorrida"],"funcoes":["alterarGraduacao","confirmarExcluirAluno","confirmarImportacao","confirmarLimparMural","confirmarLimparPontosJogos","confirmarLimparTudo","confirmarNovaGraduacao","excluirAlunoDefinitivo","exportarBackup","filtrarAlunosAdm","htmlListaAlunosAdm","importarBackup","limparMural","limparPontosJogosAgora","limparTudoDefinitivo","removerLogoApp","renderAbaAdm","resetarSenhaAluno","salvarConfiguracaoAdm","testarJogoAdm","uploadLogoApp"]},{"id":"tab6","nome":"Dev","icone":"fa-code","grupo":"tabsEquipe","conteudo":"conteudoDev","arquivos":["aba-dev.js","dev-atualizar.js"],"elementos":["areaTesteConhecimento","conteudoDev"],"funcoes":["capitalizarSlug","confirmarLimparCache","confirmarRemoverFirebase","criarAcessoEquipe","enviarRespostasQuiz","excluirAcessoEquipe","gerarParecerIA","gerarTesteConhecimento","importarDadosAntigos","iniciarQuizTurma","inspecionarColecao","limparCacheLocal","limparLogs","mostrarDadosBrutos","removerFirebaseDev","renderAbaDev","renderAreaTesteConhecimento","renderizarQuizConhecimento","salvarFirebaseDev","semanaAtualISO","ucAbrirApp","ucAbrirRepo","ucAbrirUpload","ucAtualizarApp","ucDevInjetar","ucHtmlCardAtualizar","ucTestarBackup","ucVerificarVersaoNoAr"]}];
+  var NUCLEO = {"arquivos":["seguranca-backup.js","core-base.js","core-dados.js","core-nav.js","assistente.js","abas-retrateis.js","init.js"],"funcoes":["$","abrirAba","abrirModal","abrirTimerTelaCheia","agoraEmMinutos","agoraISO","alunoLogado","aplicarAtualizacaoAppAgora","aplicarConfig","assistenteAdicionarBolha","assistenteEnviar","assistenteFormacaoProfessor","assistenteMensagemBoasVindas","assistentePerguntar","assistenteProcessar","atualizarPainelTelemetria","atualizarStatusFirebase","atualizarTimerUI","autenticarAlunoNuvem","autenticarEquipe","baixarArquivo","cadastrarAlunoNuvem","carregarConfigApp","carregarConfigFirebase","chamarAssistenteIA","chaveDoCard","dataBR","dataHoraBR","dataLocalISO","dentroJanelaCheckin","doisDigitos","esc","exigirEquipe","fecharModal","fecharTimerTelaCheia","formatarTempo","hashSenha","horaLocalHM","iniciarApp","iniciarPausarTimer","instalarGestoAcessoEquipe","janelaCheckin","limparTelemetriaErros","minutosDoHM","minutosParaHM","montarContextoAluno","montarLoginEquipe","mostrarDicaAssistentePrimeiroAcesso","mostrarToast","normalizar","notificacaoAtiva","notificar","pedirPermissaoNotificacao","perguntarIASobreErros","publicarNovaVersaoDev","registrarTelemetriaErro","registroLog","renderGraduacoes","renderizarAba","resetarTimer","revelarAcessoEquipe","sairAluno","sairEquipe","salvarConfigApp","salvarConfigFirebase","tocarAlarmeTimer","toggleAssistente","toggleAutoCadastroAluno","toggleCardColapsavel","toggleMenuEquipe","tornarCardsColapsaveis","ucIrParaBackup","ucUrlBackup","uid","urlSegura","verificarNovaVersaoPublicada"]};
   var ACESSO_EQUIPE = {"botao":"btnToggleEquipe","menu":"tabsEquipe","gatilho":"headerAppTopo"};
   function congela(o) { Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === 'object') congela(o[k]); }); return Object.freeze(o); }
   congela(ABAS); congela(NUCLEO); congela(ACESSO_EQUIPE);
@@ -1385,6 +1395,56 @@ footer a { color: var(--accent-blue); }
     Object.defineProperty(g, 'UC_ESTRUTURA_INICIAL', { value: foto, writable: false, configurable: false });
   } catch (e) {}
 })(typeof window !== 'undefined' ? window : this);
+
+</script>
+<!-- segurança: se algo falhar, oferece voltar para a versão segura v87 -->
+<script>
+/* ▼ seguranca-backup.js */
+/* ================================================================
+   SEGURANCA-BACKUP.JS — Universo Capoeira (v87) · carrega ANTES de tudo
+   Se o app novo não conseguir iniciar, mostra "Abrir versão segura (v87)".
+   O arquivo backup-v87.html é uma cópia completa e testada da versão v87 (funciona sozinha).
+   ================================================================ */
+var UC_REPO_URL = 'https://github.com/capoeirapequenaafrica-a11y/App-temas';
+var UC_APP_URL = 'https://capoeirapequenaafrica-a11y.github.io/App-temas/';
+var UC_BACKUP_ARQUIVO = 'backup-v87.html';
+var UC_ERROS_BOOT = [];
+
+function ucUrlBackup() { return new URL(UC_BACKUP_ARQUIVO, location.href).href; }
+function ucIrParaBackup() { location.href = ucUrlBackup(); }
+
+(function () {
+  if (/backup-v87/.test(location.pathname)) return;
+  window.addEventListener('error', function (e) {
+    if (UC_ERROS_BOOT.length < 20) UC_ERROS_BOOT.push((e && e.message) || 'erro');
+  });
+  function mostrarAviso(motivo) {
+    if (document.getElementById('ucAvisoSeguranca')) return;
+    var d = document.createElement('div'); d.id = 'ucAvisoSeguranca';
+    d.setAttribute('style', 'position:fixed;inset:0;z-index:999999;background:rgba(3,8,14,.96);display:flex;align-items:center;justify-content:center;padding:20px;font-family:system-ui,sans-serif;color:#eaf6ff;');
+    d.innerHTML = '<div style="max-width:340px;text-align:center;border:1px solid #ffc107;border-radius:16px;padding:18px;background:#0b1622;">' +
+      '<div style="font-size:2rem;">⚠️</div><h3 style="margin:6px 0;">O app não abriu direito</h3>' +
+      '<p style="font-size:.85rem;opacity:.85;margin:0 0 12px;">' + motivo + ' Você pode abrir a <b>versão segura (v87)</b>, que está guardada e funcionando.</p>' +
+      '<button id="ucBtnBackup" style="width:100%;padding:12px;border:0;border-radius:12px;background:#00e676;color:#04140b;font-weight:700;font-size:1rem;margin-bottom:8px;">Abrir versão segura (v87)</button>' +
+      '<button id="ucBtnRetry" style="width:100%;padding:10px;border:1px solid #2a3a4a;border-radius:12px;background:transparent;color:#eaf6ff;margin-bottom:8px;">Tentar de novo</button>' +
+      '<button id="ucBtnIgnorar" style="width:100%;padding:8px;border:0;background:transparent;color:#90a4ae;font-size:.8rem;">Continuar assim mesmo</button></div>';
+    document.body.appendChild(d);
+    document.getElementById('ucBtnBackup').onclick = ucIrParaBackup;
+    document.getElementById('ucBtnRetry').onclick = function () { location.reload(); };
+    document.getElementById('ucBtnIgnorar').onclick = function () { d.remove(); };
+  }
+  window.ucMostrarAvisoSeguranca = mostrarAviso;
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      var vivo = (typeof abrirAba === 'function') && (typeof DB !== 'undefined') && window.UCProtecao;
+      if (!vivo) { mostrarAviso('Alguns arquivos não carregaram.'); return; }
+      var ruins = [];
+      try { ruins = window.UCProtecao.diagnostico().filter(function (x) { return !x.ok; }); } catch (e) {}
+      if (ruins.length) mostrarAviso('Faltam partes do app (' + ruins.map(function (x) { return x.nome; }).join(', ') + ').');
+      else if (UC_ERROS_BOOT.length >= 6) mostrarAviso('Ocorreram vários erros ao iniciar.');
+    }, 6000);
+  });
+})();
 
 </script>
 <!-- Código do app, um arquivo por aba (a ordem importa) -->
@@ -1456,7 +1516,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -2644,6 +2704,7 @@ function renderSeletorNiveisArcade() {
     { id: 'quebra', nome: 'Quebra-Blocos' },
     { id: 'pulo', nome: 'Pulo' },
     { id: 'surfe', nome: 'Surfe' },
+  { id: 'estrada', nome: 'Estrada' },
     { id: 'mario', nome: 'Aventura' }
   ];
   var html = '<p class="mini" style="margin-bottom:6px;">Níveis na nuvem (e neste aparelho) — grátis:</p>';
@@ -2784,6 +2845,7 @@ var JOGOS_DESAFIO = [
   { id: 'quebra', nome: 'Quebra-Blocos' },
   { id: 'pulo', nome: 'Pulo' },
   { id: 'surfe', nome: 'Surfe' },
+  { id: 'estrada', nome: 'Estrada' },
   { id: 'mario', nome: 'Aventura' }
 ];
 
@@ -3203,6 +3265,10 @@ function configNivelArcade(tipo, nivel) {
       label: 'Faça ' + objSu + ' pts sem cair'
     };
   }
+  if (tipo === 'estrada') {
+    var objE = Math.round(28 + 190 * curva);
+    return { nivel: nivel, objetivo: objE, velocidadeMs: 30, speedBase: +(2.3 + 2.7 * curva).toFixed(2), scoreParaDesbloquear: objE, label: 'Faça ' + objE + ' pts sem bater' };
+  }
   if (tipo === 'mario') {
     var objM = Math.round(5 + 25 * curva);
     return {
@@ -3302,7 +3368,7 @@ function subirNivelArcade() {
   var cfg = configNivelArcade(arcade.tipo, novo);
   arcade.objetivo = cfg.objetivo;
   if (arcade.timer) clearInterval(arcade.timer);
-  var gamesComRampa2 = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman'];
+  var gamesComRampa2 = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman', 'estrada'];
   arcade.rampaAtiva = gamesComRampa2.indexOf(arcade.tipo) >= 0;
   arcade.velAlvo = cfg.velocidadeMs;
   arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 1.6) : cfg.velocidadeMs;
@@ -3328,6 +3394,8 @@ function subirNivelArcade() {
     try { initMario(); } catch (e) {}
   } else if (arcade.tipo === 'surfe') {
     try { initSurfe(); } catch (e) {}
+  } else if (arcade.tipo === 'estrada') {
+    try { initEstrada(); } catch (e) {}
   } else if (arcade.tipo === 'corrida') {
     try { initCorridaArcade(); } catch (e) {}
   }
@@ -3452,7 +3520,7 @@ function abrirJogoArcade(tipo, nivelInicio) {
   var ov = $('arcadeOverlay');
   if (ov) { ov.style.display = 'flex'; ov.setAttribute('data-jogo', tipo); }   /* v87: controles próprios de cada jogo (CSS por data-jogo) */
   try { document.body.style.overflow = 'hidden'; } catch (e) {}
-  var titulos = { pacman: 'Pac-Man', snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', mario: 'Aventura' };
+  var titulos = { pacman: 'Pac-Man', snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', estrada: 'Estrada', mario: 'Aventura' };
   if ($('arcadeTitulo')) $('arcadeTitulo').textContent = (titulos[tipo] || 'Jogo') + ' · Nv.' + nv;
   if ($('arcadeDica')) {
     var dicas = {
@@ -3463,6 +3531,7 @@ function abrirJogoArcade(tipo, nivelInicio) {
       quebra: 'Mova a barra · quebre todos os blocos',
       pulo: 'Toque em Pular ou cima para evitar os canos',
       surfe: '◀ ▶ muda de faixa · ▲ ou Pular para saltar obstáculos',
+      estrada: '◀ ▶ troca de faixa · segure TURBO (▲) · ▼ freia · pegue moedas e nitro',
       mario: '◀ ▶ corre · ▲ ou Pular · pegue moedas e chegue na bandeira'
     };
     $('arcadeDica').textContent = dicas[tipo] || 'Deslize ou use as setas';
@@ -3471,6 +3540,8 @@ function abrirJogoArcade(tipo, nivelInicio) {
   if (acoesT) acoesT.style.display = (tipo === 'tetris') ? 'flex' : 'none';
   var acoesP = $('arcadeAcoesPulo');
   if (acoesP) acoesP.style.display = (tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario') ? 'flex' : 'none';
+  var acoesE = $('arcadeAcoesEstrada');
+  if (acoesE) acoesE.style.display = (tipo === 'estrada') ? 'flex' : 'none';
   var acoesG = $('arcadeAcoesGeral');
   /* snake, corrida, quebra, pacman: também usam polegar direito (◀ ▶) */
   if (acoesG) {
@@ -3487,7 +3558,7 @@ function abrirJogoArcade(tipo, nivelInicio) {
   } else if (tipo === 'pacman') {
     arcade.canvas.width = 336;
     arcade.canvas.height = 364;
-  } else if (tipo === 'corrida' || tipo === 'quebra' || tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario') {
+  } else if (tipo === 'corrida' || tipo === 'quebra' || tipo === 'pulo' || tipo === 'surfe' || tipo === 'mario' || tipo === 'estrada') {
     arcade.canvas.width = 280;
     arcade.canvas.height = 400;
   }
@@ -3498,10 +3569,11 @@ function abrirJogoArcade(tipo, nivelInicio) {
   else if (tipo === 'quebra') initQuebra();
   else if (tipo === 'pulo') initPulo();
   else if (tipo === 'surfe') initSurfe();
+  else if (tipo === 'estrada') initEstrada();
   else if (tipo === 'mario') initMario();
   else if (tipo === 'pacman') initPacman();
   if (arcade.timer) clearInterval(arcade.timer);
-  var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman'];
+  var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman', 'estrada'];
   arcade.rampaAtiva = gamesComRampa.indexOf(tipo) >= 0;
   arcade.velAlvo = cfg.velocidadeMs;
   arcade.velAtual = arcade.rampaAtiva ? Math.round(cfg.velocidadeMs * 2.2) : cfg.velocidadeMs;
@@ -3541,14 +3613,17 @@ function instalarControlesArcadeTouch() {
     press(btn, true);
     var dir = btn.getAttribute('data-dir');
     var acao = btn.getAttribute('data-acao');
-    if (dir) arcadeDir(dir);
-    if (acao) arcadeAcao(acao);
+    if (dir) { arcadeDir(dir); arcadeSegurar(dir, true); }
+    if (acao) { arcadeAcao(acao); arcadeSegurar(acao, true); }
   }
   function handleEnd(e) {
     var btn = btnFrom(e);
     if (!btn) return;
     e.preventDefault();
     press(btn, false);
+    var dirE = btn.getAttribute('data-dir'), acaoE = btn.getAttribute('data-acao');
+    if (dirE) arcadeSegurar(dirE, false);
+    if (acaoE) arcadeSegurar(acaoE, false);
   }
   bar.addEventListener('touchstart', handleStart, { passive: false });
   bar.addEventListener('touchend', handleEnd, { passive: false });
@@ -3557,6 +3632,7 @@ function instalarControlesArcadeTouch() {
   bar.addEventListener('mouseup', handleEnd);
   bar.addEventListener('mouseleave', function () {
     bar.querySelectorAll('.arcade-pressed').forEach(function (b) { b.classList.remove('arcade-pressed'); });
+    arcadeSoltarTudo();
   });
   bar.addEventListener('click', function (e) {
     if (btnFrom(e)) e.preventDefault();
@@ -3603,6 +3679,7 @@ function fecharJogoArcade() {
     else if (tipo === 'quebra') pts = Math.round(scoreFinal * 1.5);
     else if (tipo === 'pulo') pts = Math.round(scoreFinal * 2);
     else if (tipo === 'surfe') pts = Math.round(scoreFinal * 1.8);
+    else if (tipo === 'estrada') pts = Math.round(scoreFinal * 1.8);
     else if (tipo === 'mario') pts = Math.round(scoreFinal * 2);
     else if (tipo === 'pacman') pts = Math.round(scoreFinal * 1.2);
     /* bônus por nível alcançado (grátis) */
@@ -3665,6 +3742,7 @@ function arcadeKeyHandler(e) {
   else if (k === ' ' || k === 'Enter') {
     if (arcade.tipo === 'tetris') arcadeAcao('rotate');
     else if (arcade.tipo === 'pulo' || arcade.tipo === 'surfe' || arcade.tipo === 'mario') arcadeAcao('jump');
+    else if (arcade.tipo === 'estrada') estradaDir('up');
     e.preventDefault();
   }
 }
@@ -3687,10 +3765,11 @@ function arcadeDir(d) {
     if (d === 'left') arcade.carX = Math.max(0, arcade.carX - 1);
     else if (d === 'right') arcade.carX = Math.min(2, arcade.carX + 1);
   } else if (arcade.tipo === 'quebra') {
-    if (d === 'left') arcade.paddleX = Math.max(0, arcade.paddleX - 28);
-    else if (d === 'right') arcade.paddleX = Math.min(arcade.canvas.width - arcade.paddleW, arcade.paddleX + 28);
+    quebraToque(d);
   } else if (arcade.tipo === 'pulo') {
     if (d === 'up') puloJump();
+  } else if (arcade.tipo === 'estrada') {
+    estradaDir(d);
   } else if (arcade.tipo === 'surfe') {
     if (d === 'left') arcade.surferLane = Math.max(0, arcade.surferLane - 1);
     else if (d === 'right') arcade.surferLane = Math.min(2, arcade.surferLane + 1);
@@ -3702,6 +3781,15 @@ function arcadeDir(d) {
   } else if (arcade.tipo === 'pacman') {
     if (d === 'left' || d === 'right' || d === 'up' || d === 'down') arcade.pacNext = d;
   }
+}
+
+function arcadeSegurar(chave, on) {
+  if (!arcade.rodando) return;
+  if (arcade.tipo === 'quebra' && typeof quebraSegurar === 'function') quebraSegurar(chave, on);
+  else if (arcade.tipo === 'estrada' && typeof estradaSegurar === 'function') estradaSegurar(chave, on);
+}
+function arcadeSoltarTudo() {
+  ['left', 'right', 'up', 'down', 'turbo', 'freio'].forEach(function (k) { arcadeSegurar(k, false); });
 }
 
 function arcadeAcao(a) {
@@ -3736,6 +3824,7 @@ function arcadeLoop() {
   else if (arcade.tipo === 'quebra') tickQuebra();
   else if (arcade.tipo === 'pulo') tickPulo();
   else if (arcade.tipo === 'surfe') tickSurfe();
+  else if (arcade.tipo === 'estrada') tickEstrada();
   else if (arcade.tipo === 'mario') tickMario();
   else if (arcade.tipo === 'pacman') tickPacman();
   if ($('arcadePlacar')) $('arcadePlacar').textContent = String(arcade.score);
@@ -4161,112 +4250,96 @@ function tickCorridaArcade() {
   drawCorridaArcade();
 }
 
-function desenharCarroArcade(ctx, x, y, bw, bh, cor1, cor2) {
-  /* carro mais realista: carroceria, teto, rodas, faróis */
-  ctx.fillStyle = '#111';
-  ctx.fillRect(x + 4, y + bh - 8, 8, 7);
-  ctx.fillRect(x + bw - 12, y + bh - 8, 8, 7);
-  ctx.fillRect(x + 4, y + 2, 8, 7);
-  ctx.fillRect(x + bw - 12, y + 2, 8, 7);
-  var g = ctx.createLinearGradient(x, y, x + bw, y + bh);
-  g.addColorStop(0, cor1);
-  g.addColorStop(1, cor2);
+function desenharCarroArcade(ctx, x, y, bw, bh, cor1, cor2, opts) {
+  /* carro visto de cima: sombra, rodas, carroceria com brilho, vidros, faróis com luz */
+  opts = opts || {};
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.38)';
+  ctx.beginPath(); ctx.ellipse(x + bw / 2 + 2, y + bh / 2 + 4, bw * 0.55, bh * 0.56, 0, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#0c0c0e';
+  [[x + 1, y + 6], [x + bw - 8, y + 6], [x + 1, y + bh - 15], [x + bw - 8, y + bh - 15]].forEach(function (r) {
+    ctx.beginPath(); ctx.moveTo(r[0] + 2, r[1]); ctx.lineTo(r[0] + 6, r[1]); ctx.quadraticCurveTo(r[0] + 7, r[1], r[0] + 7, r[1] + 2); ctx.lineTo(r[0] + 7, r[1] + 7); ctx.quadraticCurveTo(r[0] + 7, r[1] + 9, r[0] + 5, r[1] + 9); ctx.lineTo(r[0] + 2, r[1] + 9); ctx.quadraticCurveTo(r[0], r[1] + 9, r[0], r[1] + 7); ctx.lineTo(r[0], r[1] + 2); ctx.quadraticCurveTo(r[0], r[1], r[0] + 2, r[1]); ctx.fill();
+  });
+  var g = ctx.createLinearGradient(x, y, x + bw, y);
+  g.addColorStop(0, cor2); g.addColorStop(0.35, cor1); g.addColorStop(0.65, cor1); g.addColorStop(1, cor2);
   ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.moveTo(x + 6, y + bh - 6);
-  ctx.lineTo(x + 4, y + 14);
-  ctx.lineTo(x + 10, y + 4);
-  ctx.lineTo(x + bw - 10, y + 4);
-  ctx.lineTo(x + bw - 4, y + 14);
-  ctx.lineTo(x + bw - 6, y + bh - 6);
-  ctx.closePath();
-  ctx.fill();
-  /* teto / vidro */
-  ctx.fillStyle = 'rgba(180,220,255,0.55)';
-  ctx.fillRect(x + 12, y + 10, bw - 24, 12);
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.fillRect(x + 12, y + 10, bw - 24, 4);
-  /* faróis */
-  ctx.fillStyle = '#fff59d';
-  ctx.fillRect(x + 8, y + 4, 7, 4);
-  ctx.fillRect(x + bw - 15, y + 4, 7, 4);
-  /* lanterna traseira */
-  ctx.fillStyle = '#ff5252';
-  ctx.fillRect(x + 8, y + bh - 10, 6, 4);
-  ctx.fillRect(x + bw - 14, y + bh - 10, 6, 4);
+  ctx.moveTo(x + bw * 0.22, y + 2); ctx.lineTo(x + bw * 0.78, y + 2);
+  ctx.quadraticCurveTo(x + bw - 2, y + 4, x + bw - 3, y + bh * 0.28);
+  ctx.lineTo(x + bw - 4, y + bh - 8); ctx.quadraticCurveTo(x + bw - 6, y + bh - 1, x + bw * 0.7, y + bh - 1);
+  ctx.lineTo(x + bw * 0.3, y + bh - 1); ctx.quadraticCurveTo(x + 6, y + bh - 1, x + 4, y + bh - 8);
+  ctx.lineTo(x + 3, y + bh * 0.28); ctx.quadraticCurveTo(x + 2, y + 4, x + bw * 0.22, y + 2);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1; ctx.stroke();
+  var cap = ctx.createLinearGradient(0, y, 0, y + bh * 0.3); cap.addColorStop(0, 'rgba(255,255,255,0.32)'); cap.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = cap; ctx.fillRect(x + bw * 0.28, y + 3, bw * 0.44, bh * 0.28);
+  var vg = ctx.createLinearGradient(0, y + bh * 0.26, 0, y + bh * 0.66); vg.addColorStop(0, '#0f2236'); vg.addColorStop(1, '#1d3a57');
+  ctx.fillStyle = vg;
+  ctx.beginPath(); ctx.moveTo(x + bw * 0.24, y + bh * 0.3); ctx.lineTo(x + bw * 0.76, y + bh * 0.3); ctx.lineTo(x + bw * 0.82, y + bh * 0.62); ctx.lineTo(x + bw * 0.18, y + bh * 0.62); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.beginPath(); ctx.moveTo(x + bw * 0.3, y + bh * 0.31); ctx.lineTo(x + bw * 0.44, y + bh * 0.31); ctx.lineTo(x + bw * 0.34, y + bh * 0.61); ctx.lineTo(x + bw * 0.24, y + bh * 0.61); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(x + bw * 0.2, y + bh * 0.64, bw * 0.6, bh * 0.2);
+  ctx.save(); ctx.shadowColor = '#fff59d'; ctx.shadowBlur = 8;
+  ctx.fillStyle = '#fffde7'; ctx.beginPath(); ctx.ellipse(x + bw * 0.24, y + 5, 4, 2.4, 0, 0, 6.2832); ctx.ellipse(x + bw * 0.76, y + 5, 4, 2.4, 0, 0, 6.2832); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.shadowColor = '#ff1744'; ctx.shadowBlur = opts.freio ? 12 : 6;
+  ctx.fillStyle = opts.freio ? '#ff8a80' : '#ff5252'; ctx.fillRect(x + bw * 0.12, y + bh - 6, bw * 0.24, 3); ctx.fillRect(x + bw * 0.64, y + bh - 6, bw * 0.24, 3); ctx.restore();
+  ctx.restore();
 }
 
 function drawCorridaArcade() {
   var ctx = arcade.ctx;
-  var w = arcade.canvas.width, h = arcade.canvas.height;
-  /* noite tech */
-  var sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#0a1628');
-  sky.addColorStop(0.4, '#121212');
-  sky.addColorStop(1, '#1a1a1a');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, w, h);
-  /* asfalto neon */
-  var road = ctx.createLinearGradient(0, 0, w, 0);
-  road.addColorStop(0, '#0d1117');
-  road.addColorStop(0.5, '#1c2333');
-  road.addColorStop(1, '#0d1117');
-  ctx.fillStyle = road;
-  ctx.fillRect(8, 0, w - 16, h);
-  /* textura de asfalto (grão) */
-  var texOffset = (arcade.frame * (arcade.speed || 4)) % 40;
-  ctx.fillStyle = 'rgba(255,255,255,0.035)';
-  for (var ty = -40; ty < h + 40; ty += 9) {
-    var yy = ty + texOffset;
-    for (var tx = 10; tx < w - 10; tx += 17) {
-      ctx.fillRect(tx + ((Math.floor(ty / 9)) % 2) * 5, yy, 2, 2);
-    }
+  var w = arcade.canvas.width, h = arcade.canvas.height, t = arcade.frame || 0;
+  var bgc = ctx.createLinearGradient(0, 0, 0, h);
+  bgc.addColorStop(0, '#08111f'); bgc.addColorStop(1, '#0c1626');
+  ctx.fillStyle = bgc; ctx.fillRect(0, 0, w, h);
+  /* acostamento com luzes da cidade que passam */
+  var off2 = (t * (arcade.speed || 4) * 1.4) % 60;
+  for (var ly = -60; ly < h + 60; ly += 60) {
+    var yy = ly + off2;
+    [[2, '#00e676'], [w - 8, '#00d2ff']].forEach(function (p) {
+      var lg = ctx.createRadialGradient(p[0] + 3, yy, 0, p[0] + 3, yy, 22); lg.addColorStop(0, p[1] + '55'); lg.addColorStop(1, p[1] + '00');
+      ctx.fillStyle = lg; ctx.fillRect(p[0] - 20, yy - 22, 46, 44); ctx.fillStyle = p[1]; ctx.fillRect(p[0], yy - 6, 6, 12);
+    });
   }
-  /* bordas neon */
-  ctx.fillStyle = '#00e676';
-  ctx.globalAlpha = 0.35;
-  ctx.fillRect(0, 0, 6, h);
-  ctx.fillRect(w - 6, 0, 6, h);
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = 'rgba(0,210,255,0.4)';
-  ctx.fillRect(6, 0, 3, h);
-  ctx.fillRect(w - 9, 0, 3, h);
+  /* asfalto com brilho úmido e grão */
+  var road = ctx.createLinearGradient(0, 0, w, 0);
+  road.addColorStop(0, '#12161d'); road.addColorStop(0.5, '#262d3b'); road.addColorStop(1, '#12161d');
+  ctx.fillStyle = road; ctx.fillRect(12, 0, w - 24, h);
+  var refl = ctx.createLinearGradient(0, 0, 0, h); refl.addColorStop(0, 'rgba(120,170,255,0.10)'); refl.addColorStop(0.5, 'rgba(120,170,255,0)'); refl.addColorStop(1, 'rgba(255,255,255,0.05)');
+  ctx.fillStyle = refl; ctx.fillRect(12, 0, w - 24, h);
+  var texOffset = (t * (arcade.speed || 4)) % 40;
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for (var ty = -40; ty < h + 40; ty += 9) {
+    var yt = ty + texOffset;
+    for (var tx = 14; tx < w - 14; tx += 17) ctx.fillRect(tx + ((Math.floor(ty / 9)) % 2) * 5, yt, 2, 2);
+  }
+  /* zebras nas bordas */
+  var zoff = (t * (arcade.speed || 4) * 1.4) % 32;
+  for (var zy = -32; zy < h + 32; zy += 32) {
+    ctx.fillStyle = '#e53935'; ctx.fillRect(9, zy + zoff, 5, 16); ctx.fillRect(w - 14, zy + zoff, 5, 16);
+    ctx.fillStyle = '#f5f5f5'; ctx.fillRect(9, zy + zoff + 16, 5, 16); ctx.fillRect(w - 14, zy + zoff + 16, 5, 16);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillRect(16, 0, 2, h); ctx.fillRect(w - 18, 0, 2, h);
   var laneW = w / 3;
-  var offset = (arcade.frame * arcade.speed * 2) % 30;
-  ctx.strokeStyle = 'rgba(255,193,7,0.85)';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = '#ffc107';
-  ctx.shadowBlur = 6;
-  ctx.setLineDash([16, 12]);
-  ctx.lineDashOffset = -offset;
-  ctx.beginPath();
-  ctx.moveTo(laneW, 0); ctx.lineTo(laneW, h);
-  ctx.moveTo(laneW * 2, 0); ctx.lineTo(laneW * 2, h);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.shadowBlur = 0;
-  var coresRivais = [['#ef5350', '#b71c1c'], ['#42a5f5', '#0d47a1'], ['#ab47bc', '#6a1b9a'], ['#ff9800', '#e65100']];
+  var offset = (t * arcade.speed * 2) % 30;
+  ctx.strokeStyle = 'rgba(255,214,79,0.92)'; ctx.lineWidth = 3;
+  ctx.shadowColor = '#ffc107'; ctx.shadowBlur = 6;
+  ctx.setLineDash([16, 12]); ctx.lineDashOffset = -offset;
+  ctx.beginPath(); ctx.moveTo(laneW, 0); ctx.lineTo(laneW, h); ctx.moveTo(laneW * 2, 0); ctx.lineTo(laneW * 2, h); ctx.stroke();
+  ctx.setLineDash([]); ctx.shadowBlur = 0;
+  var coresRivais = [['#ef5350', '#8e1c1c'], ['#42a5f5', '#0d3a80'], ['#ab47bc', '#5a1a78'], ['#ffa726', '#a34d00'], ['#eceff1', '#78909c']];
   arcade.obstacles.forEach(function (o, idx) {
-    var x = o.lane * laneW + 12;
-    var y = o.y;
-    var bw = laneW - 24, bh = 40;
-    var c = coresRivais[idx % coresRivais.length];
-    /* rastro de velocidade atrás do carro */
-    var trailG = ctx.createLinearGradient(0, y - 26, 0, y);
-    trailG.addColorStop(0, 'rgba(255,255,255,0)');
-    trailG.addColorStop(1, 'rgba(255,255,255,0.18)');
-    ctx.fillStyle = trailG;
-    ctx.fillRect(x + bw * 0.18, y - 26, bw * 0.64, 26);
-    desenharCarroArcade(ctx, x, y, bw, bh, c[0], c[1]);
+    var x = o.lane * laneW + 14, y = o.y, bw = laneW - 28, bh = 42, c = coresRivais[idx % coresRivais.length];
+    var trailG = ctx.createLinearGradient(0, y - 30, 0, y); trailG.addColorStop(0, 'rgba(255,255,255,0)'); trailG.addColorStop(1, 'rgba(255,255,255,0.14)');
+    ctx.fillStyle = trailG; ctx.fillRect(x + bw * 0.2, y - 30, bw * 0.6, 30);
+    desenharCarroArcade(ctx, x, y, bw, bh, c[0], c[1], {});
   });
-  var px = arcade.carX * laneW + 14;
-  var py = h - 64;
-  var pw = laneW - 28, ph = 46;
-  /* glow do carro do jogador */
-  ctx.shadowColor = '#00e676';
-  ctx.shadowBlur = 16;
-  desenharCarroArcade(ctx, px, py, pw, ph, '#69f0ae', '#00c853');
-  ctx.shadowBlur = 0;
+  var px = arcade.carX * laneW + 15, py = h - 66, pw = laneW - 30, ph = 46;
+  var fh = ctx.createLinearGradient(0, py - 60, 0, py); fh.addColorStop(0, 'rgba(255,253,200,0)'); fh.addColorStop(1, 'rgba(255,253,200,0.16)');
+  ctx.fillStyle = fh; ctx.beginPath(); ctx.moveTo(px + pw * 0.15, py + 2); ctx.lineTo(px - 10, py - 70); ctx.lineTo(px + pw + 10, py - 70); ctx.lineTo(px + pw * 0.85, py + 2); ctx.closePath(); ctx.fill();
+  ctx.save(); ctx.shadowColor = '#00e676'; ctx.shadowBlur = 14;
+  desenharCarroArcade(ctx, px, py, pw, ph, '#69f0ae', '#00a152', {});
+  ctx.restore();
   desenharHUDArcade(ctx, w, 'CORRIDA');
 }
 
@@ -4296,8 +4369,45 @@ function gameOverArcade() {
 </script>
 <script>
 /* ▼ jogo-quebra.js */
-/* JOGO-QUEBRA.JS — Universo Capoeira (v87) · trecho do app dividido sem alterar o código (linhas 4184–4274 do index.html original) */
-/* ===== Quebra-Blocos ===== */
+/* JOGO-QUEBRA.JS — Universo Capoeira (v87) · Quebra-Blocos
+   Regras e níveis iguais às anteriores. Novidades:
+   - Segurar ◀ ▶: a barra anda continuamente. Segurando mais de 3 segundos ela entra no
+     MODO DESLIZANTE (desliza rápido e continua deslizando um pouco ao soltar).
+   - Gráficos novos: bola com rastro e brilho, blocos em relevo, raquete metálica, faíscas e fundo espacial. */
+var QB = { hold: 0, t0: 0, v: 0, desl: false, deslAte: 0, ultimo: 0, trilha: [], rastro: [], estrelas: [], hit: 0, dedo: null };
+
+/* Toque rápido em ◀ ▶: um passo de 28 px (como antes). Em MODO DESLIZANTE, o toque dá um impulso e a raquete desliza. */
+function quebraToque(d) {
+  var dir = d === 'left' ? -1 : (d === 'right' ? 1 : 0); if (!dir) return;
+  var agora = performance.now();
+  if (agora < QB.deslAte) { QB.v = Math.max(-11, Math.min(11, QB.v + dir * 6.5)); QB.deslAte = agora + 4000; return; }
+  arcade.paddleX = Math.max(0, Math.min(arcade.canvas.width - arcade.paddleW, arcade.paddleX + dir * 28));
+}
+
+/* deslizar o dedo (ou o mouse) sobre o quadro do jogo leva a raquete junto */
+function quebraLigarDedo() {
+  var cv = document.getElementById('arcadeCanvas'); if (!cv || cv.__qbDedo) return; cv.__qbDedo = true;
+  cv.style.touchAction = 'none';
+  function alvo(e) { var r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * cv.width; }
+  cv.addEventListener('pointerdown', function (e) { if (arcade.tipo !== 'quebra' || !arcade.rodando) return; QB.dedo = alvo(e); try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+  cv.addEventListener('pointermove', function (e) { if (QB.dedo === null || arcade.tipo !== 'quebra') return; QB.dedo = alvo(e); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (n) { cv.addEventListener(n, function () { QB.dedo = null; }); });
+}
+
+function quebraSegurar(chave, on) {
+  var d = chave === 'left' ? -1 : (chave === 'right' ? 1 : 0);
+  if (!d) return;
+  if (on) { QB.hold = d; QB.t0 = performance.now(); }
+  else if (QB.hold === d) QB.hold = 0;
+}
+
+function quebraRR(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+}
+
 function initQuebra() {
   var w = arcade.canvas.width, h = arcade.canvas.height;
   arcade.paddleW = 70;
@@ -4310,20 +4420,52 @@ function initQuebra() {
   var cores = ['#ef5350', '#ff9800', '#ffc107', '#00e676', '#42a5f5', '#ab47bc'];
   for (var r = 0; r < rows; r++) {
     for (var c = 0; c < cols; c++) {
-      arcade.bricks.push({ x: 10 + c * bw, y: 36 + r * (bh + 4), w: bw - 4, h: bh, vivo: true, cor: cores[(r + c) % cores.length] });
+      arcade.bricks.push({ x: 10 + c * bw, y: 36 + r * (bh + 4), w: bw - 4, h: bh, vivo: true, cor: cores[(r + c) % cores.length], fase: (r * 0.37 + c * 0.21) });
     }
   }
+  QB.hold = 0; QB.v = 0; QB.desl = false; QB.deslAte = 0; QB.ultimo = 0; QB.trilha = []; QB.rastro = []; QB.hit = 0; QB.dedo = null; quebraLigarDedo();
+  QB.estrelas = [];
+  for (var s = 0; s < 46; s++) QB.estrelas.push({ x: (s * 97.3) % w, y: 30 + (s * 61.7) % (h - 60), r: 0.6 + (s % 3) * 0.45, f: s * 1.7 });
   drawQuebra();
 }
 
 function tickQuebra() {
-  var b = arcade.ball, w = arcade.canvas.width, h = arcade.canvas.height;
+  var b = arcade.ball, w = arcade.canvas.width, h = arcade.canvas.height, agora = performance.now();
+  /* --- barra: segurar = andar; mais de 3 s = deslizar --- */
+  var dt = Math.min(3, (agora - (QB.ultimo || agora)) / 24); QB.ultimo = agora;
+  if (QB.hold) {
+    var seg = agora - QB.t0, alvo = 0, acc = 0;
+    if (seg >= 3000 && agora >= QB.deslAte) { try { mostrarToast('Modo deslizante! 🏄 toque ◀ ▶ para deslizar'); } catch (e) {} FXA.burst(arcade.paddleX + arcade.paddleW / 2, h - 12, '#40c4ff', 18, 3); }
+    if (seg >= 3000) QB.deslAte = agora + 4000;
+    if (agora < QB.deslAte) { alvo = QB.hold * 9.5; acc = 0.9; }
+    else if (seg >= 200) { alvo = QB.hold * 1.9; acc = 0.5; }      /* segurar: anda com calma; 3 s segurando: modo deslizante */
+    if (acc) QB.v += Math.max(-acc * dt, Math.min(acc * dt, alvo - QB.v));
+  } else {
+    QB.v *= Math.pow(agora < QB.deslAte ? 0.955 : 0.5, dt);
+    if (Math.abs(QB.v) < 0.12) QB.v = 0;
+  }
+  if (QB.dedo !== null) {                              /* dedo/mouse arrastando: a raquete segue */
+    var cx = arcade.paddleX + arcade.paddleW / 2, passo = Math.max(-16, Math.min(16, (QB.dedo - cx) * 0.55));
+    QB.v = passo; if (Math.abs(passo) > 8) QB.deslAte = Math.max(QB.deslAte, agora + 1500);
+  }
+  if (QB.v) {
+    var nx = arcade.paddleX + QB.v * dt, mx = w - arcade.paddleW;
+    if (nx < 0 || nx > mx) { nx = Math.max(0, Math.min(mx, nx)); QB.v = 0; }
+    arcade.paddleX = nx;
+  }
+  QB.desl = agora < QB.deslAte;
+  QB.trilha.push(arcade.paddleX); if (QB.trilha.length > 7) QB.trilha.shift();
+  QB.rastro.push({ x: b.x, y: b.y }); if (QB.rastro.length > 11) QB.rastro.shift();
+  if (QB.hit > 0) QB.hit--;
+
   b.x += b.vx; b.y += b.vy;
   if (b.x < b.r || b.x > w - b.r) b.vx *= -1;
   if (b.y < b.r) b.vy *= -1;
   if (b.y > h - 18 && b.x > arcade.paddleX && b.x < arcade.paddleX + arcade.paddleW) {
     b.vy = -Math.abs(b.vy);
     b.vx += (b.x - (arcade.paddleX + arcade.paddleW / 2)) * 0.08;
+    b.vx += QB.v * 0.12;                  /* a barra em movimento "empurra" a bola */
+    QB.hit = 6; FXA.burst(b.x, h - 16, QB.desl ? '#40c4ff' : '#69f0ae', 7, 2);
   }
   if (b.y > h + 10) { gameOverArcade(); return; }
   arcade.bricks.forEach(function (br) {
@@ -4332,6 +4474,8 @@ function tickQuebra() {
       br.vivo = false;
       b.vy *= -1;
       arcade.score += 15;
+      arcade._fxX = br.x + br.w / 2; arcade._fxY = br.y;
+      FXA.burst(br.x + br.w / 2, br.y + br.h / 2, br.cor, 14, 3);
       registrarProgressoNivel(1);
     }
   });
@@ -4342,49 +4486,68 @@ function tickQuebra() {
 }
 
 function drawQuebra() {
-  var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height;
+  var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height, t = performance.now() / 1000;
+  /* fundo espacial */
   var bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, '#1a237e');
-  bg.addColorStop(0.5, '#0d1b2a');
-  bg.addColorStop(1, '#0a1620');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, w, h);
-  /* estrelas de fundo */
-  ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  for (var s = 0; s < 20; s++) {
-    ctx.fillRect((s * 37) % w, (s * 53) % (h - 40) + 30, 2, 2);
-  }
+  bg.addColorStop(0, '#0e1240'); bg.addColorStop(0.5, '#0a1530'); bg.addColorStop(1, '#050b14');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+  var n1 = ctx.createRadialGradient(w * 0.2, h * 0.28, 5, w * 0.2, h * 0.28, w * 0.7);
+  n1.addColorStop(0, 'rgba(120,70,220,0.30)'); n1.addColorStop(1, 'rgba(120,70,220,0)'); ctx.fillStyle = n1; ctx.fillRect(0, 0, w, h);
+  var n2 = ctx.createRadialGradient(w * 0.85, h * 0.62, 5, w * 0.85, h * 0.62, w * 0.75);
+  n2.addColorStop(0, 'rgba(0,200,180,0.20)'); n2.addColorStop(1, 'rgba(0,200,180,0)'); ctx.fillStyle = n2; ctx.fillRect(0, 0, w, h);
+  QB.estrelas.forEach(function (s) {
+    ctx.globalAlpha = 0.35 + 0.55 * Math.abs(Math.sin(t * 1.3 + s.f));
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.2832); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  /* blocos em relevo com brilho passando */
   arcade.bricks.forEach(function (br) {
     if (!br.vivo) return;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2;
     var g = ctx.createLinearGradient(br.x, br.y, br.x, br.y + br.h);
-    g.addColorStop(0, br.cor);
-    g.addColorStop(1, 'rgba(0,0,0,0.35)');
-    ctx.fillStyle = g;
-    ctx.fillRect(br.x, br.y, br.w, br.h);
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillRect(br.x + 1, br.y + 1, br.w - 2, 3);
-    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-    ctx.strokeRect(br.x, br.y, br.w, br.h);
+    g.addColorStop(0, br.cor); g.addColorStop(0.55, br.cor); g.addColorStop(1, 'rgba(0,0,0,0.55)');
+    ctx.fillStyle = g; quebraRR(ctx, br.x, br.y, br.w, br.h, 3); ctx.fill();
+    ctx.restore();
+    var hl = ctx.createLinearGradient(br.x, br.y, br.x, br.y + br.h * 0.5);
+    hl.addColorStop(0, 'rgba(255,255,255,0.55)'); hl.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hl; quebraRR(ctx, br.x + 1, br.y + 1, br.w - 2, br.h * 0.5, 2.5); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 0.8; quebraRR(ctx, br.x + 0.5, br.y + 0.5, br.w - 1, br.h - 1, 3); ctx.stroke();
+    var sp = ((t * 0.5 + br.fase) % 3) / 3;                       /* faixa de brilho */
+    if (sp < 1) { ctx.save(); quebraRR(ctx, br.x, br.y, br.w, br.h, 3); ctx.clip();
+      ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.fillRect(br.x + sp * (br.w + 16) - 12, br.y, 6, br.h); ctx.restore(); }
   });
-  /* raquete */
-  var pg = ctx.createLinearGradient(arcade.paddleX, h - 16, arcade.paddleX, h - 6);
-  pg.addColorStop(0, '#69f0ae');
-  pg.addColorStop(1, '#00c853');
-  ctx.shadowColor = 'rgba(105,240,174,0.7)';
-  ctx.shadowBlur = 8;
-  ctx.fillStyle = pg;
-  ctx.fillRect(arcade.paddleX, h - 16, arcade.paddleW, 11);
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.fillRect(arcade.paddleX + 4, h - 14, arcade.paddleW - 8, 3);
-  /* bola com brilho */
-  var ballG = ctx.createRadialGradient(arcade.ball.x - 2, arcade.ball.y - 2, 1, arcade.ball.x, arcade.ball.y, arcade.ball.r);
-  ballG.addColorStop(0, '#fff');
-  ballG.addColorStop(1, '#90caf9');
-  ctx.fillStyle = ballG;
-  ctx.beginPath();
-  ctx.arc(arcade.ball.x, arcade.ball.y, arcade.ball.r, 0, Math.PI * 2);
-  ctx.fill();
+  /* raquete metálica (cianeto e rastro no modo deslizante) */
+  var py = h - 16, px = arcade.paddleX, pw = arcade.paddleW, cor = QB.desl ? '#40c4ff' : '#69f0ae', cor2 = QB.desl ? '#0277bd' : '#00a152';
+  if (QB.desl || Math.abs(QB.v) > 4) {
+    for (var i = 0; i < QB.trilha.length - 1; i++) {
+      ctx.globalAlpha = (i / QB.trilha.length) * (QB.desl ? 0.38 : 0.2);
+      ctx.fillStyle = cor; quebraRR(ctx, QB.trilha[i], py, pw, 11, 5); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.save();
+  ctx.shadowColor = cor; ctx.shadowBlur = 8 + QB.hit * 2.4;
+  var pg = ctx.createLinearGradient(0, py, 0, py + 11);
+  pg.addColorStop(0, '#ffffff'); pg.addColorStop(0.25, cor); pg.addColorStop(1, cor2);
+  ctx.fillStyle = pg; quebraRR(ctx, px, py, pw, 11, 5.5); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'; quebraRR(ctx, px + 6, py + 1.5, pw - 12, 2.6, 1.3); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(px + 5, py + 8, pw - 10, 1.4);
+  if (QB.desl) { ctx.fillStyle = '#b3e5fc'; ctx.font = 'bold 9px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('DESLIZANDO', px + pw / 2, py - 5); }
+  /* bola: rastro, halo e esfera com reflexo */
+  var b = arcade.ball;
+  for (var k = 0; k < QB.rastro.length; k++) {
+    var q = QB.rastro[k], f = (k + 1) / QB.rastro.length;
+    ctx.globalAlpha = f * 0.35; ctx.fillStyle = '#90caf9'; ctx.beginPath(); ctx.arc(q.x, q.y, b.r * f * 0.9, 0, 6.2832); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  var halo = ctx.createRadialGradient(b.x, b.y, 1, b.x, b.y, b.r * 3.2);
+  halo.addColorStop(0, 'rgba(144,202,249,0.55)'); halo.addColorStop(1, 'rgba(144,202,249,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 3.2, 0, 6.2832); ctx.fill();
+  var ballG = ctx.createRadialGradient(b.x - b.r * 0.4, b.y - b.r * 0.45, 0.5, b.x, b.y, b.r);
+  ballG.addColorStop(0, '#ffffff'); ballG.addColorStop(0.55, '#bbdefb'); ballG.addColorStop(1, '#5c9ce6');
+  ctx.fillStyle = ballG; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.2832); ctx.fill();
   desenharHUDArcade(ctx, w, 'QUEBRA');
 }
 
@@ -4610,49 +4773,17 @@ function drawSurfe() {
   var horizon = h * 0.32;
   var scroll = (arcade.frame || 0) * (arcade.speed || 3) * 0.4;
 
-  /* céu degradê realista */
-  var sky = ctx.createLinearGradient(0, 0, 0, horizon + 30);
-  sky.addColorStop(0, '#0d47a1');
-  sky.addColorStop(0.35, '#1976d2');
-  sky.addColorStop(0.7, '#64b5f6');
-  sky.addColorStop(1, '#bbdefb');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, w, horizon + 30);
-
-  /* sol */
-  var sx = w * 0.78, sy = horizon * 0.35;
-  var sun = ctx.createRadialGradient(sx, sy, 2, sx, sy, 28);
-  sun.addColorStop(0, '#fffde7');
-  sun.addColorStop(0.4, '#ffe082');
-  sun.addColorStop(1, 'rgba(255,200,50,0)');
-  ctx.fillStyle = sun;
-  ctx.beginPath(); ctx.arc(sx, sy, 28, 0, Math.PI * 2); ctx.fill();
-
-  /* nuvens */
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  for (var n = 0; n < 4; n++) {
-    var nx = ((n * 70 - scroll * 0.15) % (w + 80)) - 40;
-    var ny = 18 + (n % 3) * 16;
-    ctx.beginPath();
-    ctx.ellipse(nx, ny, 22, 10, 0, 0, Math.PI * 2);
-    ctx.ellipse(nx + 14, ny + 2, 16, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
+  /* céu, sol, montanhas e cidade: mesmo fundo em alta resolução do jogo Estrada */
+  if (typeof estConstruirFundo === 'function') {
+    if (!arcade.sBg || arcade.sBg._w !== w) { arcade.sBg = estConstruirFundo(w, h); arcade.sBg._w = w; }
+    var SB = (typeof FXA !== 'undefined' && FXA.escala) || 2;
+    ctx.drawImage(arcade.sBg, 0, 0, arcade.sBg.width, arcade.sBg.height, 0, 0, w, arcade.sBg.height / SB);
+    [[0.03, 0.10, 46], [0.02, 0.22, 34], [0.045, 0.06, 58]].forEach(function (n, i) {
+      var ccx = ((i * 130 + (arcade.frame || 0) * n[0] * 6) % (w + 140)) - 70, ccy = horizon * (0.18 + n[1] * 1.4), rr = n[2] * 0.42;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      [[0, 0, 1], [0.7, 0.15, 0.75], [-0.75, 0.2, 0.7], [0.25, -0.35, 0.8]].forEach(function (bb) { ctx.beginPath(); ctx.ellipse(ccx + bb[0] * rr * 1.3, ccy + bb[1] * rr, rr * bb[2] * 1.15, rr * bb[2] * 0.68, 0, 0, 6.2832); ctx.fill(); });
+    });
   }
-
-  /* silhueta de cidade no horizonte */
-  ctx.fillStyle = '#1a237e';
-  for (var b = 0; b < 14; b++) {
-    var bx = b * (w / 13) - 5;
-    var bh = 18 + (Math.sin(b * 1.7 + 2) * 0.5 + 0.5) * 36;
-    ctx.fillRect(bx, horizon - bh + 8, w / 12, bh);
-  }
-  ctx.fillStyle = '#283593';
-  for (var b2 = 0; b2 < 12; b2++) {
-    var bx2 = b2 * (w / 11);
-    var bh2 = 12 + (Math.cos(b2 * 2.1) * 0.5 + 0.5) * 28;
-    ctx.fillRect(bx2, horizon - bh2 + 10, w / 14, bh2);
-  }
-
   /* chão / asfalto lateral */
   var ground = ctx.createLinearGradient(0, horizon, 0, h);
   ground.addColorStop(0, '#455a64');
@@ -5159,6 +5290,357 @@ function drawMario() {
 
 </script>
 <script>
+/* ▼ jogo-estrada.js */
+/* JOGO-ESTRADA.JS — Universo Capoeira (v87) · ESTRADA (jogo de carro no estilo do Surfe)
+   Cenário em perspectiva (céu, sol, nuvens, montanhas, cidade, árvores, postes, placas), estrada com
+   zebras e faixas, carro em visão traseira com luzes e chamas do turbo, trânsito, cones, moedas e nitro.
+   Controles: ◀ ▶ trocam de faixa · segure TURBO (ou ▲) · ▼ freia. */
+var ES = { turbo: false, freio: false, turboAte: 0, freioAte: 0 };
+var ES_PAL = [
+  { l: '#ff8a80', m: '#e53935', d: '#7f0000' }, { l: '#82b1ff', m: '#1e88e5', d: '#0d2f6b' }, { l: '#ffffff', m: '#cfd8dc', d: '#78909c' },
+  { l: '#fff59d', m: '#fdd835', d: '#a68b00' }, { l: '#78909c', m: '#37474f', d: '#10161a' }, { l: '#a5d6a7', m: '#43a047', d: '#1b5e20' },
+  { l: '#ffcc80', m: '#fb8c00', d: '#8a4300' }
+];
+
+function estRR(ctx, x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+}
+function estPj(lane, z, w, h) {
+  var H = h * 0.33, lw = 22 + w * 0.3 * (1 - z);
+  return { x: w / 2 + (lane - 1) * lw, y: H + (h - 36 - H) * (1 - z), s: lw / (22 + w * 0.3), lw: lw };
+}
+
+/* ---------- fundo fixo (céu, sol, montanhas, cidade) desenhado uma vez em alta resolução ---------- */
+function estConstruirFundo(w, h) {
+  var S = (typeof FXA !== 'undefined' && FXA.escala) || 2, H = h * 0.33, bh = Math.ceil(H + 30);
+  var cv = document.createElement('canvas'); cv.width = Math.round(w * S); cv.height = Math.round(bh * S);
+  var c = cv.getContext('2d'); c.scale(S, S);
+  var sky = c.createLinearGradient(0, 0, 0, H + 20);
+  sky.addColorStop(0, '#0b3d91'); sky.addColorStop(0.4, '#1976d2'); sky.addColorStop(0.75, '#64b5f6'); sky.addColorStop(1, '#d6ecff');
+  c.fillStyle = sky; c.fillRect(0, 0, w, bh);
+  /* sol com halo e raios */
+  var sx = w * 0.74, sy = H * 0.42;
+  var halo = c.createRadialGradient(sx, sy, 4, sx, sy, w * 0.55); halo.addColorStop(0, 'rgba(255,244,190,0.95)'); halo.addColorStop(0.18, 'rgba(255,224,130,0.55)'); halo.addColorStop(1, 'rgba(255,224,130,0)');
+  c.fillStyle = halo; c.fillRect(0, 0, w, bh);
+  c.save(); c.translate(sx, sy);
+  for (var r = 0; r < 12; r++) { c.rotate(Math.PI / 6); var rg = c.createLinearGradient(0, 0, 0, -w * 0.5); rg.addColorStop(0, 'rgba(255,240,180,0.16)'); rg.addColorStop(1, 'rgba(255,240,180,0)'); c.fillStyle = rg; c.beginPath(); c.moveTo(-3, 0); c.lineTo(3, 0); c.lineTo(9, -w * 0.5); c.lineTo(-9, -w * 0.5); c.closePath(); c.fill(); }
+  c.restore();
+  var sun = c.createRadialGradient(sx - 3, sy - 3, 1, sx, sy, 15); sun.addColorStop(0, '#ffffff'); sun.addColorStop(0.6, '#fff3b0'); sun.addColorStop(1, '#ffd54f');
+  c.fillStyle = sun; c.beginPath(); c.arc(sx, sy, 14, 0, 6.2832); c.fill();
+  /* montanhas em duas camadas com névoa */
+  function serra(base, amp, cor, sd) { c.fillStyle = cor; c.beginPath(); c.moveTo(0, H + 4);
+    for (var x = 0; x <= w; x += 4) c.lineTo(x, H - base - amp * (0.55 * Math.sin(x * 0.021 + sd) + 0.3 * Math.sin(x * 0.053 + sd * 2) + 0.15 * Math.sin(x * 0.11 + sd)));
+    c.lineTo(w, H + 4); c.closePath(); c.fill(); }
+  serra(20, 26, '#7d9cc6', 1.2); serra(8, 20, '#557aa8', 4.1);
+  var nev = c.createLinearGradient(0, H - 40, 0, H + 4); nev.addColorStop(0, 'rgba(214,236,255,0)'); nev.addColorStop(1, 'rgba(214,236,255,0.85)'); c.fillStyle = nev; c.fillRect(0, H - 40, w, 44);
+  /* cidade: duas fileiras com janelas */
+  for (var camada = 0; camada < 2; camada++) {
+    for (var i = 0; i < 14; i++) {
+      var bw = w / 12 + (i % 3) * 3, bx = i * (w / 13) - 6 + camada * 9, alt = 14 + ((Math.sin(i * 2.7 + camada * 3.1) * 0.5 + 0.5) * 34) * (camada ? 0.8 : 1.15), by = H + 2 - alt;
+      var tom = camada ? 34 : 50; c.fillStyle = 'hsl(222,' + (camada ? 26 : 30) + '%,' + tom + '%)'; c.fillRect(bx, by, bw, alt + 2);
+      c.fillStyle = 'rgba(255,255,255,0.10)'; c.fillRect(bx, by, bw * 0.28, alt + 2);
+      c.fillStyle = camada ? 'rgba(255,236,160,0.55)' : 'rgba(255,236,160,0.35)';
+      for (var jy = by + 4; jy < H - 2; jy += 5) for (var jx = bx + 3; jx < bx + bw - 3; jx += 5) if (((jx * 7 + jy * 3 + i) | 0) % 4 === 0) c.fillRect(jx, jy, 2, 2.4);
+    }
+  }
+  return cv;
+}
+
+function initEstrada() {
+  var w = arcade.canvas.width, h = arcade.canvas.height, cfg = configNivelArcade('estrada', arcade.nivel || 1);
+  arcade.eLane = 1; arcade.eAlvo = 1; arcade.eObst = []; arcade.eCoins = []; arcade.eNitros = [];
+  arcade.frame = 0; arcade.speed = cfg.speedBase || 2.4; arcade.eDist = 60; arcade.eEsp = 140; arcade.eScroll = 0;
+  arcade.eNitro = 55; arcade.eFlash = 0; arcade.eShake = 0; arcade.eTurboOn = false; arcade._lastScoreNivel = 0;
+  ES.turbo = ES.freio = false; ES.turboAte = ES.freioAte = 0;
+  arcade.eBg = estConstruirFundo(w, h);
+  arcade.eCen = [];
+  for (var i = 0; i < 12; i++) {
+    arcade.eCen.push({ t: (i % 3 === 0) ? 'pinheiro' : 'arvore', lado: -1, z: 0.98 - i * 0.085, off: 0.95 + ((i * 37) % 10) / 10 * 1.5 });
+    arcade.eCen.push({ t: (i % 4 === 1) ? 'pinheiro' : 'arvore', lado: 1, z: 0.94 - i * 0.085, off: 0.95 + ((i * 53) % 10) / 10 * 1.5 });
+  }
+  for (var p = 0; p < 5; p++) { arcade.eCen.push({ t: 'poste', lado: -1, z: 0.95 - p * 0.24, off: 0.42 }); arcade.eCen.push({ t: 'poste', lado: 1, z: 0.83 - p * 0.24, off: 0.42 }); }
+  arcade.eCen.push({ t: 'placa', lado: 1, z: 0.9, off: 1.5 }); arcade.eCen.push({ t: 'placa', lado: -1, z: 0.35, off: 1.5 });
+  for (var b = 0; b < 6; b++) { arcade.eCen.push({ t: 'predio', lado: -1, z: 0.95 - b * 0.19, off: 3.4, alt: 55 + (b * 29) % 60 }); arcade.eCen.push({ t: 'predio', lado: 1, z: 0.86 - b * 0.19, off: 3.4, alt: 50 + (b * 41) % 70 }); }
+  drawEstrada();
+}
+
+function estradaSegurar(chave, on) {
+  if (chave === 'turbo' || chave === 'up') ES.turbo = on;
+  else if (chave === 'freio' || chave === 'down') ES.freio = on;
+}
+function estradaDir(d) {
+  var n = performance.now();
+  if (d === 'left') arcade.eAlvo = Math.max(0, arcade.eAlvo - 1);
+  else if (d === 'right') arcade.eAlvo = Math.min(2, arcade.eAlvo + 1);
+  else if (d === 'up') ES.turboAte = n + 260;
+  else if (d === 'down') ES.freioAte = n + 260;
+}
+
+function estSpawn(curva) {
+  var lanes = [0, 1, 2].sort(function () { return Math.random() - 0.5; }), nb = Math.random() < (0.22 + 0.5 * curva) ? 2 : 1;
+  lanes.slice(0, nb).forEach(function (l) {
+    var r = Math.random(), tipo = r < 0.55 ? 'carro' : (r < 0.55 + 0.1 + 0.12 * curva ? 'caminhao' : (r < 0.85 ? 'cone' : 'barreira'));
+    arcade.eObst.push({ lane: l, z: 1.02, tipo: tipo, pal: 1 + Math.floor(Math.random() * 6), v: tipo === 'carro' ? 0.8 + Math.random() * 0.6 : (tipo === 'caminhao' ? 0.5 : 0) });
+  });
+  var livre = lanes[2], q = Math.random();
+  if (q < 0.6) for (var k = 0; k < 4; k++) arcade.eCoins.push({ lane: livre, z: 1.02 + k * 0.055 });
+  else if (q < 0.72) arcade.eNitros.push({ lane: livre, z: 1.02 });
+}
+
+function tickEstrada() {
+  var n = performance.now(), cfg = configNivelArcade('estrada', arcade.nivel), curva = curvaDificuldade(arcade.nivel);
+  arcade.frame++;
+  var base = Math.min(8.5, (cfg.speedBase || 2.4) + arcade.frame * 0.0014);
+  var pedeTurbo = ES.turbo || n < ES.turboAte, freia = ES.freio || n < ES.freioAte;
+  var turbo = pedeTurbo && arcade.eNitro > 0 && !freia;
+  arcade.eTurboOn = turbo;
+  arcade.speed += (base * (turbo ? 1.55 : 1) * (freia ? 0.5 : 1) - arcade.speed) * 0.12;
+  if (turbo) arcade.eNitro = Math.max(0, arcade.eNitro - 1.1); else if (!freia) arcade.eNitro = Math.min(100, arcade.eNitro + 0.05);
+  arcade.eLane += (arcade.eAlvo - arcade.eLane) * 0.3;
+  arcade.eScroll += arcade.speed * 0.045;
+  if (arcade.eFlash > 0) arcade.eFlash -= 0.08;
+  if (arcade.eShake > 0) arcade.eShake -= 0.6;
+
+  arcade.eDist += arcade.speed;
+  if (arcade.eDist >= arcade.eEsp) { arcade.eDist -= arcade.eEsp; arcade.eEsp = Math.max(72, 150 - 78 * curva) * (0.85 + Math.random() * 0.3); estSpawn(curva); }
+
+  var w = arcade.canvas.width, h = arcade.canvas.height, dz = arcade.speed * 0.012;
+  arcade.eCen.forEach(function (c) { c.z -= dz; if (c.z < -0.14) c.z += 1.12; });
+  var pp = estPj(arcade.eLane, 0.14, w, h);
+  for (var i = arcade.eObst.length - 1; i >= 0; i--) {
+    var o = arcade.eObst[i]; o.z -= Math.max(0.4, arcade.speed - o.v) * 0.012;
+    var dl = Math.abs(o.lane - arcade.eLane);
+    if (o.z < 0.235 && o.z > 0.115 && dl < (o.tipo === 'caminhao' ? 0.74 : 0.62)) {
+      arcade.eFlash = 1; arcade.eShake = 9; arcade._fxX = pp.x; arcade._fxY = pp.y - 30;
+      FXA.burst(pp.x, pp.y - 10, '#ffb74d', 26, 4.2); FXA.burst(pp.x, pp.y - 10, '#eceff1', 10, 2.4, -0.02);
+      drawEstrada(); gameOverArcade(); return;
+    }
+    if (o.z < 0.115 && !o.passou) {
+      o.passou = true; arcade.score += 3;
+      if (dl >= 0.62 && dl < 1.05) { arcade.score += 5; arcade.eNitro = Math.min(100, arcade.eNitro + 6); arcade._fxX = pp.x; arcade._fxY = pp.y - 50; FXA.popup('RASPÃO!', pp.x, pp.y - 64, '#80d8ff'); }
+    }
+    if (o.z < -0.16) arcade.eObst.splice(i, 1);
+  }
+  for (var j = arcade.eCoins.length - 1; j >= 0; j--) {
+    var c = arcade.eCoins[j]; c.z -= dz;
+    if (c.z < 0.235 && c.z > 0.11 && Math.abs(c.lane - arcade.eLane) < 0.6) { arcade.score += 8; arcade._fxX = pp.x; arcade._fxY = pp.y - 40; FXA.burst(pp.x, pp.y - 24, '#ffd54f', 10, 2.6, 0.02); arcade.eCoins.splice(j, 1); continue; }
+    if (c.z < -0.1) arcade.eCoins.splice(j, 1);
+  }
+  for (var k = arcade.eNitros.length - 1; k >= 0; k--) {
+    var nt = arcade.eNitros[k]; nt.z -= dz;
+    if (nt.z < 0.235 && nt.z > 0.11 && Math.abs(nt.lane - arcade.eLane) < 0.6) { arcade.eNitro = Math.min(100, arcade.eNitro + 35); FXA.burst(pp.x, pp.y - 24, '#40c4ff', 16, 3); FXA.popup('NITRO!', pp.x, pp.y - 60, '#40c4ff'); arcade.eNitros.splice(k, 1); continue; }
+    if (nt.z < -0.1) arcade.eNitros.splice(k, 1);
+  }
+  if (arcade.frame % 8 === 0) arcade.score += turbo ? 2 : 1;
+  var ganho = arcade.score - (arcade._lastScoreNivel || 0);
+  if (ganho > 0) { arcade._lastScoreNivel = arcade.score; registrarProgressoNivel(ganho); }
+  drawEstrada();
+}
+
+/* ---------- desenho dos objetos ---------- */
+function estCarro(ctx, cx, by, s, pal, o) {
+  o = o || {}; var W = 62 * s, H = 42 * s, x = cx - W / 2, y = by - H, freio = !!o.freio;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.40)'; ctx.beginPath(); ctx.ellipse(cx, by + 1 * s, W * 0.6, 6.5 * s, 0, 0, 6.2832); ctx.fill();
+  if (o.roll) { ctx.translate(cx, by); ctx.rotate(o.roll * 0.06); ctx.translate(-cx, -by); }
+  ctx.fillStyle = '#0d0d0f'; estRR(ctx, x - 1.5 * s, by - 15 * s, 11 * s, 15 * s, 3 * s); ctx.fill(); estRR(ctx, x + W - 9.5 * s, by - 15 * s, 11 * s, 15 * s, 3 * s); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.10)'; ctx.fillRect(x - 0.5 * s, by - 13 * s, 2 * s, 11 * s);
+  var cab = ctx.createLinearGradient(0, y, 0, y + H * 0.5); cab.addColorStop(0, pal.l); cab.addColorStop(1, pal.m);
+  ctx.fillStyle = cab; ctx.beginPath(); ctx.moveTo(x + W * 0.17, y); ctx.lineTo(x + W * 0.83, y); ctx.lineTo(x + W * 0.95, y + H * 0.5); ctx.lineTo(x + W * 0.05, y + H * 0.5); ctx.closePath(); ctx.fill();
+  var gl = ctx.createLinearGradient(0, y, 0, y + H * 0.46); gl.addColorStop(0, '#1b2a3f'); gl.addColorStop(1, '#0a121d');
+  ctx.fillStyle = gl; ctx.beginPath(); ctx.moveTo(x + W * 0.22, y + H * 0.09); ctx.lineTo(x + W * 0.78, y + H * 0.09); ctx.lineTo(x + W * 0.88, y + H * 0.46); ctx.lineTo(x + W * 0.12, y + H * 0.46); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.20)'; ctx.beginPath(); ctx.moveTo(x + W * 0.28, y + H * 0.09); ctx.lineTo(x + W * 0.42, y + H * 0.09); ctx.lineTo(x + W * 0.30, y + H * 0.46); ctx.lineTo(x + W * 0.2, y + H * 0.46); ctx.closePath(); ctx.fill();
+  var bd = ctx.createLinearGradient(0, y + H * 0.42, 0, by - 4 * s); bd.addColorStop(0, pal.l); bd.addColorStop(0.35, pal.m); bd.addColorStop(1, pal.d);
+  ctx.fillStyle = bd; estRR(ctx, x, y + H * 0.44, W, H * 0.44, 8 * s); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.28)'; ctx.lineWidth = Math.max(0.5, s * 0.8); ctx.beginPath(); ctx.moveTo(x + W * 0.06, y + H * 0.58); ctx.lineTo(x + W * 0.94, y + H * 0.58); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.28)'; estRR(ctx, x + W * 0.08, y + H * 0.47, W * 0.84, 2.6 * s, 1.3 * s); ctx.fill();
+  var lum = freio || o.turbo ? 1 : 0.65;
+  [x + W * 0.05, x + W * 0.71].forEach(function (lx) {
+    ctx.save(); ctx.shadowColor = 'rgba(255,40,40,' + lum + ')'; ctx.shadowBlur = (freio || o.turbo ? 14 : 6) * s;
+    var lg = ctx.createLinearGradient(lx, 0, lx + W * 0.24, 0); lg.addColorStop(0, '#b71c1c'); lg.addColorStop(0.5, freio || o.turbo ? '#ff8a80' : '#ff5252'); lg.addColorStop(1, '#b71c1c');
+    ctx.fillStyle = lg; estRR(ctx, lx, y + H * 0.56, W * 0.24, 7 * s, 2.5 * s); ctx.fill(); ctx.restore();
+  });
+  ctx.fillStyle = '#15181c'; estRR(ctx, x + W * 0.03, y + H * 0.78, W * 0.94, 7 * s, 3 * s); ctx.fill();
+  if (s > 0.42) { ctx.fillStyle = '#f5f5f5'; estRR(ctx, cx - W * 0.16, y + H * 0.62, W * 0.32, 8 * s, 1.5 * s); ctx.fill(); ctx.fillStyle = '#1a237e'; ctx.font = 'bold ' + Math.max(4, 5.6 * s) + 'px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('UC-87', cx, y + H * 0.62 + 6.3 * s); }
+  if (o.spoiler) { ctx.fillStyle = '#111'; ctx.fillRect(x + W * 0.06, y + H * 0.40 - 3 * s, W * 0.88, 3 * s); ctx.fillRect(x + W * 0.06, y + H * 0.40 - 6 * s, 2.5 * s, 6 * s); ctx.fillRect(x + W * 0.94 - 2.5 * s, y + H * 0.40 - 6 * s, 2.5 * s, 6 * s); }
+  if (o.taxi) { ctx.fillStyle = '#212121'; estRR(ctx, cx - 9 * s, y - 5 * s, 18 * s, 6 * s, 2 * s); ctx.fill(); ctx.fillStyle = '#fff59d'; ctx.fillRect(cx - 7 * s, y - 3.6 * s, 14 * s, 3 * s); }
+  ctx.fillStyle = '#2b2f36'; ctx.beginPath(); ctx.arc(x + W * 0.28, by - 1.5 * s, 3 * s, 0, 6.2832); ctx.arc(x + W * 0.72, by - 1.5 * s, 3 * s, 0, 6.2832); ctx.fill();
+  if (o.turbo) {
+    var fl = (0.75 + Math.random() * 0.5);
+    [x + W * 0.28, x + W * 0.72].forEach(function (fx) {
+      var fg = ctx.createLinearGradient(0, by, 0, by + 26 * s * fl); fg.addColorStop(0, 'rgba(255,255,255,0.95)'); fg.addColorStop(0.25, 'rgba(120,200,255,0.9)'); fg.addColorStop(0.6, 'rgba(255,140,40,0.7)'); fg.addColorStop(1, 'rgba(255,80,0,0)');
+      ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(fx - 4 * s, by - 1 * s); ctx.quadraticCurveTo(fx, by + 30 * s * fl, fx + 4 * s, by - 1 * s); ctx.closePath(); ctx.fill();
+    });
+  }
+  ctx.restore();
+}
+function estCaminhao(ctx, cx, by, s) {
+  var W = 70 * s, H = 70 * s, x = cx - W / 2, y = by - H;
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.40)'; ctx.beginPath(); ctx.ellipse(cx, by + 1 * s, W * 0.6, 7 * s, 0, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#0d0d0f'; estRR(ctx, x, by - 14 * s, 12 * s, 14 * s, 3 * s); ctx.fill(); estRR(ctx, x + W - 12 * s, by - 14 * s, 12 * s, 14 * s, 3 * s); ctx.fill();
+  var g = ctx.createLinearGradient(x, 0, x + W, 0); g.addColorStop(0, '#b0bec5'); g.addColorStop(0.5, '#eceff1'); g.addColorStop(1, '#90a4ae');
+  ctx.fillStyle = g; estRR(ctx, x + 2 * s, y, W - 4 * s, H - 12 * s, 3 * s); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = Math.max(0.5, s); for (var i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(x + 2 * s + i * (W - 4 * s) / 6, y + 2 * s); ctx.lineTo(x + 2 * s + i * (W - 4 * s) / 6, y + H - 14 * s); ctx.stroke(); }
+  ctx.fillStyle = '#c62828'; ctx.fillRect(x + 2 * s, y + H * 0.12, W - 4 * s, 4 * s);
+  ctx.fillStyle = '#263238'; ctx.fillRect(x + 4 * s, by - 20 * s, W - 8 * s, 8 * s);
+  [x + 5 * s, x + W - 15 * s].forEach(function (lx) { ctx.save(); ctx.shadowColor = 'rgba(255,40,40,0.9)'; ctx.shadowBlur = 8 * s; ctx.fillStyle = '#ff5252'; estRR(ctx, lx, by - 19 * s, 10 * s, 6 * s, 2 * s); ctx.fill(); ctx.restore(); });
+  ctx.restore();
+}
+function estCone(ctx, cx, by, s) {
+  var W = 26 * s, H = 34 * s; ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(cx, by, W * 0.7, 4 * s, 0, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#263238'; estRR(ctx, cx - W * 0.6, by - 4 * s, W * 1.2, 4 * s, 1.5 * s); ctx.fill();
+  var g = ctx.createLinearGradient(cx - W / 2, 0, cx + W / 2, 0); g.addColorStop(0, '#ff8f00'); g.addColorStop(0.45, '#ffb74d'); g.addColorStop(1, '#e65100');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(cx - W * 0.5, by - 4 * s); ctx.lineTo(cx - W * 0.09, by - H); ctx.lineTo(cx + W * 0.09, by - H); ctx.lineTo(cx + W * 0.5, by - 4 * s); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#fafafa'; ctx.beginPath(); ctx.moveTo(cx - W * 0.34, by - 13 * s); ctx.lineTo(cx + W * 0.34, by - 13 * s); ctx.lineTo(cx + W * 0.25, by - 21 * s); ctx.lineTo(cx - W * 0.25, by - 21 * s); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function estBarreira(ctx, cx, by, s) {
+  var W = 62 * s, H = 24 * s, x = cx - W / 2; ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(cx, by, W * 0.55, 4 * s, 0, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#37474f'; ctx.fillRect(x + 4 * s, by - 12 * s, 4 * s, 12 * s); ctx.fillRect(x + W - 8 * s, by - 12 * s, 4 * s, 12 * s);
+  ctx.save(); estRR(ctx, x, by - H - 4 * s, W, 12 * s, 2 * s); ctx.clip();
+  for (var i = -2; i < 10; i++) { ctx.fillStyle = i % 2 ? '#fafafa' : '#e53935'; ctx.beginPath(); ctx.moveTo(x + i * 9 * s, by - H - 4 * s); ctx.lineTo(x + i * 9 * s + 9 * s, by - H - 4 * s); ctx.lineTo(x + i * 9 * s + 3 * s, by - H + 8 * s); ctx.lineTo(x + i * 9 * s - 6 * s, by - H + 8 * s); ctx.closePath(); ctx.fill(); }
+  ctx.restore(); ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(x, by - H - 3 * s, W, 2 * s);
+  ctx.save(); ctx.shadowColor = '#ffab00'; ctx.shadowBlur = 8 * s; ctx.fillStyle = '#ffca28'; ctx.beginPath(); ctx.arc(cx, by - H - 7 * s, 2.6 * s, 0, 6.2832); ctx.fill(); ctx.restore();
+  ctx.restore();
+}
+function estMoeda(ctx, cx, by, s, t) {
+  var r = 10 * s, sq = Math.abs(Math.cos(t * 0.09)) * 0.85 + 0.15, cy = by - 22 * s; ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(cx, by, r * 0.9, 3 * s, 0, 0, 6.2832); ctx.fill();
+  ctx.shadowColor = '#ffca28'; ctx.shadowBlur = 10 * s; ctx.translate(cx, cy); ctx.scale(sq, 1);
+  var g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 1, 0, 0, r); g.addColorStop(0, '#fff8c4'); g.addColorStop(0.5, '#ffca28'); g.addColorStop(1, '#c77800');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.2832); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(120,70,0,0.55)'; ctx.lineWidth = Math.max(0.6, s); ctx.beginPath(); ctx.arc(0, 0, r * 0.66, 0, 6.2832); ctx.stroke();
+  ctx.restore();
+}
+function estNitro(ctx, cx, by, s, t) {
+  var r = 12 * s, cy = by - 24 * s + Math.sin(t * 0.12) * 2 * s; ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(cx, by, r * 0.8, 3 * s, 0, 0, 6.2832); ctx.fill();
+  ctx.shadowColor = '#40c4ff'; ctx.shadowBlur = 14 * s;
+  var g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 1, cx, cy, r); g.addColorStop(0, '#e1f5fe'); g.addColorStop(0.5, '#29b6f6'); g.addColorStop(1, '#01579b');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.2832); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(cx + 2 * s, cy - 8 * s); ctx.lineTo(cx - 5 * s, cy + 1 * s); ctx.lineTo(cx - 0.5 * s, cy + 1 * s); ctx.lineTo(cx - 2.5 * s, cy + 9 * s); ctx.lineTo(cx + 5 * s, cy - 1.5 * s); ctx.lineTo(cx + 0.5 * s, cy - 1.5 * s); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function estArvore(ctx, x, by, s, tipo) {
+  var u = 46 * s; ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(x + u * 0.12, by, u * 0.42, u * 0.09, 0, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#5d4037'; ctx.fillRect(x - u * 0.06, by - u * 0.42, u * 0.12, u * 0.42);
+  if (tipo === 'pinheiro') {
+    for (var i = 0; i < 3; i++) { var yy = by - u * (0.3 + i * 0.3), ww = u * (0.5 - i * 0.12), g = ctx.createLinearGradient(x - ww, 0, x + ww, 0); g.addColorStop(0, '#1b5e20'); g.addColorStop(0.5, '#43a047'); g.addColorStop(1, '#1b5e20'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x, yy - u * 0.42); ctx.lineTo(x + ww, yy); ctx.lineTo(x - ww, yy); ctx.closePath(); ctx.fill(); }
+  } else {
+    [[0, 0.72, 0.4], [-0.22, 0.56, 0.3], [0.22, 0.56, 0.3]].forEach(function (c) {
+      var cx = x + c[0] * u, cy = by - c[1] * u, r = c[2] * u, g = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.4, 1, cx, cy, r);
+      g.addColorStop(0, '#9ccc65'); g.addColorStop(0.6, '#43a047'); g.addColorStop(1, '#1b5e20'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.2832); ctx.fill();
+    });
+  }
+  ctx.restore();
+}
+function estPoste(ctx, x, by, s, lado) {
+  var H = 78 * s; ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, by, 7 * s, 2 * s, 0, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#90a4ae'; ctx.fillRect(x - 1.6 * s, by - H, 3.2 * s, H); ctx.fillRect(x - 1.6 * s, by - H, -lado * 16 * s, 2.6 * s);
+  var lx = x - lado * 16 * s; ctx.shadowColor = '#fff59d'; ctx.shadowBlur = 12 * s; ctx.fillStyle = '#fffde7'; estRR(ctx, lx - 4 * s, by - H + 2 * s, 8 * s, 3.4 * s, 1.5 * s); ctx.fill();
+  ctx.restore();
+}
+function estPlaca(ctx, x, by, s) {
+  var W = 78 * s, H = 34 * s; ctx.save();
+  ctx.fillStyle = '#455a64'; ctx.fillRect(x - W * 0.34, by - H - 22 * s, 3.5 * s, 42 * s); ctx.fillRect(x + W * 0.3, by - H - 22 * s, 3.5 * s, 42 * s);
+  var g = ctx.createLinearGradient(0, by - H - 26 * s, 0, by - 26 * s); g.addColorStop(0, '#0d47a1'); g.addColorStop(1, '#1565c0');
+  ctx.fillStyle = g; estRR(ctx, x - W / 2, by - H - 28 * s, W, H, 3 * s); ctx.fill(); ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = Math.max(0.6, 1.6 * s); estRR(ctx, x - W / 2 + 2 * s, by - H - 26 * s, W - 4 * s, H - 4 * s, 2 * s); ctx.stroke();
+  if (s > 0.4) { ctx.fillStyle = '#ffd54f'; ctx.textAlign = 'center'; ctx.font = 'bold ' + (8.5 * s) + 'px system-ui, sans-serif'; ctx.fillText('UNIVERSO', x, by - H - 12 * s); ctx.fillStyle = '#fff'; ctx.fillText('CAPOEIRA', x, by - H + 0 * s); }
+  ctx.restore();
+}
+function estPredio(ctx, x, by, s, alt, lado) {
+  var W = 34 * s + 8, H = alt * s * 1.35; ctx.save();
+  var g = ctx.createLinearGradient(x, 0, x + W, 0); g.addColorStop(0, '#455a7a'); g.addColorStop(1, '#2c3e58'); ctx.fillStyle = g; ctx.fillRect(x - W / 2, by - H, W, H);
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x + (lado < 0 ? W * 0.12 : -W * 0.5), by - H, W * 0.38, H);
+  ctx.fillStyle = 'rgba(255,236,160,0.7)'; for (var yy = by - H + 5 * s; yy < by - 6 * s; yy += 9 * s) for (var xx = x - W / 2 + 4 * s; xx < x + W / 2 - 5 * s; xx += 8 * s) if (((xx * 3 + yy * 5) | 0) % 3) ctx.fillRect(xx, yy, 4 * s, 5 * s);
+  ctx.restore();
+}
+
+/* ---------- cena completa ---------- */
+function drawEstrada() {
+  var ctx = arcade.ctx, w = arcade.canvas.width, h = arcade.canvas.height, H = h * 0.33, t = arcade.frame || 0, S = (typeof FXA !== 'undefined' && FXA.escala) || 2;
+  ctx.save();
+  if (arcade.eShake > 0) ctx.translate((Math.random() - 0.5) * arcade.eShake, (Math.random() - 0.5) * arcade.eShake);
+  if (arcade.eBg) ctx.drawImage(arcade.eBg, 0, 0, arcade.eBg.width, arcade.eBg.height, 0, 0, w, arcade.eBg.height / S);
+  /* nuvens em movimento */
+  [[0.03, 0.10, 46], [0.02, 0.22, 34], [0.045, 0.06, 58]].forEach(function (n, i) {
+    var cx = ((i * 130 + t * n[0] * 6) % (w + 140)) - 70, cy = H * (0.18 + n[1] * 1.4), r = n[2] * 0.42;
+    var cg = ctx.createLinearGradient(0, cy - r, 0, cy + r); cg.addColorStop(0, 'rgba(255,255,255,0.95)'); cg.addColorStop(1, 'rgba(200,220,245,0.85)'); ctx.fillStyle = cg;
+    [[0, 0, 1], [0.7, 0.15, 0.75], [-0.75, 0.2, 0.7], [0.25, -0.35, 0.8]].forEach(function (b) { ctx.beginPath(); ctx.ellipse(cx + b[0] * r * 1.3, cy + b[1] * r, r * b[2] * 1.15, r * b[2] * 0.68, 0, 0, 6.2832); ctx.fill(); });
+  });
+  /* grama dos dois lados com faixas de corte que rolam */
+  var gr = ctx.createLinearGradient(0, H, 0, h); gr.addColorStop(0, '#5fa04a'); gr.addColorStop(1, '#2e6b2a'); ctx.fillStyle = gr; ctx.fillRect(0, H, w, h - H);
+  var off = arcade.eScroll % 1, N = 26, ys = [];
+  for (var k = 0; k <= N; k++) ys.push(H + (h - H) * Math.pow((k + off) / N, 2.1));
+  for (var g2 = 0; g2 < N; g2++) if ((g2 + Math.floor(arcade.eScroll)) % 2) { ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(0, ys[g2], w, ys[g2 + 1] - ys[g2]); }
+  /* estrada */
+  var zTop = 1, zBot = -0.158, pT = estPj(1, zTop, w, h), pB = estPj(1, zBot, w, h);
+  var ex = function (p, d) { return p.x + d * p.lw; };
+  var asf = ctx.createLinearGradient(0, H, 0, h); asf.addColorStop(0, '#5b626c'); asf.addColorStop(1, '#2d3138');
+  ctx.fillStyle = asf; ctx.beginPath(); ctx.moveTo(ex(pT, -1.5), H); ctx.lineTo(ex(pT, 1.5), H); ctx.lineTo(ex(pB, 1.5), h); ctx.lineTo(ex(pB, -1.5), h); ctx.closePath(); ctx.fill();
+  function zDeY(y) { return 1 - (y - H) / (h - 36 - H); }
+  for (var i = 0; i < N; i++) {
+    var y0 = ys[i], y1 = ys[i + 1], z0 = zDeY(y0), z1 = zDeY(y1), a = estPj(1, z0, w, h), b = estPj(1, z1, w, h), par = (i + Math.floor(arcade.eScroll)) % 2;
+    if (par) { ctx.fillStyle = 'rgba(255,255,255,0.035)'; ctx.beginPath(); ctx.moveTo(ex(a, -1.5), y0); ctx.lineTo(ex(a, 1.5), y0); ctx.lineTo(ex(b, 1.5), y1); ctx.lineTo(ex(b, -1.5), y1); ctx.closePath(); ctx.fill(); }
+    [-1.5, 1.5].forEach(function (d) {                                     /* zebras vermelhas e brancas */
+      ctx.fillStyle = par ? '#f5f5f5' : '#d32f2f'; var lw0 = 0.11 * a.lw, lw1 = 0.11 * b.lw;
+      ctx.beginPath(); ctx.moveTo(ex(a, d) - lw0 * (d > 0 ? 0 : 1), y0); ctx.lineTo(ex(a, d) + lw0 * (d > 0 ? 1 : 0), y0); ctx.lineTo(ex(b, d) + lw1 * (d > 0 ? 1 : 0), y1); ctx.lineTo(ex(b, d) - lw1 * (d > 0 ? 0 : 1), y1); ctx.closePath(); ctx.fill();
+    });
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';                               /* linhas laterais contínuas */
+    [-1.42, 1.42].forEach(function (d) { ctx.beginPath(); ctx.moveTo(ex(a, d) - 0.03 * a.lw, y0); ctx.lineTo(ex(a, d) + 0.03 * a.lw, y0); ctx.lineTo(ex(b, d) + 0.03 * b.lw, y1); ctx.lineTo(ex(b, d) - 0.03 * b.lw, y1); ctx.closePath(); ctx.fill(); });
+    if (!par) { ctx.fillStyle = 'rgba(255,255,255,0.92)'; [-0.5, 0.5].forEach(function (d) {   /* tracejado central */
+      ctx.beginPath(); ctx.moveTo(ex(a, d) - 0.035 * a.lw, y0); ctx.lineTo(ex(a, d) + 0.035 * a.lw, y0); ctx.lineTo(ex(b, d) + 0.035 * b.lw, y1); ctx.lineTo(ex(b, d) - 0.035 * b.lw, y1); ctx.closePath(); ctx.fill(); }); }
+  }
+  var nev = ctx.createLinearGradient(0, H - 2, 0, H + 34); nev.addColorStop(0, 'rgba(214,236,255,0.8)'); nev.addColorStop(1, 'rgba(214,236,255,0)'); ctx.fillStyle = nev; ctx.fillRect(0, H - 2, w, 36);
+
+  /* itens em profundidade: do fundo para a frente (o carro entra em z = 0.14) */
+  var itens = [];
+  arcade.eCen.forEach(function (c) { if (c.z > -0.1 && c.z < 1.02) itens.push({ z: c.z, f: function () {
+    var p = estPj(1, c.z, w, h), x = p.x + c.lado * (1.5 + c.off) * p.lw, by = p.y;
+    if (c.t === 'arvore' || c.t === 'pinheiro') estArvore(ctx, x, by, p.s, c.t); else if (c.t === 'poste') estPoste(ctx, x, by, p.s, c.lado);
+    else if (c.t === 'placa') estPlaca(ctx, x, by, p.s); else estPredio(ctx, x, by, p.s, c.alt, c.lado); } }); });
+  arcade.eObst.forEach(function (o) { itens.push({ z: o.z, f: function () {
+    var p = estPj(o.lane, o.z, w, h), by = p.y + 10 * p.s;
+    if (o.tipo === 'carro') estCarro(ctx, p.x, by, p.s, ES_PAL[o.pal], { taxi: o.pal === 3 }); else if (o.tipo === 'caminhao') estCaminhao(ctx, p.x, by, p.s);
+    else if (o.tipo === 'cone') estCone(ctx, p.x, by, p.s); else estBarreira(ctx, p.x, by, p.s); } }); });
+  arcade.eCoins.forEach(function (c) { itens.push({ z: c.z, f: function () { var p = estPj(c.lane, c.z, w, h); estMoeda(ctx, p.x, p.y + 10 * p.s, p.s, t + c.z * 40); } }); });
+  arcade.eNitros.forEach(function (c) { itens.push({ z: c.z, f: function () { var p = estPj(c.lane, c.z, w, h); estNitro(ctx, p.x, p.y + 10 * p.s, p.s, t); } }); });
+  itens.push({ z: 0.14, f: function () {
+    var p = estPj(arcade.eLane, 0.14, w, h), freia = ES.freio || performance.now() < ES.freioAte;
+    estCarro(ctx, p.x, p.y + 12 * p.s, p.s, ES_PAL[0], { roll: arcade.eAlvo - arcade.eLane, freio: freia, turbo: arcade.eTurboOn, spoiler: true }); } });
+  itens.sort(function (a, b) { return b.z - a.z; }).forEach(function (it) { it.f(); });
+
+  /* linhas de velocidade e brilho do turbo */
+  if (arcade.eTurboOn || arcade.speed > 5.2) {
+    ctx.save(); ctx.strokeStyle = arcade.eTurboOn ? 'rgba(190,235,255,0.55)' : 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1;
+    for (var l = 0; l < 16; l++) { var ang = (l / 16) * Math.PI * 2 + 0.2, f = ((t * 0.09 + l * 0.37) % 1), r0 = 70 + f * 150, r1 = r0 + 26 + f * 40;
+      var vx = w / 2, vy = H + 20; ctx.globalAlpha = 0.25 + 0.5 * (1 - f); ctx.beginPath(); ctx.moveTo(vx + Math.cos(ang) * r0, vy + Math.sin(ang) * r0 * 0.9); ctx.lineTo(vx + Math.cos(ang) * r1, vy + Math.sin(ang) * r1 * 0.9); ctx.stroke(); }
+    ctx.restore();
+  }
+  if (arcade.eTurboOn) { var tg = ctx.createRadialGradient(w / 2, h * 0.62, w * 0.25, w / 2, h * 0.62, w * 0.85); tg.addColorStop(0, 'rgba(64,196,255,0)'); tg.addColorStop(1, 'rgba(64,196,255,0.28)'); ctx.fillStyle = tg; ctx.fillRect(0, 0, w, h); }
+  if (arcade.eFlash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.85, arcade.eFlash) + ')'; ctx.fillRect(0, 0, w, h); }
+  ctx.restore();
+
+  /* painel: velocímetro e barra de turbo */
+  ctx.save(); ctx.textAlign = 'right'; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.65)';
+  var kmh = Math.round((arcade.speed || 0) * 24) + ' km/h'; ctx.strokeText(kmh, w - 8, 46); ctx.fillStyle = arcade.eTurboOn ? '#80d8ff' : '#fff'; ctx.fillText(kmh, w - 8, 46);
+  var bx = 10, by2 = h - 18, bw = w * 0.44; ctx.fillStyle = 'rgba(0,0,0,0.55)'; estRR(ctx, bx, by2, bw, 9, 4.5); ctx.fill();
+  var tgd = ctx.createLinearGradient(bx, 0, bx + bw, 0); tgd.addColorStop(0, '#00e5ff'); tgd.addColorStop(1, '#7c4dff'); ctx.fillStyle = tgd;
+  if (arcade.eNitro > 1) { estRR(ctx, bx + 1, by2 + 1, Math.max(6, (bw - 2) * arcade.eNitro / 100), 7, 3.5); ctx.fill(); }
+  ctx.textAlign = 'left'; ctx.font = 'bold 8px system-ui, sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('TURBO', bx + 4, by2 - 3);
+  ctx.restore();
+  desenharHUDArcade(ctx, w, 'ESTRADA');
+}
+
+</script>
+<script>
 /* ▼ jogo-pacman.js */
 /* JOGO-PACMAN.JS — Universo Capoeira (v87) · trecho do app dividido sem alterar o código (linhas 5032–5456 do index.html original) */
 /* =========================================================
@@ -5585,6 +6067,114 @@ function drawPacman() {
   }
   desenharHUDArcade(ctx, arcade.canvas.width, 'PAC-MAN');
 }
+
+</script>
+<script>
+/* ▼ fx-arcade.js */
+/* ================================================================
+   FX-ARCADE.JS — Universo Capoeira (v87) · camada de gráficos dos jogos
+   1) Nitidez: o quadro dos jogos passa a ser desenhado em alta resolução (2x–3x), sem mudar o tamanho na tela.
+   2) Efeitos comuns: partículas, "+pontos" flutuantes e vinheta de luz nas bordas.
+   Não altera regras nem controles dos jogos.
+   ================================================================ */
+var FXA = (function () {
+  var S = 2, cv = null, lw = 320, lh = 400, parts = [], pops = [], ultScore = 0, vig = null, vigKey = '';
+
+  function escala() { return Math.min(3, Math.max(2, Math.round(window.devicePixelRatio || 2))); }
+  function ctx2() { return cv ? cv.getContext('2d') : null; }
+  function aplicar() {
+    var c = ctx2(); if (!c) return;
+    c.setTransform(S, 0, 0, S, 0, 0);
+    c.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in c) c.imageSmoothingQuality = 'high';
+  }
+  /* tamanho na tela = tamanho lógico (como antes), limitado ao espaço disponível */
+  function ajustarTela() {
+    if (!cv) return;
+    var maxW = Math.min(window.innerWidth * 0.96, 360), maxH = Math.min(window.innerHeight * 0.58, 440);
+    var k = Math.min(1, maxW / lw, maxH / lh);
+    cv.style.width = Math.round(lw * k) + 'px'; cv.style.height = Math.round(lh * k) + 'px';
+  }
+  function instalar() {
+    cv = document.getElementById('arcadeCanvas'); if (!cv || cv.__fx) return;
+    cv.__fx = true; S = escala(); lw = Number(cv.getAttribute('width')) || 320; lh = Number(cv.getAttribute('height')) || 400;
+    Object.defineProperty(cv, 'width', { configurable: true, get: function () { return lw; },
+      set: function (v) { lw = Number(v) || lw; cv.setAttribute('width', Math.round(lw * S)); aplicar(); ajustarTela(); } });
+    Object.defineProperty(cv, 'height', { configurable: true, get: function () { return lh; },
+      set: function (v) { lh = Number(v) || lh; cv.setAttribute('height', Math.round(lh * S)); aplicar(); ajustarTela(); } });
+    cv.setAttribute('width', Math.round(lw * S)); cv.setAttribute('height', Math.round(lh * S)); aplicar(); ajustarTela();
+    window.addEventListener('resize', ajustarTela); window.addEventListener('orientationchange', ajustarTela);
+  }
+
+  /* ---------- partículas e textos ---------- */
+  function limpar() { parts = []; pops = []; ultScore = 0; }
+  function burst(x, y, cor, n, vel, grav) {
+    n = n || 12; vel = vel || 2.6;
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * 6.2832, v = vel * (0.35 + Math.random() * 0.9);
+      parts.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.6, g: grav === undefined ? 0.12 : grav, vida: 1, dec: 0.035 + Math.random() * 0.03, r: 1.2 + Math.random() * 2.2, cor: cor || '#fff' });
+    }
+    if (parts.length > 220) parts.splice(0, parts.length - 220);
+  }
+  function popup(txt, x, y, cor) { pops.push({ t: txt, x: x, y: y, vida: 1, cor: cor || '#ffe082' }); if (pops.length > 12) pops.shift(); }
+
+  function vinheta(c, w, h) {
+    var chave = w + 'x' + h;
+    if (!vig || vigKey !== chave) {
+      vig = c.createRadialGradient(w / 2, h * 0.5, Math.min(w, h) * 0.28, w / 2, h * 0.5, Math.max(w, h) * 0.75);
+      vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.42)'); vigKey = chave;
+    }
+    c.fillStyle = vig; c.fillRect(0, 0, w, h);
+  }
+
+  /* chamada ao final do desenho de cada jogo (via desenharHUDArcade) */
+  function desenhar(c, w, h) {
+    if (!c) return;
+    if (typeof arcade !== 'undefined' && arcade.score > ultScore) {
+      var dif = arcade.score - ultScore;
+      if (dif >= 5 && (ultScore > 0 || dif < 40)) popup('+' + dif, arcade._fxX || w * 0.5, arcade._fxY || 58, dif >= 20 ? '#ffd54f' : '#b9f6ca');
+      ultScore = arcade.score;
+    }
+    c.save();
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i]; p.x += p.vx; p.y += p.vy; p.vy += p.g; p.vida -= p.dec;
+      if (p.vida <= 0) { parts.splice(i, 1); continue; }
+      c.globalAlpha = Math.max(0, p.vida); c.fillStyle = p.cor; c.shadowColor = p.cor; c.shadowBlur = 6;
+      c.beginPath(); c.arc(p.x, p.y, p.r * (0.5 + p.vida * 0.5), 0, 6.2832); c.fill();
+    }
+    c.shadowBlur = 0; c.textAlign = 'center'; c.font = 'bold 13px system-ui, sans-serif';
+    for (var j = pops.length - 1; j >= 0; j--) {
+      var q = pops[j]; q.y -= 0.7; q.vida -= 0.022;
+      if (q.vida <= 0) { pops.splice(j, 1); continue; }
+      c.globalAlpha = Math.min(1, q.vida * 1.6); c.lineWidth = 3; c.strokeStyle = 'rgba(0,0,0,0.6)'; c.strokeText(q.t, q.x, q.y); c.fillStyle = q.cor; c.fillText(q.t, q.x, q.y);
+    }
+    c.restore();
+    vinheta(c, w, h);
+  }
+
+  return { instalar: instalar, limpar: limpar, burst: burst, popup: popup, desenhar: desenhar, ajustarTela: ajustarTela,
+           get escala() { return S; } };
+})();
+
+/* liga a camada de efeitos ao HUD que todos os jogos já chamam no fim do desenho */
+(function () {
+  if (typeof desenharHUDArcade === 'function' && !desenharHUDArcade.__fx) {
+    var orig = desenharHUDArcade;
+    desenharHUDArcade = function (ctx, w, titulo) {
+      var r = orig.apply(this, arguments);
+      try { FXA.desenhar(ctx, w, (arcade && arcade.canvas && arcade.canvas.height) || 400); } catch (e) {}
+      return r;
+    };
+    desenharHUDArcade.__fx = true;
+  }
+  /* zera efeitos ao abrir um jogo */
+  if (typeof abrirJogoArcade === 'function' && !abrirJogoArcade.__fx) {
+    var ab = abrirJogoArcade;
+    abrirJogoArcade = function () { FXA.instalar(); FXA.limpar(); arcade._fxX = 0; arcade._fxY = 0; return ab.apply(this, arguments); };
+    abrirJogoArcade.__fx = true;
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', FXA.instalar); else FXA.instalar();
+})();
 
 </script>
 <script>
@@ -10294,6 +10884,1000 @@ function htmlPainelInteracaoProfessor() {
 
   return html;
 }
+
+</script>
+<script>
+/* ▼ treino-semanal.js */
+/* ================================================================
+   TREINO-SEMANAL.JS — Universo Capoeira (v87)
+   Categorias de treino, plano da aula semanal, carga horária por dia,
+   resumo semanal salvo na nuvem e boletim. Usado por Aluno, Check-in e Professor.
+   Regras fixas: berimbau 20 min no início e cantoria 20 min no final, todos os dias.
+   ================================================================ */
+
+var TR_CATS = [
+  { id: 'base_ginga',    nome: 'Base e ginga',              icone: 'fa-shoe-prints', min: 20 },
+  { id: 'entrada_roda',  nome: 'Entrada de roda',           icone: 'fa-door-open',   min: 15 },
+  { id: 'benguela',      nome: 'Sequências de Benguela',    icone: 'fa-link',        min: 20 },
+  { id: 'angola',        nome: 'Sequências de Angola',      icone: 'fa-link',        min: 20 },
+  { id: 'regional',      nome: 'Sequências de regional',    icone: 'fa-link',        min: 20 },
+  { id: 'ataque_defesa', nome: 'Ataque e defesa',           icone: 'fa-shield-alt',  min: 20 },
+  { id: 'esquivas',      nome: 'Treino de esquivas',        icone: 'fa-wind',        min: 15 },
+  { id: 'fisico',        nome: 'Treino físico',             icone: 'fa-dumbbell',    min: 20,
+    posicoes: [['antes', 'Antes das categorias'], ['depois', 'Depois das categorias'], ['aula_fisica', 'Aula só de treino físico']] },
+  { id: 'alongamento',   nome: 'Alongamento e aquecimento', icone: 'fa-child',       min: 15,
+    posicoes: [['antes', 'Antes'], ['depois', 'Depois'], ['aula_toda', 'Durante a aula toda']] }
+];
+var TR_FIXOS = {
+  berimbau: { cat: 'berimbau', nome: 'Toques de berimbau', icone: 'fa-music',      min: 20, pos: 'inicio', fixo: true },
+  cantoria: { cat: 'cantoria', nome: 'Aulas de cantoria',  icone: 'fa-microphone', min: 20, pos: 'fim',    fixo: true }
+};
+var TR_NOME_GERAL = { cat: 'geral', nome: 'Aula de capoeira', icone: 'fa-users' };
+
+function trCat(id) {
+  for (var i = 0; i < TR_CATS.length; i++) if (TR_CATS[i].id === id) return TR_CATS[i];
+  if (TR_FIXOS[id]) return TR_FIXOS[id];
+  return id === 'geral' ? TR_NOME_GERAL : null;
+}
+function trNomeCat(id) { var c = trCat(id); return c ? c.nome : id; }
+function trIconeCat(id) { var c = trCat(id); return (c && c.icone) || 'fa-star'; }
+
+/* ---------- datas ---------- */
+function trParseISO(iso) { var p = String(iso || '').split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 12, 0, 0); }
+function trISO(d) { return dataLocalISO(d); }
+function trSomaDias(iso, n) { var d = trParseISO(iso); d.setDate(d.getDate() + n); return trISO(d); }
+function trSegunda(iso) { var d = trParseISO(iso || dataLocalISO()); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return trISO(d); }
+function trMinParaTexto(min) {
+  min = Math.round(Number(min) || 0);
+  var h = Math.floor(min / 60), m = min % 60;
+  if (!h) return m + ' min';
+  return h + 'h' + (m ? String(m).padStart ? String(m).padStart(2, '0') : ('0' + m).slice(-2) : '');
+}
+function trHoras(min) { return Math.round((Number(min) || 0) / 60 * 100) / 100; }
+
+/* ---------- preferências (nuvem + reserva local) ---------- */
+var TR_PREFS_KEY = 'uc_treino_prefs_v87';
+function trPrefs() {
+  var doc = null;
+  try { doc = DB.buscar('planosAula', 'prefs'); } catch (e) {}
+  var loc = {};
+  try { loc = JSON.parse(localStorage.getItem(TR_PREFS_KEY) || '{}') || {}; } catch (e) {}
+  var p = Object.assign({ advertencias: true, dispensados: {} }, loc, doc || {});
+  if (!p.dispensados || typeof p.dispensados !== 'object') p.dispensados = {};
+  return p;
+}
+function trSalvarPrefs(patch) {
+  var novo = Object.assign(trPrefs(), patch);
+  try { localStorage.setItem(TR_PREFS_KEY, JSON.stringify({ advertencias: novo.advertencias, dispensados: novo.dispensados })); } catch (e) {}
+  return DB.salvar('planosAula', { tipo: 'prefs', advertencias: novo.advertencias, dispensados: novo.dispensados, atualizadoEm: agoraISO() }, 'prefs');
+}
+
+/* ---------- plano da aula ---------- */
+function trPlanoTemplate(dow) { return DB.buscar('planosAula', 'dow_' + dow) || null; }
+function trPlanoData(iso) { return DB.buscar('planosAula', 'data_' + iso) || null; }
+function trPlanoDoDia(iso) {
+  var o = trPlanoData(iso);
+  if (o && o.itens && o.itens.length) return o;
+  var t = trPlanoTemplate(trParseISO(iso).getDay());
+  return (t && t.itens && t.itens.length) ? t : null;
+}
+
+/* pedidos de treino aprovados e incluídos na aula daquela data */
+function trPedidosDoDia(iso, alunoId) {
+  return DB.listar('solicitacoes').filter(function (s) {
+    if (!s.incluidoAula || s.status === 'rejeitado') return false;
+    if (s.dataAula !== iso) return false;
+    return !alunoId || s.alunoId === alunoId;
+  });
+}
+
+/* ordena os itens do plano: berimbau → alongamento(antes) → físico(antes) → categorias → físico(depois) → alongamento(depois) → cantoria */
+function trOrdenarMeio(base) {
+  var alongA = [], fisA = [], cats = [], fisD = [], alongD = [], paralelos = [], aulaFisica = base.some(function (i) { return i.cat === 'fisico' && i.pos === 'aula_fisica'; });
+  base.forEach(function (i) {
+    if (i.cat === 'alongamento') { if (i.pos === 'aula_toda') paralelos.push(i); else if (i.pos === 'depois') alongD.push(i); else alongA.push(i); }
+    else if (i.cat === 'fisico') { if (i.pos === 'depois') fisD.push(i); else fisA.push(i); }
+    else if (!aulaFisica) cats.push(i);
+  });
+  return { meio: [].concat(alongA, fisA, cats, fisD, alongD), paralelos: paralelos };
+}
+
+function trMontar(itens) {
+  var total = 0, porCat = {};
+  itens.forEach(function (i) { if (!i.paralelo) { total += Number(i.min) || 0; porCat[i.cat] = (porCat[i.cat] || 0) + (Number(i.min) || 0); } });
+  itens.forEach(function (i) { if (i.paralelo) porCat[i.cat] = (porCat[i.cat] || 0) + total; });
+  return { itens: itens, total: total, porCat: porCat };
+}
+
+/* itens de um dia de treino de um aluno (presença pode trazer itens congelados/ajustados pelo professor) */
+function trItensDoDia(iso, alunoId, presenca) {
+  if (presenca && presenca.treinoItens && presenca.treinoItens.length) return trMontar(presenca.treinoItens.map(function (i) { return Object.assign({}, i); }));
+  var plano = trPlanoDoDia(iso), itens = [Object.assign({}, TR_FIXOS.berimbau)];
+  if (plano) {
+    var o = trOrdenarMeio(plano.itens);
+    o.meio.forEach(function (i) { itens.push({ cat: i.cat, nome: trNomeCat(i.cat), min: Number(i.min) || 0, pos: i.pos || 'meio' }); });
+    o.paralelos.forEach(function (i) { itens.push({ cat: i.cat, nome: trNomeCat(i.cat), min: 0, pos: 'aula_toda', paralelo: true }); });
+  } else {
+    var cfg = (presenca && Number(presenca.horasAula) > 0) ? Number(presenca.horasAula) * 60 : horasPorAulaConfig() * 60;
+    itens.push({ cat: 'geral', nome: TR_NOME_GERAL.nome, min: Math.max(0, Math.round(cfg) - TR_FIXOS.berimbau.min - TR_FIXOS.cantoria.min), pos: 'meio' });
+  }
+  trPedidosDoDia(iso, alunoId).forEach(function (s) {
+    (s.categorias || []).forEach(function (cid) { itens.push({ cat: cid, nome: trNomeCat(cid) + ' (pedido)', min: Number(s.minPedido) || 15, pos: 'pedido', origem: 'pedido' }); });
+  });
+  itens.push(Object.assign({}, TR_FIXOS.cantoria));
+  return trMontar(itens);
+}
+
+/* ---------- presenças do aluno ---------- */
+function trPresencasAluno(aluno) {
+  var nomeN = normalizar(aluno.nome || '');
+  return DB.listar('presencas').filter(function (p) {
+    return (p.alunoId && p.alunoId === aluno.id) || (nomeN && normalizar(p.alunoNome || '') === nomeN);
+  });
+}
+function trPresencaDoDia(aluno, iso) {
+  var l = trPresencasAluno(aluno).filter(function (p) { return p.data === iso; });
+  var ordem = { aprovado: 0, pendente: 1, rejeitado: 2 };
+  l.sort(function (a, b) { return (ordem[a.status] === undefined ? 3 : ordem[a.status]) - (ordem[b.status] === undefined ? 3 : ordem[b.status]); });
+  return l[0] || null;
+}
+function trAulasPrevistas(iso) {
+  var dow = trParseISO(iso).getDay();
+  return DB.listar('horarios').filter(function (h) { return Number(h.diaSemana) === dow; });
+}
+
+/* ---------- semana ---------- */
+function trSemana(aluno, segundaISO) {
+  var dias = [], porCat = {}, total = 0, aulas = 0, previstas = 0, hoje = dataLocalISO();
+  for (var i = 0; i < 7; i++) {
+    var iso = trSomaDias(segundaISO, i), p = trPresencaDoDia(aluno, iso), prev = trAulasPrevistas(iso).length > 0, it = null;
+    if (prev) previstas++;
+    if (p && p.status === 'aprovado') {
+      it = trItensDoDia(iso, aluno.id, p); aulas++; total += it.total;
+      Object.keys(it.porCat).forEach(function (c) { porCat[c] = (porCat[c] || 0) + it.porCat[c]; });
+    }
+    dias.push({ data: iso, dow: trParseISO(iso).getDay(), presenca: p, prevista: prev, futuro: iso > hoje, treino: it });
+  }
+  return { aluno: aluno, inicio: segundaISO, fim: trSomaDias(segundaISO, 6), dias: dias, porCat: porCat, minutos: total, aulas: aulas, previstas: previstas };
+}
+
+/* salva na nuvem o resumo da semana (só se mudou) → base do boletim e do certificado */
+function trSalvarSemana(aluno, segundaISO) {
+  var s = trSemana(aluno, segundaISO), id = 's_' + aluno.id + '_' + segundaISO;
+  var atual = DB.buscar('semanasAluno', id);
+  if (!s.aulas && !atual) return Promise.resolve(null);
+  if (atual && atual.minutos === s.minutos && atual.aulas === s.aulas && atual.previstas === s.previstas) return Promise.resolve(id);
+  return DB.salvar('semanasAluno', {
+    alunoId: aluno.id, alunoNome: aluno.nome, inicio: s.inicio, fim: s.fim,
+    minutos: s.minutos, aulas: s.aulas, previstas: s.previstas, porCat: s.porCat,
+    dias: s.dias.filter(function (d) { return d.treino; }).map(function (d) { return { data: d.data, min: d.treino.total, itens: d.treino.itens.map(function (i) { return { cat: i.cat, min: i.paralelo ? d.treino.total : i.min }; }) }; }),
+    salvoEm: agoraISO()
+  }, id);
+}
+function trSalvarSemanasRecentes(aluno, n) {
+  var seg = trSegunda(dataLocalISO()), ps = [];
+  for (var i = 0; i < (n || 6); i++) ps.push(trSalvarSemana(aluno, trSomaDias(seg, -7 * i)));
+  return Promise.all(ps);
+}
+
+/* ---------- boletim ---------- */
+function trBoletim(aluno, deISO, ateISO) {
+  var seg = trSegunda(deISO), fim = ateISO, semanas = [], porCat = {}, min = 0, aulas = 0, prev = 0;
+  while (seg <= fim) {
+    var s = trSemana(aluno, seg); semanas.push(s); min += s.minutos; aulas += s.aulas; prev += s.previstas;
+    Object.keys(s.porCat).forEach(function (c) { porCat[c] = (porCat[c] || 0) + s.porCat[c]; });
+    seg = trSomaDias(seg, 7);
+  }
+  var avals = DB.listar('avaliacoes').filter(function (a) { return a.alunoId === aluno.id; });
+  var media = avals.length ? avals.reduce(function (a, v) { return a + mediaAvaliacao(v); }, 0) / avals.length : null;
+  var freq = prev ? Math.min(100, Math.round(aulas / prev * 100)) : null;
+  return { aluno: aluno, de: deISO, ate: ateISO, semanas: semanas, porCat: porCat, minutos: min, aulas: aulas, previstas: prev, frequencia: freq, mediaAvaliacoes: media, avaliacoes: avals.length };
+}
+function trHtmlBoletim(b, teste) {
+  var cats = Object.keys(b.porCat).sort(function (x, y) { return b.porCat[y] - b.porCat[x]; }), max = cats.length ? b.porCat[cats[0]] : 1;
+  var h = '<div class="tr-boletim">' + (teste ? '<div class="tr-teste-faixa">🧪 MODO TESTE — nada é salvo</div>' : '') +
+    '<h3 style="margin:0 0 4px;"><i class="fas fa-file-alt"></i> Boletim de treino</h3>' +
+    '<p class="mini"><b>' + esc(b.aluno.apelido || b.aluno.nome) + '</b> · ' + esc(b.aluno.graduacao || '') + '<br>Período: ' + dataBR(b.de) + ' a ' + dataBR(b.ate) + '</p>' +
+    '<div class="tr-resumo"><div><b>' + trMinParaTexto(b.minutos) + '</b><span>carga horária</span></div><div><b>' + b.aulas + '</b><span>aulas</span></div>' +
+    '<div><b>' + (b.frequencia === null ? '—' : b.frequencia + '%') + '</b><span>frequência</span></div><div><b>' + (b.mediaAvaliacoes === null ? '—' : b.mediaAvaliacoes.toFixed(1)) + '</b><span>média aval.</span></div></div>' +
+    '<h4 style="margin:10px 0 6px;font-size:.8rem;">Horas por treino</h4>';
+  if (!cats.length) h += '<p class="sem-dados">Nenhum treino registrado no período.</p>';
+  cats.forEach(function (c) {
+    h += '<div class="tr-barra"><div class="tr-barra-rot"><span><i class="fas ' + trIconeCat(c) + '"></i> ' + esc(trNomeCat(c)) + '</span><b>' + trMinParaTexto(b.porCat[c]) + '</b></div>' +
+      '<div class="tr-barra-fundo"><div class="tr-barra-cheia" style="width:' + Math.max(4, Math.round(b.porCat[c] / max * 100)) + '%"></div></div></div>';
+  });
+  h += '<h4 style="margin:10px 0 6px;font-size:.8rem;">Semana a semana</h4>';
+  b.semanas.forEach(function (s) {
+    h += '<div class="lista-item"><div class="linha"><span>' + dataBR(s.inicio) + ' – ' + dataBR(s.fim) + '</span><b>' + trMinParaTexto(s.minutos) + '</b></div><span class="mini">' + s.aulas + ' aula(s)' + (s.previstas ? ' de ' + s.previstas + ' previstas' : '') + '</span></div>';
+  });
+  return h + '</div>';
+}
+function trImprimir(html, titulo) {
+  var w = window.open('', '_blank');
+  if (!w) { mostrarToast('Permita pop-ups para imprimir.', 'erro'); return; }
+  w.document.write('<!doctype html><meta charset="utf-8"><title>' + esc(titulo) + '</title><body style="font-family:Arial,sans-serif;padding:18px;color:#111"><style>.tr-resumo{display:flex;gap:10px}.tr-resumo div{border:1px solid #999;padding:6px 10px;border-radius:8px;text-align:center}.tr-resumo b{display:block;font-size:1.2rem}.tr-barra-fundo{background:#ddd;height:8px;border-radius:4px}.tr-barra-cheia{background:#0a8f4d;height:8px;border-radius:4px}.lista-item{border-bottom:1px solid #ccc;padding:4px 0}.linha{display:flex;justify-content:space-between}.tr-barra-rot{display:flex;justify-content:space-between;font-size:.85rem}.mini{font-size:.8rem;color:#444}.tr-teste-faixa{background:#fff3cd;padding:4px}</style>' + html);
+  w.document.close(); w.focus(); setTimeout(function () { w.print(); }, 400);
+}
+function trVerBoletimAluno() {
+  var a = alunoLogado(); if (!a) return;
+  var ate = dataLocalISO(), de = trSomaDias(ate, -90);
+  var b = trBoletim(a, de, ate);
+  abrirModal('Meu boletim', trHtmlBoletim(b, false), '<button class="btn btn-gold" onclick="trImprimirBoletimAluno()"><i class="fas fa-print"></i> Imprimir / salvar PDF</button><button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+function trImprimirBoletimAluno() {
+  var a = alunoLogado(); if (!a) return;
+  var ate = dataLocalISO(); trImprimir(trHtmlBoletim(trBoletim(a, trSomaDias(ate, -90), ate), false), 'Boletim ' + a.nome);
+}
+
+/* ---------- a carga horária de todo o app passa a vir do plano do dia ---------- */
+var trCalcCargaOriginal = (typeof calcularCargaHorariaAluno === 'function') ? calcularCargaHorariaAluno : null;
+calcularCargaHorariaAluno = function (alunoRef) {
+  if (!alunoRef) return { aulas: 0, horas: 0, texto: '0h' };
+  var aluno = typeof alunoRef === 'object' ? alunoRef : DB.buscar('alunos', alunoRef);
+  var alunoId = typeof alunoRef === 'object' ? alunoRef.id : alunoRef, nomeN = normalizar((aluno && aluno.nome) || (alunoRef && alunoRef.nome) || '');
+  var aulas = 0, min = 0;
+  DB.listar('presencas').forEach(function (p) {
+    if (p.status !== 'aprovado') return;
+    var ok = (alunoId && p.alunoId && p.alunoId === alunoId) || (nomeN && normalizar(p.alunoNome || '') === nomeN);
+    if (!ok) return;
+    aulas++; min += trItensDoDia(p.data, p.alunoId || alunoId, p).total;
+  });
+  var horas = min / 60;
+  return { aulas: aulas, horas: horas, texto: formatarCargaHoraria(horas), minutos: min };
+};
+
+/* ao aprovar um check-in, congela os itens e as horas do dia (mudar o plano depois não altera o passado) */
+var trDecidirOriginal = (typeof decidirPresenca === 'function') ? decidirPresenca : null;
+decidirPresenca = function (id, status) {
+  if (status === 'aprovado') {
+    var p = DB.buscar('presencas', id);
+    if (p && !(p.treinoItens && p.treinoItens.length)) {
+      var it = trItensDoDia(p.data, p.alunoId, p);
+      DB.salvar('presencas', { treinoItens: it.itens, horasAula: trHoras(it.total) }, id);
+    }
+  }
+  return trDecidirOriginal.apply(this, arguments);
+};
+
+/* ---------- estilo ---------- */
+(function () {
+  if (document.getElementById('ucTreinoCss')) return;
+  var st = document.createElement('style'); st.id = 'ucTreinoCss';
+  st.textContent =
+    '.tr-card{border:1px solid rgba(0,230,118,.35)}.tr-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}' +
+    '.tr-chip{border:1px solid var(--border,#2a3a4a);background:rgba(255,255,255,.04);color:inherit;border-radius:999px;padding:6px 10px;font-size:.74rem;cursor:pointer}' +
+    '.tr-chip.on{background:var(--primary-green,#00e676);color:#04140b;border-color:transparent;font-weight:700}' +
+    '.tr-resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.tr-resumo div{background:rgba(255,255,255,.05);border-radius:10px;padding:6px;text-align:center}' +
+    '.tr-resumo b{display:block;font-size:1rem}.tr-resumo span{font-size:.62rem;opacity:.75}' +
+    '.tr-barra{margin:6px 0}.tr-barra-rot{display:flex;justify-content:space-between;font-size:.74rem}.tr-barra-fundo{height:8px;background:rgba(255,255,255,.08);border-radius:5px;margin-top:3px}' +
+    '.tr-barra-cheia{height:8px;border-radius:5px;background:linear-gradient(90deg,#00e676,#00d2ff)}' +
+    '.tr-teste-faixa{background:rgba(255,193,7,.18);border:1px dashed #ffc107;color:#ffe082;border-radius:8px;padding:4px 8px;font-size:.72rem;margin-bottom:8px}' +
+    '.tr-dia{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.tr-dia .mini{display:block}' +
+    '.tr-fixo{opacity:.85;border-style:dashed}.tr-linha-item{display:grid;grid-template-columns:1fr 64px auto;gap:6px;align-items:center;margin:4px 0}' +
+    '.tr-linha-item select,.tr-linha-item input{margin:0}.tr-sem-nav{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0}' +
+    '.tr-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:6px}.tr-cal-cab{font-size:.62rem;text-align:center;opacity:.7}' +
+    '.tr-cal-dia{aspect-ratio:1/1;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:inherit;font-size:.72rem;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:0;position:relative}' +
+    '.tr-cal-dia small{font-size:.58rem;line-height:1}.tr-cal-vazio{visibility:hidden}.tr-cal-dia.hoje{outline:2px solid var(--gold,#ffc107)}' +
+    '.tr-cal-dia.ok{background:rgba(0,230,118,.22);border-color:#00e676}.tr-cal-dia.pend{background:rgba(255,193,7,.2);border-color:#ffc107}' +
+    '.tr-cal-dia.falta{background:rgba(239,83,80,.2);border-color:#ef5350}.tr-cal-dia.prev{border-color:#00d2ff}.tr-cal-dia.sem{opacity:.45}' +
+    '.tr-legenda{display:flex;flex-wrap:wrap;gap:8px;font-size:.62rem;opacity:.85;margin-top:6px}.tr-legenda i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:3px;vertical-align:middle}';
+  document.head.appendChild(st);
+})();
+
+</script>
+<script>
+/* ▼ calendario-treino.js */
+/* ================================================================
+   CALENDARIO-TREINO.JS — Universo Capoeira (v87)
+   Mini calendário 📆 do treino: dias treinados, pendentes, faltas e dias sem registro.
+   Aluno: vê os detalhes e pede ajuste. Professor: ajusta o dia (treinou / não treinou / itens do treino).
+   Aparece na aba Check-in e no painel do Professor.
+   ================================================================ */
+var TR_CALS = {};
+var TR_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+var TR_DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+
+function trEquipeLogada() { return (typeof sessaoEquipe !== 'undefined') && !!sessaoEquipe; }
+
+function trCalEstadoDia(aluno, iso, hoje) {
+  var p = trPresencaDoDia(aluno, iso), prev = trAulasPrevistas(iso).length > 0;
+  if (p && p.status === 'aprovado') return { cls: 'ok', ico: '✓', p: p, prev: prev };
+  if (p && p.status === 'pendente') return { cls: 'pend', ico: '…', p: p, prev: prev };
+  if (p && p.status === 'rejeitado') return { cls: 'falta', ico: '✗', p: p, prev: prev };
+  if (prev && iso < hoje) return { cls: 'falta', ico: '✗', p: null, prev: prev };
+  if (prev) return { cls: 'prev', ico: '•', p: null, prev: prev };
+  return { cls: 'sem', ico: '', p: null, prev: prev };
+}
+
+function trCalMontar(containerId, alunoId, modo) {
+  var hoje = new Date(), st = TR_CALS[containerId];
+  if (!st) st = TR_CALS[containerId] = { ano: hoje.getFullYear(), mes: hoje.getMonth() };
+  st.alunoId = alunoId; st.modo = modo || 'aluno';
+  trCalRender(containerId);
+}
+
+function trCalRender(containerId) {
+  var box = document.getElementById(containerId), st = TR_CALS[containerId];
+  if (!box || !st) return;
+  var aluno = DB.buscar('alunos', st.alunoId);
+  if (!aluno) { box.innerHTML = '<p class="sem-dados">Escolha um aluno para ver o calendário.</p>'; return; }
+  var hoje = dataLocalISO(), primeiro = new Date(st.ano, st.mes, 1), diasNoMes = new Date(st.ano, st.mes + 1, 0).getDate();
+  var treinou = 0, faltas = 0, min = 0, h = '<div class="tr-sem-nav"><button class="btn btn-secondary btn-mini" onclick="trCalMes(\'' + containerId + '\',-1)"><i class="fas fa-chevron-left"></i></button>' +
+    '<b>' + TR_MESES[st.mes] + ' ' + st.ano + '</b><button class="btn btn-secondary btn-mini" onclick="trCalMes(\'' + containerId + '\',1)"><i class="fas fa-chevron-right"></i></button></div><div class="tr-cal">';
+  TR_DIAS_CURTOS.forEach(function (d) { h += '<div class="tr-cal-cab">' + d + '</div>'; });
+  for (var v = 0; v < primeiro.getDay(); v++) h += '<div class="tr-cal-dia tr-cal-vazio"></div>';
+  for (var d = 1; d <= diasNoMes; d++) {
+    var iso = st.ano + '-' + ('0' + (st.mes + 1)).slice(-2) + '-' + ('0' + d).slice(-2), e = trCalEstadoDia(aluno, iso, hoje);
+    if (e.cls === 'ok') { treinou++; min += trItensDoDia(iso, aluno.id, e.p).total; }
+    if (e.cls === 'falta') faltas++;
+    h += '<button type="button" class="tr-cal-dia ' + e.cls + (iso === hoje ? ' hoje' : '') + '" onclick="trCalDia(\'' + containerId + '\',\'' + iso + '\')"><span>' + d + '</span><small>' + e.ico + '</small></button>';
+  }
+  h += '</div><div class="tr-legenda"><span><i style="background:#00e676"></i>treinou</span><span><i style="background:#ffc107"></i>pendente</span><span><i style="background:#ef5350"></i>não treinou</span><span><i style="background:#00d2ff"></i>aula prevista</span></div>' +
+    '<p class="mini" style="margin-top:6px;"><b>' + treinou + '</b> dia(s) treinado(s) · <b>' + faltas + '</b> sem treino · carga do mês <b>' + trMinParaTexto(min) + '</b>. Toque em um dia para ver os detalhes' +
+    (st.modo === 'equipe' ? ' e ajustar.' : ' ou pedir ajuste ao professor.') + '</p>';
+  box.innerHTML = h;
+}
+function trCalMes(containerId, delta) {
+  var st = TR_CALS[containerId]; if (!st) return;
+  st.mes += delta; if (st.mes < 0) { st.mes = 11; st.ano--; } if (st.mes > 11) { st.mes = 0; st.ano++; }
+  trCalRender(containerId);
+}
+function trCalRenderTodos() { Object.keys(TR_CALS).forEach(trCalRender); }
+
+/* ---------- detalhe do dia ---------- */
+function trHtmlItensDia(it) {
+  var h = '';
+  it.itens.forEach(function (i) {
+    h += '<div class="lista-item' + (i.fixo ? ' tr-fixo' : '') + '"><div class="linha"><span><i class="fas ' + trIconeCat(i.cat) + '"></i> ' + esc(i.nome || trNomeCat(i.cat)) + '</span><b>' +
+      (i.paralelo ? 'aula toda' : trMinParaTexto(i.min)) + '</b></div></div>';
+  });
+  return h + '<p class="mini" style="margin-top:6px;">Carga horária do dia: <b>' + trMinParaTexto(it.total) + '</b> (' + trHoras(it.total) + ' h)</p>';
+}
+function trCalDia(containerId, iso) {
+  var st = TR_CALS[containerId]; if (!st) return;
+  var aluno = DB.buscar('alunos', st.alunoId); if (!aluno) return;
+  var e = trCalEstadoDia(aluno, iso, dataLocalISO()), equipe = st.modo === 'equipe' && trEquipeLogada();
+  var titulo = DIAS_SEMANA[trParseISO(iso).getDay()] + ', ' + dataBR(iso);
+  var status = e.cls === 'ok' ? '<span class="pill pill-ok">TREINOU</span>' : e.cls === 'pend' ? '<span class="pill pill-pend">PENDENTE</span>' :
+    e.cls === 'falta' ? '<span class="pill pill-no">NÃO TREINOU</span>' : (e.prev ? '<span class="pill pill-info">AULA PREVISTA</span>' : '<span class="pill">SEM AULA</span>');
+  var corpo = '<p class="mini" style="margin-bottom:6px;">' + esc(aluno.apelido || aluno.nome) + ' · ' + status + '</p>';
+  if (e.p && e.p.status === 'aprovado') corpo += trHtmlItensDia(trItensDoDia(iso, aluno.id, e.p));
+  else {
+    var plano = trItensDoDia(iso, aluno.id, null);
+    corpo += '<p class="mini">' + (e.cls === 'ok' ? '' : 'Sem treino registrado neste dia. ') + 'Plano da aula:</p>' + trHtmlItensDia(plano);
+  }
+  if (e.p && e.p.observacaoProfessor) corpo += '<p class="mini" style="color:var(--gold);margin-top:6px;">Prof.: ' + esc(e.p.observacaoProfessor) + '</p>';
+  var acoes = '';
+  if (equipe) {
+    corpo += '<label class="campo-label">Observação do ajuste</label><input id="trCalObs" placeholder="Ex.: aluno treinou em outro polo">';
+    if (e.cls !== 'ok') acoes += '<button class="btn" onclick="trCalProf(\'' + aluno.id + '\',\'' + iso + '\',\'treinou\')"><i class="fas fa-check"></i> Marcar que treinou</button>';
+    if (e.p && e.p.status !== 'rejeitado') acoes += '<button class="btn btn-danger" onclick="trCalProf(\'' + aluno.id + '\',\'' + iso + '\',\'naotreinou\')"><i class="fas fa-xmark"></i> Marcar que não treinou</button>';
+    acoes += '<button class="btn btn-gold" onclick="trEditarItensDia(\'' + aluno.id + '\',\'' + iso + '\')"><i class="fas fa-pen"></i> Editar itens do treino</button>';
+  } else if (e.cls !== 'ok') {
+    corpo += '<label class="campo-label">Quer mudar ou registrar este dia? Explique ao professor:</label><textarea id="trCalMotivo" rows="3" placeholder="Ex.: treinei nesse dia mas esqueci de fazer o check-in"></textarea>';
+    acoes += '<button class="btn" onclick="trCalPedirAjuste(\'' + aluno.id + '\',\'' + iso + '\')"><i class="fas fa-paper-plane"></i> Pedir ajuste ao professor</button>';
+  }
+  abrirModal(titulo, corpo, acoes + '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+
+function trCalPedirAjuste(alunoId, iso) {
+  var a = DB.buscar('alunos', alunoId); if (!a) return;
+  var motivo = (($('trCalMotivo') || {}).value || '').trim();
+  if (motivo.length < 5) { mostrarToast('Explique o motivo em poucas palavras.', 'erro'); return; }
+  DB.salvar('solicitacoes', {
+    alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', graduacao: a.graduacao || '',
+    tipo: 'Ajuste de calendário', ajusteCalendario: true, dataPreferida: iso, observacao: motivo, categorias: [],
+    status: 'pendente', respostaProfessor: '', criadoEm: agoraISO()
+  }).then(function () { fecharModal(); mostrarToast('Pedido enviado ao professor!'); registroLog('aluno', 'Pedido de ajuste de calendário ' + iso + ' (' + a.nome + ')'); if (typeof renderAluno === 'function') renderAluno(); });
+}
+
+function trCalProf(alunoId, iso, acao) {
+  var a = DB.buscar('alunos', alunoId); if (!a || !trEquipeLogada()) return;
+  var obs = (($('trCalObs') || {}).value || '').trim(), p = trPresencaDoDia(a, iso), quem = sessaoEquipe.nome || 'Professor';
+  var fim = function (msg) { fecharModal(); mostrarToast(msg); registroLog('professor', msg + ' (' + a.nome + ', ' + iso + ')'); trCalRenderTodos(); if (typeof renderAbaProfessor === 'function') renderAbaProfessor(); };
+  if (acao === 'treinou') {
+    var it = trItensDoDia(iso, a.id, null), patch = { status: 'aprovado', observacaoProfessor: obs || 'Ajustado pelo professor no calendário.', avaliadoPor: quem, avaliadoEm: agoraISO(), treinoItens: it.itens, horasAula: trHoras(it.total) };
+    if (p) DB.salvar('presencas', patch, p.id).then(function () { fim('Dia marcado como treinado'); });
+    else DB.salvar('presencas', Object.assign({ alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', data: iso, hora: '', tipo: 'manual', poloId: '', poloNome: '', criadoEm: agoraISO() }, patch)).then(function () { fim('Treino lançado'); });
+  } else if (acao === 'naotreinou' && p) {
+    DB.salvar('presencas', { status: 'rejeitado', observacaoProfessor: obs || 'Ajustado pelo professor no calendário.', avaliadoPor: quem, avaliadoEm: agoraISO() }, p.id).then(function () { fim('Dia marcado como não treinado'); });
+  }
+}
+
+/* editor dos itens do treino de um dia (professor) */
+function trEditarItensDia(alunoId, iso) {
+  var a = DB.buscar('alunos', alunoId); if (!a) return;
+  var p = trPresencaDoDia(a, iso), atual = trItensDoDia(iso, a.id, p && p.status === 'aprovado' ? p : null), mapa = {};
+  atual.itens.forEach(function (i) { if (!i.paralelo) mapa[i.cat] = i.min; });
+  var lista = [TR_FIXOS.berimbau].concat(TR_CATS.filter(function (c) { return c.id !== 'alongamento' || true; }), [TR_FIXOS.cantoria]);
+  var h = '<p class="mini">Marque o que o aluno treinou e ajuste os minutos. Isso muda a carga horária desse dia.</p>';
+  lista.forEach(function (c) {
+    var cid = c.cat || c.id, on = mapa[cid] !== undefined;
+    h += '<div class="tr-linha-item"><label style="display:flex;gap:6px;align-items:center;font-size:.8rem;"><input type="checkbox" id="trEdC_' + cid + '"' + (on ? ' checked' : '') + ' style="width:auto;margin:0;"> <i class="fas ' + c.icone + '"></i> ' + esc(c.nome) + '</label>' +
+      '<input type="number" min="0" max="240" step="5" id="trEdM_' + cid + '" value="' + (on ? mapa[cid] : c.min) + '"><span class="mini">min</span></div>';
+  });
+  abrirModal('Itens do treino · ' + dataBR(iso), h, '<button class="btn" onclick="trSalvarItensDia(\'' + alunoId + '\',\'' + iso + '\')"><i class="fas fa-save"></i> Salvar itens</button><button class="btn btn-back" onclick="fecharModal()">Cancelar</button>');
+}
+function trSalvarItensDia(alunoId, iso) {
+  var a = DB.buscar('alunos', alunoId); if (!a || !trEquipeLogada()) return;
+  var itens = [], pos = { berimbau: 'inicio', cantoria: 'fim' };
+  [TR_FIXOS.berimbau].concat(TR_CATS, [TR_FIXOS.cantoria]).forEach(function (c) {
+    var cid = c.cat || c.id, cb = $('trEdC_' + cid), mi = $('trEdM_' + cid);
+    if (cb && cb.checked) itens.push({ cat: cid, nome: c.nome, min: Math.max(0, Number(mi.value) || 0), pos: pos[cid] || 'meio', fixo: !!c.fixo });
+  });
+  if (!itens.length) { mostrarToast('Marque pelo menos um item.', 'erro'); return; }
+  var total = trMontar(itens).total, p = trPresencaDoDia(a, iso), patch = { treinoItens: itens, horasAula: trHoras(total), status: 'aprovado', avaliadoPor: sessaoEquipe.nome || 'Professor', avaliadoEm: agoraISO() };
+  var pronto = function () { fecharModal(); mostrarToast('Itens salvos: ' + trMinParaTexto(total)); trCalRenderTodos(); if (typeof renderAbaProfessor === 'function') renderAbaProfessor(); };
+  if (p) DB.salvar('presencas', patch, p.id).then(pronto);
+  else DB.salvar('presencas', Object.assign({ alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', data: iso, hora: '', tipo: 'manual', poloId: '', poloNome: '', observacaoProfessor: 'Lançado pelo professor no calendário.', criadoEm: agoraISO() }, patch)).then(pronto);
+}
+
+/* ---------- entra na aba Check-in ---------- */
+function trCalInserirCheckin() {
+  var tab = $('tab2'); if (!tab) return;
+  var card = $('cardCalendarioTreino');
+  if (!card) {
+    card = document.createElement('div'); card.className = 'card tr-card'; card.id = 'cardCalendarioTreino';
+    var ref = $('cardMinhasPresencasCheckin');
+    if (ref && ref.parentNode) ref.parentNode.insertBefore(card, ref); else tab.appendChild(card);
+  }
+  var equipe = trEquipeLogada(), aluno = alunoLogado() || encontrarAlunoPorNome(nomeCheckinAtual());
+  var head = '<h3><i class="fas fa-calendar-alt"></i> Meu calendário de treino 📆</h3>';
+  if (equipe) {
+    var alunos = DB.listar('alunos').slice().sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); });
+    var sel = (TR_CALS.calCheckin && TR_CALS.calCheckin.alunoId) || (aluno && aluno.id) || (alunos[0] && alunos[0].id) || '';
+    head = '<h3><i class="fas fa-calendar-alt"></i> Calendário de treino do aluno 📆</h3><label class="campo-label">Aluno (você pode ajustar os dias)</label><select id="trCalAlunoSel" onchange="trCalMontar(\'calCheckin\',this.value,\'equipe\')">' +
+      alunos.map(function (a) { return '<option value="' + a.id + '"' + (a.id === sel ? ' selected' : '') + '>' + esc(a.nome) + '</option>'; }).join('') + '</select>';
+    card.innerHTML = head + '<div id="calCheckin"></div>'; card.style.display = 'block';
+    trCalMontar('calCheckin', sel, 'equipe'); return;
+  }
+  if (!aluno) { card.style.display = 'block'; card.innerHTML = head + '<p class="sem-dados">Entre na aba Aluno (ou digite seu nome no check-in) para ver seus dias de treino.</p>'; return; }
+  card.style.display = 'block'; card.innerHTML = head + '<div id="calCheckin"></div>';
+  trCalMontar('calCheckin', aluno.id, 'aluno');
+}
+
+var trRenderCheckinOriginal = renderCheckin;
+renderCheckin = function () {
+  var r = trRenderCheckinOriginal.apply(this, arguments);
+  try { trCalInserirCheckin(); } catch (e) { console.warn('[calendário]', e); }
+  return r;
+};
+
+</script>
+<script>
+/* ▼ aluno-acesso.js */
+/* ================================================================
+   ALUNO-ACESSO.JS — Universo Capoeira (v87)
+   Entrada do aluno: senha (como sempre) OU digital/rosto/PIN do celular (opcional, neste aparelho).
+   A biometria é só um atalho de conveniência neste aparelho: a senha continua valendo em qualquer lugar.
+   ================================================================ */
+var UC_BIO_KEY = 'uc_bio_v87';
+var UC_ULTIMO_ALUNO_KEY = 'uc_ultimo_aluno_v87';
+
+function bioSuportado() {
+  return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && window.isSecureContext);
+}
+function bioConfig() { try { return JSON.parse(localStorage.getItem(UC_BIO_KEY) || 'null'); } catch (e) { return null; } }
+function bioB64(buf) { var b = new Uint8Array(buf), s = ''; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
+function bioDeB64(str) { var s = atob(str), b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
+function bioDesafio() { var c = new Uint8Array(32); (window.crypto || window.msCrypto).getRandomValues(c); return c; }
+function bioTexto(s) { return new TextEncoder().encode(String(s)); }
+
+function bioAtivar() {
+  var a = alunoLogado();
+  if (!a) { mostrarToast('Entre com sua senha primeiro.', 'erro'); return; }
+  if (!bioSuportado()) { mostrarToast('Este aparelho/navegador não permite digital neste endereço. Use a senha.', 'erro'); return; }
+  navigator.credentials.create({ publicKey: {
+    challenge: bioDesafio(),
+    rp: { name: 'Universo Capoeira', id: location.hostname },
+    user: { id: bioTexto(a.id), name: a.nome, displayName: a.apelido || a.nome },
+    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+    timeout: 60000, attestation: 'none'
+  } }).then(function (cred) {
+    try { localStorage.setItem(UC_BIO_KEY, JSON.stringify({ alunoId: a.id, nome: a.apelido || a.nome, credId: bioB64(cred.rawId), criadoEm: agoraISO() })); } catch (e) {}
+    mostrarToast('Acesso rápido ativado neste aparelho!');
+    registroLog('auth', 'Acesso por biometria ativado: ' + a.nome);
+    renderAluno();
+  }).catch(function (e) {
+    mostrarToast(e && e.name === 'NotAllowedError' ? 'Cancelado. Nada foi ativado.' : 'Não foi possível ativar a digital neste aparelho.', 'erro');
+  });
+}
+function bioDesativar() {
+  try { localStorage.removeItem(UC_BIO_KEY); } catch (e) {}
+  mostrarToast('Acesso rápido desativado. Você continua entrando com a senha.');
+  renderAluno();
+}
+function bioEntrar() {
+  var cfg = bioConfig();
+  if (!cfg) { mostrarToast('Acesso rápido não está ativado neste aparelho.', 'erro'); return; }
+  if (!DB.carregado('alunos')) { mostrarToast('Aguarde os dados carregarem e tente de novo.', 'erro'); return; }
+  navigator.credentials.get({ publicKey: {
+    challenge: bioDesafio(), rpId: location.hostname, timeout: 60000, userVerification: 'required',
+    allowCredentials: [{ id: bioDeB64(cfg.credId), type: 'public-key', transports: ['internal'] }]
+  } }).then(function () {
+    var a = DB.buscar('alunos', cfg.alunoId);
+    if (!a) { mostrarToast('Aluno não encontrado. Entre com a senha.', 'erro'); return; }
+    sessaoAlunoId = a.id;
+    registroLog('auth', 'Aluno entrou com biometria: ' + a.nome);
+    renderAluno(); renderCheckin();
+    mostrarToast('Bem-vindo(a), ' + (a.apelido || a.nome) + '!');
+  }).catch(function () { mostrarToast('Não reconhecido. Tente de novo ou use a senha.', 'erro'); });
+}
+
+/* cartão "Acesso rápido" (painel do aluno) */
+function bioHtmlCard(logado) {
+  var cfg = bioConfig(), ativo = cfg && cfg.alunoId === logado.id, sup = bioSuportado();
+  return '<div class="card tr-card" id="trCardAcesso"><h3><i class="fas fa-fingerprint"></i> Acesso rápido (opcional)</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Entre no seu painel com a <b>digital, o rosto ou o PIN do celular</b> em vez de digitar a senha. Só funciona neste aparelho e a senha continua valendo.</p>' +
+    (ativo
+      ? '<p class="mini" style="color:var(--primary-green);margin-bottom:6px;"><i class="fas fa-check-circle"></i> Ativado neste aparelho.</p><button class="btn btn-secondary" onclick="bioDesativar()"><i class="fas fa-ban"></i> Desativar</button>'
+      : (sup ? '<button class="btn" onclick="bioAtivar()"><i class="fas fa-fingerprint"></i> Ativar digital / rosto</button>'
+             : '<p class="mini">Indisponível neste navegador ou endereço. Use a senha normalmente.</p>')) + '</div>';
+}
+
+/* tela de login: nome lembrado + botão de digital */
+function bioInjetarLogin() {
+  var card = $('cardAlunoLogin'); if (!card) return;
+  var nome = $('alunoLoginNome'), ultimo = ''; try { ultimo = localStorage.getItem(UC_ULTIMO_ALUNO_KEY) || ''; } catch (e) {}
+  if (nome && !nome.value && ultimo) nome.value = ultimo;
+  var velho = $('trBioLogin'); if (velho) velho.remove();
+  var cfg = bioConfig(); if (!cfg || !bioSuportado()) return;
+  var div = document.createElement('div'); div.id = 'trBioLogin'; div.style.margin = '8px 0';
+  div.innerHTML = '<button class="btn btn-gold" onclick="bioEntrar()"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto (' + esc(cfg.nome || 'aluno') + ')</button>' +
+    '<p class="mini" style="margin-top:4px;">Ou entre com a sua senha abaixo.</p>';
+  var h = card.querySelector('h3'); if (h && h.parentNode) h.parentNode.insertBefore(div, h.nextSibling); else card.insertBefore(div, card.firstChild);
+}
+
+</script>
+<script>
+/* ▼ treino-aluno.js */
+/* ================================================================
+   TREINO-ALUNO.JS — Universo Capoeira (v87) · painel do aluno
+   "Minha semana" (treinos e carga horária), pedido de treino específico
+   (entra na aula semanal) e acesso rápido. Salva o resumo da semana na nuvem.
+   ================================================================ */
+var TR_SEM_OFFSET = 0;      /* 0 = semana atual, -1 = anterior... */
+var TR_PED_SEL = {};
+
+function trPedToggle(id, btn) {
+  TR_PED_SEL[id] = !TR_PED_SEL[id];
+  if (btn) btn.classList.toggle('on', !!TR_PED_SEL[id]);
+}
+function trSemNav(delta) { TR_SEM_OFFSET = Math.min(0, TR_SEM_OFFSET + delta); renderAluno(); }
+
+function trHtmlSemanaAluno(a) {
+  var seg = trSomaDias(trSegunda(dataLocalISO()), TR_SEM_OFFSET * 7), s = trSemana(a, seg), cats = Object.keys(s.porCat).sort(function (x, y) { return s.porCat[y] - s.porCat[x]; });
+  var max = cats.length ? s.porCat[cats[0]] : 1, salvo = DB.buscar('semanasAluno', 's_' + a.id + '_' + seg);
+  var h = '<div class="card tr-card" id="trCardSemana"><h3><i class="fas fa-calendar-week"></i> Minha semana de treino</h3>' +
+    '<div class="tr-sem-nav"><button class="btn btn-secondary btn-mini" onclick="trSemNav(-1)"><i class="fas fa-chevron-left"></i></button>' +
+    '<b style="font-size:.8rem;">' + dataBR(s.inicio) + ' – ' + dataBR(s.fim) + (TR_SEM_OFFSET === 0 ? ' (atual)' : '') + '</b>' +
+    '<button class="btn btn-secondary btn-mini" onclick="trSemNav(1)"' + (TR_SEM_OFFSET >= 0 ? ' disabled style="opacity:.4"' : '') + '><i class="fas fa-chevron-right"></i></button></div>' +
+    '<div class="tr-resumo"><div><b>' + trMinParaTexto(s.minutos) + '</b><span>carga da semana</span></div><div><b>' + s.aulas + '</b><span>aulas</span></div><div><b>' + (s.previstas || '—') + '</b><span>previstas</span></div>' +
+    '<div><b>' + (salvo ? '☁️' : '—') + '</b><span>' + (salvo ? 'na nuvem' : 'a salvar') + '</span></div></div>';
+  if (!cats.length) h += '<p class="sem-dados">Nenhum treino confirmado nesta semana.</p>';
+  cats.forEach(function (c) {
+    h += '<div class="tr-barra"><div class="tr-barra-rot"><span><i class="fas ' + trIconeCat(c) + '"></i> ' + esc(trNomeCat(c)) + '</span><b>' + trMinParaTexto(s.porCat[c]) + '</b></div><div class="tr-barra-fundo"><div class="tr-barra-cheia" style="width:' + Math.max(4, Math.round(s.porCat[c] / max * 100)) + '%"></div></div></div>';
+  });
+  h += '<h4 style="margin:10px 0 6px;font-size:.78rem;">Dia a dia</h4>';
+  s.dias.forEach(function (d) {
+    if (!d.treino && !d.prevista && !d.presenca) return;
+    var st = d.treino ? '<span class="pill pill-ok">TREINOU</span>' : (d.presenca && d.presenca.status === 'pendente') ? '<span class="pill pill-pend">PENDENTE</span>' : (d.futuro ? '<span class="pill pill-info">PREVISTA</span>' : '<span class="pill pill-no">SEM TREINO</span>');
+    h += '<div class="lista-item"><div class="linha tr-dia"><span><b>' + DIAS_SEMANA[d.dow].slice(0, 3) + ' ' + dataBR(d.data) + '</b>' +
+      (d.treino ? '<span class="mini">' + d.treino.itens.filter(function (i) { return !i.paralelo; }).map(function (i) { return esc(i.nome || trNomeCat(i.cat)) + ' ' + trMinParaTexto(i.min); }).join(' · ') + '</span>' : '') + '</span><span style="text-align:right;">' + st +
+      (d.treino ? '<span class="mini"><b>' + trMinParaTexto(d.treino.total) + '</b></span>' : '') + '</span></div></div>';
+  });
+  h += '<div class="flex-btn" style="margin-top:8px;"><button class="btn btn-gold" onclick="trVerBoletimAluno()"><i class="fas fa-file-alt"></i> Ver meu boletim</button></div>' +
+    '<p class="mini" style="margin-top:6px;">Toda semana o seu resumo é salvo na nuvem. Com ele o professor gera o boletim e o certificado no fim da avaliação.</p></div>';
+  return h;
+}
+
+function trHtmlPedidoAluno(a) {
+  var meus = DB.listar('solicitacoes').filter(function (s) { return s.alunoId === a.id && !s.ajusteCalendario; }).sort(function (x, y) { return String(y.criadoEm || '').localeCompare(String(x.criadoEm || '')); }).slice(0, 4);
+  var h = '<div class="card tr-card" id="trCardPedido"><h3><i class="fas fa-hand-point-up"></i> Pedir treino específico</h3>' +
+    '<p class="mini">Escolha o que você quer treinar. O pedido entra no plano da aula da semana e o professor pode ajustar o dia.</p><div class="tr-chips">';
+  TR_CATS.forEach(function (c) { h += '<button type="button" class="tr-chip' + (TR_PED_SEL[c.id] ? ' on' : '') + '" onclick="trPedToggle(\'' + c.id + '\',this)"><i class="fas ' + c.icone + '"></i> ' + esc(c.nome) + '</button>'; });
+  h += '</div><label class="campo-label">Dia que prefere (opcional)</label><input type="date" id="trPedData" min="' + dataLocalISO() + '">' +
+    '<label class="campo-label">Observação (opcional)</label><textarea id="trPedObs" rows="2" placeholder="Ex.: quero melhorar a ginga e as esquivas"></textarea>' +
+    '<button class="btn" onclick="trEnviarPedido(this)"><i class="fas fa-paper-plane"></i> Enviar pedido de treino</button>';
+  if (meus.length) {
+    h += '<h4 style="margin:10px 0 6px;font-size:.78rem;">Meus pedidos</h4>';
+    meus.forEach(function (s) {
+      h += '<div class="lista-item"><div class="linha"><span class="mini"><b>' + esc((s.categorias && s.categorias.length ? s.categorias.map(trNomeCat).join(', ') : s.tipo) || '-') + '</b></span>' + pillStatusSolicitacao(s.status) + '</div>' +
+        (s.incluidoAula && s.dataAula ? '<span class="mini" style="color:var(--primary-green);"><i class="fas fa-check"></i> Entrou na aula de ' + dataBR(s.dataAula) + '</span>' : (s.dataPreferida ? '<span class="mini">Preferência: ' + dataBR(s.dataPreferida) + '</span>' : '')) +
+        (s.respostaProfessor ? '<div class="mini" style="color:var(--gold);">Prof.: ' + esc(s.respostaProfessor) + '</div>' : '') + '</div>';
+    });
+  }
+  return h + '</div>';
+}
+
+function trEnviarPedido(btn) {
+  var a = alunoLogado(); if (!a) { mostrarToast('Faça login para pedir treino.', 'erro'); return; }
+  var ids = TR_CATS.filter(function (c) { return TR_PED_SEL[c.id]; }).map(function (c) { return c.id; });
+  if (!ids.length) { mostrarToast('Escolha pelo menos um treino.', 'erro'); return; }
+  var data = (($('trPedData') || {}).value || ''), obs = (($('trPedObs') || {}).value || '').trim();
+  if (btn) { btn.classList.add('carregando'); btn.disabled = true; }
+  DB.salvar('solicitacoes', {
+    alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', graduacao: a.graduacao || '',
+    tipo: ids.map(trNomeCat).join(', '), categorias: ids, minPedido: 15, dataPreferida: data, observacao: obs,
+    status: 'pendente', respostaProfessor: '', incluidoAula: false, dataAula: '', criadoEm: agoraISO()
+  }).then(function () {
+    TR_PED_SEL = {}; mostrarToast('Pedido enviado! Ele entra no plano da aula.');
+    registroLog('aluno', 'Pedido de treino específico: ' + ids.join(',') + ' por ' + a.nome); renderAluno();
+  }).catch(function () { if (btn) { btn.classList.remove('carregando'); btn.disabled = false; } });
+}
+
+function trAlunoInjetar() {
+  var logado = alunoLogado();
+  if (!logado) { bioInjetarLogin(); return; }
+  try { localStorage.setItem(UC_ULTIMO_ALUNO_KEY, logado.apelido || logado.nome); } catch (e) {}
+  var painel = $('cardAlunoPainel'); if (!painel) return;
+  var velho = $('trAlunoBloco'); if (velho) velho.remove();
+  var div = document.createElement('div'); div.id = 'trAlunoBloco';
+  div.innerHTML = trHtmlSemanaAluno(logado) + trHtmlPedidoAluno(logado) + bioHtmlCard(logado);
+  painel.insertBefore(div, painel.firstChild);
+  try { trSalvarSemanasRecentes(logado, 6); } catch (e) { console.warn('[semana]', e); }
+}
+
+var trRenderAlunoOriginal = renderAluno;
+renderAluno = function () {
+  var r = trRenderAlunoOriginal.apply(this, arguments);
+  try { trAlunoInjetar(); } catch (e) { console.warn('[aluno]', e); }
+  return r;
+};
+
+</script>
+<script>
+/* ▼ treino-professor.js */
+/* ================================================================
+   TREINO-PROFESSOR.JS — Universo Capoeira (v87) · aba Professor
+   1) Advertências: gerar ou não (geral e por aluno)   2) Plano da aula semanal (categorias + minutos)
+   3) Pedidos de treino e de ajuste de calendário      4) Calendário do aluno (ajustar dias)
+   5) Boletim e certificado da avaliação final          6) Testes de cada item (nada é salvo)
+   ================================================================ */
+var TR_DRAFT = null;          /* rascunho do plano do dia em edição */
+var TR_DIA_SEL = new Date().getDay();
+var TR_BOL_ALUNO = '';
+
+/* ---------- advertências: gerar ou não ---------- */
+var trIdentOriginal = (typeof identificarAlunosParaAdvertencia === 'function') ? identificarAlunosParaAdvertencia : function () { return []; };
+identificarAlunosParaAdvertencia = function () {
+  var p = trPrefs();
+  if (!p.advertencias) return [];
+  return trIdentOriginal().filter(function (f) { return !p.dispensados[f.aluno.id]; });
+};
+function trToggleAdvertencias() {
+  var p = trPrefs(), novo = !p.advertencias;
+  trSalvarPrefs({ advertencias: novo }).then(function () { mostrarToast(novo ? 'Advertências ligadas: você decide caso a caso.' : 'Advertências desligadas: nenhuma será sugerida.'); renderAbaProfessor(); });
+}
+function trAdvDispensar(alunoId, sim) {
+  var p = trPrefs(), d = Object.assign({}, p.dispensados);
+  if (sim) d[alunoId] = true; else delete d[alunoId];
+  trSalvarPrefs({ dispensados: d }).then(function () { mostrarToast(sim ? 'Combinado: não gerar advertência para este aluno.' : 'Aluno volta a ser considerado.'); renderAbaProfessor(); });
+}
+function trHtmlAdvertencias() {
+  var p = trPrefs(), brutas = trIdentOriginal();
+  var h = '<div class="card tr-card" id="trCardAdv" style="border-color:var(--danger);"><h3><i class="fas fa-triangle-exclamation"></i> Advertências: gerar ou não</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Você decide. Com o interruptor <b>desligado</b> o app não sugere nenhuma advertência. Ligado, você escolhe aluno por aluno: gerar ou dispensar.</p>' +
+    '<button class="btn ' + (p.advertencias ? '' : 'btn-secondary') + '" onclick="trToggleAdvertencias()"><i class="fas ' + (p.advertencias ? 'fa-toggle-on' : 'fa-toggle-off') + '"></i> Gerar advertências: ' + (p.advertencias ? 'SIM' : 'NÃO') + '</button>';
+  if (!brutas.length) h += '<p class="sem-dados" style="margin-top:8px;">Nenhum aluno com padrão preocupante agora.</p>';
+  brutas.forEach(function (f) {
+    var disp = !!p.dispensados[f.aluno.id];
+    h += '<div class="lista-item"><b style="font-size:.78rem;">' + esc(f.aluno.apelido || f.aluno.nome) + '</b><div class="mini">' + f.motivos.map(esc).join('; ') + '</div><div class="flex-btn" style="margin-top:6px;">' +
+      (p.advertencias && !disp ? '<button class="btn btn-danger btn-mini" onclick="gerarAdvertenciaIA(\'' + f.aluno.id + '\')"><i class="fas fa-robot"></i> Gerar</button>' : '') +
+      (disp ? '<button class="btn btn-secondary btn-mini" onclick="trAdvDispensar(\'' + f.aluno.id + '\',false)"><i class="fas fa-rotate-left"></i> Voltar a considerar</button>'
+            : '<button class="btn btn-secondary btn-mini" onclick="trAdvDispensar(\'' + f.aluno.id + '\',true)"><i class="fas fa-ban"></i> Não gerar</button>') +
+      '</div>' + (disp ? '<span class="mini" style="color:var(--gold);">Dispensado: sem advertência para este aluno.</span>' : '') + '</div>';
+  });
+  return h + '</div>';
+}
+
+/* ---------- plano da aula semanal ---------- */
+function trPlanoCarregar(dow) {
+  TR_DIA_SEL = dow;
+  var t = trPlanoTemplate(dow);
+  TR_DRAFT = { dow: dow, itens: (t && t.itens ? t.itens : []).map(function (i) { return { cat: i.cat, min: Number(i.min) || 0, pos: i.pos || '' }; }) };
+}
+function trPlanoLerDom() {
+  if (!TR_DRAFT) return;
+  TR_DRAFT.itens.forEach(function (it, i) {
+    var c = $('trPlCat_' + i), m = $('trPlMin_' + i), p = $('trPlPos_' + i);
+    if (c) it.cat = c.value; if (m) it.min = Math.max(0, Math.min(300, Number(m.value) || 0)); if (p) it.pos = p.value;
+  });
+}
+function trPlanoSelDia(dow) { trPlanoLerDom(); trPlanoCarregar(dow); trPlanoRedesenhar(); }
+function trPlanoAdd() {
+  trPlanoLerDom(); var sel = $('trPlNovo'), id = sel ? sel.value : TR_CATS[0].id, c = trCat(id);
+  TR_DRAFT.itens.push({ cat: id, min: c.min, pos: c.posicoes ? c.posicoes[0][0] : '' }); trPlanoRedesenhar();
+}
+function trPlanoRem(i) { trPlanoLerDom(); TR_DRAFT.itens.splice(i, 1); trPlanoRedesenhar(); }
+function trPlanoRedesenhar() { var b = $('trCardPlano'); if (b) { b.innerHTML = trPlanoHtmlInterno(); } }
+function trPlanoSalvar() {
+  trPlanoLerDom();
+  var itens = TR_DRAFT.itens.filter(function (i) { return i.min > 0 || i.pos === 'aula_toda'; });
+  DB.salvar('planosAula', { tipo: 'dow', diaSemana: TR_DRAFT.dow, itens: itens, atualizadoEm: agoraISO(), por: (sessaoEquipe && sessaoEquipe.nome) || 'Professor' }, 'dow_' + TR_DRAFT.dow)
+    .then(function () { mostrarToast('Plano de ' + DIAS_SEMANA[TR_DRAFT.dow] + ' salvo!'); registroLog('professor', 'Plano da aula salvo: ' + DIAS_SEMANA[TR_DRAFT.dow]); trPlanoCarregar(TR_DRAFT.dow); trPlanoRedesenhar(); trCalRenderTodos(); });
+}
+function trPlanoCopiar() {
+  trPlanoLerDom();
+  var dias = {}; DB.listar('horarios').forEach(function (h) { dias[Number(h.diaSemana)] = true; });
+  var alvo = Object.keys(dias).map(Number).filter(function (d) { return d !== TR_DRAFT.dow; });
+  if (!alvo.length) { mostrarToast('Não há outros dias de aula cadastrados.', 'erro'); return; }
+  var itens = TR_DRAFT.itens.filter(function (i) { return i.min > 0 || i.pos === 'aula_toda'; });
+  Promise.all(alvo.map(function (d) { return DB.salvar('planosAula', { tipo: 'dow', diaSemana: d, itens: itens, atualizadoEm: agoraISO() }, 'dow_' + d); }))
+    .then(function () { mostrarToast('Plano copiado para ' + alvo.length + ' dia(s) de aula.'); });
+}
+function trPlanoHtmlInterno() {
+  if (!TR_DRAFT) trPlanoCarregar(TR_DIA_SEL);
+  var dow = TR_DRAFT.dow, hor = DB.listar('horarios').filter(function (h) { return Number(h.diaSemana) === dow; }), dias = {};
+  DB.listar('horarios').forEach(function (h) { dias[Number(h.diaSemana)] = true; });
+  var h = '<h3><i class="fas fa-clipboard-list"></i> Aula semanal — plano de treino</h3><p class="mini">Escolha o dia e monte a aula. Cada treino gera carga horária para todos os alunos presentes.</p><div class="tr-chips">';
+  for (var d = 0; d < 7; d++) h += '<button type="button" class="tr-chip' + (d === dow ? ' on' : '') + '" onclick="trPlanoSelDia(' + d + ')">' + DIAS_SEMANA[d].slice(0, 3) + (dias[d] ? ' •' : '') + '</button>';
+  h += '</div>' + trLinhaFixa(TR_FIXOS.berimbau, 'início da aula');
+  TR_DRAFT.itens.forEach(function (it, i) {
+    var c = trCat(it.cat) || TR_CATS[0];
+    h += '<div class="lista-item"><div class="tr-linha-item"><select id="trPlCat_' + i + '" onchange="trPlanoLerDom();trPlanoRedesenhar()">' +
+      TR_CATS.map(function (x) { return '<option value="' + x.id + '"' + (x.id === it.cat ? ' selected' : '') + '>' + esc(x.nome) + '</option>'; }).join('') + '</select>' +
+      '<input type="number" id="trPlMin_' + i + '" min="0" max="300" step="5" value="' + it.min + '" title="minutos"><span style="display:flex;gap:4px;"><button class="btn btn-secondary btn-mini" title="Testar" onclick="trTestarItem(' + i + ')">🧪</button><button class="btn btn-danger btn-mini" onclick="trPlanoRem(' + i + ')"><i class="fas fa-xmark"></i></button></span></div>' +
+      (c.posicoes ? '<select id="trPlPos_' + i + '">' + c.posicoes.map(function (p) { return '<option value="' + p[0] + '"' + (p[0] === it.pos ? ' selected' : '') + '>' + p[1] + '</option>'; }).join('') + '</select>' : '') + '</div>';
+  });
+  h += '<div class="tr-linha-item" style="grid-template-columns:1fr auto;"><select id="trPlNovo">' + TR_CATS.map(function (x) { return '<option value="' + x.id + '">' + esc(x.nome) + '</option>'; }).join('') + '</select>' +
+    '<button class="btn btn-mini" onclick="trPlanoAdd()"><i class="fas fa-plus"></i> Adicionar</button></div>' + trLinhaFixa(TR_FIXOS.cantoria, 'final da aula');
+  var calc = trCalcularPlano(TR_DRAFT.itens), dur = hor.length && hor[0].horaInicio && hor[0].horaFim ? (minutosDoHM(hor[0].horaFim) - minutosDoHM(hor[0].horaInicio)) : 0;
+  h += '<p class="mini" style="margin-top:8px;">Total do dia: <b>' + trMinParaTexto(calc.total) + '</b> (' + trHoras(calc.total) + ' h)' + (dur > 0 ? ' · aula cadastrada: ' + trMinParaTexto(dur) + (Math.abs(dur - calc.total) > 5 ? ' <span style="color:var(--gold);">⚠️ o plano não bate com a duração</span>' : ' ✅') : '') + '</p>' +
+    '<div class="flex-btn"><button class="btn" onclick="trPlanoSalvar()"><i class="fas fa-save"></i> Salvar plano do dia</button><button class="btn btn-secondary" onclick="trPlanoLerDom();trTestarDia()">🧪 Testar este dia</button><button class="btn btn-secondary" onclick="trPlanoCopiar()"><i class="fas fa-copy"></i> Copiar p/ outros dias</button></div>';
+  return h;
+}
+function trLinhaFixa(f, quando) {
+  return '<div class="lista-item tr-fixo"><div class="linha"><span><i class="fas ' + f.icone + '"></i> <b>' + f.nome + '</b></span><span class="mini">' + f.min + ' min · ' + quando + ' · todo dia 🔒</span></div></div>';
+}
+function trCalcularPlano(itensBase) {
+  var o = trOrdenarMeio(itensBase.filter(function (i) { return i.min > 0 || i.pos === 'aula_toda'; })), itens = [Object.assign({}, TR_FIXOS.berimbau)];
+  o.meio.forEach(function (i) { itens.push({ cat: i.cat, nome: trNomeCat(i.cat), min: Number(i.min) || 0 }); });
+  o.paralelos.forEach(function (i) { itens.push({ cat: i.cat, nome: trNomeCat(i.cat), min: 0, paralelo: true }); });
+  itens.push(Object.assign({}, TR_FIXOS.cantoria)); return trMontar(itens);
+}
+
+/* ---------- pedidos de treino e de ajuste de calendário ---------- */
+function trProximaDataAula() {
+  var dias = {}; DB.listar('horarios').forEach(function (h) { dias[Number(h.diaSemana)] = true; });
+  for (var i = 0; i < 14; i++) { var iso = trSomaDias(dataLocalISO(), i); if (dias[trParseISO(iso).getDay()]) return iso; }
+  return dataLocalISO();
+}
+function trHtmlPedidos() {
+  var todos = DB.listar('solicitacoes').slice().sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+  var tr = todos.filter(function (s) { return !s.ajusteCalendario && (s.status === 'pendente' || (s.status === 'aprovado' && s.incluidoAula && s.dataAula >= dataLocalISO())); }).slice(0, 10);
+  var aj = todos.filter(function (s) { return s.ajusteCalendario && s.status === 'pendente'; }).slice(0, 10);
+  var h = '<h3><i class="fas fa-inbox"></i> Pedidos dos alunos <span class="badge-count">' + (tr.filter(function (s) { return s.status === 'pendente'; }).length + aj.length) + '</span></h3><h4 style="font-size:.78rem;margin:6px 0;">Treino específico → aula semanal</h4>';
+  if (!tr.length) h += '<p class="sem-dados">Nenhum pedido de treino agora.</p>';
+  tr.forEach(function (s) {
+    var cats = (s.categorias && s.categorias.length ? s.categorias.map(trNomeCat).join(', ') : s.tipo) || '-', dia = s.dataAula || s.dataPreferida || trProximaDataAula();
+    h += '<div class="lista-item"><div class="linha"><b style="font-size:.78rem;">' + esc(s.alunoApelido || s.alunoNome) + '</b>' + pillStatusSolicitacao(s.status) + '</div><span class="mini">' + esc(cats) + '</span>' +
+      (s.observacao ? '<div class="mini">"' + esc(s.observacao) + '"</div>' : '') + (s.dataPreferida ? '<div class="mini">Aluno prefere: ' + dataBR(s.dataPreferida) + '</div>' : '') +
+      '<label class="campo-label" style="margin-top:6px;">Dia da aula (você ajusta)</label><input type="date" id="trPedDia_' + s.id + '" value="' + dia + '">' +
+      '<div class="flex-btn" style="margin-top:4px;"><button class="btn btn-mini" onclick="trPedIncluir(\'' + s.id + '\')"><i class="fas fa-calendar-check"></i> ' + (s.incluidoAula ? 'Mover de dia' : 'Incluir na aula') + '</button>' +
+      (s.status === 'pendente' ? '<button class="btn btn-danger btn-mini" onclick="trPedRecusar(\'' + s.id + '\')"><i class="fas fa-xmark"></i> Recusar</button>' : '') + '</div></div>';
+  });
+  h += '<h4 style="font-size:.78rem;margin:10px 0 6px;">Ajustes de calendário</h4>';
+  if (!aj.length) h += '<p class="sem-dados">Nenhum pedido de ajuste.</p>';
+  aj.forEach(function (s) {
+    h += '<div class="lista-item"><div class="linha"><b style="font-size:.78rem;">' + esc(s.alunoApelido || s.alunoNome) + '</b><span class="mini">' + dataBR(s.dataPreferida) + '</span></div><div class="mini">"' + esc(s.observacao) + '"</div>' +
+      '<div class="flex-btn" style="margin-top:6px;"><button class="btn btn-mini" onclick="trAjusteResolver(\'' + s.id + '\',true)"><i class="fas fa-check"></i> Aprovar (treinou)</button><button class="btn btn-danger btn-mini" onclick="trAjusteResolver(\'' + s.id + '\',false)"><i class="fas fa-xmark"></i> Recusar</button></div></div>';
+  });
+  return h;
+}
+function trPedIncluir(id) {
+  var s = DB.buscar('solicitacoes', id), inp = $('trPedDia_' + id); if (!s || !inp || !inp.value) { mostrarToast('Escolha o dia da aula.', 'erro'); return; }
+  DB.salvar('solicitacoes', { status: 'aprovado', incluidoAula: true, dataAula: inp.value, respostaProfessor: 'Seu treino entrou na aula de ' + dataBR(inp.value) + '.', respondidoEm: agoraISO() }, id)
+    .then(function () { mostrarToast('Pedido incluído na aula de ' + dataBR(inp.value) + '.'); registroLog('professor', 'Pedido de treino de ' + s.alunoNome + ' incluído em ' + inp.value); renderAbaProfessor(); });
+}
+function trPedRecusar(id) {
+  DB.salvar('solicitacoes', { status: 'rejeitado', incluidoAula: false, respostaProfessor: 'Neste momento não foi possível incluir. Fale com o professor.', respondidoEm: agoraISO() }, id).then(function () { mostrarToast('Pedido recusado.'); renderAbaProfessor(); });
+}
+function trAjusteResolver(id, aprova) {
+  var s = DB.buscar('solicitacoes', id); if (!s) return;
+  var a = DB.buscar('alunos', s.alunoId), fim = function () { mostrarToast(aprova ? 'Dia ajustado.' : 'Pedido recusado.'); trCalRenderTodos(); renderAbaProfessor(); };
+  var resp = aprova ? 'Ajuste aprovado pelo professor.' : 'Ajuste não aprovado.';
+  if (aprova && a) {
+    var iso = s.dataPreferida, p = trPresencaDoDia(a, iso), it = trItensDoDia(iso, a.id, null);
+    var patch = { status: 'aprovado', observacaoProfessor: 'Ajustado a pedido do aluno: ' + (s.observacao || ''), avaliadoPor: (sessaoEquipe && sessaoEquipe.nome) || 'Professor', avaliadoEm: agoraISO(), treinoItens: it.itens, horasAula: trHoras(it.total) };
+    var salvar = p ? DB.salvar('presencas', patch, p.id) : DB.salvar('presencas', Object.assign({ alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', data: iso, hora: '', tipo: 'manual', poloId: '', poloNome: '', criadoEm: agoraISO() }, patch));
+    salvar.then(function () { return DB.salvar('solicitacoes', { status: 'aprovado', respostaProfessor: resp, respondidoEm: agoraISO() }, id); }).then(fim);
+  } else DB.salvar('solicitacoes', { status: 'rejeitado', respostaProfessor: resp, respondidoEm: agoraISO() }, id).then(fim);
+}
+
+/* ---------- calendário do aluno ---------- */
+function trHtmlCalProf() {
+  var alunos = DB.listar('alunos').slice().sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); });
+  var sel = (TR_CALS.calProf && TR_CALS.calProf.alunoId) || (alunos[0] && alunos[0].id) || '';
+  return '<h3><i class="fas fa-calendar-alt"></i> Calendário do aluno 📆</h3><p class="mini">Veja os dias treinados e ajuste: marcar treino, tirar treino ou editar os itens.</p>' +
+    '<select id="trCalProfSel" onchange="trCalMontar(\'calProf\',this.value,\'equipe\')">' + alunos.map(function (a) { return '<option value="' + a.id + '"' + (a.id === sel ? ' selected' : '') + '>' + esc(a.nome) + '</option>'; }).join('') + '</select><div id="calProf"></div>';
+}
+
+/* ---------- boletim e certificado ---------- */
+function trHtmlBoletimProf() {
+  var alunos = DB.listar('alunos').slice().sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); }), hoje = dataLocalISO();
+  var sel = TR_BOL_ALUNO || (alunos[0] && alunos[0].id) || '';
+  var salvos = DB.listar('boletins').filter(function (b) { return b.alunoId === sel; }).sort(function (a, b) { return String(b.geradoEm || '').localeCompare(String(a.geradoEm || '')); }).slice(0, 4);
+  var h = '<h3><i class="fas fa-file-alt"></i> Boletim e certificado (avaliação final)</h3><p class="mini">O boletim usa os resumos semanais salvos na nuvem. Ao encerrar a avaliação, o certificado sai com a carga horária real do aluno.</p>' +
+    '<label class="campo-label">Aluno</label><select id="trBolAluno" onchange="TR_BOL_ALUNO=this.value;renderAbaProfessor()">' + alunos.map(function (a) { return '<option value="' + a.id + '"' + (a.id === sel ? ' selected' : '') + '>' + esc(a.nome) + '</option>'; }).join('') + '</select>' +
+    '<label class="campo-label">De</label><input type="date" id="trBolDe" value="' + trSomaDias(hoje, -90) + '"><label class="campo-label">Até</label><input type="date" id="trBolAte" value="' + hoje + '">' +
+    '<div class="flex-btn"><button class="btn btn-secondary" onclick="trBoletimTestar()">🧪 Testar boletim</button><button class="btn" onclick="trBoletimGerar(false)"><i class="fas fa-cloud-arrow-up"></i> Gerar e salvar</button><button class="btn btn-gold" onclick="trBoletimGerar(true)"><i class="fas fa-award"></i> Encerrar avaliação + certificado</button></div>';
+  salvos.forEach(function (b) { h += '<div class="lista-item"><div class="linha"><span class="mini">' + dataBR(b.de) + ' – ' + dataBR(b.ate) + '</span><b>' + trMinParaTexto(b.minutos) + '</b></div><span class="mini">salvo em ' + dataBR(String(b.geradoEm || '').slice(0, 10)) + '</span></div>'; });
+  return h;
+}
+function trBolLerForm() {
+  var a = DB.buscar('alunos', ($('trBolAluno') || {}).value); if (!a) { mostrarToast('Escolha o aluno.', 'erro'); return null; }
+  var de = ($('trBolDe') || {}).value, ate = ($('trBolAte') || {}).value; if (!de || !ate || de > ate) { mostrarToast('Confira as datas.', 'erro'); return null; }
+  return { a: a, de: de, ate: ate };
+}
+function trBoletimTestar() {
+  var f = trBolLerForm(); if (!f) return;
+  abrirModal('Boletim (teste)', trHtmlBoletim(trBoletim(f.a, f.de, f.ate), true), '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+function trBoletimGerar(emitir) {
+  var f = trBolLerForm(); if (!f) return;
+  var b = trBoletim(f.a, f.de, f.ate), quem = (sessaoEquipe && sessaoEquipe.nome) || 'Professor';
+  trSalvarSemanasRecentes(f.a, 12);
+  DB.salvar('boletins', {
+    alunoId: f.a.id, alunoNome: f.a.nome, de: f.de, ate: f.ate, minutos: b.minutos, aulas: b.aulas, previstas: b.previstas, frequencia: b.frequencia, mediaAvaliacoes: b.mediaAvaliacoes, porCat: b.porCat,
+    semanas: b.semanas.map(function (s) { return { inicio: s.inicio, min: s.minutos, aulas: s.aulas }; }), geradoPor: quem, geradoEm: agoraISO()
+  }).then(function (bid) {
+    registroLog('professor', 'Boletim gerado para ' + f.a.nome);
+    if (!emitir) { mostrarToast('Boletim salvo na nuvem!'); renderAbaProfessor(); return; }
+    var codigo = 'UC-' + f.ate.replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(), carga = formatarCargaHoraria(b.minutos / 60);
+    return DB.salvar('certificados', { alunoId: f.a.id, alunoNome: f.a.nome, alunoApelido: f.a.apelido || '', evento: 'Avaliação final — treinos de capoeira', data: f.ate, cargaHoraria: carga, aulasComputadas: b.aulas, assinatura: '', codigo: codigo, boletimId: bid, emitidoPor: quem, emitidoEm: agoraISO() })
+      .then(function (cid) { mostrarToast('Avaliação encerrada! Certificado ' + codigo + ' · ' + carga); baixarCertificado(cid); renderAbaProfessor(); });
+  });
+}
+
+/* ---------- testes (nada é salvo) ---------- */
+function trAlunoDeTeste() {
+  var alunos = DB.listar('alunos'), sel = $('trBolAluno') && DB.buscar('alunos', $('trBolAluno').value);
+  return sel || alunos.filter(function (a) { return trPresencasAluno(a).some(function (p) { return p.status === 'aprovado'; }); })[0] || alunos[0] || { id: 'teste', nome: 'Aluno de teste', graduacao: '' };
+}
+function trTestarItem(i) {
+  trPlanoLerDom(); var it = TR_DRAFT.itens[i]; if (!it) return;
+  var c = trCat(it.cat), so = trCalcularPlano([it]);
+  var pos = c.posicoes ? (c.posicoes.filter(function (p) { return p[0] === it.pos; })[0] || [0, ''])[1] : '';
+  abrirModal('Teste: ' + c.nome, '<div class="tr-teste-faixa">🧪 MODO TESTE — nada é salvo</div>' +
+    '<p class="mini">Se este treino estiver no plano de ' + DIAS_SEMANA[TR_DRAFT.dow] + ':</p><div class="lista-item"><div class="linha"><span><i class="fas ' + c.icone + '"></i> ' + esc(c.nome) + '</span><b>' + (it.pos === 'aula_toda' ? 'aula toda' : trMinParaTexto(it.min)) + '</b></div>' + (pos ? '<span class="mini">Posição: ' + esc(pos) + '</span>' : '') + '</div>' +
+    '<p class="mini" style="margin-top:6px;">Somado ao berimbau e à cantoria de 20 min, uma aula só com esse treino tem <b>' + trMinParaTexto(so.total) + '</b> de carga horária (' + trHoras(so.total) + ' h) para cada aluno presente.</p>', '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+function trTestarFixo(cat) {
+  var f = TR_FIXOS[cat];
+  abrirModal('Teste: ' + f.nome, '<div class="tr-teste-faixa">🧪 MODO TESTE — nada é salvo</div><p class="mini"><i class="fas ' + f.icone + '"></i> <b>' + f.nome + '</b> vale <b>' + f.min + ' min</b> no ' + (f.pos === 'inicio' ? 'início' : 'final') + ' de <b>todas</b> as aulas e entra na carga horária de cada aluno presente (' + trHoras(f.min) + ' h por aula).</p>', '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+function trTestarDia() {
+  var calc = trCalcularPlano(TR_DRAFT.itens), hor = DB.listar('horarios').filter(function (h) { return Number(h.diaSemana) === TR_DRAFT.dow; })[0];
+  var t = hor && minutosDoHM(hor.horaInicio) !== null ? minutosDoHM(hor.horaInicio) : null, h = '<div class="tr-teste-faixa">🧪 MODO TESTE — nada é salvo</div>';
+  var hm = function (m) { return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2); };
+  calc.itens.forEach(function (i) {
+    h += '<div class="lista-item' + (i.fixo ? ' tr-fixo' : '') + '"><div class="linha"><span>' + (t !== null && !i.paralelo ? '<span class="mini">' + hm(t) + '</span> ' : '') + '<i class="fas ' + trIconeCat(i.cat) + '"></i> ' + esc(i.nome) + '</span><b>' + (i.paralelo ? 'aula toda' : trMinParaTexto(i.min)) + '</b></div></div>';
+    if (t !== null && !i.paralelo) t += i.min;
+  });
+  var al = trAlunoDeTeste(), dow = DIAS_SEMANA[TR_DRAFT.dow];
+  h += '<p class="mini" style="margin-top:8px;">Carga horária gerada nesse dia: <b>' + trMinParaTexto(calc.total) + '</b> (' + trHoras(calc.total) + ' h) por aluno presente.</p>';
+  abrirModal('Teste do dia · ' + dow, h, '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+function trTestarSemana() {
+  var al = trAlunoDeTeste(), s = trSemana(al, trSegunda(dataLocalISO()));
+  abrirModal('Teste: semana do aluno', '<div class="tr-teste-faixa">🧪 MODO TESTE — nada é salvo</div><p class="mini"><b>' + esc(al.apelido || al.nome) + '</b> · ' + dataBR(s.inicio) + ' – ' + dataBR(s.fim) + '</p><div class="tr-resumo"><div><b>' + trMinParaTexto(s.minutos) + '</b><span>carga</span></div><div><b>' + s.aulas + '</b><span>aulas</span></div><div><b>' + (s.previstas || '—') + '</b><span>previstas</span></div><div><b>' + Object.keys(s.porCat).length + '</b><span>treinos</span></div></div>' +
+    Object.keys(s.porCat).map(function (c) { return '<div class="tr-barra-rot"><span>' + esc(trNomeCat(c)) + '</span><b>' + trMinParaTexto(s.porCat[c]) + '</b></div>'; }).join('') || '<p class="sem-dados">Sem treinos confirmados nesta semana.</p>', '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+function trTestarBoletim() { var al = trAlunoDeTeste(), ate = dataLocalISO(); abrirModal('Teste: boletim', trHtmlBoletim(trBoletim(al, trSomaDias(ate, -90), ate), true), '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>'); }
+function trTestarBio() {
+  var linhas = ['Endereço seguro (https): ' + (window.isSecureContext ? '✅ sim' : '❌ não'), 'Suporte a biometria no navegador: ' + (window.PublicKeyCredential ? '✅ sim' : '❌ não')];
+  var fim = function (extra) { abrirModal('Teste: acesso por digital', '<div class="tr-teste-faixa">🧪 MODO TESTE — nada é ativado</div>' + linhas.concat(extra ? [extra] : []).map(function (l) { return '<p class="mini">' + l + '</p>'; }).join(''), '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>'); };
+  if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function (ok) { fim('Digital/rosto/PIN neste aparelho: ' + (ok ? '✅ disponível' : '❌ indisponível')); }).catch(function () { fim(''); });
+  else fim('');
+}
+function trTestarAdvertencia() {
+  var p = trPrefs(), b = trIdentOriginal();
+  abrirModal('Teste: advertências', '<div class="tr-teste-faixa">🧪 MODO TESTE — nada é enviado</div><p class="mini">Interruptor: <b>' + (p.advertencias ? 'SIM (você decide caso a caso)' : 'NÃO (nenhuma é sugerida)') + '</b></p><p class="mini">Alunos com padrão preocupante agora: <b>' + b.length + '</b> · dispensados: <b>' + Object.keys(p.dispensados).length + '</b></p>', '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+function trHtmlTestes() {
+  var h = '<h3><i class="fas fa-flask"></i> Testar cada item 🧪</h3><p class="mini">Simulações: nada é salvo nem enviado.</p><div class="tr-chips">' +
+    '<button class="tr-chip" onclick="trTestarFixo(\'berimbau\')"><i class="fas fa-music"></i> Berimbau</button><button class="tr-chip" onclick="trTestarFixo(\'cantoria\')"><i class="fas fa-microphone"></i> Cantoria</button>';
+  TR_CATS.forEach(function (c) { h += '<button class="tr-chip" onclick="trTestarCat(\'' + c.id + '\')"><i class="fas ' + c.icone + '"></i> ' + esc(c.nome) + '</button>'; });
+  return h + '<button class="tr-chip" onclick="trPlanoLerDom();trTestarDia()">📋 Dia da aula</button><button class="tr-chip" onclick="trTestarSemana()">📅 Semana do aluno</button><button class="tr-chip" onclick="trTestarBoletim()">📄 Boletim</button><button class="tr-chip" onclick="trTestarBio()">🔐 Digital</button><button class="tr-chip" onclick="trTestarAdvertencia()">⚠️ Advertência</button></div>';
+}
+function trTestarCat(id) { if (!TR_DRAFT) trPlanoCarregar(TR_DIA_SEL); var c = trCat(id); TR_DRAFT.itens.push({ cat: id, min: c.min, pos: c.posicoes ? c.posicoes[0][0] : '' }); var i = TR_DRAFT.itens.length - 1; trTestarItem(i); TR_DRAFT.itens.pop(); }
+
+function trIrPara(id) {
+  var el = $(id); if (!el) return;
+  el.classList.remove('fechado'); el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---------- entra na aba Professor ---------- */
+function trProfInjetar() {
+  var box = $('conteudoProfessor');
+  if (!box || !trEquipeLogada() || !box.children.length) return;
+  var velho = $('trProfBloco'); if (velho) velho.remove();
+  if (!TR_DRAFT) trPlanoCarregar(TR_DIA_SEL);
+  var div = document.createElement('div'); div.id = 'trProfBloco';
+  div.innerHTML = '<div class="card tr-card" id="trCardAtalhos"><h3><i class="fas fa-dumbbell"></i> Treinos, agenda e boletim</h3><div class="tr-chips">' +
+    '<button class="tr-chip" onclick="trIrPara(\'trCardPlano\')">📋 Plano da aula</button><button class="tr-chip" onclick="trIrPara(\'trCardPedidos\')">📥 Pedidos</button><button class="tr-chip" onclick="trIrPara(\'trCardCal\')">📆 Calendário</button>' +
+    '<button class="tr-chip" onclick="trIrPara(\'trCardBol\')">📄 Boletim</button><button class="tr-chip" onclick="trIrPara(\'trCardTestes\')">🧪 Testes</button><button class="tr-chip" onclick="trIrPara(\'trCardAdv\')">⚠️ Advertências</button></div></div>' +
+    '<div class="card tr-card fechado" id="trCardPlano">' + trPlanoHtmlInterno() + '</div>' +
+    '<div class="card tr-card fechado" id="trCardPedidos">' + trHtmlPedidos() + '</div>' +
+    '<div class="card tr-card fechado" id="trCardCal">' + trHtmlCalProf() + '</div>' +
+    '<div class="card tr-card fechado" id="trCardBol">' + trHtmlBoletimProf() + '</div>' +
+    '<div class="card tr-card fechado" id="trCardTestes">' + trHtmlTestes() + '</div>' + trHtmlAdvertencias().replace('class="card tr-card"', 'class="card tr-card fechado"');
+  box.appendChild(div);
+  var sel = $('trCalProfSel'); if (sel) trCalMontar('calProf', sel.value, 'equipe');
+}
+
+var trRenderProfOriginal = renderAbaProfessor;
+renderAbaProfessor = function () {
+  var r = trRenderProfOriginal.apply(this, arguments);
+  try { trProfInjetar(); } catch (e) { console.warn('[professor]', e); }
+  return r;
+};
+
+</script>
+<script>
+/* ▼ dev-atualizar.js */
+/* ================================================================
+   DEV-ATUALIZAR.JS — Universo Capoeira (v87) · aba Dev
+   Abrir o repositório no GitHub, atualizar o app neste aparelho, checar a versão no ar
+   e voltar para a versão segura (backup v87).
+   ================================================================ */
+function ucAbrirRepo() { window.open(UC_REPO_URL, '_blank', 'noopener'); }
+function ucAbrirUpload() { window.open(UC_REPO_URL + '/upload/main', '_blank', 'noopener'); }
+function ucAbrirApp() { window.open(UC_APP_URL, '_blank', 'noopener'); }
+
+function ucAtualizarApp() {
+  mostrarToast('Atualizando... o app vai reiniciar.');
+  var tarefas = [];
+  try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) tarefas.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })); } catch (e) {}
+  try { if (window.caches && caches.keys) tarefas.push(caches.keys().then(function (ns) { return Promise.all(ns.map(function (n) { return caches.delete(n); })); })); } catch (e) {}
+  Promise.all(tarefas).catch(function () {}).then(function () {
+    var u = new URL(location.href); u.searchParams.set('v', Date.now()); location.replace(u.href);
+  });
+}
+
+function ucVerificarVersaoNoAr() {
+  var box = $('ucVersaoNoAr'); if (box) box.textContent = 'Verificando...';
+  var busca = function (arq) { return fetch(new URL(arq, location.href).href + '?nocache=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('http'); return r.text(); }); };
+  busca('core-base.js').catch(function () { return busca('index.html'); }).then(function (t) {
+    var m = /VERSAO_APP\s*=\s*'([^']+)'/.exec(t), no = m ? m[1] : '?';
+    if (box) box.innerHTML = 'No ar: <b>' + esc(no) + '</b> · neste aparelho: <b>' + esc(VERSAO_APP) + '</b> ' + (no === VERSAO_APP ? '✅ iguais' : '⚠️ diferentes — toque em "Atualizar app agora"');
+  }).catch(function () { if (box) box.textContent = 'Não consegui verificar agora (sem internet?).'; });
+}
+
+function ucTestarBackup() {
+  fetch(ucUrlBackup(), { method: 'GET', cache: 'no-store' }).then(function (r) {
+    mostrarToast(r.ok ? 'Versão segura encontrada ✅' : 'Versão segura NÃO encontrada ❌ (envie o backup-v87.html ao GitHub)', r.ok ? undefined : 'erro');
+  }).catch(function () { mostrarToast('Não consegui testar agora.', 'erro'); });
+}
+
+function ucHtmlCardAtualizar() {
+  return '<div class="card tr-card" id="ucCardAtualizar"><h3><i class="fas fa-cloud-arrow-up"></i> Abrir e atualizar o app</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Repositório: <b>capoeirapequenaafrica-a11y/App-temas</b></p>' +
+    '<div class="flex-btn"><button class="btn" onclick="ucAbrirRepo()"><i class="fab fa-github"></i> Abrir repositório</button>' +
+    '<button class="btn btn-gold" onclick="ucAbrirUpload()"><i class="fas fa-upload"></i> Enviar arquivos</button></div>' +
+    '<p class="mini" style="margin:4px 0 8px;">Se "Enviar arquivos" não abrir, no GitHub use <b>Add file → Upload files</b>.</p>' +
+    '<div class="flex-btn"><button class="btn btn-secondary" onclick="ucAbrirApp()"><i class="fas fa-up-right-from-square"></i> Abrir o app publicado</button>' +
+    '<button class="btn btn-secondary" onclick="ucAtualizarApp()"><i class="fas fa-rotate"></i> Atualizar app agora</button></div>' +
+    '<p class="mini" id="ucVersaoNoAr" style="margin-top:8px;">Versão neste aparelho: <b>' + esc(VERSAO_APP) + '</b></p>' +
+    '<button class="btn btn-secondary btn-mini" onclick="ucVerificarVersaoNoAr()"><i class="fas fa-magnifying-glass"></i> Ver versão no ar</button>' +
+    '<h4 style="margin:12px 0 6px;font-size:.8rem;"><i class="fas fa-life-ring"></i> Versão segura (backup v87)</h4>' +
+    '<p class="mini" style="margin-bottom:6px;">Se uma atualização der erro, volte para a v87 guardada.</p>' +
+    '<div class="flex-btn"><button class="btn btn-danger" onclick="ucIrParaBackup()"><i class="fas fa-rotate-left"></i> Voltar para a v87</button><button class="btn btn-secondary" onclick="ucTestarBackup()">🧪 Testar backup</button></div></div>';
+}
+function ucDevInjetar() {
+  var box = $('conteudoDev');
+  if (!box || !(typeof sessaoEquipe !== 'undefined' && sessaoEquipe) || !box.children.length) return;
+  var velho = $('ucCardAtualizar'); if (velho) velho.remove();
+  box.insertAdjacentHTML('afterbegin', ucHtmlCardAtualizar());
+}
+var ucRenderDevOriginal = renderAbaDev;
+renderAbaDev = function () {
+  var r = ucRenderDevOriginal.apply(this, arguments);
+  try { ucDevInjetar(); } catch (e) { console.warn('[dev]', e); }
+  return r;
+};
 
 </script>
 <script>
