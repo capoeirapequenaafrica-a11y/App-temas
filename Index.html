@@ -410,6 +410,51 @@ footer a { color: var(--accent-blue); }
 .chat-msg { background: #0a1419; border-left: 3px solid var(--accent-blue); border-radius: 6px; padding: 5px 8px; margin-bottom: 5px; }
 .chat-msg img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; }
 .lock-card { border: 1px solid var(--gold) !important; }
+.sessao-chip {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: #081217;
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 3px 6px 3px 8px;
+  max-width: 48vw;
+  flex-shrink: 0;
+}
+.sessao-chip.visivel { display: inline-flex; }
+.sessao-chip .sessao-nome {
+  font-size: 0.68rem;
+  color: var(--primary-green);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+.sessao-chip .btn-sair-header {
+  width: auto;
+  margin: 0;
+  padding: 4px 8px;
+  font-size: 0.62rem;
+  border-radius: 14px;
+  background: #37474f;
+  box-shadow: none;
+  gap: 4px;
+}
+.btn-bio {
+  background: linear-gradient(135deg, #1a237e, #283593) !important;
+  box-shadow: 0 2px 8px rgba(26, 35, 126, 0.35) !important;
+}
+.btn-bio:active { opacity: 0.9; }
+.flex-btn-bio { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+.flex-btn-bio .btn { flex: 1 1 140px; min-width: 0; }
+.aviso-bio-dica {
+  font-size: 0.68rem;
+  color: var(--text-sub);
+  margin: 4px 0 0;
+  line-height: 1.35;
+}
+
 .timer-grande-btn { width: 60px; height: 60px; font-size: 1.4rem; }
 .grade-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .grade-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
@@ -649,6 +694,13 @@ footer a { color: var(--accent-blue); }
     <div class="cronometro-box" id="cronometroBox" style="display:none !important;" aria-hidden="true">
       <div class="cronometro-display" id="timerDisplay">01:30</div>
     </div>
+    <div class="sessao-chip" id="sessaoChipHeader" aria-live="polite">
+      <i class="fas fa-user-circle" style="color:var(--primary-green);font-size:0.9rem;"></i>
+      <span class="sessao-nome" id="sessaoChipNome">—</span>
+      <button type="button" class="btn btn-sair-header" id="btnSairHeader" onclick="ucSairRapido()" title="Sair">
+        <i class="fas fa-sign-out-alt"></i> Sair
+      </button>
+    </div>
   </header>
 
   <div id="overlayTimerGrande" style="display:none !important;" aria-hidden="true">
@@ -800,24 +852,49 @@ footer a { color: var(--accent-blue); }
     <div id="boxProfessorNaAulaCheckin"></div>
     <div id="boxGympassCheckin"></div>
 
+    <div class="aviso-formacao-remunerada" id="avisoCheckinAgendamento" role="alert" style="border-color:var(--danger); background:rgba(239,83,80,0.12); color:#ffcdd2;">
+      <span class="aviso-icone">⚠️</span>
+      <span><b>Aviso importante:</b> o check-in só é liberado se você <b>agendou a aula com pelo menos 1 hora de antecedência</b> (aba Aluno → Agendar aula).
+      Sem agendamento válido, ou após esse prazo, o check-in exige <b>justificativa</b> e só vale com <b>autorização do professor</b> — e entra no <b>histórico de compromisso</b>.
+      Falta ou atraso sem justificativa aceita entram no relatório e podem gerar <b>advertência</b>. Só 1 check-in por aula/dia.</span>
+    </div>
+
+    <div class="card" id="cardTransparenciaPermissoes" style="border:1px solid var(--accent-blue);">
+      <h3 style="color:var(--accent-blue);"><i class="fas fa-shield-alt"></i> Transparência e permissões</h3>
+      <p class="mini" style="margin-bottom:6px;">O app só usa recursos do celular <b>com a sua permissão</b>.</p>
+      <ul class="mini" style="margin:0 0 8px 16px; line-height:1.45;">
+        <li><b>Digital / rosto</b> — login e check-in (opcional, só neste aparelho)</li>
+        <li><b>Notificações</b> — avisos do professor</li>
+        <li><b>Câmera</b> — só ao escolher foto</li>
+        <li><b>Armazenamento local</b> — sessão e preferências</li>
+        <li><b>Internet</b> — sincronizar dados da academia</li>
+      </ul>
+      <button type="button" class="btn btn-secondary btn-mini" onclick="ucPedirPermissoesApp()"><i class="fas fa-hand-point-up"></i> Revisar permissões</button>
+    </div>
+
     <div class="card">
       <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
       <div id="horarioAulaHojeBox" style="font-size:0.75rem; background:#081217; border:1px solid var(--card-border); border-radius:8px; padding:6px 8px; margin-bottom:8px;">
         <i class="fas fa-clock"></i> Carregando horário da aula de hoje...
       </div>
+      <div id="boxStatusAgendamentoCheckin" style="font-size:0.72rem; margin-bottom:8px;"></div>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Selecione o polo cadastrado pelo professor:</p>
       <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo" oninput="atualizarEstadoBotaoCheckin()">
       <select id="selectPoloFixoTreino" onchange="avaliarAtrasoHoje()">
         <option value="">Aguardando professor cadastrar local...</option>
       </select>
       <div id="boxJustificativaAtraso" style="display:none; margin-top:8px; border:1px solid var(--danger); border-radius:8px; padding:8px;">
-        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo (o professor irá avaliar):</p>
-        <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto no trabalho..."></textarea>
+        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Atraso, falta de agendamento ou agendamento com menos de 1h de antecedência. Justifique (o professor autoriza e isso vai ao histórico de compromisso):</p>
+        <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto, esqueci de agendar..."></textarea>
       </div>
-      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação. <strong>Só é permitido 1 check-in por aula/dia.</strong></p>
+      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Agende na aba <b>Aluno</b> com antecedência. No horário faça o check-in (pode usar digital). <strong>Só 1 check-in por aula/dia.</strong></p>
       <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
-      <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
-      <button class="btn btn-secondary" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
+      <div class="flex-btn-bio" style="margin-top:6px;">
+        <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar presença</button>
+        <button class="btn btn-bio" id="btnCheckinBiometria" type="button" onclick="ucCheckinComBiometria()"><i class="fas fa-fingerprint"></i> Check-in digital</button>
+      </div>
+      <p class="aviso-bio-dica">Ative a digital no painel do aluno (Acesso rápido) para usar o check-in por biometria.</p>
+      <button class="btn btn-secondary" style="margin-top:6px;" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
     </div>
 
     <div class="card" id="cardMinhasPresencasCheckin" style="display:none;">
@@ -966,7 +1043,7 @@ footer a { color: var(--accent-blue); }
     <div class="card" id="cardAgendaAluno">
       <h3 class="titulo-colapsavel" onclick="alternarCard(this)"><i class="fas fa-calendar-plus"></i> Agendar aula <i class="fas fa-chevron-down seta-colapsavel"></i></h3>
       <div class="card-corpo-colapsavel">
-        <p class="mini">Agende com antecedência. No dia da aula faça o <b>check-in</b>. Falta ou atraso entram no relatório e podem gerar advertência.</p>
+        <p class="mini">⚠️ Agende com <b>≥ 1 hora de antecedência</b>. No horário faça o <b>check-in</b> (pode usar digital). Sem agendamento válido: justificativa + autorização do professor → histórico de compromisso. Falta/atraso sem aceite geram advertência.</p>
         <label class="campo-label">Data da aula</label>
         <input type="date" id="agendaData" required>
         <label class="campo-label">Horário (opcional)</label>
@@ -2554,13 +2631,17 @@ function montarLoginEquipe(container, papelRequerido) {
       '<h3 style="color:var(--gold);"><i class="fas fa-lock"></i> Área restrita — ' + esc(rotulo) + '</h3>' +
       (semEquipe
         ? '<div class="aviso-info"><i class="fas fa-star"></i> Nenhum acesso de equipe cadastrado ainda. Crie o primeiro acesso (perfil <strong>Dev</strong>) para liberar as áreas Professor, ADM e Dev.</div>'
-        : '<p class="mini">Entre com o nome e a senha cadastrados pela equipe.</p>') +
+        : '<p class="mini">Entre com o nome e a senha cadastrados pela equipe <b>ou</b> use a digital neste aparelho.</p>') +
       '<label class="campo-label">Nome</label>' +
       '<input id="equipeLoginNome' + sufixo + '" placeholder="Nome de usuário da equipe">' +
       '<label class="campo-label">Senha</label>' +
       '<input id="equipeLoginSenha' + sufixo + '" type="password" placeholder="Senha">' +
       (semEquipe ? '<label class="campo-label">Perfil</label><select id="equipeLoginPapel' + sufixo + '">' + opcoes + '</select>' : '') +
-      '<button class="btn" onclick="autenticarEquipe(\'' + papelRequerido + '\')"><i class="fas fa-sign-in-alt"></i> Entrar</button>' +
+      '<div class="flex-btn-bio" style="margin-top:6px;">' +
+        '<button class="btn" onclick="autenticarEquipe(\'' + papelRequerido + '\')"><i class="fas fa-sign-in-alt"></i> Entrar com senha</button>' +
+        '<button class="btn btn-bio" type="button" onclick="ucEquipeEntrarBio(\'' + papelRequerido + '\')"><i class="fas fa-fingerprint"></i> Digital / rosto</button>' +
+      '</div>' +
+      '<p class="aviso-bio-dica"><i class="fas fa-info-circle"></i> A digital é opcional e só funciona neste aparelho. A senha padrão continua valendo — sem conflito.</p>' +
     '</div>';
   return false;
 }
@@ -7842,7 +7923,7 @@ function renderAluno() {
           '<button class="btn btn-secondary" onclick="abrirAba(\'tab2\'); this.closest(\'.card\').remove();"><i class="fas fa-map-marker-alt"></i> Ir para o Check-in</button>' +
         '</div>'
       : '') +
-    '<button class="btn btn-back" onclick="sairAluno()"><i class="fas fa-sign-out-alt"></i> Sair</button>' +
+    '<div class="flex-btn" style="margin-bottom:8px;"><button class="btn btn-danger" onclick="sairAluno()"><i class="fas fa-sign-out-alt"></i> Sair da conta</button></div>' +
 
     /* ===== CABEÇALHO DO ALUNO ===== */
     '<div style="text-align:center; margin-bottom:10px;">' +
@@ -8119,7 +8200,11 @@ function renderAbaProfessor() {
       '</select>' +
       '<label class="campo-label">Observação (opcional)</label>' +
       '<input id="profCheckinObsAuto" placeholder="Ex: roda aberta, foco em ginga...">' +
-      '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula — fazer check-in</button>';
+      '<div class="flex-btn-bio">' +
+        '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula</button>' +
+        '<button class="btn btn-bio" type="button" onclick="ucProfessorCheckinBio()"><i class="fas fa-fingerprint"></i> Check-in digital</button>' +
+      '</div>' +
+      '<p class="aviso-bio-dica">Ative a digital da equipe após o login (botão abaixo do painel) para usar o check-in por biometria.</p>';
   }
   html += '</div>';
 
@@ -12747,6 +12832,484 @@ iniciarApp();
 })(typeof window !== 'undefined' ? window : this);
 
 </script>
+
+<script>
+/* ▼ uc-compromisso-seguranca.js — check-in digital, equipe bio, sair header, regras 1h, hash */
+(function (g) {
+  'use strict';
+  var ANTECEDENCIA_MIN = 60;
+  var EQUIPE_BIO_KEY = 'uc_equipe_bio_v87';
+  function $(id) { return document.getElementById(id); }
+
+  /* ===== Header: sessão + Sair ===== */
+  g.ucSairRapido = function () {
+    if (g.sessaoEquipe && typeof g.sairEquipe === 'function') g.sairEquipe();
+    else if (g.sessaoAlunoId && typeof g.sairAluno === 'function') g.sairAluno();
+    else if (typeof g.mostrarToast === 'function') g.mostrarToast('Nenhuma sessão ativa.');
+    g.ucAtualizarChipSessao();
+  };
+  g.ucAtualizarChipSessao = function () {
+    var chip = $('sessaoChipHeader'), nomeEl = $('sessaoChipNome');
+    if (!chip) return;
+    var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
+    if (g.sessaoEquipe) {
+      chip.classList.add('visivel');
+      if (nomeEl) nomeEl.textContent = (g.sessaoEquipe.nome || 'Equipe') + ' · ' + (g.sessaoEquipe.papel || '');
+    } else if (aluno) {
+      chip.classList.add('visivel');
+      if (nomeEl) nomeEl.textContent = aluno.apelido || aluno.nome || 'Aluno';
+    } else {
+      chip.classList.remove('visivel');
+      if (nomeEl) nomeEl.textContent = '—';
+    }
+  };
+
+  /* ===== Hash SHA-256 + legado ===== */
+  var _hashLegado = typeof g.hashSenha === 'function' ? g.hashSenha : null;
+  function hashDjb2(senha) {
+    if (_hashLegado) return _hashLegado(senha);
+    var str = 'uc::' + String(senha || ''), h = 5381;
+    for (var i = 0; i < str.length; i++) { h = ((h << 5) + h) + str.charCodeAt(i); h = h & 0xffffffff; }
+    return 'h' + (h >>> 0).toString(16);
+  }
+  g.hashSenha = function (s) { return hashDjb2(s); };
+  g.hashSenhaAsync = function (senha) {
+    var plain = String(senha || '');
+    if (g.crypto && g.crypto.subtle && g.TextEncoder) {
+      return g.crypto.subtle.digest('SHA-256', new TextEncoder().encode('uc-v87::' + plain))
+        .then(function (buf) {
+          var a = new Uint8Array(buf), h = 'sha256:';
+          for (var i = 0; i < a.length; i++) h += ('0' + a[i].toString(16)).slice(-2);
+          return h;
+        }).catch(function () { return hashDjb2(plain); });
+    }
+    return Promise.resolve(hashDjb2(plain));
+  };
+  g.verificarSenhaHash = function (senha, hashSalvo) {
+    if (!hashSalvo) return Promise.resolve(false);
+    if (String(hashSalvo).indexOf('sha256:') === 0) {
+      return g.hashSenhaAsync(senha).then(function (h) { return h === hashSalvo; });
+    }
+    return Promise.resolve(hashDjb2(senha) === hashSalvo);
+  };
+
+  /* ===== Agendamento / compromisso ===== */
+  function agendamentoDoAlunoHoje(aluno) {
+    if (!aluno || !g.DB) return null;
+    var hoje = typeof g.dataLocalISO === 'function' ? g.dataLocalISO() : new Date().toISOString().slice(0, 10);
+    var lista = g.DB.listar('agendamentos').filter(function (a) {
+      return a && a.alunoId === aluno.id && a.data === hoje && a.status !== 'cancelado';
+    }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+    return lista[0] || null;
+  }
+  function minutosDesdeISO(iso) {
+    if (!iso) return null;
+    var t = Date.parse(iso);
+    if (isNaN(t)) return null;
+    return Math.floor((Date.now() - t) / 60000);
+  }
+  function agendamentoValidoAntecedencia(ag, aula) {
+    if (!ag) return false;
+    var criadoMin = minutosDesdeISO(ag.criadoEm);
+    if (criadoMin === null) return true;
+    if (!aula || typeof g.minutosDoHM !== 'function') return criadoMin >= ANTECEDENCIA_MIN;
+    var inicio = g.minutosDoHM(aula.horaInicio);
+    if (inicio === null) return criadoMin >= ANTECEDENCIA_MIN;
+    var agora = typeof g.agoraEmMinutos === 'function' ? g.agoraEmMinutos() : 0;
+    return ((inicio - agora) + criadoMin) >= ANTECEDENCIA_MIN;
+  }
+  function registrarHistoricoCompromisso(payload) {
+    if (!g.DB || !g.DB.salvar) return Promise.resolve();
+    var id = 'comp_' + (payload.alunoId || 'x') + '_' + (payload.data || '') + '_' + Date.now().toString(36);
+    return g.DB.salvar('historicoCompromisso', Object.assign({
+      id: id, criadoEm: typeof g.agoraISO === 'function' ? g.agoraISO() : new Date().toISOString()
+    }, payload), id);
+  }
+  function atualizarBoxStatusAgendamento() {
+    var box = $('boxStatusAgendamentoCheckin');
+    if (!box) return;
+    var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
+    if (!aluno) {
+      var nome = ($('checkinFixoNomeAluno') && $('checkinFixoNomeAluno').value) || '';
+      if (nome && typeof g.encontrarAlunoPorNome === 'function') aluno = g.encontrarAlunoPorNome(nome);
+    }
+    if (!aluno) {
+      box.innerHTML = '<div class="aviso-info"><i class="fas fa-user-lock"></i> Faça login na aba Aluno (ou informe o nome) para validar o agendamento.</div>';
+      return;
+    }
+    var ag = agendamentoDoAlunoHoje(aluno);
+    var aula = typeof g.aulaDeHoje === 'function' ? g.aulaDeHoje() : null;
+    if (!ag) {
+      box.innerHTML = '<div class="alerta-dificuldade"><i class="fas fa-calendar-times"></i> <b>Sem agendamento para hoje.</b> Vá em Aluno → Agendar aula (≥ 1h de antecedência). Sem isso, check-in exige justificativa + autorização do professor.</div>';
+      if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
+      return;
+    }
+    if (agendamentoValidoAntecedencia(ag, aula)) {
+      box.innerHTML = '<div class="aviso-info" style="border-left-color:var(--primary-green);"><i class="fas fa-check-circle"></i> Agendamento válido para hoje' + (ag.hora ? ' · ' + ag.hora : '') + '. Pode fazer check-in (inclusive digital).</div>';
+    } else {
+      box.innerHTML = '<div class="alerta-dificuldade"><i class="fas fa-clock"></i> Agendamento com <b>menos de 1h de antecedência</b>. Justifique; professor autoriza → histórico de compromisso.</div>';
+      if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
+    }
+  }
+
+  g.ucPedirPermissoesApp = function () {
+    var linhas = [];
+    linhas.push('HTTPS / contexto seguro: ' + (g.isSecureContext ? 'sim ✅' : 'não ❌'));
+    if ('Notification' in g) {
+      linhas.push('Notificações: ' + Notification.permission);
+      if (Notification.permission === 'default' && typeof g.pedirPermissaoNotificacao === 'function') {
+        try { g.pedirPermissaoNotificacao(); } catch (e) {}
+      }
+    }
+    linhas.push('Biometria: ' + (typeof g.bioSuportado === 'function' && g.bioSuportado() ? 'disponível' : 'indisponível'));
+    if (typeof g.abrirModal === 'function') {
+      g.abrirModal('Permissões', '<ul class="mini" style="margin-left:16px;line-height:1.5;">' +
+        linhas.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul>', '');
+    } else if (typeof g.mostrarToast === 'function') g.mostrarToast(linhas.join(' · '));
+  };
+
+  /* ===== Check-in digital do ALUNO ===== */
+  g.ucCheckinComBiometria = function () {
+    if (typeof g.bioSuportado !== 'function' || !g.bioSuportado()) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria indisponível. Use o check-in normal.', 'erro');
+      return;
+    }
+    var cfg = typeof g.bioConfig === 'function' ? g.bioConfig() : null;
+    if (!cfg || !cfg.credId) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Ative a digital no painel do aluno (Acesso rápido) antes.', 'erro');
+      try { if (typeof g.abrirAba === 'function') g.abrirAba('tab3'); } catch (e) {}
+      return;
+    }
+    if (!g.DB || (g.DB.carregado && !g.DB.carregado('alunos'))) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Aguarde os dados carregarem.', 'erro');
+      return;
+    }
+    navigator.credentials.get({
+      publicKey: {
+        challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
+        rpId: location.hostname,
+        timeout: 60000,
+        userVerification: 'required',
+        allowCredentials: [{
+          id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(cfg.credId) : cfg.credId,
+          type: 'public-key',
+          transports: ['internal']
+        }]
+      }
+    }).then(function () {
+      var aluno = g.DB.buscar('alunos', cfg.alunoId);
+      if (!aluno) {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Aluno da biometria não encontrado.', 'erro');
+        return;
+      }
+      g.sessaoAlunoId = aluno.id;
+      try { localStorage.setItem('uc_sessao_aluno_v87', aluno.id); } catch (e) {}
+      if ($('checkinFixoNomeAluno')) $('checkinFixoNomeAluno').value = aluno.nome || '';
+      g.ucAtualizarChipSessao();
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital OK — enviando check-in…');
+      if (typeof g.alunoCheckinLocalFixoSimples === 'function') g.alunoCheckinLocalFixoSimples();
+    }).catch(function (e) {
+      if (typeof g.mostrarToast === 'function') {
+        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Biometria cancelada.' : 'Biometria falhou. Use o check-in normal.', 'erro');
+      }
+    });
+  };
+
+  /* ===== Equipe: biometria (login qualquer aba) ===== */
+  function equipeBioCfg() {
+    try { return JSON.parse(localStorage.getItem(EQUIPE_BIO_KEY) || 'null'); } catch (e) { return null; }
+  }
+  g.ucEquipeAtivarBio = function () {
+    if (typeof g.bioSuportado !== 'function' || !g.bioSuportado()) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria indisponível neste aparelho.', 'erro');
+      return;
+    }
+    if (!g.sessaoEquipe) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Entre com a senha da equipe primeiro; depois ative a digital.', 'erro');
+      return;
+    }
+    var challenge = typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32);
+    var userId = typeof g.bioTexto === 'function' ? g.bioTexto('equipe:' + (g.sessaoEquipe.id || g.sessaoEquipe.nome || 'eq')) : new TextEncoder().encode('equipe');
+    navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: 'Universo Capoeira Equipe', id: location.hostname },
+        user: { id: userId, name: g.sessaoEquipe.nome || 'equipe', displayName: g.sessaoEquipe.nome || 'Equipe' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+        timeout: 60000, attestation: 'none'
+      }
+    }).then(function (cred) {
+      var idB64 = typeof g.bioB64 === 'function' ? g.bioB64(cred.rawId) : btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
+      localStorage.setItem(EQUIPE_BIO_KEY, JSON.stringify({
+        nome: g.sessaoEquipe.nome,
+        papel: g.sessaoEquipe.papel,
+        id: g.sessaoEquipe.id || '',
+        credId: idB64
+      }));
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital da equipe ativada neste aparelho!');
+      g.ucAtualizarChipSessao();
+    }).catch(function (e) {
+      if (typeof g.mostrarToast === 'function') {
+        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Cancelado.' : 'Não foi possível ativar a digital da equipe.', 'erro');
+      }
+    });
+  };
+  g.ucEquipeEntrarBio = function (papelRequerido) {
+    var cfg = equipeBioCfg();
+    if (!cfg || !cfg.credId) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Ative a digital após entrar com senha (botão no painel da equipe).', 'erro');
+      return;
+    }
+    navigator.credentials.get({
+      publicKey: {
+        challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
+        rpId: location.hostname,
+        timeout: 60000,
+        userVerification: 'required',
+        allowCredentials: [{
+          id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(cfg.credId) : cfg.credId,
+          type: 'public-key',
+          transports: ['internal']
+        }]
+      }
+    }).then(function () {
+      var membro = null;
+      if (g.DB && g.DB.listar) {
+        g.DB.listar('equipe').forEach(function (e) {
+          if (!membro && String(e.nome || '').toLowerCase() === String(cfg.nome || '').toLowerCase()) membro = e;
+        });
+      }
+      var papel = (membro && membro.papel) || cfg.papel || 'professor';
+      if (papelRequerido) {
+        var permitidos = { professor: ['professor', 'adm', 'dev'], adm: ['adm', 'dev'], dev: ['dev'] };
+        if ((permitidos[papelRequerido] || []).indexOf(papel) < 0) {
+          if (typeof g.mostrarToast === 'function') g.mostrarToast('Seu perfil (' + papel + ') não tem acesso a esta área.', 'erro');
+          return;
+        }
+      }
+      g.sessaoEquipe = { id: membro ? membro.id : (cfg.id || ''), nome: cfg.nome, papel: papel };
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Equipe autenticada por digital!');
+      g.ucAtualizarChipSessao();
+      try {
+        if (typeof g.revelarAcessoEquipe === 'function') g.revelarAcessoEquipe();
+        if (typeof g.renderizarAba === 'function' && g.abaAtual) g.renderizarAba(g.abaAtual);
+        else if (typeof g.renderAbaProfessor === 'function') g.renderAbaProfessor();
+      } catch (e) {}
+    }).catch(function (e) {
+      if (typeof g.mostrarToast === 'function') {
+        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Biometria cancelada. Use a senha.' : 'Biometria da equipe falhou. Use a senha.', 'erro');
+      }
+    });
+  };
+
+  /* ===== Check-in digital do PROFESSOR ===== */
+  g.ucProfessorCheckinBio = function () {
+    if (!g.sessaoEquipe) {
+      /* tenta autenticar por bio e depois check-in */
+      var cfg = equipeBioCfg();
+      if (!cfg) {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Entre na equipe (senha ou digital) antes do check-in.', 'erro');
+        return;
+      }
+      g.ucEquipeEntrarBio('professor');
+      setTimeout(function () {
+        if (g.sessaoEquipe && typeof g.professorCheckinAula === 'function') g.professorCheckinAula();
+      }, 1200);
+      return;
+    }
+    if (typeof g.bioSuportado === 'function' && g.bioSuportado() && equipeBioCfg()) {
+      navigator.credentials.get({
+        publicKey: {
+          challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
+          rpId: location.hostname,
+          timeout: 60000,
+          userVerification: 'required',
+          allowCredentials: [{
+            id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(equipeBioCfg().credId) : equipeBioCfg().credId,
+            type: 'public-key',
+            transports: ['internal']
+          }]
+        }
+      }).then(function () {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital OK — registrando presença do professor…');
+        if (typeof g.professorCheckinAula === 'function') g.professorCheckinAula();
+      }).catch(function () {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria falhou. Use o botão normal de check-in.', 'erro');
+      });
+    } else if (typeof g.professorCheckinAula === 'function') {
+      g.professorCheckinAula();
+    }
+  };
+
+  /* ===== Wrap check-in aluno com regras ===== */
+  function instalarCheckin() {
+    if (typeof g.alunoCheckinLocalFixoSimples !== 'function' || g.alunoCheckinLocalFixoSimples.__ucComp) return;
+    var orig = g.alunoCheckinLocalFixoSimples;
+    g.alunoCheckinLocalFixoSimples = function () {
+      var nome = ($('checkinFixoNomeAluno') && $('checkinFixoNomeAluno').value || '').trim();
+      var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
+      if (!aluno && nome && typeof g.encontrarAlunoPorNome === 'function') aluno = g.encontrarAlunoPorNome(nome);
+      var aula = typeof g.aulaDeHoje === 'function' ? g.aulaDeHoje() : null;
+      var ag = aluno ? agendamentoDoAlunoHoje(aluno) : null;
+      var precisaAuth = false, motivo = '';
+      if (!ag) { precisaAuth = true; motivo = 'sem_agendamento'; }
+      else if (!agendamentoValidoAntecedencia(ag, aula)) { precisaAuth = true; motivo = 'agendamento_tardio'; }
+      var atrasado = $('boxJustificativaAtraso') && $('boxJustificativaAtraso').style.display !== 'none';
+      if (atrasado) { precisaAuth = true; if (!motivo) motivo = 'atraso'; }
+      var just = ($('justificativaAtrasoInput') && $('justificativaAtrasoInput').value || '').trim();
+      if (precisaAuth && just.length < 4) {
+        if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
+        if (typeof g.mostrarToast === 'function') {
+          g.mostrarToast(motivo === 'sem_agendamento'
+            ? 'Sem agendamento válido. Justifique (mín. 4 caracteres). Professor autoriza → histórico de compromisso.'
+            : 'Agendamento < 1h ou atraso. Justifique para o professor autorizar.', 'erro');
+        }
+        return;
+      }
+      var salvarOrig = g.DB && g.DB.salvar, patch = false;
+      if (salvarOrig && precisaAuth) {
+        g.DB.salvar = function (col, dados, id) {
+          if (col === 'presencas' && dados && !patch) {
+            patch = true;
+            dados.exigeAutorizacaoProfessor = true;
+            dados.motivoCompromisso = motivo;
+            dados.agendamentoId = ag ? ag.id : '';
+            dados.status = 'pendente';
+            dados.historicoCompromisso = true;
+            dados.justificativa = dados.justificativa || just;
+            try {
+              registrarHistoricoCompromisso({
+                alunoId: dados.alunoId || (aluno && aluno.id) || '',
+                alunoNome: dados.alunoNome || nome,
+                data: dados.data, hora: dados.hora, tipo: motivo,
+                justificativa: just, status: 'aguardando_autorizacao',
+                agendamentoId: ag ? ag.id : ''
+              });
+            } catch (e) {}
+          }
+          return salvarOrig.apply(this, arguments);
+        };
+      }
+      try { return orig.apply(this, arguments); }
+      finally { if (salvarOrig) g.DB.salvar = salvarOrig; }
+    };
+    g.alunoCheckinLocalFixoSimples.__ucComp = true;
+  }
+
+  /* ===== Login aluno: sha256 + legado ===== */
+  function instalarAuthAluno() {
+    if (typeof g.autenticarAlunoNuvem !== 'function' || g.autenticarAlunoNuvem.__ucHash) return;
+    g.autenticarAlunoNuvem = function (btn) {
+      var nome = ($('alunoLoginNome') && $('alunoLoginNome').value || '').trim();
+      var senha = ($('alunoLoginSenha') && $('alunoLoginSenha').value) || '';
+      if (!nome || !senha) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Informe nome e senha.', 'erro'); return; }
+      if (!g.DB || (g.DB.carregado && !g.DB.carregado('alunos'))) {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Ainda carregando dados…', 'erro'); return;
+      }
+      var alvo = typeof g.normalizar === 'function' ? g.normalizar(nome) : nome.toLowerCase();
+      var achado = null;
+      g.DB.listar('alunos').forEach(function (a) {
+        if (achado) return;
+        var n = typeof g.normalizar === 'function' ? g.normalizar(a.nome) : String(a.nome || '').toLowerCase();
+        var ap = typeof g.normalizar === 'function' ? g.normalizar(a.apelido || '') : String(a.apelido || '').toLowerCase();
+        if (n === alvo || ap === alvo) achado = a;
+      });
+      if (!achado) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Aluno não encontrado.', 'erro'); return; }
+      if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Entrando...'; }
+      g.verificarSenhaHash(senha, achado.senhaHash).then(function (ok) {
+        if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Painel'; }
+        if (!ok) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Senha incorreta.', 'erro'); return; }
+        g.sessaoAlunoId = achado.id;
+        try { localStorage.setItem('uc_sessao_aluno_v87', achado.id); } catch (e) {}
+        if (String(achado.senhaHash || '').indexOf('sha256:') !== 0) {
+          g.hashSenhaAsync(senha).then(function (h) { try { g.DB.salvar('alunos', { senhaHash: h }, achado.id); } catch (e) {} });
+        }
+        if ($('alunoLoginSenha')) $('alunoLoginSenha').value = '';
+        if (typeof g.registroLog === 'function') g.registroLog('auth', 'Aluno entrou: ' + achado.nome);
+        if (typeof g.renderAluno === 'function') g.renderAluno();
+        if (typeof g.renderCheckin === 'function') g.renderCheckin();
+        g.ucAtualizarChipSessao();
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Bem-vindo(a), ' + (achado.apelido || achado.nome) + '!');
+      });
+    };
+    g.autenticarAlunoNuvem.__ucHash = true;
+  }
+
+  /* Injetar botão ativar bio da equipe nos painéis logados */
+  function injetarAtivarBioEquipe() {
+    if (!g.sessaoEquipe) return;
+    ['conteudoProfessor', 'conteudoAdm', 'conteudoDev'].forEach(function (cid) {
+      var box = $(cid);
+      if (!box || box.querySelector('#ucBtnAtivarBioEquipe')) return;
+      if (!box.children.length) return;
+      var div = document.createElement('div');
+      div.className = 'card';
+      div.id = 'ucCardBioEquipe';
+      div.style.border = '1px solid var(--accent-blue)';
+      div.innerHTML = '<h3 style="color:var(--accent-blue);"><i class="fas fa-fingerprint"></i> Acesso rápido da equipe</h3>' +
+        '<p class="mini">Ative a digital neste aparelho para entrar em qualquer aba da equipe sem digitar a senha. A senha continua valendo.</p>' +
+        '<button type="button" class="btn btn-bio" id="ucBtnAtivarBioEquipe" onclick="ucEquipeAtivarBio()"><i class="fas fa-fingerprint"></i> Ativar digital / rosto da equipe</button>' +
+        '<button type="button" class="btn btn-danger" style="margin-top:6px;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button>';
+      box.insertBefore(div, box.firstChild);
+    });
+  }
+
+  function instalarRenderHooks() {
+    if (typeof g.renderCheckin === 'function' && !g.renderCheckin.__ucComp) {
+      var rc = g.renderCheckin;
+      g.renderCheckin = function () { var r = rc.apply(this, arguments); try { atualizarBoxStatusAgendamento(); g.ucAtualizarChipSessao(); } catch (e) {} return r; };
+      g.renderCheckin.__ucComp = true;
+    }
+    if (typeof g.renderAluno === 'function' && !g.renderAluno.__ucChip) {
+      var ra = g.renderAluno;
+      g.renderAluno = function () { var r = ra.apply(this, arguments); try { g.ucAtualizarChipSessao(); } catch (e) {} return r; };
+      g.renderAluno.__ucChip = true;
+    }
+    ['renderAbaProfessor', 'renderAbaAdm', 'renderAbaDev'].forEach(function (fn) {
+      if (typeof g[fn] === 'function' && !g[fn].__ucBio) {
+        var o = g[fn];
+        g[fn] = function () { var r = o.apply(this, arguments); try { injetarAtivarBioEquipe(); g.ucAtualizarChipSessao(); } catch (e) {} return r; };
+        g[fn].__ucBio = true;
+      }
+    });
+    if (typeof g.sairAluno === 'function' && !g.sairAluno.__ucChip) {
+      var sa = g.sairAluno;
+      g.sairAluno = function () { var r = sa.apply(this, arguments); g.ucAtualizarChipSessao(); return r; };
+      g.sairAluno.__ucChip = true;
+    }
+    if (typeof g.sairEquipe === 'function' && !g.sairEquipe.__ucChip) {
+      var se = g.sairEquipe;
+      g.sairEquipe = function () { var r = se.apply(this, arguments); g.ucAtualizarChipSessao(); return r; };
+      g.sairEquipe.__ucChip = true;
+    }
+  }
+
+  function boot() {
+    try { instalarCheckin(); } catch (e) { console.warn(e); }
+    try { instalarAuthAluno(); } catch (e) { console.warn(e); }
+    try { instalarRenderHooks(); } catch (e) { console.warn(e); }
+    try { atualizarBoxStatusAgendamento(); } catch (e) {}
+    try { g.ucAtualizarChipSessao(); } catch (e) {}
+    try { injetarAtivarBioEquipe(); } catch (e) {}
+    if (typeof MutationObserver !== 'undefined') {
+      var t = 0;
+      new MutationObserver(function () {
+        if (t) return;
+        t = setTimeout(function () {
+          t = 0;
+          try { instalarCheckin(); instalarRenderHooks(); injetarAtivarBioEquipe(); g.ucAtualizarChipSessao(); } catch (e) {}
+        }, 150);
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(boot, 500); });
+  else setTimeout(boot, 500);
+
+  g.UCCompromisso = { ANTECEDENCIA_MIN: ANTECEDENCIA_MIN, agendamentoDoAlunoHoje: agendamentoDoAlunoHoje };
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
 <!-- guardião das abas protegidas (sempre por último) -->
 <script>
 /* ▼ protecao.js */
