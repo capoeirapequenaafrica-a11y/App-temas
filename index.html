@@ -152,14 +152,48 @@ header {
 .tabs-alca-dica { display: inline-flex; align-items: center; gap: 5px; opacity: 0.8; }
 .tabs-alca .seta-abas { transition: transform 0.28s ease; font-size: 0.7rem; }
 .tabs-container.recolhida .seta-abas { transform: rotate(180deg); }
-.tabs-container.recolhida .tabs { display: none !important; }
+.tabs-container .tabs,
+.tabs-container .tabs-equipe {
+  overflow: hidden;
+  max-height: 120px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 0.32s ease, opacity 0.22s ease, transform 0.28s ease, margin 0.28s ease;
+}
+.tabs-container.recolhida .tabs,
+.tabs-container.recolhida .tabs-equipe {
+  max-height: 0 !important;
+  opacity: 0;
+  transform: translateY(-6px);
+  margin: 0 !important;
+  pointer-events: none;
+  border-width: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
 .tabs-container.recolhida { padding-bottom: 0; }
 .tabs-container.recolhida .tabs-alca { padding-bottom: 3px; }
-@media (prefers-reduced-motion: reduce) { .tabs-alca .seta-abas { transition: none; } }
+.tabs-alca:active { opacity: 0.85; }
+.tabs button {
+  transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease;
+}
+.tabs button:active { transform: scale(0.96); }
+.tab-content {
+  animation: abaFadeIn 0.28s ease;
+}
+@keyframes abaFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tabs-alca .seta-abas, .tabs-container .tabs, .tabs-container .tabs-equipe, .tab-content { transition: none; animation: none; }
+}
 /* ---- Aviso da formação de alunos ---- */
 .aviso-formacao-remunerada { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 10px; padding: 9px 10px; border-radius: 10px; border: 1px solid #ffc107; background: rgba(255,193,7,0.10); color: #ffe082; font-size: 0.78rem; line-height: 1.35; }
 .aviso-formacao-remunerada .aviso-icone { font-size: 1.05rem; flex: none; }
-.tabs-equipe { margin-top: 6px; }
+.tabs-equipe { margin-top: 6px; display: none; flex-wrap: wrap; width: 100%; }
+.tabs-equipe[style*="flex"] { display: flex !important; }
+#btnToggleEquipe { min-width: 58px !important; display: flex !important; visibility: visible !important; }
 #btnToggleEquipe.active { background: linear-gradient(135deg, var(--accent-blue-dark), #0277bd); }
 .tab-content { display: none; padding: 10px; flex: 1; width: 100% !important; max-width: 100% !important; overflow-y: auto; }
 .tab-content.active { display: block; }
@@ -376,6 +410,51 @@ footer a { color: var(--accent-blue); }
 .chat-msg { background: #0a1419; border-left: 3px solid var(--accent-blue); border-radius: 6px; padding: 5px 8px; margin-bottom: 5px; }
 .chat-msg img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; }
 .lock-card { border: 1px solid var(--gold) !important; }
+.sessao-chip {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: #081217;
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 3px 6px 3px 8px;
+  max-width: 48vw;
+  flex-shrink: 0;
+}
+.sessao-chip.visivel { display: inline-flex; }
+.sessao-chip .sessao-nome {
+  font-size: 0.68rem;
+  color: var(--primary-green);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+.sessao-chip .btn-sair-header {
+  width: auto;
+  margin: 0;
+  padding: 4px 8px;
+  font-size: 0.62rem;
+  border-radius: 14px;
+  background: #37474f;
+  box-shadow: none;
+  gap: 4px;
+}
+.btn-bio {
+  background: linear-gradient(135deg, #1a237e, #283593) !important;
+  box-shadow: 0 2px 8px rgba(26, 35, 126, 0.35) !important;
+}
+.btn-bio:active { opacity: 0.9; }
+.flex-btn-bio { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+.flex-btn-bio .btn { flex: 1 1 140px; min-width: 0; }
+.aviso-bio-dica {
+  font-size: 0.68rem;
+  color: var(--text-sub);
+  margin: 4px 0 0;
+  line-height: 1.35;
+}
+
 .timer-grande-btn { width: 60px; height: 60px; font-size: 1.4rem; }
 .grade-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .grade-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
@@ -588,6 +667,10 @@ footer a { color: var(--accent-blue); }
   padding: 8px 12px;
   border-radius: 8px;
 }
+
+/* Uma entrada de jogos no Inicio: esconde cards duplicados */
+#cardJogosGrupo, #cardRankingJogos { display: none !important; }
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -611,6 +694,13 @@ footer a { color: var(--accent-blue); }
     <div class="cronometro-box" id="cronometroBox" style="display:none !important;" aria-hidden="true">
       <div class="cronometro-display" id="timerDisplay">01:30</div>
     </div>
+    <div class="sessao-chip" id="sessaoChipHeader" aria-live="polite">
+      <i class="fas fa-user-circle" style="color:var(--primary-green);font-size:0.9rem;"></i>
+      <span class="sessao-nome" id="sessaoChipNome">—</span>
+      <button type="button" class="btn btn-sair-header" id="btnSairHeader" onclick="ucSairRapido()" title="Sair">
+        <i class="fas fa-sign-out-alt"></i> Sair
+      </button>
+    </div>
   </header>
 
   <div id="overlayTimerGrande" style="display:none !important;" aria-hidden="true">
@@ -628,7 +718,7 @@ footer a { color: var(--accent-blue); }
       <button onclick="abrirAba('tab2', this)"><i class="fas fa-map-marker-alt"></i>Check-in</button>
       <button onclick="abrirAba('tab3', this)"><i class="fas fa-user-graduate"></i>Aluno</button>
       <button onclick="abrirAba('tabJogos', this)"><i class="fas fa-gamepad"></i>Jogos</button>
-      <button onclick="toggleMenuEquipe()" id="btnToggleEquipe" style="display:none;"><i class="fas fa-users-cog"></i>Equipe</button>
+      <button onclick="toggleMenuEquipe()" id="btnToggleEquipe" style="display:flex;"><i class="fas fa-users-cog"></i>Equipe</button>
     </div>
     <div class="tabs tabs-equipe" id="tabsEquipe" style="display:none;">
       <button onclick="abrirAba('tab4', this)"><i class="fas fa-chalkboard-teacher"></i>Professor</button>
@@ -762,24 +852,49 @@ footer a { color: var(--accent-blue); }
     <div id="boxProfessorNaAulaCheckin"></div>
     <div id="boxGympassCheckin"></div>
 
+    <div class="aviso-formacao-remunerada" id="avisoCheckinAgendamento" role="alert" style="border-color:var(--danger); background:rgba(239,83,80,0.12); color:#ffcdd2;">
+      <span class="aviso-icone">⚠️</span>
+      <span><b>Aviso importante:</b> o check-in só é liberado se você <b>agendou a aula com pelo menos 1 hora de antecedência</b> (aba Aluno → Agendar aula).
+      Sem agendamento válido, ou após esse prazo, o check-in exige <b>justificativa</b> e só vale com <b>autorização do professor</b> — e entra no <b>histórico de compromisso</b>.
+      Falta ou atraso sem justificativa aceita entram no relatório e podem gerar <b>advertência</b>. Só 1 check-in por aula/dia.</span>
+    </div>
+
+    <div class="card" id="cardTransparenciaPermissoes" style="border:1px solid var(--accent-blue);">
+      <h3 style="color:var(--accent-blue);"><i class="fas fa-shield-alt"></i> Transparência e permissões</h3>
+      <p class="mini" style="margin-bottom:6px;">O app só usa recursos do celular <b>com a sua permissão</b>.</p>
+      <ul class="mini" style="margin:0 0 8px 16px; line-height:1.45;">
+        <li><b>Digital / rosto</b> — login e check-in (opcional, só neste aparelho)</li>
+        <li><b>Notificações</b> — avisos do professor</li>
+        <li><b>Câmera</b> — só ao escolher foto</li>
+        <li><b>Armazenamento local</b> — sessão e preferências</li>
+        <li><b>Internet</b> — sincronizar dados da academia</li>
+      </ul>
+      <button type="button" class="btn btn-secondary btn-mini" onclick="ucPedirPermissoesApp()"><i class="fas fa-hand-point-up"></i> Revisar permissões</button>
+    </div>
+
     <div class="card">
       <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
       <div id="horarioAulaHojeBox" style="font-size:0.75rem; background:#081217; border:1px solid var(--card-border); border-radius:8px; padding:6px 8px; margin-bottom:8px;">
         <i class="fas fa-clock"></i> Carregando horário da aula de hoje...
       </div>
+      <div id="boxStatusAgendamentoCheckin" style="font-size:0.72rem; margin-bottom:8px;"></div>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Selecione o polo cadastrado pelo professor:</p>
       <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo" oninput="atualizarEstadoBotaoCheckin()">
       <select id="selectPoloFixoTreino" onchange="avaliarAtrasoHoje()">
         <option value="">Aguardando professor cadastrar local...</option>
       </select>
       <div id="boxJustificativaAtraso" style="display:none; margin-top:8px; border:1px solid var(--danger); border-radius:8px; padding:8px;">
-        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo (o professor irá avaliar):</p>
-        <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto no trabalho..."></textarea>
+        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Atraso, falta de agendamento ou agendamento com menos de 1h de antecedência. Justifique (o professor autoriza e isso vai ao histórico de compromisso):</p>
+        <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto, esqueci de agendar..."></textarea>
       </div>
-      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação. <strong>Só é permitido 1 check-in por aula/dia.</strong></p>
+      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Agende na aba <b>Aluno</b> com antecedência. No horário faça o check-in (pode usar digital). <strong>Só 1 check-in por aula/dia.</strong></p>
       <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
-      <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
-      <button class="btn btn-secondary" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
+      <div class="flex-btn-bio" style="margin-top:6px;">
+        <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar presença</button>
+        <button class="btn btn-bio" id="btnCheckinBiometria" type="button" onclick="ucCheckinComBiometria()"><i class="fas fa-fingerprint"></i> Check-in digital</button>
+      </div>
+      <p class="aviso-bio-dica">Ative a digital no painel do aluno (Acesso rápido) para usar o check-in por biometria.</p>
+      <button class="btn btn-secondary" style="margin-top:6px;" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
     </div>
 
     <div class="card" id="cardMinhasPresencasCheckin" style="display:none;">
@@ -803,59 +918,65 @@ footer a { color: var(--accent-blue); }
       <input type="text" id="nomeJogadorTab" placeholder="Ex: Formiga" oninput="sincronizarNomeJogador(this.value)">
       <p class="mini" style="margin:8px 0 4px;">Toque em um jogo ou escolha o nível abaixo:</p>
       <div id="boxNiveisArcadeTab" style="margin:8px 0;"></div>
+      <p class="mini" style="margin:8px 0 4px;"><b>Lista de jogos</b> (sem duplicar funcoes):</p>
       <div class="jogos-grid-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;">
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('snake')">
-          <i class="fas fa-dragon" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Minhoca</strong>
-          <span>Coma e cresça</span>
+        <p class="campo-label" style="grid-column:1/-1;margin:0;color:var(--gold);"><i class="fas fa-chess"></i> Tabuleiro</p>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('damas')">
+          <i class="fas fa-chess-pawn" style="font-size:1.6rem;color:#c0c0c0;"></i>
+          <strong>Damas</strong>
+          <span>Pecas realistas · vs IA</span>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('tetris')">
           <i class="fas fa-th" style="font-size:1.6rem;color:var(--accent-blue);"></i>
           <strong>Tetris</strong>
           <span>Complete as linhas</span>
         </button>
+        <p class="campo-label" style="grid-column:1/-1;margin:4px 0 0;color:var(--gold);"><i class="fas fa-ghost"></i> Labirinto</p>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pacman')">
           <i class="fas fa-ghost" style="font-size:1.6rem;color:var(--accent-blue);"></i>
           <strong>Pac-Man</strong>
-          <span>Fuja dos fantasmas</span>
+          <span>Classico 2D</span>
         </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('corrida')">
-          <i class="fas fa-car" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Corrida</strong>
-          <span>Desvie dos carros</span>
+        <button type="button" class="jogo-card-btn" onclick="abrirPacHorror3D()">
+          <i class="fas fa-skull" style="font-size:1.6rem;color:#ef5350;"></i>
+          <strong>Pac Horror 3D</strong>
+          <span>Labirinto dinamico + IA</span>
         </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('quebra')">
-          <i class="fas fa-cubes" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Quebra-Blocos</strong>
-          <span>Destrua tudo</span>
-        </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pulo')">
-          <i class="fas fa-dove" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Pulo</strong>
-          <span>Esquive os obstáculos</span>
-        </button>
-        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('surfe')">
-          <i class="fas fa-running" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Surfe</strong>
-          <span>Mude de faixa</span>
-        </button>
+        <p class="campo-label" style="grid-column:1/-1;margin:4px 0 0;color:var(--gold);"><i class="fas fa-car"></i> Direcao</p>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('estrada')">
-          <i class="fas fa-car-side" style="font-size:1.6rem;color:var(--accent-blue);"></i>
-          <strong>Cidade</strong>
-          <span>Percurso pela cidade</span>
+          <i class="fas fa-road" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Estrada / Cidade</strong>
+          <span>Faixas · turbo · sobrevivencia</span>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirSimulador3D()">
           <i class="fas fa-traffic-light" style="font-size:1.6rem;color:var(--accent-blue);"></i>
           <strong>Simulador 3D</strong>
-          <span>Trânsito e multas CTB</span>
+          <span>Transito e multas CTB</span>
+        </button>
+        <p class="campo-label" style="grid-column:1/-1;margin:4px 0 0;color:var(--gold);"><i class="fas fa-gamepad"></i> Arcade</p>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('snake')">
+          <i class="fas fa-dragon" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Minhoca</strong>
+          <span>Coma e cresca</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('quebra')">
+          <i class="fas fa-cubes" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Quebra-Blocos</strong>
+          <span>Destrua os blocos</span>
+        </button>
+        <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('pulo')">
+          <i class="fas fa-dove" style="font-size:1.6rem;color:var(--accent-blue);"></i>
+          <strong>Pulo</strong>
+          <span>Esquive obstaculos</span>
         </button>
         <button type="button" class="jogo-card-btn" onclick="abrirJogoArcade('mario')">
           <i class="fas fa-mountain" style="font-size:1.6rem;color:var(--accent-blue);"></i>
           <strong>Aventura</strong>
-          <span>Pegue moedas</span>
+          <span>Moedas e bandeira</span>
         </button>
       </div>
-      <div class="card" id="cardRankingJogosTab" style="border:1px solid var(--gold);margin-top:8px;margin-bottom:0;">
+      <p class="mini">Unificados: Corrida + Surfe + Cidade → Estrada. Pac-Man 2D e Horror 3D são modos diferentes.</p>
+<div class="card" id="cardRankingJogosTab" style="border:1px solid var(--gold);margin-top:8px;margin-bottom:0;">
         <h3 style="color:var(--gold);"><i class="fas fa-trophy"></i> Ranking de Pontos</h3>
         <div id="listaRankingJogosTab"></div>
         <p class="mini" style="text-align:center;margin-top:6px;">Jogue para aparecer no ranking!</p>
@@ -913,6 +1034,31 @@ footer a { color: var(--accent-blue); }
       <h3><i class="fas fa-graduation-cap"></i> Teste de Conhecimentos Gerais</h3>
       <p class="mini" style="margin-bottom:6px;">Um teste rápido por semana, gerado pela IA, pra chegar afiado na próxima avaliação.</p>
       <div id="areaTesteConhecimento"></div>
+    </div>
+
+    <div class="card" id="cardBoletimAluno">
+      <h3><i class="fas fa-chart-line"></i> Meu boletim e evolucao</h3>
+      <div id="boxBoletimAluno"></div>
+    </div>
+    <div class="card" id="cardAgendaAluno">
+      <h3 class="titulo-colapsavel" onclick="alternarCard(this)"><i class="fas fa-calendar-plus"></i> Agendar aula <i class="fas fa-chevron-down seta-colapsavel"></i></h3>
+      <div class="card-corpo-colapsavel">
+        <p class="mini">⚠️ Agende com <b>≥ 1 hora de antecedência</b>. No horário faça o <b>check-in</b> (pode usar digital). Sem agendamento válido: justificativa + autorização do professor → histórico de compromisso. Falta/atraso sem aceite geram advertência.</p>
+        <label class="campo-label">Data da aula</label>
+        <input type="date" id="agendaData" required>
+        <label class="campo-label">Horário (opcional)</label>
+        <input type="time" id="agendaHora">
+        <label class="campo-label">Observação (opcional)</label>
+        <input type="text" id="agendaObs" placeholder="Ex.: aula de ginga / berimbau">
+        <button class="btn" type="button" onclick="agendarAulaAluno()"><i class="fas fa-calendar-check"></i> Confirmar agendamento</button>
+        <p class="mini" id="agendaFeedback" style="margin-top:6px;"></p>
+        <div id="boxAgendaAluno" style="margin-top:8px;"></div>
+      </div>
+    </div>
+    <div class="card" id="cardCurriculoAluno">
+      <h3><i class="fas fa-book-open"></i> Curriculo · aquecimento · carga horaria</h3>
+      <div id="boxCurriculoAluno"></div>
+      <p class="mini">Painel de <b>formacao</b> e diferente do de aluno comum.</p>
     </div>
   </div>
 
@@ -1389,7 +1535,7 @@ footer a { color: var(--accent-blue); }
   var ACESSO_EQUIPE = {"botao":"btnToggleEquipe","menu":"tabsEquipe","gatilho":"headerAppTopo"};
   function congela(o) { Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === 'object') congela(o[k]); }); return Object.freeze(o); }
   congela(ABAS); congela(NUCLEO); congela(ACESSO_EQUIPE);
-  var VERSAO = "v87", CHAVES_LEGADAS = ["uc_assistente_apresentado_v1"];
+  var VERSAO = "v88", CHAVES_LEGADAS = ["uc_assistente_apresentado_v1"];
   var M = { VERSAO: VERSAO, CHAVES_LEGADAS: CHAVES_LEGADAS, ABAS: ABAS, NUCLEO: NUCLEO, ACESSO_EQUIPE: ACESSO_EQUIPE };
   if (typeof module !== 'undefined' && module.exports) { module.exports = M; return; }
   Object.defineProperty(g, 'UC_PROTEGIDAS', { value: M, writable: false, configurable: false });
@@ -1478,7 +1624,7 @@ if (window.caches && caches.keys) {
 /* ---------------------------------------------------------------
    0. CONSTANTES
    --------------------------------------------------------------- */
-var VERSAO_APP = 'v87';
+var VERSAO_APP = 'v88';
 var CHAVE_LOCAL = 'uc_db_v87';
 var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v87';
 
@@ -2214,11 +2360,60 @@ function tocarAlarmeTimer() {
    --------------------------------------------------------------- */
 var abaAtual = 'tab1';
 
+
+function toggleAbasRetrateis() {
+  var box = $('tabsContainer');
+  var btn = $('btnRecolherAbas');
+  if (!box) return;
+  var recolhida = box.classList.toggle('recolhida');
+  if (btn) {
+    btn.setAttribute('aria-expanded', recolhida ? 'false' : 'true');
+    var txt = btn.querySelector('.tabs-alca-txt');
+    if (txt) txt.textContent = recolhida ? 'mostrar' : 'abas';
+  }
+  try { localStorage.setItem('uc_abas_recolhidas', recolhida ? '1' : '0'); } catch (e) {}
+}
+
+function atualizarRotuloAba(id) {
+  var el = $('rotuloAbaAtual');
+  if (!el) return;
+  var mapa = {
+    tab1: '<i class="fas fa-home"></i>Início',
+    tab2: '<i class="fas fa-map-marker-alt"></i>Check-in',
+    tab3: '<i class="fas fa-user-graduate"></i>Aluno',
+    tabJogos: '<i class="fas fa-gamepad"></i>Jogos',
+    tab4: '<i class="fas fa-chalkboard-teacher"></i>Professor',
+    tab5: '<i class="fas fa-sliders-h"></i>ADM',
+    tab6: '<i class="fas fa-code"></i>Dev'
+  };
+  el.innerHTML = mapa[id] || mapa.tab1;
+}
+
+function alternarCard(el) {
+  var card = el && (el.closest ? el.closest('.card') : null);
+  if (!card) return;
+  card.classList.toggle('fechado');
+}
+
 function abrirAba(id, btn) {
   abaAtual = id;
   document.querySelectorAll('.tab-content').forEach(function (el) { el.classList.remove('active'); });
   var alvo = $(id);
-  if (alvo) alvo.classList.add('active');
+  if (alvo) {
+    alvo.classList.add('active');
+    /* reinicia animação de entrada */
+    alvo.style.animation = 'none';
+    void alvo.offsetWidth;
+    alvo.style.animation = '';
+  }
+  try { atualizarRotuloAba(id); } catch (e) {}
+  /* ao trocar de aba, expande a barra se estiver recolhida e o toque veio de um botão */
+  if (btn) {
+    var tc = $('tabsContainer');
+    if (tc && tc.classList.contains('recolhida')) {
+      /* mantém recolhida — usuário escolheu; só atualiza rótulo */
+    }
+  }
   var pai = btn || null;
   if (!pai) {
     /* se chamado por código, procura o botão correspondente */
@@ -2237,11 +2432,18 @@ function abrirAba(id, btn) {
 
 function toggleMenuEquipe() {
   var t = $('tabsEquipe');
-  var abrir = t.style.display === 'none';
+  var btn = $('btnToggleEquipe');
+  if (!t) return;
+  if (btn) { btn.style.display = 'flex'; btn.style.visibility = 'visible'; }
+  var aberto = t.style.display === 'flex' || t.style.display === 'block';
+  var abrir = !aberto;
   t.style.display = abrir ? 'flex' : 'none';
-  $('btnToggleEquipe').classList.toggle('active', abrir);
-  if (abrir) { abrirAba('tab4'); }
-  else if (['tab4', 'tab5', 'tab6'].indexOf(abaAtual) >= 0) { abrirAba('tab1'); }
+  if (btn) btn.classList.toggle('active', abrir);
+  if (abrir) {
+    try { abrirAba('tab4'); } catch (e) {}
+  } else if (typeof abaAtual !== 'undefined' && ['tab4', 'tab5', 'tab6'].indexOf(abaAtual) >= 0) {
+    try { abrirAba('tab1'); } catch (e2) {}
+  }
 }
 
 function revelarAcessoEquipe() {
@@ -2270,18 +2472,32 @@ function instalarGestoAcessoEquipe() {
   var alvo = $('headerAppTopo');
   if (!alvo) return;
   var pressTimer = null;
+  var lastTap = 0;
   var iniciar = function () {
-    pressTimer = setTimeout(revelarAcessoEquipe, 700);
+    pressTimer = setTimeout(function () { revelarAcessoEquipe(); }, 600);
   };
   var cancelar = function () {
     if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
   };
+  var duplo = function () {
+    var agora = Date.now();
+    if (agora - lastTap < 350) {
+      revelarAcessoEquipe();
+      lastTap = 0;
+    } else lastTap = agora;
+  };
   alvo.addEventListener('touchstart', iniciar, { passive: true });
-  alvo.addEventListener('touchend', cancelar);
+  alvo.addEventListener('touchend', function (e) { cancelar(); duplo(); });
   alvo.addEventListener('touchmove', cancelar);
   alvo.addEventListener('mousedown', iniciar);
   alvo.addEventListener('mouseup', cancelar);
   alvo.addEventListener('mouseleave', cancelar);
+  alvo.addEventListener('dblclick', function (e) { e.preventDefault(); revelarAcessoEquipe(); });
+  /* garante botão Equipe visível após boot */
+  try {
+    var btn = $('btnToggleEquipe');
+    if (btn) { btn.style.display = 'flex'; btn.style.visibility = 'visible'; }
+  } catch (e) {}
 }
 
 
@@ -2415,13 +2631,17 @@ function montarLoginEquipe(container, papelRequerido) {
       '<h3 style="color:var(--gold);"><i class="fas fa-lock"></i> Área restrita — ' + esc(rotulo) + '</h3>' +
       (semEquipe
         ? '<div class="aviso-info"><i class="fas fa-star"></i> Nenhum acesso de equipe cadastrado ainda. Crie o primeiro acesso (perfil <strong>Dev</strong>) para liberar as áreas Professor, ADM e Dev.</div>'
-        : '<p class="mini">Entre com o nome e a senha cadastrados pela equipe.</p>') +
+        : '<p class="mini">Entre com o nome e a senha cadastrados pela equipe <b>ou</b> use a digital neste aparelho.</p>') +
       '<label class="campo-label">Nome</label>' +
       '<input id="equipeLoginNome' + sufixo + '" placeholder="Nome de usuário da equipe">' +
       '<label class="campo-label">Senha</label>' +
       '<input id="equipeLoginSenha' + sufixo + '" type="password" placeholder="Senha">' +
       (semEquipe ? '<label class="campo-label">Perfil</label><select id="equipeLoginPapel' + sufixo + '">' + opcoes + '</select>' : '') +
-      '<button class="btn" onclick="autenticarEquipe(\'' + papelRequerido + '\')"><i class="fas fa-sign-in-alt"></i> Entrar</button>' +
+      '<div class="flex-btn-bio" style="margin-top:6px;">' +
+        '<button class="btn" onclick="autenticarEquipe(\'' + papelRequerido + '\')"><i class="fas fa-sign-in-alt"></i> Entrar com senha</button>' +
+        '<button class="btn btn-bio" type="button" onclick="ucEquipeEntrarBio(\'' + papelRequerido + '\')"><i class="fas fa-fingerprint"></i> Digital / rosto</button>' +
+      '</div>' +
+      '<p class="aviso-bio-dica"><i class="fas fa-info-circle"></i> A digital é opcional e só funciona neste aparelho. A senha padrão continua valendo — sem conflito.</p>' +
     '</div>';
   return false;
 }
@@ -3218,6 +3438,9 @@ function configNivelArcade(tipo, nivel) {
   nivel = Math.max(1, Math.min(10, Number(nivel) || 1));
   var curva = curvaDificuldade(nivel);
   /* scoreParaDesbloquear: pontos na partida para liberar o PRÓXIMO nível (alternativa ao objetivo) */
+  if (tipo === 'damas') {
+    return { nivel: nivel, objetivo: 1, velocidadeMs: 200, scoreParaDesbloquear: 100 + nivel * 50, label: 'Capture as peças pretas' };
+  }
   if (tipo === 'snake') {
     var objS = Math.round(6 + 64 * curva);
     return {
@@ -3525,7 +3748,7 @@ function abrirJogoArcade(tipo, nivelInicio) {
   var ov = $('arcadeOverlay');
   if (ov) { ov.style.display = 'flex'; ov.setAttribute('data-jogo', tipo); }   /* v87: controles próprios de cada jogo (CSS por data-jogo) */
   try { document.body.style.overflow = 'hidden'; } catch (e) {}
-  var titulos = { pacman: 'Pac-Man', snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', estrada: 'Cidade', mario: 'Aventura' };
+  var titulos = { pacman: 'Pac-Man', snake: 'Minhoca', tetris: 'Tetris', corrida: 'Corrida', quebra: 'Quebra-Blocos', pulo: 'Pulo', surfe: 'Surfe', estrada: 'Cidade', mario: 'Aventura', damas: 'Damas' };
   if ($('arcadeTitulo')) $('arcadeTitulo').textContent = (titulos[tipo] || 'Jogo') + ' · Nv.' + nv;
   if ($('arcadeDica')) {
     var dicas = {
@@ -3537,7 +3760,8 @@ function abrirJogoArcade(tipo, nivelInicio) {
       pulo: 'Toque em Pular ou cima para evitar os canos',
       surfe: '◀ ▶ muda de faixa · ▲ ou Pular para saltar obstáculos',
       estrada: '◀ ▶ troca de faixa · segure TURBO (▲) · ▼ freia · pegue moedas e nitro',
-      mario: '◀ ▶ corre · ▲ ou Pular · pegue moedas e chegue na bandeira'
+      mario: '◀ ▶ corre · ▲ ou Pular · pegue moedas e chegue na bandeira',
+      damas: 'Toque na peça prata e depois na casa · capture as pretas'
     };
     $('arcadeDica').textContent = dicas[tipo] || 'Deslize ou use as setas';
   }
@@ -3832,6 +4056,7 @@ function arcadeLoop() {
   else if (arcade.tipo === 'estrada') tickEstrada();
   else if (arcade.tipo === 'mario') tickMario();
   else if (arcade.tipo === 'pacman') tickPacman();
+  else if (arcade.tipo === 'damas') { try { drawDamas(arcade.ctx); } catch (e) {} }
   if ($('arcadePlacar')) $('arcadePlacar').textContent = String(arcade.score);
   try { verificarDesbloqueioPorScore(); } catch (e) {}
 }
@@ -5766,6 +5991,134 @@ var PAC_MAPA = [
   '111111111111111111111111'
 ];
 
+
+function initDamas() {
+  var N = 8, cell = 42;
+  arcade.damasN = N; arcade.damasCell = cell; arcade.damasSel = null;
+  arcade.damasTurn = 1; arcade.damasMsg = 'Sua vez — peça prata'; arcade.damasOver = false;
+  var b = [];
+  for (var r = 0; r < N; r++) {
+    b[r] = [];
+    for (var c = 0; c < N; c++) {
+      b[r][c] = 0;
+      if ((r + c) % 2 === 1) { if (r < 3) b[r][c] = -1; if (r > 4) b[r][c] = 1; }
+    }
+  }
+  arcade.damasBoard = b; arcade.objetivo = 1;
+  var canvas = $('arcadeCanvas');
+  if (canvas) {
+    canvas.width = N * cell; canvas.height = N * cell + 28;
+    canvas.onclick = damasClick;
+    canvas.ontouchend = function (e) {
+      e.preventDefault();
+      var tch = e.changedTouches[0], rect = canvas.getBoundingClientRect();
+      damasClick({ offsetX: (tch.clientX - rect.left) * (canvas.width / rect.width), offsetY: (tch.clientY - rect.top) * (canvas.height / rect.height) });
+    };
+  }
+}
+function damasClick(ev) {
+  if (arcade.tipo !== 'damas' || arcade.damasOver || arcade.damasTurn !== 1) return;
+  var cell = arcade.damasCell, N = 8;
+  var c = Math.floor((ev.offsetX || 0) / cell), r = Math.floor((ev.offsetY || 0) / cell);
+  if (r < 0 || r >= N || c < 0 || c >= N) return;
+  var b = arcade.damasBoard, sel = arcade.damasSel;
+  if (sel) {
+    var hit = damasMoves(sel.r, sel.c, true).filter(function (m) { return m.r === r && m.c === c; })[0];
+    if (hit) {
+      damasApply(sel.r, sel.c, hit); arcade.damasSel = null;
+      if (!arcade.damasOver) { arcade.damasTurn = -1; arcade.damasMsg = 'IA pensando…'; setTimeout(damasIA, 350); }
+      return;
+    }
+  }
+  if (b[r][c] > 0) { arcade.damasSel = { r: r, c: c }; arcade.damasMsg = 'Escolha o destino'; }
+  else arcade.damasSel = null;
+}
+function damasMoves(r, c, onlyPlayer) {
+  var b = arcade.damasBoard, N = 8, p = b[r][c];
+  if (!p || (onlyPlayer && p < 0)) return [];
+  var isKing = Math.abs(p) === 2;
+  var dirs = isKing ? [[1,1],[1,-1],[-1,1],[-1,-1]] : (p > 0 ? [[-1,1],[-1,-1]] : [[1,1],[1,-1]]);
+  var simple = [], captures = [];
+  dirs.forEach(function (d) {
+    var r1 = r + d[0], c1 = c + d[1];
+    if (r1 < 0 || r1 >= N || c1 < 0 || c1 >= N) return;
+    if (b[r1][c1] === 0) simple.push({ r: r1, c: c1, cap: null });
+    else if (b[r1][c1] * p < 0) {
+      var r2 = r1 + d[0], c2 = c1 + d[1];
+      if (r2 >= 0 && r2 < N && c2 >= 0 && c2 < N && b[r2][c2] === 0) captures.push({ r: r2, c: c2, cap: { r: r1, c: c1 } });
+    }
+  });
+  return captures.length ? captures : simple;
+}
+function damasApply(r, c, m) {
+  var b = arcade.damasBoard, p = b[r][c];
+  b[r][c] = 0; if (m.cap) b[m.cap.r][m.cap.c] = 0;
+  if (p === 1 && m.r === 0) p = 2; if (p === -1 && m.r === 7) p = -2;
+  b[m.r][m.c] = p; arcade.score += m.cap ? 20 : 5; damasCheckEnd();
+}
+function damasCheckEnd() {
+  var b = arcade.damasBoard, mine = 0, enemy = 0, myMoves = 0;
+  for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+    if (b[r][c] > 0) { mine++; myMoves += damasMoves(r, c, true).length; }
+    if (b[r][c] < 0) enemy++;
+  }
+  if (enemy === 0) { arcade.damasOver = true; arcade.damasMsg = 'Você venceu!'; arcade.score += 200; try { registrarPontosJogo('damas', arcade.score); } catch (e) {} }
+  else if (mine === 0 || myMoves === 0) { arcade.damasOver = true; arcade.damasMsg = 'IA venceu'; }
+}
+function damasIA() {
+  if (arcade.tipo !== 'damas' || arcade.damasOver) return;
+  var b = arcade.damasBoard, best = null, bestScore = -1e9;
+  for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) {
+    if (b[r][c] >= 0) continue;
+    damasMoves(r, c, false).forEach(function (m) {
+      var sc = (m.cap ? 30 : 1) + (m.r === 7 ? 15 : 0) + Math.random();
+      if (sc > bestScore) { bestScore = sc; best = { r: r, c: c, m: m }; }
+    });
+  }
+  if (best) damasApply(best.r, best.c, best.m);
+  arcade.damasTurn = 1; arcade.damasMsg = arcade.damasOver ? arcade.damasMsg : 'Sua vez';
+}
+function drawDamas(ctx) {
+  if (!ctx || !arcade.damasBoard) return;
+  var N = 8, cell = arcade.damasCell || 42, b = arcade.damasBoard;
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
+    ctx.fillStyle = (r + c) % 2 === 0 ? '#f0e6d0' : '#3d2b1f';
+    ctx.fillRect(c * cell, r * cell, cell, cell);
+  }
+  if (arcade.damasSel) {
+    ctx.fillStyle = 'rgba(0,230,118,0.35)';
+    ctx.fillRect(arcade.damasSel.c * cell, arcade.damasSel.r * cell, cell, cell);
+    damasMoves(arcade.damasSel.r, arcade.damasSel.c, true).forEach(function (m) {
+      ctx.beginPath(); ctx.arc(m.c * cell + cell / 2, m.r * cell + cell / 2, cell * 0.18, 0, Math.PI * 2);
+      ctx.fillStyle = m.cap ? 'rgba(239,83,80,0.75)' : 'rgba(0,210,255,0.55)'; ctx.fill();
+    });
+  }
+  for (r = 0; r < N; r++) for (c = 0; c < N; c++) {
+    var p = b[r][c]; if (!p) continue;
+    var cx = c * cell + cell / 2, cy = r * cell + cell / 2, rad = cell * 0.36, isS = p > 0;
+    ctx.beginPath(); ctx.arc(cx, cy + 2, rad, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
+    var grd = ctx.createRadialGradient(cx - rad * 0.3, cy - rad * 0.35, 2, cx, cy, rad);
+    if (isS) { grd.addColorStop(0, '#f8f8f8'); grd.addColorStop(0.5, '#c0c0c0'); grd.addColorStop(1, '#6a6a6a'); }
+    else { grd.addColorStop(0, '#555'); grd.addColorStop(0.5, '#1a1a1a'); grd.addColorStop(1, '#000'); }
+    ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fillStyle = grd; ctx.fill();
+    ctx.strokeStyle = isS ? '#9e9e9e' : '#333'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy - rad * 0.12, rad * 0.7, 0, Math.PI * 2);
+    var g2 = ctx.createRadialGradient(cx, cy - rad * 0.3, 1, cx, cy, rad * 0.7);
+    if (isS) { g2.addColorStop(0, '#fff'); g2.addColorStop(1, '#bdbdbd'); }
+    else { g2.addColorStop(0, '#444'); g2.addColorStop(1, '#111'); }
+    ctx.fillStyle = g2; ctx.fill();
+    if (Math.abs(p) === 2) {
+      ctx.fillStyle = isS ? '#ffc107' : '#ef5350';
+      ctx.font = 'bold ' + Math.floor(cell * 0.32) + 'px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('\u2605', cx, cy);
+    }
+  }
+  ctx.fillStyle = '#cfd8dc'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(arcade.damasMsg || '', 8, N * cell + 18);
+  ctx.fillText('Pts ' + (arcade.score || 0), N * cell - 64, N * cell + 18);
+}
+
 function initPacman() {
   var TILE = 14;
   arcade.pacTile = TILE;
@@ -6843,13 +7196,339 @@ function baixarCertificado(id) {
     '<div class="rodape">Código de autenticidade: <strong>' + esc(c.codigo || '-') + '</strong><br>' +
     'Emitido em ' + esc(c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + esc(c.emitidoPor || 'Equipe') + '<br><br>' +
     '_______________________________<br>' + esc(c.assinatura || 'Professor responsável') + '</div></div>' +
-    '<script>setTimeout(function(){window.print();},600);<\/script></body></html>';
+    '</body></html>';
   var w = window.open('', '_blank');
   if (!w) { mostrarToast('Permita pop-ups para abrir o certificado.', 'erro'); return; }
   w.document.write(html);
   w.document.close();
+  setTimeout(function () { try { w.print(); } catch (e) {} }, 600);
 }
+</script>
+<script>
+(function (W) {
+  'use strict';
+  var MOVIMENTOS = {
+    chutes: [
+      { id: 'queixada', nome: 'Queixada' },
+      { id: 'armada', nome: 'Armada' },
+      { id: 'meia_lua_frente', nome: 'Meia-lua de frente' },
+      { id: 'meia_lua_compasso', nome: 'Meia-lua de compasso' },
+      { id: 'meia_lua_solta', nome: 'Meia-lua solta' }
+    ],
+    esquivas: [
+      { id: 'descida_basica', nome: 'Descida basica' },
+      { id: 'esquiva_lateral', nome: 'Esquiva lateral' },
+      { id: 'esquiva_diagonal', nome: 'Esquiva diagonal' },
+      { id: 'esquiva_frente', nome: 'Esquiva de frente' }
+    ],
+    sequencias: [
+      { id: 'seq_neg_role', nome: 'Descida basica > negativa > role' },
+      { id: 'seq_neg_sobe_tras', nome: 'Descida basica > negativa > sobe por tras' },
+      { id: 'seq_neg_sobe_lat', nome: 'Descida basica > negativa > sobe pela lateral' }
+    ],
+    berimbau: [
+      { id: 'toque_angola', nome: 'Toque Angola' },
+      { id: 'toque_benguela', nome: 'Toque Benguela' },
+      { id: 'toque_regional', nome: 'Toque Regional' }
+    ],
+    jogos: [
+      { id: 'jogo_angola', nome: 'Jogo de Angola' },
+      { id: 'jogo_benguela', nome: 'Jogo de Benguela' },
+      { id: 'jogo_regional', nome: 'Jogo Regional' }
+    ],
+    instrumentos: [
+      { id: 'atabaque', nome: 'Atabaque' },
+      { id: 'pandeiro', nome: 'Pandeiro' }
+    ]
+  };
+  var LABELS = { chutes: 'Chutes', esquivas: 'Esquivas', sequencias: 'Sequencias', berimbau: 'Toques de berimbau', jogos: 'Jogos nos toques', instrumentos: 'Instrumentos' };
 
+  function todosMovs() {
+    var a = [];
+    Object.keys(MOVIMENTOS).forEach(function (c) {
+      MOVIMENTOS[c].forEach(function (m) { a.push({ cat: c, id: m.id, nome: m.nome }); });
+    });
+    return a;
+  }
+
+  W.renderFormBimMovimentos = function () {
+    var box = document.getElementById('boxBimMovimentos');
+    if (!box) return;
+    var h = '';
+    Object.keys(MOVIMENTOS).forEach(function (c) {
+      h += '<p class="campo-label" style="margin-top:10px;color:var(--primary-green);"><b>' + LABELS[c] + '</b></p>';
+      MOVIMENTOS[c].forEach(function (m) {
+        h += '<div class="lista-item" style="padding:6px 8px;"><div class="linha"><b>' + m.nome + '</b></div>' +
+          '<div class="grade-2" style="margin-top:4px;">' +
+          '<div><label class="mini">Lado E (0-100)</label><input type="number" min="0" max="100" id="bim_' + m.id + '_E" value="70"></div>' +
+          '<div><label class="mini">Lado D (0-100)</label><input type="number" min="0" max="100" id="bim_' + m.id + '_D" value="70"></div>' +
+          '</div></div>';
+      });
+    });
+    box.innerHTML = h;
+  };
+
+  W.salvarAvalBimestral = function () {
+    var alunoId = (document.getElementById('bimAluno') || {}).value;
+    var aluno = DB.buscar('alunos', alunoId);
+    if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
+    var bim = (document.getElementById('bimPeriodo') || {}).value || '1';
+    var ano = parseInt((document.getElementById('bimAno') || {}).value, 10) || new Date().getFullYear();
+    var notas = {};
+    todosMovs().forEach(function (m) {
+      var e = parseFloat((document.getElementById('bim_' + m.id + '_E') || {}).value); if (isNaN(e)) e = 0;
+      var d = parseFloat((document.getElementById('bim_' + m.id + '_D') || {}).value); if (isNaN(d)) d = 0;
+      e = Math.max(0, Math.min(100, e)); d = Math.max(0, Math.min(100, d));
+      notas[m.id] = { nome: m.nome, cat: m.cat, E: e, D: d, media: Math.round((e + d) / 2) };
+    });
+    var compromisso = parseFloat((document.getElementById('bimCompromisso') || {}).value) || 0;
+    var faltas = parseInt((document.getElementById('bimFaltas') || {}).value, 10) || 0;
+    var atrasos = parseInt((document.getElementById('bimAtrasos') || {}).value, 10) || 0;
+    var parecer = ((document.getElementById('bimParecer') || {}).value || '').trim();
+    var apto = ((document.getElementById('bimApto') || {}).value || '');
+    var medias = Object.keys(notas).map(function (k) { return notas[k].media; });
+    var mediaMov = medias.length ? medias.reduce(function (a, b) { return a + b; }, 0) / medias.length : 0;
+    var mediaGeral = Math.max(0, Math.min(100, Math.round(mediaMov * 0.75 + compromisso * 0.25 - Math.min(20, faltas * 3) - Math.min(10, atrasos * 2))));
+    DB.salvar('avaliacoesBimestrais', {
+      id: 'bim_' + alunoId + '_' + ano + '_' + bim, tipo: 'bimestral', alunoId: alunoId, alunoNome: aluno.nome,
+      ano: ano, bimestre: parseInt(bim, 10), notas: notas, compromisso: compromisso, faltas: faltas, atrasos: atrasos,
+      parecer: parecer, apto: apto, mediaGeral: mediaGeral, criadoEm: (typeof agoraISO === 'function' ? agoraISO() : new Date().toISOString())
+    }).then(function () {
+      mostrarToast('Avaliacao bimestral salva · media ' + mediaGeral);
+      try { W.renderBoletimAlunoLogado(); } catch (e) {}
+    });
+  };
+
+  W.gerarSugestaoIABimestre = function () {
+    var medias = todosMovs().map(function (m) {
+      var e = parseFloat((document.getElementById('bim_' + m.id + '_E') || {}).value) || 0;
+      var d = parseFloat((document.getElementById('bim_' + m.id + '_D') || {}).value) || 0;
+      return { nome: m.nome, m: (e + d) / 2 };
+    }).sort(function (a, b) { return a.m - b.m; });
+    var fracos = medias.slice(0, 3).map(function (x) { return x.nome; }).join(', ');
+    var fortes = medias.slice(-3).map(function (x) { return x.nome; }).join(', ');
+    var faltas = parseInt((document.getElementById('bimFaltas') || {}).value, 10) || 0;
+    var atrasos = parseInt((document.getElementById('bimAtrasos') || {}).value, 10) || 0;
+    var media = medias.reduce(function (s, x) { return s + x.m; }, 0) / (medias.length || 1);
+    var txt = 'Pontos fortes: ' + fortes + '. Atencao: ' + fracos + '. Media: ' + Math.round(media) + '/100.';
+    if (faltas) txt += ' Faltas (' + faltas + ').';
+    if (atrasos) txt += ' Atrasos (' + atrasos + ').';
+    txt += (media >= 70 && faltas <= 2) ? ' Sugestao IA: APTO — professor confirma.' : ' Sugestao IA: revisar antes de liberar.';
+    var el = document.getElementById('bimParecer'); if (el) el.value = txt;
+    var apto = document.getElementById('bimApto'); if (apto) apto.value = (media >= 70 && faltas <= 2) ? 'sim' : 'nao';
+    mostrarToast('Sugestao da IA pronta · professor decide');
+  };
+
+  function desenharGraficoBim(reg) {
+    var cv = document.querySelector('canvas.graf-bim[data-bim="' + reg.id + '"]');
+    if (!cv || !reg.notas) return;
+    var ctx = cv.getContext('2d');
+    var cats = {};
+    Object.keys(reg.notas).forEach(function (k) {
+      var n = reg.notas[k];
+      if (!cats[n.cat]) cats[n.cat] = [];
+      cats[n.cat].push(n.media);
+    });
+    var keys = Object.keys(cats), w = cv.width, h = cv.height, bw = (w - 20) / Math.max(1, keys.length) - 6;
+    ctx.clearRect(0, 0, w, h);
+    keys.forEach(function (k, i) {
+      var arr = cats[k];
+      var med = arr.reduce(function (a, b) { return a + b; }, 0) / arr.length;
+      var bh = (med / 100) * (h - 24), x = 12 + i * (bw + 6);
+      var g = ctx.createLinearGradient(0, h - bh, 0, h);
+      g.addColorStop(0, '#00e676'); g.addColorStop(1, '#0091ea');
+      ctx.fillStyle = g; ctx.fillRect(x, h - 14 - bh, bw, bh);
+      ctx.fillStyle = '#90a4ae'; ctx.font = '8px sans-serif'; ctx.fillText((LABELS[k] || k).slice(0, 8), x, h - 2);
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 9px sans-serif'; ctx.fillText(String(Math.round(med)), x + 2, h - 16 - bh);
+    });
+  }
+
+  W.renderBoletimAlunoLogado = function () {
+    var box = document.getElementById('boxBoletimAluno');
+    if (!box) return;
+    var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (!aluno) { box.innerHTML = '<p class="sem-dados">Faca login para ver o boletim.</p>'; return; }
+    var lista = DB.listar('avaliacoesBimestrais').filter(function (a) { return a.alunoId === aluno.id; })
+      .sort(function (a, b) { return (a.ano * 10 + a.bimestre) - (b.ano * 10 + b.bimestre); });
+    if (!lista.length) { box.innerHTML = '<p class="sem-dados">Sem avaliacao bimestral ainda.</p>'; return; }
+    var html = '<p class="mini">1o semestre = boletim · 2o semestre = boletim + certificado</p>';
+    lista.forEach(function (reg) {
+      var sem = reg.bimestre <= 2 ? '1o semestre' : '2o semestre';
+      html += '<div class="lista-item"><div class="linha"><b>' + reg.ano + ' · ' + reg.bimestre + 'o bimestre</b>' +
+        '<span class="pill ' + (reg.apto === 'sim' ? 'pill-ok' : (reg.apto === 'nao' ? 'pill-no' : 'pill-pend')) + '">' +
+        (reg.apto === 'sim' ? 'Apto' : (reg.apto === 'nao' ? 'Nao apto' : 'Em avaliacao')) + '</span></div>' +
+        '<p class="mini">' + sem + ' · Media <b>' + reg.mediaGeral + '</b>/100 · Compromisso ' + (reg.compromisso || 0) +
+        ' · Faltas ' + (reg.faltas || 0) + ' · Atrasos ' + (reg.atrasos || 0) + '</p>';
+      if (reg.parecer) html += '<p class="mini">' + (typeof esc === 'function' ? esc(reg.parecer) : reg.parecer) + '</p>';
+      html += '<canvas class="graf-bim" data-bim="' + reg.id + '" width="280" height="100" style="width:100%;max-width:320px;margin-top:6px;border-radius:8px;background:#0a1419;"></canvas>';
+      if (reg.bimestre >= 3) {
+        html += '<button class="btn btn-mini btn-gold" style="margin-top:6px;" onclick="emitirCertificadoSemestre(\'' + reg.id + '\')"><i class="fas fa-certificate"></i> Certificado detalhado</button>';
+      }
+      html += '</div>';
+    });
+    var avals = DB.listar('avaliacoes').filter(function (a) { return a.alunoId === aluno.id; })
+      .sort(function (a, b) { return String(a.semana || '').localeCompare(String(b.semana || '')); }).slice(-8);
+    if (avals.length) {
+      html += '<p class="campo-label" style="margin-top:12px;">Evolucao semanal</p>';
+      avals.forEach(function (a) {
+        var m = typeof mediaAvaliacao === 'function' ? mediaAvaliacao(a) : 0;
+        html += '<div class="lista-item"><div class="linha"><b>Semana ' + (a.semana || '—') + '</b><span class="pill pill-ok">' + (Math.round(m * 10) / 10) + '/10</span></div></div>';
+      });
+    }
+    box.innerHTML = html;
+    setTimeout(function () { lista.forEach(desenharGraficoBim); }, 40);
+  };
+
+  W.emitirCertificadoSemestre = function (regId) {
+    var reg = DB.buscar('avaliacoesBimestrais', regId);
+    if (!reg) return;
+    var linhas = Object.keys(reg.notas || {}).map(function (k) {
+      var n = reg.notas[k];
+      return n.nome + ': E ' + n.E + ' · D ' + n.D + ' · media ' + n.media;
+    }).join('\n');
+    var txt = 'CERTIFICADO / BOLETIM DETALHADO\n' + reg.alunoNome + '\n' + reg.ano + ' · ' + reg.bimestre + 'o bimestre\nMedia: ' + reg.mediaGeral +
+      '\nApto: ' + (reg.apto || 'em avaliacao') + '\n\n' + linhas + '\n\nParecer: ' + (reg.parecer || '—');
+    try {
+      var w = window.open('', '_blank');
+      if (w) { w.document.write('<pre style="font-family:system-ui;padding:24px;white-space:pre-wrap;">' + txt.replace(/</g, '&lt;') + '</pre>'); w.document.close(); }
+      else alert(txt);
+    } catch (e) { alert(txt); }
+  };
+
+  W.agendarAulaAluno = function () {
+    var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    var fb = document.getElementById('agendaFeedback');
+    if (!aluno) {
+      if (typeof mostrarToast === 'function') mostrarToast('Faça login na aba Aluno primeiro.', 'erro');
+      if (fb) fb.innerHTML = '<span style="color:var(--danger);">Entre na aba Aluno com sua senha para agendar.</span>';
+      try { abrirAba('tab3'); } catch (e) {}
+      return;
+    }
+    var data = (document.getElementById('agendaData') || {}).value;
+    if (!data) {
+      if (typeof mostrarToast === 'function') mostrarToast('Escolha a data da aula.', 'erro');
+      if (fb) fb.textContent = 'Informe a data.';
+      return;
+    }
+    var hoje = new Date(); hoje.setHours(0,0,0,0);
+    var partes = data.split('-');
+    var dt = new Date(parseInt(partes[0],10), parseInt(partes[1],10)-1, parseInt(partes[2],10));
+    if (dt < hoje) {
+      if (typeof mostrarToast === 'function') mostrarToast('Escolha uma data de hoje ou futura.', 'erro');
+      if (fb) fb.textContent = 'Data precisa ser hoje ou depois.';
+      return;
+    }
+    var hora = (document.getElementById('agendaHora') || {}).value || '';
+    var obs = ((document.getElementById('agendaObs') || {}).value || '').trim();
+    DB.salvar('agendamentos', {
+      id: 'ag_' + aluno.id + '_' + data + (hora ? '_' + hora.replace(':','') : ''),
+      alunoId: aluno.id, alunoNome: aluno.nome, data: data, hora: hora, obs: obs,
+      status: 'agendado', criadoEm: (typeof agoraISO === 'function' ? agoraISO() : new Date().toISOString())
+    }).then(function () {
+      if (typeof mostrarToast === 'function') mostrarToast('Aula agendada para ' + data + (hora ? ' às ' + hora : ''));
+      if (fb) fb.innerHTML = '<span style="color:var(--primary-green);">Agendado: ' + data + (hora ? ' · ' + hora : '') + '</span>';
+      var di = document.getElementById('agendaData'); if (di) di.value = '';
+      var hi = document.getElementById('agendaHora'); if (hi) hi.value = '';
+      var oi = document.getElementById('agendaObs'); if (oi) oi.value = '';
+      W.renderAgendaAluno();
+    }).catch(function () {
+      if (typeof mostrarToast === 'function') mostrarToast('Não foi possível salvar o agendamento.', 'erro');
+    });
+  };
+
+  W.renderAgendaAluno = function () {
+    var box = document.getElementById('boxAgendaAluno');
+    var di = document.getElementById('agendaData');
+    if (di && !di.getAttribute('data-min-set')) {
+      try {
+        var h = new Date();
+        var m = h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0') + '-' + String(h.getDate()).padStart(2,'0');
+        di.min = m; di.setAttribute('data-min-set', '1');
+      } catch (e) {}
+    }
+    if (!box) return;
+    var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (!aluno) { box.innerHTML = '<p class="sem-dados">Faça login para ver e criar agendamentos.</p>'; return; }
+    var lista = DB.listar('agendamentos').filter(function (a) { return a.alunoId === aluno.id; })
+      .sort(function (a, b) { return String(a.data).localeCompare(String(b.data)); });
+    box.innerHTML = lista.length ? lista.map(function (a) {
+      return '<div class="lista-item"><div class="linha"><b>' + a.data + (a.hora ? ' · ' + a.hora : '') + '</b><span class="pill pill-info">' + (a.status || 'agendado') + '</span></div>' +
+        (a.obs ? '<p class="mini">' + (typeof esc === 'function' ? esc(a.obs) : a.obs) + '</p>' : '') + '</div>';
+    }).join('') : '<p class="sem-dados">Nenhuma aula agendada ainda.</p>';
+  };
+
+  W.corrigirPresencaManual = function () {
+    var alunoId = (document.getElementById('corrAluno') || {}).value;
+    var data = (document.getElementById('corrData') || {}).value;
+    var status = (document.getElementById('corrStatus') || {}).value || 'presente';
+    var aluno = DB.buscar('alunos', alunoId);
+    if (!aluno || !data) { mostrarToast('Aluno e data obrigatorios.', 'erro'); return; }
+    DB.salvar('checkins', {
+      id: 'ch_' + alunoId + '_' + data, alunoId: alunoId, alunoNome: aluno.nome, data: data,
+      status: status, origem: 'correcao_manual_professor',
+      criadoEm: (typeof agoraISO === 'function' ? agoraISO() : new Date().toISOString())
+    }).then(function () {
+      if (status === 'falta' || status === 'atraso') {
+        try {
+          DB.salvar('advertencias', {
+            id: 'adv_' + alunoId + '_' + data + '_' + status, alunoId: alunoId, tipo: status, data: data,
+            texto: status === 'falta' ? 'Falta (correcao manual).' : 'Atraso (correcao manual).',
+            criadoEm: new Date().toISOString()
+          });
+        } catch (e) {}
+      }
+      mostrarToast('Presenca corrigida: ' + status);
+    });
+  };
+
+  W.renderCurriculoAluno = function () {
+    var box = document.getElementById('boxCurriculoAluno');
+    if (!box) return;
+    var html = '<p class="mini"><b>Aquecimento:</b> mobilidade de quadril, ginga suave, corrida leve 3–5 min.</p>' +
+      '<p class="mini"><b>Alongamento:</b> posteriores, adutores, ombros e coluna — 5–8 min ao final.</p>' +
+      '<p class="mini">Carga horaria (berimbau 20 min, cantoria 20 min, ginga, sequencias) entra no boletim e certificado.</p>' +
+      '<div class="aviso-info" style="margin-top:8px;"><b>Transparencia:</b> camera, GPS, biometria e armazenamento so com sua permissao. Senhas com protecao local.</div>';
+    box.innerHTML = html;
+  };
+
+  var _ra = W.renderAluno;
+  if (typeof _ra === 'function') {
+    W.renderAluno = function () {
+      var r = _ra.apply(this, arguments);
+      try { W.renderBoletimAlunoLogado(); W.renderAgendaAluno(); W.renderCurriculoAluno(); } catch (e) {}
+      return r;
+    };
+  }
+
+  setTimeout(function () {
+    try { if (document.getElementById('boxBimMovimentos')) W.renderFormBimMovimentos(); } catch (e) {}
+  }, 1000);
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
+
+<script>
+(function(){
+  function redirJogos(){
+    var c = document.getElementById('cardAtalhoArcadeInicio');
+    if(!c) return;
+    var btns = c.querySelectorAll('button, a');
+    btns.forEach(function(b){
+      if((b.textContent||'').toLowerCase().indexOf('jog')>=0 || b.onclick){
+        b.addEventListener('click', function(e){
+          /* leave existing handlers; also ensure tab */
+        });
+      }
+    });
+    var p = c.querySelector('p.mini') || c.querySelector('p');
+    if(p) p.textContent = 'Use a aba Jogos para todos os mini-games (evita duplicar no Inicio).';
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', redirJogos);
+  else setTimeout(redirJogos, 500);
+})();
+</script>
+
+<script>
 /* --- mural --- */
 function renderMural() {
   var box = $('chatMessages');
@@ -7244,7 +7923,7 @@ function renderAluno() {
           '<button class="btn btn-secondary" onclick="abrirAba(\'tab2\'); this.closest(\'.card\').remove();"><i class="fas fa-map-marker-alt"></i> Ir para o Check-in</button>' +
         '</div>'
       : '') +
-    '<button class="btn btn-back" onclick="sairAluno()"><i class="fas fa-sign-out-alt"></i> Sair</button>' +
+    '<div class="flex-btn" style="margin-bottom:8px;"><button class="btn btn-danger" onclick="sairAluno()"><i class="fas fa-sign-out-alt"></i> Sair da conta</button></div>' +
 
     /* ===== CABEÇALHO DO ALUNO ===== */
     '<div style="text-align:center; margin-bottom:10px;">' +
@@ -7521,7 +8200,11 @@ function renderAbaProfessor() {
       '</select>' +
       '<label class="campo-label">Observação (opcional)</label>' +
       '<input id="profCheckinObsAuto" placeholder="Ex: roda aberta, foco em ginga...">' +
-      '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula — fazer check-in</button>';
+      '<div class="flex-btn-bio">' +
+        '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula</button>' +
+        '<button class="btn btn-bio" type="button" onclick="ucProfessorCheckinBio()"><i class="fas fa-fingerprint"></i> Check-in digital</button>' +
+      '</div>' +
+      '<p class="aviso-bio-dica">Ative a digital da equipe após o login (botão abaixo do painel) para usar o check-in por biometria.</p>';
   }
   html += '</div>';
 
@@ -7742,6 +8425,35 @@ function renderAbaProfessor() {
     '<button class="btn btn-gold" onclick="salvarAvaliacao()"><i class="fas fa-save"></i> Salvar avaliação semanal</button>' +
     '<p class="mini" style="margin-top:6px;">Se já existir avaliação desta semana para o aluno, ela será atualizada.</p>' +
   '</div>';
+
+  /* --- avaliacao bimestral --- */
+  html += '<div class="card" id="cardAvalBimestral"><h3><i class="fas fa-clipboard-list"></i> Avaliacao bimestral (0-100 E/D)</h3>' +
+    '<p class="mini">Todos os movimentos nos dois lados (E e D), de 0 a 100. Compromisso, faltas e atrasos no boletim.</p>' +
+    '<label class="campo-label">Aluno</label><select id="bimAluno">' +
+    (alunos.length ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + '</option>'; }).join('') : '<option value="">—</option>') +
+    '</select>' +
+    '<label class="campo-label">Bimestre</label><select id="bimPeriodo"><option value="1">1o</option><option value="2">2o</option><option value="3">3o</option><option value="4">4o</option></select>' +
+    '<label class="campo-label">Ano</label><input id="bimAno" type="number" value="' + (new Date().getFullYear()) + '">' +
+    '<div id="boxBimMovimentos" style="margin-top:8px;"></div>' +
+    '<div class="grade-3"><div><label class="campo-label">Compromisso 0-100</label><input id="bimCompromisso" type="number" min="0" max="100" value="80"></div>' +
+    '<div><label class="campo-label">Faltas</label><input id="bimFaltas" type="number" min="0" value="0"></div>' +
+    '<div><label class="campo-label">Atrasos</label><input id="bimAtrasos" type="number" min="0" value="0"></div></div>' +
+    '<label class="campo-label">Parecer / IA</label><textarea id="bimParecer" placeholder="Sugestao da IA e parecer do professor"></textarea>' +
+    '<label class="campo-label">Apto no semestre? (IA sugere, professor decide)</label>' +
+    '<select id="bimApto"><option value="">Em avaliacao</option><option value="sim">Apto</option><option value="nao">Nao apto</option></select>' +
+    '<button class="btn btn-gold" onclick="salvarAvalBimestral()"><i class="fas fa-save"></i> Salvar avaliacao bimestral</button>' +
+    '<button class="btn btn-secondary" onclick="gerarSugestaoIABimestre()"><i class="fas fa-robot"></i> Sugestao da IA</button></div>';
+  try { setTimeout(function () { if (typeof renderFormBimMovimentos === 'function') renderFormBimMovimentos(); }, 100); } catch (e) {}
+
+  /* --- calendario: correcao manual --- */
+  html += '<div class="card"><h3><i class="fas fa-calendar-check"></i> Calendario · corrigir presenca</h3>' +
+    '<p class="mini">Ajuste se o aluno treinou e nao registrou, ou para falta/atraso.</p>' +
+    '<label class="campo-label">Aluno</label><select id="corrAluno">' +
+    (alunos.length ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + '</option>'; }).join('') : '<option value="">—</option>') +
+    '</select>' +
+    '<label class="campo-label">Data</label><input type="date" id="corrData">' +
+    '<label class="campo-label">Status</label><select id="corrStatus"><option value="presente">Presente</option><option value="atraso">Atraso</option><option value="falta">Falta</option><option value="justificado">Justificado</option></select>' +
+    '<button class="btn" onclick="corrigirPresencaManual()"><i class="fas fa-save"></i> Salvar correcao</button></div>';
 
   /* --- certificados --- */
   html += '<div class="card"><h3><i class="fas fa-award"></i> Emitir Certificado</h3>' +
@@ -11447,7 +12159,23 @@ var UC_ULTIMO_ALUNO_KEY = 'uc_ultimo_aluno_v87';
 function bioSuportado() {
   return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && window.isSecureContext);
 }
-function bioConfig() { try { return JSON.parse(localStorage.getItem(UC_BIO_KEY) || 'null'); } catch (e) { return null; } }
+function bioConfig() {
+  try { var local = JSON.parse(localStorage.getItem(UC_BIO_KEY) || 'null'); if (local && local.credId) return local; } catch (e) {}
+  try {
+    if (typeof DB !== 'undefined' && DB.listar) {
+      var lista = DB.listar('bioCredenciais') || [];
+      var a = typeof alunoLogado === 'function' ? alunoLogado() : null;
+      var hit = a ? lista.filter(function (r) { return r.alunoId === a.id; })[0] : null;
+      if (!hit && lista.length === 1) hit = lista[0];
+      if (hit && hit.credId) {
+        var rec = { alunoId: hit.alunoId, nome: hit.displayName, credId: hit.credId, criadoEm: hit.criadoEm };
+        try { localStorage.setItem(UC_BIO_KEY, JSON.stringify(rec)); } catch (e2) {}
+        return rec;
+      }
+    }
+  } catch (e3) {}
+  return null;
+}
 function bioB64(buf) { var b = new Uint8Array(buf), s = ''; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
 function bioDeB64(str) { var s = atob(str), b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
 function bioDesafio() { var c = new Uint8Array(32); (window.crypto || window.msCrypto).getRandomValues(c); return c; }
@@ -11465,8 +12193,15 @@ function bioAtivar() {
     authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
     timeout: 60000, attestation: 'none'
   } }).then(function (cred) {
-    try { localStorage.setItem(UC_BIO_KEY, JSON.stringify({ alunoId: a.id, nome: a.apelido || a.nome, credId: bioB64(cred.rawId), criadoEm: agoraISO() })); } catch (e) {}
-    mostrarToast('Acesso rápido ativado neste aparelho!');
+    var rec = { alunoId: a.id, nome: a.apelido || a.nome, credId: bioB64(cred.rawId), criadoEm: agoraISO() };
+    try { localStorage.setItem(UC_BIO_KEY, JSON.stringify(rec)); } catch (e) {}
+    try {
+      if (typeof DB !== 'undefined' && DB.salvar) {
+        DB.salvar('bioCredenciais', { id: 'bio_aluno_' + a.id, chave: 'aluno:' + a.id, alunoId: a.id, credId: rec.credId, displayName: rec.nome, criadoEm: rec.criadoEm, aparelho: (navigator.userAgent || '').slice(0, 120) });
+        a.bioCredId = rec.credId; a.bioAtualizadoEm = rec.criadoEm; DB.salvar('alunos', a);
+      }
+    } catch (eDB) {}
+    mostrarToast('Acesso rápido ativado e salvo no banco!');
     registroLog('auth', 'Acesso por biometria ativado: ' + a.nome);
     renderAluno();
   }).catch(function (e) {
@@ -12097,6 +12832,484 @@ iniciarApp();
 })(typeof window !== 'undefined' ? window : this);
 
 </script>
+
+<script>
+/* ▼ uc-compromisso-seguranca.js — v88 · check-in digital, equipe bio, sair header, regras 1h, hash */
+(function (g) {
+  'use strict';
+  var ANTECEDENCIA_MIN = 60;
+  var EQUIPE_BIO_KEY = 'uc_equipe_bio_v87';
+  function $(id) { return document.getElementById(id); }
+
+  /* ===== Header: sessão + Sair ===== */
+  g.ucSairRapido = function () {
+    if (g.sessaoEquipe && typeof g.sairEquipe === 'function') g.sairEquipe();
+    else if (g.sessaoAlunoId && typeof g.sairAluno === 'function') g.sairAluno();
+    else if (typeof g.mostrarToast === 'function') g.mostrarToast('Nenhuma sessão ativa.');
+    g.ucAtualizarChipSessao();
+  };
+  g.ucAtualizarChipSessao = function () {
+    var chip = $('sessaoChipHeader'), nomeEl = $('sessaoChipNome');
+    if (!chip) return;
+    var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
+    if (g.sessaoEquipe) {
+      chip.classList.add('visivel');
+      if (nomeEl) nomeEl.textContent = (g.sessaoEquipe.nome || 'Equipe') + ' · ' + (g.sessaoEquipe.papel || '');
+    } else if (aluno) {
+      chip.classList.add('visivel');
+      if (nomeEl) nomeEl.textContent = aluno.apelido || aluno.nome || 'Aluno';
+    } else {
+      chip.classList.remove('visivel');
+      if (nomeEl) nomeEl.textContent = '—';
+    }
+  };
+
+  /* ===== Hash SHA-256 + legado ===== */
+  var _hashLegado = typeof g.hashSenha === 'function' ? g.hashSenha : null;
+  function hashDjb2(senha) {
+    if (_hashLegado) return _hashLegado(senha);
+    var str = 'uc::' + String(senha || ''), h = 5381;
+    for (var i = 0; i < str.length; i++) { h = ((h << 5) + h) + str.charCodeAt(i); h = h & 0xffffffff; }
+    return 'h' + (h >>> 0).toString(16);
+  }
+  g.hashSenha = function (s) { return hashDjb2(s); };
+  g.hashSenhaAsync = function (senha) {
+    var plain = String(senha || '');
+    if (g.crypto && g.crypto.subtle && g.TextEncoder) {
+      return g.crypto.subtle.digest('SHA-256', new TextEncoder().encode('uc-v87::' + plain))
+        .then(function (buf) {
+          var a = new Uint8Array(buf), h = 'sha256:';
+          for (var i = 0; i < a.length; i++) h += ('0' + a[i].toString(16)).slice(-2);
+          return h;
+        }).catch(function () { return hashDjb2(plain); });
+    }
+    return Promise.resolve(hashDjb2(plain));
+  };
+  g.verificarSenhaHash = function (senha, hashSalvo) {
+    if (!hashSalvo) return Promise.resolve(false);
+    if (String(hashSalvo).indexOf('sha256:') === 0) {
+      return g.hashSenhaAsync(senha).then(function (h) { return h === hashSalvo; });
+    }
+    return Promise.resolve(hashDjb2(senha) === hashSalvo);
+  };
+
+  /* ===== Agendamento / compromisso ===== */
+  function agendamentoDoAlunoHoje(aluno) {
+    if (!aluno || !g.DB) return null;
+    var hoje = typeof g.dataLocalISO === 'function' ? g.dataLocalISO() : new Date().toISOString().slice(0, 10);
+    var lista = g.DB.listar('agendamentos').filter(function (a) {
+      return a && a.alunoId === aluno.id && a.data === hoje && a.status !== 'cancelado';
+    }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+    return lista[0] || null;
+  }
+  function minutosDesdeISO(iso) {
+    if (!iso) return null;
+    var t = Date.parse(iso);
+    if (isNaN(t)) return null;
+    return Math.floor((Date.now() - t) / 60000);
+  }
+  function agendamentoValidoAntecedencia(ag, aula) {
+    if (!ag) return false;
+    var criadoMin = minutosDesdeISO(ag.criadoEm);
+    if (criadoMin === null) return true;
+    if (!aula || typeof g.minutosDoHM !== 'function') return criadoMin >= ANTECEDENCIA_MIN;
+    var inicio = g.minutosDoHM(aula.horaInicio);
+    if (inicio === null) return criadoMin >= ANTECEDENCIA_MIN;
+    var agora = typeof g.agoraEmMinutos === 'function' ? g.agoraEmMinutos() : 0;
+    return ((inicio - agora) + criadoMin) >= ANTECEDENCIA_MIN;
+  }
+  function registrarHistoricoCompromisso(payload) {
+    if (!g.DB || !g.DB.salvar) return Promise.resolve();
+    var id = 'comp_' + (payload.alunoId || 'x') + '_' + (payload.data || '') + '_' + Date.now().toString(36);
+    return g.DB.salvar('historicoCompromisso', Object.assign({
+      id: id, criadoEm: typeof g.agoraISO === 'function' ? g.agoraISO() : new Date().toISOString()
+    }, payload), id);
+  }
+  function atualizarBoxStatusAgendamento() {
+    var box = $('boxStatusAgendamentoCheckin');
+    if (!box) return;
+    var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
+    if (!aluno) {
+      var nome = ($('checkinFixoNomeAluno') && $('checkinFixoNomeAluno').value) || '';
+      if (nome && typeof g.encontrarAlunoPorNome === 'function') aluno = g.encontrarAlunoPorNome(nome);
+    }
+    if (!aluno) {
+      box.innerHTML = '<div class="aviso-info"><i class="fas fa-user-lock"></i> Faça login na aba Aluno (ou informe o nome) para validar o agendamento.</div>';
+      return;
+    }
+    var ag = agendamentoDoAlunoHoje(aluno);
+    var aula = typeof g.aulaDeHoje === 'function' ? g.aulaDeHoje() : null;
+    if (!ag) {
+      box.innerHTML = '<div class="alerta-dificuldade"><i class="fas fa-calendar-times"></i> <b>Sem agendamento para hoje.</b> Vá em Aluno → Agendar aula (≥ 1h de antecedência). Sem isso, check-in exige justificativa + autorização do professor.</div>';
+      if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
+      return;
+    }
+    if (agendamentoValidoAntecedencia(ag, aula)) {
+      box.innerHTML = '<div class="aviso-info" style="border-left-color:var(--primary-green);"><i class="fas fa-check-circle"></i> Agendamento válido para hoje' + (ag.hora ? ' · ' + ag.hora : '') + '. Pode fazer check-in (inclusive digital).</div>';
+    } else {
+      box.innerHTML = '<div class="alerta-dificuldade"><i class="fas fa-clock"></i> Agendamento com <b>menos de 1h de antecedência</b>. Justifique; professor autoriza → histórico de compromisso.</div>';
+      if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
+    }
+  }
+
+  g.ucPedirPermissoesApp = function () {
+    var linhas = [];
+    linhas.push('HTTPS / contexto seguro: ' + (g.isSecureContext ? 'sim ✅' : 'não ❌'));
+    if ('Notification' in g) {
+      linhas.push('Notificações: ' + Notification.permission);
+      if (Notification.permission === 'default' && typeof g.pedirPermissaoNotificacao === 'function') {
+        try { g.pedirPermissaoNotificacao(); } catch (e) {}
+      }
+    }
+    linhas.push('Biometria: ' + (typeof g.bioSuportado === 'function' && g.bioSuportado() ? 'disponível' : 'indisponível'));
+    if (typeof g.abrirModal === 'function') {
+      g.abrirModal('Permissões', '<ul class="mini" style="margin-left:16px;line-height:1.5;">' +
+        linhas.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul>', '');
+    } else if (typeof g.mostrarToast === 'function') g.mostrarToast(linhas.join(' · '));
+  };
+
+  /* ===== Check-in digital do ALUNO ===== */
+  g.ucCheckinComBiometria = function () {
+    if (typeof g.bioSuportado !== 'function' || !g.bioSuportado()) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria indisponível. Use o check-in normal.', 'erro');
+      return;
+    }
+    var cfg = typeof g.bioConfig === 'function' ? g.bioConfig() : null;
+    if (!cfg || !cfg.credId) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Ative a digital no painel do aluno (Acesso rápido) antes.', 'erro');
+      try { if (typeof g.abrirAba === 'function') g.abrirAba('tab3'); } catch (e) {}
+      return;
+    }
+    if (!g.DB || (g.DB.carregado && !g.DB.carregado('alunos'))) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Aguarde os dados carregarem.', 'erro');
+      return;
+    }
+    navigator.credentials.get({
+      publicKey: {
+        challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
+        rpId: location.hostname,
+        timeout: 60000,
+        userVerification: 'required',
+        allowCredentials: [{
+          id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(cfg.credId) : cfg.credId,
+          type: 'public-key',
+          transports: ['internal']
+        }]
+      }
+    }).then(function () {
+      var aluno = g.DB.buscar('alunos', cfg.alunoId);
+      if (!aluno) {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Aluno da biometria não encontrado.', 'erro');
+        return;
+      }
+      g.sessaoAlunoId = aluno.id;
+      try { localStorage.setItem('uc_sessao_aluno_v87', aluno.id); } catch (e) {}
+      if ($('checkinFixoNomeAluno')) $('checkinFixoNomeAluno').value = aluno.nome || '';
+      g.ucAtualizarChipSessao();
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital OK — enviando check-in…');
+      if (typeof g.alunoCheckinLocalFixoSimples === 'function') g.alunoCheckinLocalFixoSimples();
+    }).catch(function (e) {
+      if (typeof g.mostrarToast === 'function') {
+        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Biometria cancelada.' : 'Biometria falhou. Use o check-in normal.', 'erro');
+      }
+    });
+  };
+
+  /* ===== Equipe: biometria (login qualquer aba) ===== */
+  function equipeBioCfg() {
+    try { return JSON.parse(localStorage.getItem(EQUIPE_BIO_KEY) || 'null'); } catch (e) { return null; }
+  }
+  g.ucEquipeAtivarBio = function () {
+    if (typeof g.bioSuportado !== 'function' || !g.bioSuportado()) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria indisponível neste aparelho.', 'erro');
+      return;
+    }
+    if (!g.sessaoEquipe) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Entre com a senha da equipe primeiro; depois ative a digital.', 'erro');
+      return;
+    }
+    var challenge = typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32);
+    var userId = typeof g.bioTexto === 'function' ? g.bioTexto('equipe:' + (g.sessaoEquipe.id || g.sessaoEquipe.nome || 'eq')) : new TextEncoder().encode('equipe');
+    navigator.credentials.create({
+      publicKey: {
+        challenge: challenge,
+        rp: { name: 'Universo Capoeira Equipe', id: location.hostname },
+        user: { id: userId, name: g.sessaoEquipe.nome || 'equipe', displayName: g.sessaoEquipe.nome || 'Equipe' },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+        timeout: 60000, attestation: 'none'
+      }
+    }).then(function (cred) {
+      var idB64 = typeof g.bioB64 === 'function' ? g.bioB64(cred.rawId) : btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
+      localStorage.setItem(EQUIPE_BIO_KEY, JSON.stringify({
+        nome: g.sessaoEquipe.nome,
+        papel: g.sessaoEquipe.papel,
+        id: g.sessaoEquipe.id || '',
+        credId: idB64
+      }));
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital da equipe ativada neste aparelho!');
+      g.ucAtualizarChipSessao();
+    }).catch(function (e) {
+      if (typeof g.mostrarToast === 'function') {
+        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Cancelado.' : 'Não foi possível ativar a digital da equipe.', 'erro');
+      }
+    });
+  };
+  g.ucEquipeEntrarBio = function (papelRequerido) {
+    var cfg = equipeBioCfg();
+    if (!cfg || !cfg.credId) {
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Ative a digital após entrar com senha (botão no painel da equipe).', 'erro');
+      return;
+    }
+    navigator.credentials.get({
+      publicKey: {
+        challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
+        rpId: location.hostname,
+        timeout: 60000,
+        userVerification: 'required',
+        allowCredentials: [{
+          id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(cfg.credId) : cfg.credId,
+          type: 'public-key',
+          transports: ['internal']
+        }]
+      }
+    }).then(function () {
+      var membro = null;
+      if (g.DB && g.DB.listar) {
+        g.DB.listar('equipe').forEach(function (e) {
+          if (!membro && String(e.nome || '').toLowerCase() === String(cfg.nome || '').toLowerCase()) membro = e;
+        });
+      }
+      var papel = (membro && membro.papel) || cfg.papel || 'professor';
+      if (papelRequerido) {
+        var permitidos = { professor: ['professor', 'adm', 'dev'], adm: ['adm', 'dev'], dev: ['dev'] };
+        if ((permitidos[papelRequerido] || []).indexOf(papel) < 0) {
+          if (typeof g.mostrarToast === 'function') g.mostrarToast('Seu perfil (' + papel + ') não tem acesso a esta área.', 'erro');
+          return;
+        }
+      }
+      g.sessaoEquipe = { id: membro ? membro.id : (cfg.id || ''), nome: cfg.nome, papel: papel };
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Equipe autenticada por digital!');
+      g.ucAtualizarChipSessao();
+      try {
+        if (typeof g.revelarAcessoEquipe === 'function') g.revelarAcessoEquipe();
+        if (typeof g.renderizarAba === 'function' && g.abaAtual) g.renderizarAba(g.abaAtual);
+        else if (typeof g.renderAbaProfessor === 'function') g.renderAbaProfessor();
+      } catch (e) {}
+    }).catch(function (e) {
+      if (typeof g.mostrarToast === 'function') {
+        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Biometria cancelada. Use a senha.' : 'Biometria da equipe falhou. Use a senha.', 'erro');
+      }
+    });
+  };
+
+  /* ===== Check-in digital do PROFESSOR ===== */
+  g.ucProfessorCheckinBio = function () {
+    if (!g.sessaoEquipe) {
+      /* tenta autenticar por bio e depois check-in */
+      var cfg = equipeBioCfg();
+      if (!cfg) {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Entre na equipe (senha ou digital) antes do check-in.', 'erro');
+        return;
+      }
+      g.ucEquipeEntrarBio('professor');
+      setTimeout(function () {
+        if (g.sessaoEquipe && typeof g.professorCheckinAula === 'function') g.professorCheckinAula();
+      }, 1200);
+      return;
+    }
+    if (typeof g.bioSuportado === 'function' && g.bioSuportado() && equipeBioCfg()) {
+      navigator.credentials.get({
+        publicKey: {
+          challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
+          rpId: location.hostname,
+          timeout: 60000,
+          userVerification: 'required',
+          allowCredentials: [{
+            id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(equipeBioCfg().credId) : equipeBioCfg().credId,
+            type: 'public-key',
+            transports: ['internal']
+          }]
+        }
+      }).then(function () {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital OK — registrando presença do professor…');
+        if (typeof g.professorCheckinAula === 'function') g.professorCheckinAula();
+      }).catch(function () {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria falhou. Use o botão normal de check-in.', 'erro');
+      });
+    } else if (typeof g.professorCheckinAula === 'function') {
+      g.professorCheckinAula();
+    }
+  };
+
+  /* ===== Wrap check-in aluno com regras ===== */
+  function instalarCheckin() {
+    if (typeof g.alunoCheckinLocalFixoSimples !== 'function' || g.alunoCheckinLocalFixoSimples.__ucComp) return;
+    var orig = g.alunoCheckinLocalFixoSimples;
+    g.alunoCheckinLocalFixoSimples = function () {
+      var nome = ($('checkinFixoNomeAluno') && $('checkinFixoNomeAluno').value || '').trim();
+      var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
+      if (!aluno && nome && typeof g.encontrarAlunoPorNome === 'function') aluno = g.encontrarAlunoPorNome(nome);
+      var aula = typeof g.aulaDeHoje === 'function' ? g.aulaDeHoje() : null;
+      var ag = aluno ? agendamentoDoAlunoHoje(aluno) : null;
+      var precisaAuth = false, motivo = '';
+      if (!ag) { precisaAuth = true; motivo = 'sem_agendamento'; }
+      else if (!agendamentoValidoAntecedencia(ag, aula)) { precisaAuth = true; motivo = 'agendamento_tardio'; }
+      var atrasado = $('boxJustificativaAtraso') && $('boxJustificativaAtraso').style.display !== 'none';
+      if (atrasado) { precisaAuth = true; if (!motivo) motivo = 'atraso'; }
+      var just = ($('justificativaAtrasoInput') && $('justificativaAtrasoInput').value || '').trim();
+      if (precisaAuth && just.length < 4) {
+        if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
+        if (typeof g.mostrarToast === 'function') {
+          g.mostrarToast(motivo === 'sem_agendamento'
+            ? 'Sem agendamento válido. Justifique (mín. 4 caracteres). Professor autoriza → histórico de compromisso.'
+            : 'Agendamento < 1h ou atraso. Justifique para o professor autorizar.', 'erro');
+        }
+        return;
+      }
+      var salvarOrig = g.DB && g.DB.salvar, patch = false;
+      if (salvarOrig && precisaAuth) {
+        g.DB.salvar = function (col, dados, id) {
+          if (col === 'presencas' && dados && !patch) {
+            patch = true;
+            dados.exigeAutorizacaoProfessor = true;
+            dados.motivoCompromisso = motivo;
+            dados.agendamentoId = ag ? ag.id : '';
+            dados.status = 'pendente';
+            dados.historicoCompromisso = true;
+            dados.justificativa = dados.justificativa || just;
+            try {
+              registrarHistoricoCompromisso({
+                alunoId: dados.alunoId || (aluno && aluno.id) || '',
+                alunoNome: dados.alunoNome || nome,
+                data: dados.data, hora: dados.hora, tipo: motivo,
+                justificativa: just, status: 'aguardando_autorizacao',
+                agendamentoId: ag ? ag.id : ''
+              });
+            } catch (e) {}
+          }
+          return salvarOrig.apply(this, arguments);
+        };
+      }
+      try { return orig.apply(this, arguments); }
+      finally { if (salvarOrig) g.DB.salvar = salvarOrig; }
+    };
+    g.alunoCheckinLocalFixoSimples.__ucComp = true;
+  }
+
+  /* ===== Login aluno: sha256 + legado ===== */
+  function instalarAuthAluno() {
+    if (typeof g.autenticarAlunoNuvem !== 'function' || g.autenticarAlunoNuvem.__ucHash) return;
+    g.autenticarAlunoNuvem = function (btn) {
+      var nome = ($('alunoLoginNome') && $('alunoLoginNome').value || '').trim();
+      var senha = ($('alunoLoginSenha') && $('alunoLoginSenha').value) || '';
+      if (!nome || !senha) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Informe nome e senha.', 'erro'); return; }
+      if (!g.DB || (g.DB.carregado && !g.DB.carregado('alunos'))) {
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Ainda carregando dados…', 'erro'); return;
+      }
+      var alvo = typeof g.normalizar === 'function' ? g.normalizar(nome) : nome.toLowerCase();
+      var achado = null;
+      g.DB.listar('alunos').forEach(function (a) {
+        if (achado) return;
+        var n = typeof g.normalizar === 'function' ? g.normalizar(a.nome) : String(a.nome || '').toLowerCase();
+        var ap = typeof g.normalizar === 'function' ? g.normalizar(a.apelido || '') : String(a.apelido || '').toLowerCase();
+        if (n === alvo || ap === alvo) achado = a;
+      });
+      if (!achado) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Aluno não encontrado.', 'erro'); return; }
+      if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Entrando...'; }
+      g.verificarSenhaHash(senha, achado.senhaHash).then(function (ok) {
+        if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Painel'; }
+        if (!ok) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Senha incorreta.', 'erro'); return; }
+        g.sessaoAlunoId = achado.id;
+        try { localStorage.setItem('uc_sessao_aluno_v87', achado.id); } catch (e) {}
+        if (String(achado.senhaHash || '').indexOf('sha256:') !== 0) {
+          g.hashSenhaAsync(senha).then(function (h) { try { g.DB.salvar('alunos', { senhaHash: h }, achado.id); } catch (e) {} });
+        }
+        if ($('alunoLoginSenha')) $('alunoLoginSenha').value = '';
+        if (typeof g.registroLog === 'function') g.registroLog('auth', 'Aluno entrou: ' + achado.nome);
+        if (typeof g.renderAluno === 'function') g.renderAluno();
+        if (typeof g.renderCheckin === 'function') g.renderCheckin();
+        g.ucAtualizarChipSessao();
+        if (typeof g.mostrarToast === 'function') g.mostrarToast('Bem-vindo(a), ' + (achado.apelido || achado.nome) + '!');
+      });
+    };
+    g.autenticarAlunoNuvem.__ucHash = true;
+  }
+
+  /* Injetar botão ativar bio da equipe nos painéis logados */
+  function injetarAtivarBioEquipe() {
+    if (!g.sessaoEquipe) return;
+    ['conteudoProfessor', 'conteudoAdm', 'conteudoDev'].forEach(function (cid) {
+      var box = $(cid);
+      if (!box || box.querySelector('#ucBtnAtivarBioEquipe')) return;
+      if (!box.children.length) return;
+      var div = document.createElement('div');
+      div.className = 'card';
+      div.id = 'ucCardBioEquipe';
+      div.style.border = '1px solid var(--accent-blue)';
+      div.innerHTML = '<h3 style="color:var(--accent-blue);"><i class="fas fa-fingerprint"></i> Acesso rápido da equipe</h3>' +
+        '<p class="mini">Ative a digital neste aparelho para entrar em qualquer aba da equipe sem digitar a senha. A senha continua valendo.</p>' +
+        '<button type="button" class="btn btn-bio" id="ucBtnAtivarBioEquipe" onclick="ucEquipeAtivarBio()"><i class="fas fa-fingerprint"></i> Ativar digital / rosto da equipe</button>' +
+        '<button type="button" class="btn btn-danger" style="margin-top:6px;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button>';
+      box.insertBefore(div, box.firstChild);
+    });
+  }
+
+  function instalarRenderHooks() {
+    if (typeof g.renderCheckin === 'function' && !g.renderCheckin.__ucComp) {
+      var rc = g.renderCheckin;
+      g.renderCheckin = function () { var r = rc.apply(this, arguments); try { atualizarBoxStatusAgendamento(); g.ucAtualizarChipSessao(); } catch (e) {} return r; };
+      g.renderCheckin.__ucComp = true;
+    }
+    if (typeof g.renderAluno === 'function' && !g.renderAluno.__ucChip) {
+      var ra = g.renderAluno;
+      g.renderAluno = function () { var r = ra.apply(this, arguments); try { g.ucAtualizarChipSessao(); } catch (e) {} return r; };
+      g.renderAluno.__ucChip = true;
+    }
+    ['renderAbaProfessor', 'renderAbaAdm', 'renderAbaDev'].forEach(function (fn) {
+      if (typeof g[fn] === 'function' && !g[fn].__ucBio) {
+        var o = g[fn];
+        g[fn] = function () { var r = o.apply(this, arguments); try { injetarAtivarBioEquipe(); g.ucAtualizarChipSessao(); } catch (e) {} return r; };
+        g[fn].__ucBio = true;
+      }
+    });
+    if (typeof g.sairAluno === 'function' && !g.sairAluno.__ucChip) {
+      var sa = g.sairAluno;
+      g.sairAluno = function () { var r = sa.apply(this, arguments); g.ucAtualizarChipSessao(); return r; };
+      g.sairAluno.__ucChip = true;
+    }
+    if (typeof g.sairEquipe === 'function' && !g.sairEquipe.__ucChip) {
+      var se = g.sairEquipe;
+      g.sairEquipe = function () { var r = se.apply(this, arguments); g.ucAtualizarChipSessao(); return r; };
+      g.sairEquipe.__ucChip = true;
+    }
+  }
+
+  function boot() {
+    try { instalarCheckin(); } catch (e) { console.warn(e); }
+    try { instalarAuthAluno(); } catch (e) { console.warn(e); }
+    try { instalarRenderHooks(); } catch (e) { console.warn(e); }
+    try { atualizarBoxStatusAgendamento(); } catch (e) {}
+    try { g.ucAtualizarChipSessao(); } catch (e) {}
+    try { injetarAtivarBioEquipe(); } catch (e) {}
+    if (typeof MutationObserver !== 'undefined') {
+      var t = 0;
+      new MutationObserver(function () {
+        if (t) return;
+        t = setTimeout(function () {
+          t = 0;
+          try { instalarCheckin(); instalarRenderHooks(); injetarAtivarBioEquipe(); g.ucAtualizarChipSessao(); } catch (e) {}
+        }, 150);
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(boot, 500); });
+  else setTimeout(boot, 500);
+
+  g.UCCompromisso = { ANTECEDENCIA_MIN: ANTECEDENCIA_MIN, agendamentoDoAlunoHoje: agendamentoDoAlunoHoje };
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
 <!-- guardião das abas protegidas (sempre por último) -->
 <script>
 /* ▼ protecao.js */
@@ -12162,8 +13375,13 @@ iniciarApp();
       if (!botaoDaAba(a.id)) f.push('botão da aba');
       if (!$(a.id)) f.push('área da aba');
       if (a.conteudo && !$(a.conteudo)) f.push('#' + a.conteudo);
-      (foto[a.id] || []).forEach(function (e) { f.push('#' + e + ' (sumiu do HTML)'); });
-      a.funcoes.forEach(function (fn) { if (typeof global[fn] !== 'function') f.push(fn + '()'); });
+      (foto[a.id] || []).forEach(function (e) { if (!$(e)) f.push('#' + e + ' (sumiu do HTML)'); });
+      a.funcoes.forEach(function (fn) {
+        if (typeof global[fn] !== 'function' && a.id !== 'tab1' && a.id !== 'tabJogos') f.push(fn + '()');
+      });
+      if ((a.id === 'tab1' || a.id === 'tabJogos') && $(a.id) && botaoDaAba(a.id)) {
+        f = f.filter(function (x) { return x === 'botão da aba' || x === 'área da aba'; });
+      }
       return { id: a.id, nome: a.nome, ok: f.length === 0, faltas: f };
     });
     var nf = P.NUCLEO.funcoes.filter(function (fn) { return typeof global[fn] !== 'function'; }).map(function (x) { return x + '()'; });
@@ -12329,11 +13547,11 @@ function sim3dIniciar() {
   var dm = new THREE.Object3D(), tr = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.3, 0.45, 4, 6), new THREE.MeshStandardMaterial({ color: 0x5d4037 }), tp.length),
       fo = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(3.2, 1), new THREE.MeshStandardMaterial({ color: noite ? 0x1b4a22 : 0x2f8f3a, roughness: 0.9, flatShading: true }), tp.length);
   tp.forEach(function (p, i) { var s = 0.8 + ((i * 37) % 5) / 10; dm.scale.set(s, s, s); dm.position.set(p[0], 2 * s, p[1]); dm.updateMatrix(); tr.setMatrixAt(i, dm.matrix); dm.position.y = 6.2 * s; dm.updateMatrix(); fo.setMatrixAt(i, dm.matrix); });
-  tr.castShadow = fo.castShadow = true; scene.add(tr); scene.add(fo);
+  tr.castShadow = fo.castShadow = true; tr.frustumCulled = fo.frustumCulled = false; scene.add(tr); scene.add(fo);
   var po = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.15, 0.2, 9, 8), new THREE.MeshStandardMaterial({ color: 0x78838c, metalness: 0.6 }), lp.length),
       hd = new THREE.InstancedMesh(new THREE.BoxGeometry(2.4, 0.3, 0.7), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffe9a8, emissiveIntensity: noite ? 2.5 : 0.1 }), lp.length);
   dm.scale.set(1, 1, 1); lp.forEach(function (p, i) { dm.position.set(p[0], 4.5, p[1]); dm.updateMatrix(); po.setMatrixAt(i, dm.matrix); dm.position.set(p[0] + (p[0] % 15 === 0 && p[0] > -20 ? (p[0] > 0 ? -1.2 : 1.2) : 1.2), 9, p[1]); dm.updateMatrix(); hd.setMatrixAt(i, dm.matrix); });
-  scene.add(po); scene.add(hd);
+  po.frustumCulled = hd.frustumCulled = false; scene.add(po); scene.add(hd);
   /* prédios com janelas (acendem à noite) */
   function tex(em) { var c = document.createElement('canvas'); c.width = 64; c.height = 128; var x = c.getContext('2d'); x.fillStyle = em ? '#000' : '#8a97a6'; x.fillRect(0, 0, 64, 128);
     for (var j = 0; j < 14; j++) for (var i2 = 0; i2 < 6; i2++) { var on = ((i2 * 7 + j * 3) % 5) < 3; x.fillStyle = em ? (on ? '#ffd98a' : '#000') : (on ? '#2a3b4d' : '#3a4a5c'); x.fillRect(4 + i2 * 10, 4 + j * 9, 6, 6); }
@@ -12430,6 +13648,128 @@ function sim3dIniciar() {
   SIM3D.ok = true; SIM3D.loop = loop; loop();
 }
 function sim3dLoop() { if (SIM3D.loop) SIM3D.loop(); }
+</script>
+<style>
+#pm3d{position:fixed;inset:0;z-index:99999;background:#050505;display:none;touch-action:none;color:#fff;font-family:system-ui,sans-serif}
+#pm3d .vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.88) 100%)}
+#pm3d .hud{position:absolute;top:8px;left:8px;background:rgba(10,10,15,.8);border:1px solid #5a1a1a;border-radius:10px;padding:8px 12px;font-size:13px;pointer-events:none}
+#pm3d .bt{background:rgba(20,20,30,.85);color:#fff;border:1px solid #6b1d1d;border-radius:8px;padding:7px 10px;font-size:13px}
+#pm3d .bt.on{background:#b71c1c}#pm3d .dp{position:absolute;width:62px;height:62px;border-radius:50%;font-size:22px;background:rgba(30,30,40,.8);color:#fff;border:2px solid #6b1d1d;user-select:none}
+</style>
+<div id="pm3d"><div id="pmCv" style="position:absolute;inset:0"></div><div class="vig"></div><div id="pmFl" style="position:absolute;inset:0;background:#b00;opacity:0;pointer-events:none"></div>
+<div class="hud" id="pmH"></div><div id="pmMsg" style="position:absolute;top:38%;width:100%;text-align:center;font-size:26px;font-weight:bold;color:#ff3b3b;text-shadow:0 0 12px #f00;pointer-events:none"></div>
+<div style="position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;z-index:3"><button class="bt" style="background:#7f1d1d" onclick="fecharPacHorror3D()">✕ Sair</button>
+<div style="display:flex;gap:4px"><button class="bt" id="pmN1">1P</button><button class="bt" id="pmN2">2P</button><button class="bt" id="pmN3">3P</button></div>
+<div style="display:flex;gap:4px"><button class="bt" id="pmD1">Médio</button><button class="bt" id="pmD2">Difícil</button><button class="bt" id="pmD3">Impossível</button></div></div>
+<button class="dp" id="pmU" style="left:76px;bottom:140px">▲</button><button class="dp" id="pmLf" style="left:12px;bottom:76px">◀</button><button class="dp" id="pmRt" style="left:140px;bottom:76px">▶</button><button class="dp" id="pmDn" style="left:76px;bottom:12px">▼</button></div>
+<script>
+/* PAC-MAN HORROR 3D: labirinto procedural que muda, 1-3 jogadores, fantasmas com Minimax + poda alfa-beta (Médio d2 / Difícil d4 / Impossível d6) */
+var PM = { ok: false, on: false };
+function abrirPacHorror3D() {
+  document.getElementById('pm3d').style.display = 'block'; PM.on = true;
+  if (window.THREE) return PM.ok ? PM.loop() : pmIniciar();
+  var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'; sc.onload = pmIniciar;
+  sc.onerror = function () { document.getElementById('pmMsg').textContent = 'Sem internet para carregar o 3D'; }; document.head.appendChild(sc);
+}
+function fecharPacHorror3D() { PM.on = false; document.getElementById('pm3d').style.display = 'none'; }
+function pmIniciar() {
+  var N = 21, C = 2, NN = N * N, V = THREE.Vector3, CF = { facil: { d: 2, t: 60, sp: 3.2 }, dificil: { d: 4, t: 30, sp: 4.2 }, impossivel: { d: 6, t: 15, sp: 5 } };
+  function cf() { return CF[MM.nivel] || CF.facil; }
+  var rd = new THREE.WebGLRenderer({ antialias: true }); rd.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); rd.setSize(innerWidth, innerHeight); rd.outputEncoding = THREE.sRGBEncoding; rd.shadowMap.enabled = true; rd.shadowMap.type = THREE.PCFSoftShadowMap; document.getElementById('pmCv').appendChild(rd.domElement);
+  var scene = new THREE.Scene(); scene.background = new THREE.Color(0x050505); var cam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
+  function enquadra() { var asp = innerWidth / innerHeight, d = 44 / Math.min(1, asp); cam.aspect = asp; cam.position.set(0, d * 0.93, d * 0.38); cam.lookAt(0, 0, 0); cam.updateProjectionMatrix(); scene.fog = new THREE.Fog(0x050505, d * 0.9, d * 1.7); rd.setSize(innerWidth, innerHeight); }
+  enquadra(); addEventListener('resize', enquadra);
+  scene.add(new THREE.AmbientLight(0x556677, 0.9)); var dl = new THREE.DirectionalLight(0x99aacc, 0.45); dl.position.set(10, 40, 10); scene.add(dl);
+  var chao = new THREE.Mesh(new THREE.PlaneGeometry(N * C + 12, N * C + 12), new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.9 })); chao.rotation.x = -Math.PI / 2; chao.receiveShadow = true; scene.add(chao);
+  var M = [], D, pel = [], pw = [], P = [], G = [], assusta = 0, score = 0, tm = 60, over = false, flash = 0, T = 0, np = 1, msgT = 0, fr = 0, clk = new THREE.Clock();
+  function aberta(x, y) { return x >= 0 && y >= 0 && x < N && y < N && M[y][x] === 0; }
+  function viz(x, y) { return [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(function (d) { return aberta(x + d[0], y + d[1]); }); }
+  function nb(c) { var x = c % N, y = Math.floor(c / N); return viz(x, y).map(function (d) { return (y + d[1]) * N + x + d[0]; }); }
+  function w2(x, y) { return new V((x - (N - 1) / 2) * C, 0, (y - (N - 1) / 2) * C); }
+  var wm = new THREE.InstancedMesh(new THREE.BoxGeometry(C, 2.6, C), new THREE.MeshStandardMaterial({ color: 0xcfc8b8, roughness: 0.85 }), NN); wm.frustumCulled = false; scene.add(wm);
+  var pm2 = new THREE.InstancedMesh(new THREE.SphereGeometry(0.22, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffe082, emissive: 0xffb300, emissiveIntensity: 1.2 }), NN); pm2.frustumCulled = false; scene.add(pm2);
+  function paredes() { var k = 0, o = new THREE.Object3D(); for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) if (M[y][x]) { var p = w2(x, y); o.position.set(p.x, 1.3, p.z); o.updateMatrix(); wm.setMatrixAt(k++, o.matrix); } wm.count = k; wm.instanceMatrix.needsUpdate = true; }
+  function pelUp() { var k = 0, o = new THREE.Object3D(); for (var i = 0; i < NN; i++) if (pel[i] && !M[Math.floor(i / N)][i % N]) { var p = w2(i % N, Math.floor(i / N)); o.position.set(p.x, 0.6, p.z); o.updateMatrix(); pm2.setMatrixAt(k++, o.matrix); } pm2.count = k; pm2.instanceMatrix.needsUpdate = true; return k; }
+  function gera(keep) {
+    M = []; for (var y = 0; y < N; y++) M.push(Array(N).fill(1));
+    var st = [[1, 1]]; M[1][1] = 0;
+    while (st.length) { var c = st[st.length - 1], ds = [[2, 0], [-2, 0], [0, 2], [0, -2]].sort(function () { return Math.random() - 0.5; }).filter(function (d) { var x = c[0] + d[0], y = c[1] + d[1]; return x > 0 && y > 0 && x < N - 1 && y < N - 1 && M[y][x] === 1; });
+      if (!ds.length) { st.pop(); continue; } var d = ds[0]; M[c[1] + d[1] / 2][c[0] + d[0] / 2] = 0; M[c[1] + d[1]][c[0] + d[0]] = 0; st.push([c[0] + d[0], c[1] + d[1]]); }
+    for (var i = 0; i < 26; i++) { var x = 1 + Math.floor(Math.random() * (N - 2)), y2 = 1 + Math.floor(Math.random() * (N - 2)); if ((x + y2) % 2 === 1) M[y2][x] = 0; }
+    (keep || []).forEach(function (e) { M[e.y][e.x] = 0; if (e.mv) M[e.ty][e.tx] = 0; });
+    D = new Int16Array(NN * NN).fill(999);
+    for (var s0 = 0; s0 < NN; s0++) { var sx = s0 % N, sy = Math.floor(s0 / N); if (M[sy][sx]) continue; var q = [s0]; D[s0 * NN + s0] = 0;
+      for (var h = 0; h < q.length; h++) { var u = q[h], ux = u % N, uy = Math.floor(u / N); viz(ux, uy).forEach(function (dd) { var v = (uy + dd[1]) * N + ux + dd[0]; if (D[s0 * NN + v] === 999) { D[s0 * NN + v] = D[s0 * NN + u] + 1; q.push(v); } }); } }
+    paredes();
+  }
+  /* entidades */
+  function mkPac(cor) { var g = new THREE.Group(), mt = new THREE.MeshStandardMaterial({ color: cor, emissive: cor, emissiveIntensity: 0.25, roughness: 0.4 });
+    var top = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 12, 0, 6.283, 0, 1.5708), mt), bot = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 12, 0, 6.283, 1.5708, 1.5708), mt); g.add(top); g.add(bot);
+    var l = new THREE.PointLight(0xffaa55, 1.6, 14); l.position.y = 3; g.add(l); scene.add(g); return { g: g, top: top, bot: bot, l: l }; }
+  function mkGhost(cor) { var geo = new THREE.IcosahedronGeometry(0.9, 2), p = geo.attributes.position; for (var i = 0; i < p.count; i++) { var k = 1 + (Math.random() - 0.5) * 0.28; p.setXYZ(i, p.getX(i) * k, Math.max(p.getY(i), -0.7) * k, p.getZ(i) * k); } geo.computeVertexNormals();
+    var mt = new THREE.MeshStandardMaterial({ color: 0x2a1515, emissive: cor, emissiveIntensity: 0.35, roughness: 0.9, flatShading: true }), g = new THREE.Group(), b = new THREE.Mesh(geo, mt); g.add(b);
+    var em = new THREE.MeshBasicMaterial({ color: 0xff1111 }); [-0.3, 0.3].forEach(function (x) { var e = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), em); e.position.set(x, 0.2, -0.78); g.add(e); });
+    var l = new THREE.PointLight(0xff2222, 0.9, 7); l.position.y = 0.3; g.add(l); scene.add(g); return { g: g, mt: mt, cor: cor }; }
+  var SP = [[1, 1], [19, 1], [1, 19]], GS = [[9, 9], [11, 9], [9, 11]], PC = [0xffd600, 0x29b6f6, 0xf06292];
+  function novo(n) {
+    np = n || np; P.forEach(function (p) { scene.remove(p.m.g); }); G.forEach(function (g) { scene.remove(g.m.g); }); P = []; G = []; score = 0; over = false; assusta = 0; tm = cf().t;
+    for (var i = 0; i < np; i++) P.push({ m: mkPac(PC[i]), x: SP[i][0], y: SP[i][1], sx: SP[i][0], sy: SP[i][1], tx: 0, ty: 0, t: 0, mv: 0, dir: [1, 0], want: null, vivo: true, vidas: 3, inv: 0, chegou: 0 });
+    for (i = 0; i < 3; i++) G.push({ m: mkGhost([0xff0000, 0xaa00ff, 0xff6a00][i]), x: GS[i][0], y: GS[i][1], tx: 0, ty: 0, t: 0, mv: 0, dir: [1, 0], gi: i, resp: 0, chegou: 0 });
+    gera(P.concat(G)); pel = []; for (i = 0; i < NN; i++) pel[i] = aberta(i % N, Math.floor(i / N)) ? 1 : 0;
+    pw.forEach(function (p) { scene.remove(p.m); }); pw = [[19, 19], [9, 1], [1, 9], [19, 9]].map(function (c) { var m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 8), new THREE.MeshStandardMaterial({ color: 0xff6d00, emissive: 0xff3d00, emissiveIntensity: 1.5 })), p = w2(c[0], c[1]); m.position.set(p.x, 0.8, p.z); scene.add(m); return { c: c[1] * N + c[0], m: m, on: 1 }; });
+    pelUp(); ['pmN1', 'pmN2', 'pmN3'].forEach(function (id, j) { document.getElementById(id).classList.toggle('on', j + 1 === np); }); ['facil', 'dificil', 'impossivel'].forEach(function (n, j) { document.getElementById('pmD' + (j + 1)).classList.toggle('on', MM.nivel === n); });
+  }
+  function msg(t) { document.getElementById('pmMsg').textContent = t; msgT = 2; }
+  /* Minimax (poda alfa-beta): o fantasma maximiza, o Pac-Man mais próximo minimiza */
+  function decide(g) {
+    var al = P.filter(function (p) { return p.vivo; }); if (!al.length) return null; var c = cf(), ass = assusta > 0, gc = g.y * N + g.x;
+    al.sort(function (a, b) { return D[gc * NN + a.y * N + a.x] - D[gc * NN + b.y * N + b.x]; });
+    var pac = al[0], tg = pac.y * N + pac.x, cut = -1, nv = viz(g.x, g.y); if (!nv.length) return null;
+    if (g.gi > 0 && MM.nivel !== 'facil' && !ass) { var cx = pac.x, cy = pac.y; for (var i = 0; i < 4; i++) if (aberta(cx + pac.dir[0], cy + pac.dir[1])) { cx += pac.dir[0]; cy += pac.dir[1]; } cut = cy * N + cx; }
+    if (MM.nivel === 'impossivel' && g.gi === 2 && al.length > 1 && !ass) { var p2 = al[al.length - 1]; tg = p2.y * N + p2.x; }
+    if (MM.nivel === 'facil' && Math.random() < 0.2) return nv[Math.floor(Math.random() * nv.length)];
+    var r = MM.search({ g: gc, p: tg }, c.d, true, -1e9, 1e9,
+      function (s, max) { return max ? nb(s.g) : nb(s.p).concat([s.p]); },
+      function (s, m, max) { return max ? { g: m, p: s.p } : { g: s.g, p: m }; },
+      function (s) { if (s.g === s.p) return ass ? -1000 : 1000; var d = D[s.g * NN + (cut >= 0 ? cut : s.p)]; return (ass ? d : -d) * 10 + nb(s.g).length * 0.5; });
+    return r.m == null ? null : [(r.m % N) - g.x, Math.floor(r.m / N) - g.y];
+  }
+  function anda(e, dt, sp, escolhe) {
+    if (!e.mv) { var d = escolhe(e); if (d && aberta(e.x + d[0], e.y + d[1])) { e.dir = d; e.tx = e.x + d[0]; e.ty = e.y + d[1]; e.mv = 1; e.t = 0; } }
+    if (e.mv) { e.t += dt * sp; if (e.t >= 1) { e.x = e.tx; e.y = e.ty; e.mv = 0; e.t = 0; e.chegou = 1; } }
+    return w2(e.x + (e.mv ? (e.tx - e.x) * e.t : 0), e.y + (e.mv ? (e.ty - e.y) * e.t : 0));
+  }
+  var KEYS = { w: [0, 0, [0, -1]], s: [0, 0, [0, 1]], a: [0, 0, [-1, 0]], d: [0, 0, [1, 0]] };
+  var MAP = { w: [0, [0, -1]], a: [0, [-1, 0]], s: [0, [0, 1]], d: [0, [1, 0]], arrowup: [1, [0, -1]], arrowleft: [1, [-1, 0]], arrowdown: [1, [0, 1]], arrowright: [1, [1, 0]], i: [2, [0, -1]], j: [2, [-1, 0]], k: [2, [0, 1]], l: [2, [1, 0]] };
+  addEventListener('keydown', function (e) { if (!PM.on) return; var m = MAP[e.key.toLowerCase()]; if (m && P[m[0]]) { P[m[0]].want = m[1]; e.preventDefault(); } });
+  [['pmU', [0, -1]], ['pmLf', [-1, 0]], ['pmRt', [1, 0]], ['pmDn', [0, 1]]].forEach(function (b) { var el = document.getElementById(b[0]); ['pointerdown'].forEach(function (ev) { el.addEventListener(ev, function (x) { x.preventDefault(); if (P[0]) P[0].want = b[1]; }); }); });
+  [1, 2, 3].forEach(function (n) { document.getElementById('pmN' + n).onclick = function () { novo(n); }; });
+  [['facil', 1], ['dificil', 2], ['impossivel', 3]].forEach(function (d) { document.getElementById('pmD' + d[1]).onclick = function () { MM.nivel = d[0]; try { localStorage.setItem('uc_mm', d[0]); } catch (e) {} novo(); }; });
+  function loop() {
+    if (!PM.on) return; requestAnimationFrame(loop); var dt = Math.min(0.05, clk.getDelta()); T += dt; fr++; var c = cf();
+    if (!over) {
+      tm -= dt; if (tm <= 0) { tm = c.t; gera(P.concat(G)); pelUp(); msg('O LABIRINTO MUDOU'); flash = 0.6; }
+      if (assusta > 0) assusta -= dt;
+      P.forEach(function (p) { p.m.g.visible = p.vivo; if (!p.vivo) return; if (p.inv > 0) p.inv -= dt; p.m.g.visible = !(p.inv > 0 && Math.floor(T * 10) % 2);
+        var pos = anda(p, dt, 5.2, function (e) { if (e.want && aberta(e.x + e.want[0], e.y + e.want[1])) return e.want; return e.dir; });
+        p.m.g.position.set(pos.x, 0.9, pos.z); p.m.g.rotation.y = Math.atan2(-p.dir[0], -p.dir[1]); var op = 0.45 * (1 + Math.sin(T * 16)) / 2; p.m.top.rotation.x = op; p.m.bot.rotation.x = -op;
+        p.m.l.intensity = Math.random() < 0.02 ? 0.2 : 1.4 + Math.random() * 0.5;
+        if (p.chegou) { p.chegou = 0; var cc = p.y * N + p.x; if (pel[cc]) { pel[cc] = 0; score += 10; pelUp(); } pw.forEach(function (w) { if (w.on && w.c === cc) { w.on = 0; w.m.visible = false; assusta = 6; score += 50; msg('FANTASMAS COM MEDO'); } });
+          if (!pel.some(function (v, i) { return v && !M[Math.floor(i / N)][i % N]; }) && !pw.some(function (w) { return w.on; })) { score += 500; for (var i = 0; i < NN; i++) pel[i] = aberta(i % N, Math.floor(i / N)) ? 1 : 0; gera(P.concat(G)); pelUp(); msg('NOVA FASE'); } } });
+      G.forEach(function (g) { g.m.g.visible = g.resp <= 0; if (g.resp > 0) { g.resp -= dt; return; }
+        var ass = assusta > 0, pos = anda(g, dt, c.sp * (ass ? 0.6 : 1), function (e) { return decide(e); });
+        g.m.g.position.set(pos.x + (Math.random() - 0.5) * 0.06, 1.1 + Math.sin(T * 3 + g.gi) * 0.2, pos.z + (Math.random() - 0.5) * 0.06); g.m.g.rotation.y = Math.atan2(-g.dir[0], -g.dir[1]);
+        g.m.mt.emissive.setHex(ass ? 0x0033ff : g.m.cor); g.m.mt.emissiveIntensity = ass ? 0.9 : 0.35 + Math.random() * 0.1;
+        P.forEach(function (p) { if (!p.vivo || p.inv > 0) return; if (Math.hypot(g.m.g.position.x - p.m.g.position.x, g.m.g.position.z - p.m.g.position.z) < 1.5) {
+          if (ass) { score += 200; g.x = GS[g.gi][0]; g.y = GS[g.gi][1]; g.mv = 0; g.resp = 3; } else { p.vidas--; p.inv = 2.5; flash = 1; p.x = p.sx; p.y = p.sy; p.mv = 0; if (p.vidas <= 0) p.vivo = false; if (!P.some(function (q) { return q.vivo; })) { over = true; msg('GAME OVER'); } } } }); });
+    }
+    if (msgT > 0) { msgT -= dt; if (msgT <= 0) document.getElementById('pmMsg').textContent = over ? 'GAME OVER' : ''; }
+    flash = Math.max(0, flash - dt * 1.5); document.getElementById('pmFl').style.opacity = flash * 0.5;
+    if (fr % 8 === 0) document.getElementById('pmH').innerHTML = 'Pontos: <b style="color:#ffd600">' + score + '</b> · ' + P.map(function (p, i) { return 'P' + (i + 1) + ' ' + (p.vivo ? '♥'.repeat(p.vidas) : '☠'); }).join(' ') + '<br>Labirinto muda em <b>' + Math.ceil(tm) + 's</b> · IA ' + ({ facil: 'Médio', dificil: 'Difícil', impossivel: 'Impossível' }[MM.nivel] || 'Médio') + '<br><span style="font-size:11px;color:#9aa">P1 WASD/botões · P2 setas · P3 IJKL</span>';
+    rd.render(scene, cam);
+  }
+  PM.ok = true; PM.loop = loop; novo(1); loop();
+}
 </script>
 </body>
 </html>
