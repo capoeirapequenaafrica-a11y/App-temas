@@ -1535,7 +1535,7 @@ footer a { color: var(--accent-blue); }
   var ACESSO_EQUIPE = {"botao":"btnToggleEquipe","menu":"tabsEquipe","gatilho":"headerAppTopo"};
   function congela(o) { Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === 'object') congela(o[k]); }); return Object.freeze(o); }
   congela(ABAS); congela(NUCLEO); congela(ACESSO_EQUIPE);
-  var VERSAO = "v87", CHAVES_LEGADAS = ["uc_assistente_apresentado_v1"];
+  var VERSAO = "v88", CHAVES_LEGADAS = ["uc_assistente_apresentado_v1"];
   var M = { VERSAO: VERSAO, CHAVES_LEGADAS: CHAVES_LEGADAS, ABAS: ABAS, NUCLEO: NUCLEO, ACESSO_EQUIPE: ACESSO_EQUIPE };
   if (typeof module !== 'undefined' && module.exports) { module.exports = M; return; }
   Object.defineProperty(g, 'UC_PROTEGIDAS', { value: M, writable: false, configurable: false });
@@ -1624,7 +1624,7 @@ if (window.caches && caches.keys) {
 /* ---------------------------------------------------------------
    0. CONSTANTES
    --------------------------------------------------------------- */
-var VERSAO_APP = 'v87';
+var VERSAO_APP = 'v88';
 var CHAVE_LOCAL = 'uc_db_v87';
 var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v87';
 
@@ -12834,7 +12834,7 @@ iniciarApp();
 </script>
 
 <script>
-/* ▼ uc-compromisso-seguranca.js — check-in digital, equipe bio, sair header, regras 1h, hash */
+/* ▼ uc-compromisso-seguranca.js — v88 · check-in digital, equipe bio, sair header, regras 1h, hash */
 (function (g) {
   'use strict';
   var ANTECEDENCIA_MIN = 60;
