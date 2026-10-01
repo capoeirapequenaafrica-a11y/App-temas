@@ -1029,11 +1029,16 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
 
     <div class="card" id="cardAlunoLogin">
       <h3><i class="fas fa-user-lock"></i> Área do Aluno (Login)</h3>
+      <div id="trBioLogin" style="margin:8px 0 10px;">
+        <button class="btn btn-gold" type="button" id="btnBioEntrar" onclick="bioEntrar()" style="display:none;"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto</button>
+        <p class="mini" id="txtBioLoginDica" style="margin-top:4px;line-height:1.35;"><i class="fas fa-fingerprint"></i> <b>Digital / rosto:</b> entre com a senha uma vez, depois ative em <b>Acesso rápido</b> no seu painel. O botão aparece aqui nas próximas vezes.</p>
+      </div>
       <label class="campo-label">Nome completo ou apelido</label>
       <input id="alunoLoginNome" placeholder="Ex: João da Silva">
       <label class="campo-label">Senha</label>
       <input id="alunoLoginSenha" type="password" placeholder="Sua senha">
       <button class="btn" onclick="autenticarAlunoNuvem(this)"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</button>
+      <button class="btn btn-secondary" type="button" onclick="abrirPedidoResetSenha()" style="margin-top:6px;"><i class="fas fa-key"></i> Esqueci a senha</button>
       <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:6px;">
         <button class="btn btn-secondary" onclick="toggleAutoCadastroAluno(true)"><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</button>
       </div>
@@ -8186,6 +8191,72 @@ function trocarSenhaAluno() {
   });
 }
 
+/* Pedido de reset de senha (aluno esqueceu) — professor/ADM aprova na Equipe */
+function abrirPedidoResetSenha() {
+  var nomePref = '';
+  try { nomePref = ($('alunoLoginNome') && $('alunoLoginNome').value) || localStorage.getItem(UC_ULTIMO_ALUNO_KEY) || ''; } catch (e) {}
+  abrirModal('Esqueci a senha',
+    '<p class="mini" style="margin-bottom:8px;">Informe seu nome. O professor recebe o pedido e libera uma senha provisória.</p>' +
+    '<label class="campo-label">Seu nome / apelido na academia</label>' +
+    '<input id="resetSenhaNome" placeholder="Ex: João da Silva" value="' + esc(nomePref) + '">' +
+    '<label class="campo-label">Contato (WhatsApp, opcional)</label>' +
+    '<input id="resetSenhaContato" placeholder="(21) 90000-0000" inputmode="tel">' +
+    '<label class="campo-label">Observação (opcional)</label>' +
+    '<textarea id="resetSenhaObs" placeholder="Ex.: esqueci a senha do app"></textarea>',
+    '<button class="btn" onclick="enviarPedidoResetSenha(this)"><i class="fas fa-paper-plane"></i> Enviar pedido ao professor</button>' +
+    '<button class="btn btn-back" onclick="fecharModal()"><i class="fas fa-times"></i> Cancelar</button>'
+  );
+}
+function enviarPedidoResetSenha(btn) {
+  var nome = (($('resetSenhaNome') && $('resetSenhaNome').value) || '').trim();
+  var contato = (($('resetSenhaContato') && $('resetSenhaContato').value) || '').trim();
+  var obs = (($('resetSenhaObs') && $('resetSenhaObs').value) || '').trim();
+  if (!nome) { mostrarToast('Informe seu nome.', 'erro'); return; }
+  var aluno = null;
+  try {
+    var alvo = normalizar(nome);
+    DB.listar('alunos').forEach(function (a) {
+      if (!aluno && (normalizar(a.nome) === alvo || normalizar(a.apelido || '') === alvo)) aluno = a;
+    });
+  } catch (e) {}
+  if (btn) { btn.classList.add('carregando'); btn.disabled = true; }
+  var reg = {
+    tipo: 'reset_senha',
+    alunoId: aluno ? aluno.id : '',
+    alunoNome: aluno ? aluno.nome : nome,
+    alunoApelido: aluno ? (aluno.apelido || '') : '',
+    contato: contato,
+    observacao: obs,
+    status: 'pendente',
+    criadoEm: agoraISO()
+  };
+  DB.salvar('pedidosResetSenha', reg).then(function () {
+    fecharModal();
+    mostrarToast('Pedido enviado! O professor vai liberar uma senha provisória.');
+    registroLog('auth', 'Pedido de reset de senha: ' + nome);
+    try { if (typeof toggleAssistente === 'function') { /* noop */ } } catch (e) {}
+  }).catch(function () {
+    if (btn) { btn.classList.remove('carregando'); btn.disabled = false; }
+    mostrarToast('Não foi possível enviar o pedido agora. Tente de novo ou fale com o professor.', 'erro');
+  });
+}
+
+/* Assistente: se aluno logado, permite trocar senha; se não, abre pedido */
+function assistenteAtualizarSenhaAluno() {
+  var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
+  if (logado) {
+    mostrarToast('Vamos trocar sua senha. Informe a atual e a nova.');
+    try { trocarSenhaAluno(); } catch (e) { mostrarToast('Não foi possível abrir a troca de senha.', 'erro'); }
+    return 'Você está logado. Abri a troca de senha: digite a senha atual e a nova (mín. 4 caracteres).';
+  }
+  try { abrirPedidoResetSenha(); } catch (e) {}
+  return 'Você não está logado. Abri o pedido de nova senha para o professor aprovar.\n\n' +
+    '1. Informe seu nome na academia\n' +
+    '2. Envie o pedido\n' +
+    '3. O professor libera uma senha provisória\n' +
+    '4. Entre e troque a senha no painel (ou peça de novo ao assistente estando logado)';
+}
+
 function baixarMeusDados() {
   var logado = alunoLogado();
   if (!logado) return;
@@ -10603,12 +10674,8 @@ function assistenteProcessar(texto) {
       'Se der erro, peça ao professor para registrar o check-in manual na área Equipe.';
   }
 
-  if (/esqueci.*senha|nao lembro.*senha|perdi.*senha|trocar.*senha|redefinir.*senha|recuperar.*senha/.test(t)) {
-    return 'Esqueceu sua senha? Eu não posso trocar por aqui (só o professor pode, por segurança).\n\n' +
-      '1. Toque em "Falar com o professor" (ou chame pessoalmente)\n' +
-      '2. Peça pra resetar sua senha de aluno\n' +
-      '3. O professor faz isso em segundos na aba Equipe\n' +
-      '4. Você recebe uma senha provisória e troca no primeiro login';
+  if (/esqueci.*senha|nao lembro.*senha|perdi.*senha|trocar.*senha|redefinir.*senha|recuperar.*senha|atualizar.*senha|mudar.*senha/.test(t)) {
+    return assistenteAtualizarSenhaAluno();
   }
 
   if (/check.?in.*erro|erro.*check.?in|check.?in.*nao funciona|deu errado.*check|nao consigo.*check.?in|check.?in.*travou/.test(t)) {
@@ -12345,12 +12412,27 @@ function bioInjetarLogin() {
   var card = $('cardAlunoLogin'); if (!card) return;
   var nome = $('alunoLoginNome'), ultimo = ''; try { ultimo = localStorage.getItem(UC_ULTIMO_ALUNO_KEY) || ''; } catch (e) {}
   if (nome && !nome.value && ultimo) nome.value = ultimo;
-  var velho = $('trBioLogin'); if (velho) velho.remove();
-  var cfg = bioConfig(); if (!cfg || !bioSuportado()) return;
-  var div = document.createElement('div'); div.id = 'trBioLogin'; div.style.margin = '8px 0';
-  div.innerHTML = '<button class="btn btn-gold" onclick="bioEntrar()"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto (' + esc(cfg.nome || 'aluno') + ')</button>' +
-    '<p class="mini" style="margin-top:4px;">Ou entre com a sua senha abaixo.</p>';
-  var h = card.querySelector('h3'); if (h && h.parentNode) h.parentNode.insertBefore(div, h.nextSibling); else card.insertBefore(div, card.firstChild);
+  var btn = $('btnBioEntrar'), dica = $('txtBioLoginDica'), cfg = bioConfig(), sup = bioSuportado();
+  /* se o HTML estático não existir, recria o bloco */
+  if (!$('trBioLogin')) {
+    var div = document.createElement('div'); div.id = 'trBioLogin'; div.style.margin = '8px 0 10px';
+    div.innerHTML = '<button class="btn btn-gold" type="button" id="btnBioEntrar" onclick="bioEntrar()" style="display:none;"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto</button>' +
+      '<p class="mini" id="txtBioLoginDica" style="margin-top:4px;line-height:1.35;"></p>';
+    var h = card.querySelector('h3'); if (h && h.parentNode) h.parentNode.insertBefore(div, h.nextSibling); else card.insertBefore(div, card.firstChild);
+    btn = $('btnBioEntrar'); dica = $('txtBioLoginDica');
+  }
+  if (btn && cfg && sup) {
+    btn.style.display = '';
+    btn.innerHTML = '<i class="fas fa-fingerprint"></i> Entrar com digital / rosto (' + esc(cfg.nome || 'aluno') + ')';
+    if (dica) dica.innerHTML = 'Ou entre com a sua senha abaixo.';
+  } else if (btn) {
+    btn.style.display = 'none';
+    if (dica) {
+      dica.innerHTML = sup
+        ? '<i class="fas fa-fingerprint"></i> <b>Digital / rosto:</b> entre com a senha uma vez, depois ative em <b>Acesso rápido</b> no seu painel. O botão aparece aqui nas próximas vezes.'
+        : '<i class="fas fa-info-circle"></i> Digital indisponível neste navegador/endereço (precisa <b>HTTPS</b>). Use a senha normalmente.';
+    }
+  }
 }
 
 </script>
@@ -12714,6 +12796,54 @@ function trIrPara(id) {
 }
 
 /* ---------- entra na aba Professor ---------- */
+
+function htmlPedidosResetSenhaProf() {
+  var lista = [];
+  try { lista = (DB.listar('pedidosResetSenha') || []).filter(function (p) { return p.status === 'pendente'; }); } catch (e) {}
+  lista.sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+  var h = '<div class="card tr-card" id="trCardResetSenha"><h3><i class="fas fa-key"></i> Pedidos de nova senha</h3>';
+  if (!lista.length) {
+    h += '<p class="sem-dados">Nenhum pedido pendente.</p></div>';
+    return h;
+  }
+  lista.forEach(function (p) {
+    var nome = p.alunoNome || p.alunoApelido || 'Aluno';
+    var pid = p.id || '';
+    var aid = p.alunoId || '';
+    h += '<div class="lista-item"><div class="linha"><b>' + esc(nome) + '</b><span class="pill pill-pend">pendente</span></div>' +
+      (p.contato ? '<div class="mini">Contato: ' + esc(p.contato) + '</div>' : '') +
+      (p.observacao ? '<div class="mini">' + esc(p.observacao) + '</div>' : '') +
+      '<div class="mini">' + esc(p.criadoEm || '') + '</div>' +
+      '<div class="flex-btn" style="margin-top:6px;">' +
+      (aid
+        ? '<button class="btn btn-mini" onclick="aprovarResetSenhaPedido(\'' + esc(pid) + '\',\'' + esc(aid) + '\')"><i class="fas fa-check"></i> Gerar senha</button>'
+        : '<span class="mini">Cadastro não encontrado — use ADM para resetar pelo nome</span>') +
+      '<button class="btn btn-mini btn-secondary" onclick="recusarResetSenhaPedido(\'' + esc(pid) + '\')">Recusar</button>' +
+      '</div></div>';
+  });
+  return h + '</div>';
+}
+function aprovarResetSenhaPedido(pedidoId, alunoId) {
+  var a = DB.buscar('alunos', alunoId);
+  if (!a) { mostrarToast('Aluno não encontrado.', 'erro'); return; }
+  var nova = 'capoeira' + Math.floor(1000 + Math.random() * 9000);
+  DB.salvar('alunos', { senhaHash: hashSenha(nova) }, alunoId).then(function () {
+    return DB.salvar('pedidosResetSenha', { status: 'aprovado', resolvidoEm: agoraISO(), senhaProvisoria: nova }, pedidoId);
+  }).then(function () {
+    abrirModal('Senha provisória', '<p>Nova senha de <strong>' + esc(a.nome) + '</strong>:</p>' +
+      '<p style="font-size:1.15rem;font-weight:800;color:var(--primary-green);text-align:center;">' + esc(nova) + '</p>' +
+      '<p class="mini">Passe essa senha ao aluno e peça para trocar no painel.</p>');
+    registroLog('auth', 'Reset de senha aprovado: ' + a.nome);
+    try { trProfInjetar(); } catch (e) {}
+  });
+}
+function recusarResetSenhaPedido(pedidoId) {
+  DB.salvar('pedidosResetSenha', { status: 'recusado', resolvidoEm: agoraISO() }, pedidoId).then(function () {
+    mostrarToast('Pedido recusado.');
+    try { trProfInjetar(); } catch (e) {}
+  });
+}
+
 function trProfInjetar() {
   var box = $('conteudoProfessor');
   if (!box || !trEquipeLogada() || !box.children.length) return;
@@ -12722,7 +12852,8 @@ function trProfInjetar() {
   var div = document.createElement('div'); div.id = 'trProfBloco';
   div.innerHTML = '<div class="card tr-card" id="trCardAtalhos"><h3><i class="fas fa-dumbbell"></i> Treinos, agenda e boletim</h3><div class="tr-chips">' +
     '<button class="tr-chip" onclick="trIrPara(\'trCardPlano\')">📋 Plano da aula</button><button class="tr-chip" onclick="trIrPara(\'trCardPedidos\')">📥 Pedidos</button><button class="tr-chip" onclick="trIrPara(\'trCardCal\')">📆 Calendário</button>' +
-    '<button class="tr-chip" onclick="trIrPara(\'trCardBol\')">📄 Boletim</button><button class="tr-chip" onclick="trIrPara(\'trCardTestes\')">🧪 Testes</button><button class="tr-chip" onclick="trIrPara(\'trCardAdv\')">⚠️ Advertências</button></div></div>' +
+    '<button class="tr-chip" onclick="trIrPara(\'trCardBol\')">📄 Boletim</button><button class="tr-chip" onclick="trIrPara(\'trCardTestes\')">🧪 Testes</button><button class="tr-chip" onclick="trIrPara(\'trCardAdv\')">⚠️ Advertências</button><button class="tr-chip" onclick="trIrPara('trCardResetSenha')">🔑 Senhas</button></div></div>' +
+    htmlPedidosResetSenhaProf() +
     '<div class="card tr-card fechado" id="trCardPlano">' + trPlanoHtmlInterno() + '</div>' +
     '<div class="card tr-card fechado" id="trCardPedidos">' + trHtmlPedidos() + '</div>' +
     '<div class="card tr-card fechado" id="trCardCal">' + trHtmlCalProf() + '</div>' +
