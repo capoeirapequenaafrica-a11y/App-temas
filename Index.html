@@ -410,51 +410,6 @@ footer a { color: var(--accent-blue); }
 .chat-msg { background: #0a1419; border-left: 3px solid var(--accent-blue); border-radius: 6px; padding: 5px 8px; margin-bottom: 5px; }
 .chat-msg img { max-width: 100%; border-radius: 6px; margin-top: 4px; display: block; }
 .lock-card { border: 1px solid var(--gold) !important; }
-.sessao-chip {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  background: #081217;
-  border: 1px solid var(--card-border);
-  border-radius: 20px;
-  padding: 3px 6px 3px 8px;
-  max-width: 48vw;
-  flex-shrink: 0;
-}
-.sessao-chip.visivel { display: inline-flex; }
-.sessao-chip .sessao-nome {
-  font-size: 0.68rem;
-  color: var(--primary-green);
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 110px;
-}
-.sessao-chip .btn-sair-header {
-  width: auto;
-  margin: 0;
-  padding: 4px 8px;
-  font-size: 0.62rem;
-  border-radius: 14px;
-  background: #37474f;
-  box-shadow: none;
-  gap: 4px;
-}
-.btn-bio {
-  background: linear-gradient(135deg, #1a237e, #283593) !important;
-  box-shadow: 0 2px 8px rgba(26, 35, 126, 0.35) !important;
-}
-.btn-bio:active { opacity: 0.9; }
-.flex-btn-bio { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
-.flex-btn-bio .btn { flex: 1 1 140px; min-width: 0; }
-.aviso-bio-dica {
-  font-size: 0.68rem;
-  color: var(--text-sub);
-  margin: 4px 0 0;
-  line-height: 1.35;
-}
-
 .timer-grande-btn { width: 60px; height: 60px; font-size: 1.4rem; }
 .grade-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .grade-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
@@ -671,10 +626,84 @@ footer a { color: var(--accent-blue); }
 /* Uma entrada de jogos no Inicio: esconde cards duplicados */
 #cardJogosGrupo, #cardRankingJogos { display: none !important; }
 
+/* =====================================================================
+   INTERFACE MOBILE COMPACTO — camada visual (menu lateral, barra inferior,
+   topo, cards, botões). Não altera dados nem funções do app.
+   ===================================================================== */
+:root{
+  --ink:#06151e; --navy:#081b25; --panel:#102a36; --line:#28505a;
+  --green:#20c77a; --blue:#2c8cff; --mist:#d8edf0; --muted:#8caab1;
+  --gold:#f4c95d; --primary-green:#20c77a; --primary-green-dark:#1aa866;
+  --accent-blue:#2c8cff; --accent-blue-dark:#1f6fd1; --card-bg:#102a36; --card-border:#28505a;
+  --text-main:#d8edf0; --text-sub:#8caab1; --radius:18px;
+}
+html, body { background-color:#081b25 !important; background-size:cover; background-position:center; background-repeat:no-repeat; }
+body, button, input, select, textarea { font-family:"Fira Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:linear-gradient(rgba(6,21,30,.74),rgba(6,21,30,.82)),radial-gradient(circle at 18% 5%,#20c77a33 0,transparent 24%),radial-gradient(circle at 88% 20%,#2c8cff2b 0,transparent 22%),linear-gradient(135deg,transparent 48%,#ffffff06 49%,transparent 50%);background-size:auto,auto,auto,28px 28px}
+.app-frame{ position:relative; z-index:1; background:transparent !important; border:0 !important; max-width:760px !important; margin:0 auto; }
+.tab-content{ padding:12px 14px !important; }
+header#headerAppTopo{ background:#081b25e8; border-bottom:1px solid #ffffff12; backdrop-filter:blur(15px); padding:10px 14px; padding-top:calc(10px + env(safe-area-inset-top)); gap:10px; }
+header#headerAppTopo .logos-header-box{ gap:10px; flex:1; }
+.uc-icon-btn{ display:grid; place-items:center; width:44px; height:44px; flex-shrink:0; border:0; border-radius:14px; background:#173843; color:var(--mist); font-size:1.05rem; cursor:pointer; touch-action:manipulation; }
+.app-logo-img{ width:42px; height:42px; max-width:42px; max-height:42px; border-radius:14px; object-fit:cover; border:1px solid #f4c95d70; padding:0; }
+.app-title{ color:var(--mist); font-size:1.05rem; font-weight:800; gap:8px; }
+.app-title > i{ color:var(--gold); }
+.uc-brand-txt{ display:flex; flex-direction:column; line-height:1.05; min-width:0; }
+.uc-brand-txt #headerTituloTexto{ font-size:1.05rem; font-weight:800; color:var(--mist); overflow:hidden; text-overflow:ellipsis; }
+.uc-brand-txt small{ color:var(--green); font-size:.62rem; font-weight:700; letter-spacing:.06em; margin-top:2px; }
+.status-firebase{ display:inline-flex; align-items:center; gap:5px; background:transparent !important; margin:0 !important; padding:0 !important; font-size:.72rem !important; font-weight:700; }
+.status-firebase:before{ content:""; width:8px; height:8px; border-radius:50%; background:currentColor; box-shadow:0 0 12px currentColor; }
+.status-online{ color:var(--green) !important; } .status-offline{ color:#ff8796 !important; }
+.tabs-container, #dicaAcessoEquipe, footer{ display:none !important; }
+.card{ border:1px solid var(--line) !important; border-radius:18px !important; background:var(--panel) !important; box-shadow:0 10px 24px #0002; padding:15px; }
+.card:hover{ border-color:var(--line); box-shadow:0 10px 24px #0002; }
+.card h3{ color:var(--mist); font-size:.98rem; font-weight:800; }
+.card h3 > i:first-child{ color:var(--gold); }
+.btn{ background:var(--green); color:#052017; border-radius:13px; font-weight:800; min-height:46px; padding:11px 14px; }
+.btn.btn-secondary{ background:#1a3c49; color:var(--mist); border:1px solid #32606b; }
+.btn.btn-danger{ background:#612a37; color:#fff; }
+.btn.btn-gold{ background:var(--gold); color:#3b2b00; }
+.btn.btn-back{ background:#1a3c49; color:var(--mist); border:1px solid #32606b; }
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]), select, textarea{ border:1px solid #3a626d !important; border-radius:12px !important; background:#081b25 !important; color:var(--mist) !important; padding:12px; }
+.jogo-card-btn{ min-height:98px; border:1px solid var(--line); border-radius:16px; background:#0a202a; align-items:flex-start; text-align:left; padding:11px; }
+.jogo-card-btn i{ color:var(--gold) !important; }
+.jogo-card-btn:active,.jogo-card-btn:hover{ border-color:var(--green); }
+.toast{ bottom:calc(150px + env(safe-area-inset-bottom)); width:min(420px,calc(100% - 32px)); max-width:none; padding:12px 14px; border-radius:13px; background:var(--mist); color:#09202a; font-weight:700; font-size:.85rem; }
+.toast.erro{ background:#ff8796; color:#2a0b10; }
+#assistenteFab{ bottom:calc(84px + env(safe-area-inset-bottom)); right:18px; width:52px; height:52px; background:var(--gold); color:#3b2b00; box-shadow:0 8px 24px #0007; }
+#assistentePainel{ bottom:calc(148px + env(safe-area-inset-bottom)) !important; }
+.uc-backdrop{ position:fixed; inset:0; z-index:9300; background:#0009; display:none; }
+.uc-backdrop.open{ display:block; }
+.uc-side{ position:fixed; z-index:9310; top:0; left:0; width:min(84vw,320px); height:100%; padding:calc(env(safe-area-inset-top) + 18px) 16px 18px; background:#0b222c; border-right:1px solid var(--line); transform:translateX(-105%); transition:transform .25s ease; box-shadow:12px 0 36px #0008; overflow-y:auto; }
+.uc-side.open{ transform:none; }
+.uc-nav-item{ display:flex; width:100%; align-items:center; gap:12px; padding:14px; border:0; border-radius:14px; background:transparent; color:var(--mist); text-align:left; font-weight:700; font-size:1rem; cursor:pointer; }
+.uc-nav-item i{ width:22px; text-align:center; color:var(--gold); }
+.uc-nav-item:hover,.uc-nav-item.active{ background:#20c77a22; color:var(--green); }
+.uc-nav-item.active i{ color:var(--green); }
+.uc-nav-sub{ padding-left:34px; font-size:.92rem; }
+.uc-bottom{ display:flex; justify-content:space-around; flex-shrink:0; padding:9px 12px; background:#081b25f5; border-top:1px solid #ffffff12; backdrop-filter:blur(14px); }
+.uc-bottom button{ border:0; background:none; color:var(--muted); font-size:.66rem; font-weight:700; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:64px; cursor:pointer; touch-action:manipulation; }
+.uc-bottom button i{ font-size:1.15rem; }
+.uc-bottom button.active{ color:var(--green); }
+.uc-hero{ position:relative; overflow:hidden; border:1px solid #f4c95d55; border-radius:22px; min-height:170px; padding:20px; background:#12313d; margin-bottom:12px; }
+.uc-hero img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.34; }
+.uc-hero-txt{ position:relative; max-width:75%; }
+.uc-eyebrow{ color:var(--gold); font-size:.75rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.uc-hero h2{ margin:7px 0; font-size:1.7rem; line-height:1.06; color:#fff; font-weight:800; }
+.uc-hero p{ margin:0; color:#d8edf0cc; }
+.uc-quick{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:13px 0; }
+.uc-quick button{ min-height:88px; padding:12px; border:1px solid var(--line); border-radius:18px; background:var(--panel); color:var(--mist); font-weight:700; text-align:left; cursor:pointer; font-size:.95rem; }
+.uc-quick i{ display:block; color:var(--gold); margin-bottom:8px; font-size:1.2rem; }
+.uc-section-title{ margin:18px 2px 8px; font-size:1.05rem; color:var(--gold); font-weight:800; }
+.uc-grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+@media (min-width:620px){ .uc-quick{ grid-template-columns:repeat(4,1fr); } }
+@media (orientation:landscape) and (max-height:500px){ .uc-hero{ min-height:125px; } .uc-bottom{ padding-top:5px; padding-bottom:5px; } }
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="app-frame">
@@ -682,24 +711,18 @@ footer a { color: var(--accent-blue); }
   <!-- ================= CABEÇALHO ================= -->
   <header id="headerAppTopo">
     <div class="logos-header-box">
+      <button type="button" id="menuButton" class="uc-icon-btn" aria-label="Abrir menu" aria-expanded="false" onclick="ucMenu()"><i class="fas fa-bars"></i></button>
       <img id="headerLogo1" class="app-logo-img" alt="Logo 1">
       <img id="headerLogo2" class="app-logo-img" alt="Logo 2">
       <div class="app-title" id="headerAppTitle">
         <i class="fas fa-child-reaching"></i>
-        <span id="headerTituloTexto">Universo Capoeira</span>
-        <span id="firebaseStatus" class="status-firebase status-offline">OFFLINE</span>
+        <span class="uc-brand-txt"><span id="headerTituloTexto">Universo Capoeira</span><small>MOBILE COMPACTO</small></span>
       </div>
     </div>
+    <span id="firebaseStatus" class="status-firebase status-offline">OFFLINE</span>
     <!-- cronômetro removido a pedido do usuário -->
     <div class="cronometro-box" id="cronometroBox" style="display:none !important;" aria-hidden="true">
       <div class="cronometro-display" id="timerDisplay">01:30</div>
-    </div>
-    <div class="sessao-chip" id="sessaoChipHeader" aria-live="polite">
-      <i class="fas fa-user-circle" style="color:var(--primary-green);font-size:0.9rem;"></i>
-      <span class="sessao-nome" id="sessaoChipNome">—</span>
-      <button type="button" class="btn btn-sair-header" id="btnSairHeader" onclick="ucSairRapido()" title="Sair">
-        <i class="fas fa-sign-out-alt"></i> Sair
-      </button>
     </div>
   </header>
 
@@ -731,6 +754,22 @@ footer a { color: var(--accent-blue); }
 
   <!-- ================= ABA 1 - INÍCIO ================= -->
   <div id="tab1" class="tab-content active">
+
+    <article class="uc-hero">
+      <img id="heroFotoInicio" loading="lazy" src="https://images.pexels.com/photos/28975498/pexels-photo-28975498.jpeg" alt="Capoeiristas realizando movimento em uma vibrante rua brasileira" onerror="this.style.display='none'">
+      <div class="uc-hero-txt">
+        <div class="uc-eyebrow">Sua roda começa aqui</div>
+        <h2>Treine. Conecte. Evolua.</h2>
+        <p>Tudo da sua capoeira em uma experiência leve e feita para celular.</p>
+      </div>
+    </article>
+    <div class="uc-quick">
+      <button type="button" onclick="abrirAba('tab2')"><i class="fas fa-location-crosshairs"></i>Fazer check-in</button>
+      <button type="button" onclick="abrirAba('tab3')"><i class="fas fa-user"></i>Meu painel</button>
+      <button type="button" onclick="abrirAba('tabJogos')"><i class="fas fa-gamepad"></i>Abrir arcade</button>
+      <button type="button" onclick="toggleAssistente()"><i class="fas fa-wand-magic-sparkles"></i>Assistente</button>
+    </div>
+    <h2 class="uc-section-title">Hoje na roda</h2>
 
     <div class="card card-destaque brilho-azul" id="cardAvisoAvaliacaoObrigatoria" style="display:none; border:1px solid var(--danger);">
       <h3 style="color:var(--danger);"><i class="fas fa-triangle-exclamation"></i> Avaliação Semanal Pendente</h3>
@@ -852,49 +891,24 @@ footer a { color: var(--accent-blue); }
     <div id="boxProfessorNaAulaCheckin"></div>
     <div id="boxGympassCheckin"></div>
 
-    <div class="aviso-formacao-remunerada" id="avisoCheckinAgendamento" role="alert" style="border-color:var(--danger); background:rgba(239,83,80,0.12); color:#ffcdd2;">
-      <span class="aviso-icone">⚠️</span>
-      <span><b>Aviso importante:</b> o check-in só é liberado se você <b>agendou a aula com pelo menos 1 hora de antecedência</b> (aba Aluno → Agendar aula).
-      Sem agendamento válido, ou após esse prazo, o check-in exige <b>justificativa</b> e só vale com <b>autorização do professor</b> — e entra no <b>histórico de compromisso</b>.
-      Falta ou atraso sem justificativa aceita entram no relatório e podem gerar <b>advertência</b>. Só 1 check-in por aula/dia.</span>
-    </div>
-
-    <div class="card" id="cardTransparenciaPermissoes" style="border:1px solid var(--accent-blue);">
-      <h3 style="color:var(--accent-blue);"><i class="fas fa-shield-alt"></i> Transparência e permissões</h3>
-      <p class="mini" style="margin-bottom:6px;">O app só usa recursos do celular <b>com a sua permissão</b>.</p>
-      <ul class="mini" style="margin:0 0 8px 16px; line-height:1.45;">
-        <li><b>Digital / rosto</b> — login e check-in (opcional, só neste aparelho)</li>
-        <li><b>Notificações</b> — avisos do professor</li>
-        <li><b>Câmera</b> — só ao escolher foto</li>
-        <li><b>Armazenamento local</b> — sessão e preferências</li>
-        <li><b>Internet</b> — sincronizar dados da academia</li>
-      </ul>
-      <button type="button" class="btn btn-secondary btn-mini" onclick="ucPedirPermissoesApp()"><i class="fas fa-hand-point-up"></i> Revisar permissões</button>
-    </div>
-
     <div class="card">
       <h3><i class="fas fa-building"></i> Check-in em Local Registrado</h3>
       <div id="horarioAulaHojeBox" style="font-size:0.75rem; background:#081217; border:1px solid var(--card-border); border-radius:8px; padding:6px 8px; margin-bottom:8px;">
         <i class="fas fa-clock"></i> Carregando horário da aula de hoje...
       </div>
-      <div id="boxStatusAgendamentoCheckin" style="font-size:0.72rem; margin-bottom:8px;"></div>
       <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:6px;">Selecione o polo cadastrado pelo professor:</p>
       <input id="checkinFixoNomeAluno" placeholder="Seu Nome Completo" oninput="atualizarEstadoBotaoCheckin()">
       <select id="selectPoloFixoTreino" onchange="avaliarAtrasoHoje()">
         <option value="">Aguardando professor cadastrar local...</option>
       </select>
       <div id="boxJustificativaAtraso" style="display:none; margin-top:8px; border:1px solid var(--danger); border-radius:8px; padding:8px;">
-        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Atraso, falta de agendamento ou agendamento com menos de 1h de antecedência. Justifique (o professor autoriza e isso vai ao histórico de compromisso):</p>
-        <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto, esqueci de agendar..."></textarea>
+        <p style="font-size:0.75rem; color:var(--danger); margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Justifique abaixo (o professor irá avaliar):</p>
+        <textarea id="justificativaAtrasoInput" placeholder="Ex: trânsito, imprevisto no trabalho..."></textarea>
       </div>
-      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Agende na aba <b>Aluno</b> com antecedência. No horário faça o check-in (pode usar digital). <strong>Só 1 check-in por aula/dia.</strong></p>
+      <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação. <strong>Só é permitido 1 check-in por aula/dia.</strong></p>
       <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
-      <div class="flex-btn-bio" style="margin-top:6px;">
-        <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar presença</button>
-        <button class="btn btn-bio" id="btnCheckinBiometria" type="button" onclick="ucCheckinComBiometria()"><i class="fas fa-fingerprint"></i> Check-in digital</button>
-      </div>
-      <p class="aviso-bio-dica">Ative a digital no painel do aluno (Acesso rápido) para usar o check-in por biometria.</p>
-      <button class="btn btn-secondary" style="margin-top:6px;" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
+      <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
+      <button class="btn btn-secondary" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
     </div>
 
     <div class="card" id="cardMinhasPresencasCheckin" style="display:none;">
@@ -1043,7 +1057,7 @@ footer a { color: var(--accent-blue); }
     <div class="card" id="cardAgendaAluno">
       <h3 class="titulo-colapsavel" onclick="alternarCard(this)"><i class="fas fa-calendar-plus"></i> Agendar aula <i class="fas fa-chevron-down seta-colapsavel"></i></h3>
       <div class="card-corpo-colapsavel">
-        <p class="mini">⚠️ Agende com <b>≥ 1 hora de antecedência</b>. No horário faça o <b>check-in</b> (pode usar digital). Sem agendamento válido: justificativa + autorização do professor → histórico de compromisso. Falta/atraso sem aceite geram advertência.</p>
+        <p class="mini">Agende com antecedência. No dia da aula faça o <b>check-in</b>. Falta ou atraso entram no relatório e podem gerar advertência.</p>
         <label class="campo-label">Data da aula</label>
         <input type="date" id="agendaData" required>
         <label class="campo-label">Horário (opcional)</label>
@@ -1060,6 +1074,33 @@ footer a { color: var(--accent-blue); }
       <div id="boxCurriculoAluno"></div>
       <p class="mini">Painel de <b>formacao</b> e diferente do de aluno comum.</p>
     </div>
+  </div>
+
+  <!-- ================= EQUIPE E COMUNIDADE (hub) ================= -->
+  <div id="tabEquipe" class="tab-content">
+    <h2 class="uc-section-title" style="margin-top:4px;">Equipe e comunidade</h2>
+    <div class="card"><h3><i class="fas fa-medal"></i> Área Professor</h3>
+      <p class="mini" style="margin-bottom:8px;">Materiais de formação para conduzir aulas infantis com segurança, ritmo e ludicidade.</p>
+      <button class="btn btn-secondary" type="button" onclick="abrirAba('tab4')">Abrir área Professor</button></div>
+    <div class="card"><h3><i class="fas fa-shield-halved"></i> Área ADM</h3>
+      <p class="mini" style="margin-bottom:8px;">Resumo das permissões e dos fluxos de atendimento da escola.</p>
+      <button class="btn btn-secondary" type="button" onclick="abrirAba('tab5')">Abrir área ADM</button></div>
+    <div class="card"><h3><i class="fas fa-code"></i> Área Dev</h3>
+      <p class="mini" style="margin-bottom:8px;">Ponto de integração para notificações, câmera, localização, biometria e serviços externos.</p>
+      <button class="btn btn-secondary" type="button" onclick="abrirAba('tab6')">Abrir área Dev</button></div>
+    <div class="card"><h3><i class="fas fa-comments"></i> Mural e bate-papo</h3>
+      <p class="mini" style="margin-bottom:8px;">Mensagens da comunidade da academia.</p>
+      <button class="btn btn-secondary" type="button" onclick="ucIrParaMural()">Abrir mural</button></div>
+    <div class="card"><h3><i class="fas fa-sliders"></i> Configurações locais</h3>
+      <p class="mini" style="margin-bottom:8px;">Logo e foto de fundo ficam guardados apenas neste aparelho.</p>
+      <div class="uc-grid2">
+        <button class="btn btn-secondary" type="button" onclick="document.getElementById('ucFileLogo').click()"><i class="fas fa-image"></i> Escolher logo</button>
+        <button class="btn btn-secondary" type="button" onclick="document.getElementById('ucFileFundo').click()"><i class="fas fa-image"></i> Foto de fundo</button>
+        <button class="btn btn-secondary" type="button" onclick="ucRemoverImagem('logo')">Remover logo</button>
+        <button class="btn btn-secondary" type="button" onclick="ucRemoverImagem('fundo')">Remover fundo</button>
+      </div>
+      <input id="ucFileLogo" type="file" accept="image/*" style="display:none" onchange="ucEscolherImagem('logo',this)">
+      <input id="ucFileFundo" type="file" accept="image/*" style="display:none" onchange="ucEscolherImagem('fundo',this)"></div>
   </div>
 
   <!-- ================= ABA 4 - PROFESSOR ================= -->
@@ -1080,7 +1121,32 @@ footer a { color: var(--accent-blue); }
   <footer>
     <span id="footerInfo">Universo Capoeira</span> &middot; <i class="fas fa-shield-alt"></i> Capoeira na Pequena África
   </footer>
+
+  <nav class="uc-bottom" aria-label="Atalhos">
+    <button type="button" data-uc="tab1" class="active" onclick="abrirAba('tab1')"><i class="fas fa-house"></i>Início</button>
+    <button type="button" data-uc="tab2" onclick="abrirAba('tab2')"><i class="fas fa-location-crosshairs"></i>Check-in</button>
+    <button type="button" data-uc="tabJogos" onclick="abrirAba('tabJogos')"><i class="fas fa-gamepad"></i>Jogos</button>
+    <button type="button" data-uc="tab3" onclick="abrirAba('tab3')"><i class="fas fa-user"></i>Aluno</button>
+  </nav>
 </div>
+
+<div id="ucBackdrop" class="uc-backdrop" onclick="ucMenu(false)"></div>
+<nav id="ucSideNav" class="uc-side" aria-label="Navegação principal">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <strong style="color:var(--gold);font-weight:800;font-size:1rem;">Navegação</strong>
+    <button type="button" class="uc-icon-btn" aria-label="Fechar menu" onclick="ucMenu(false)"><i class="fas fa-xmark"></i></button>
+  </div>
+  <button class="uc-nav-item active" type="button" data-uc="tab1" onclick="abrirAba('tab1')"><i class="fas fa-house"></i><span>Início</span></button>
+  <button class="uc-nav-item" type="button" data-uc="tab2" onclick="abrirAba('tab2')"><i class="fas fa-location-crosshairs"></i><span>Check-in</span></button>
+  <button class="uc-nav-item" type="button" data-uc="tab3" onclick="abrirAba('tab3')"><i class="fas fa-graduation-cap"></i><span>Aluno</span></button>
+  <button class="uc-nav-item" type="button" data-uc="tabJogos" onclick="abrirAba('tabJogos')"><i class="fas fa-gamepad"></i><span>Jogos</span></button>
+  <button class="uc-nav-item" type="button" data-uc="tabEquipe" onclick="abrirAba('tabEquipe')"><i class="fas fa-users"></i><span>Equipe</span></button>
+  <button class="uc-nav-item uc-nav-sub" type="button" data-uc="tab4" onclick="abrirAba('tab4')"><i class="fas fa-chalkboard-teacher"></i><span>Professor</span></button>
+  <button class="uc-nav-item uc-nav-sub" type="button" data-uc="tab5" onclick="abrirAba('tab5')"><i class="fas fa-sliders-h"></i><span>ADM</span></button>
+  <button class="uc-nav-item uc-nav-sub" type="button" data-uc="tab6" onclick="abrirAba('tab6')"><i class="fas fa-code"></i><span>Dev</span></button>
+  <hr style="border:0;border-top:1px solid #ffffff12;margin:13px 0">
+  <button class="uc-nav-item" type="button" onclick="ucMenu(false);sairAluno();abrirAba('tab1')"><i class="fas fa-right-from-bracket"></i><span>Sair</span></button>
+</nav>
 
 <!-- ================= MODAL GENÉRICO ================= -->
 <div class="modal-overlay" id="modalOverlay">
@@ -1535,7 +1601,7 @@ footer a { color: var(--accent-blue); }
   var ACESSO_EQUIPE = {"botao":"btnToggleEquipe","menu":"tabsEquipe","gatilho":"headerAppTopo"};
   function congela(o) { Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === 'object') congela(o[k]); }); return Object.freeze(o); }
   congela(ABAS); congela(NUCLEO); congela(ACESSO_EQUIPE);
-  var VERSAO = "v88", CHAVES_LEGADAS = ["uc_assistente_apresentado_v1"];
+  var VERSAO = "v87", CHAVES_LEGADAS = ["uc_assistente_apresentado_v1"];
   var M = { VERSAO: VERSAO, CHAVES_LEGADAS: CHAVES_LEGADAS, ABAS: ABAS, NUCLEO: NUCLEO, ACESSO_EQUIPE: ACESSO_EQUIPE };
   if (typeof module !== 'undefined' && module.exports) { module.exports = M; return; }
   Object.defineProperty(g, 'UC_PROTEGIDAS', { value: M, writable: false, configurable: false });
@@ -1624,7 +1690,7 @@ if (window.caches && caches.keys) {
 /* ---------------------------------------------------------------
    0. CONSTANTES
    --------------------------------------------------------------- */
-var VERSAO_APP = 'v88';
+var VERSAO_APP = 'v87';
 var CHAVE_LOCAL = 'uc_db_v87';
 var CHAVE_CONFIG_LOCAL = 'uc_config_firebase_v87';
 
@@ -1674,6 +1740,7 @@ var CONFIG_PADRAO = {
   instagram: '@capoeiranapequenaafrica',
   logo1: '',
   logo2: '',
+  fotoInicio: '',
   tempoTimerSegundos: 90,
   toleranciaAtrasoMin: 15,
   janelaCheckinMin: 10,
@@ -2631,17 +2698,13 @@ function montarLoginEquipe(container, papelRequerido) {
       '<h3 style="color:var(--gold);"><i class="fas fa-lock"></i> Área restrita — ' + esc(rotulo) + '</h3>' +
       (semEquipe
         ? '<div class="aviso-info"><i class="fas fa-star"></i> Nenhum acesso de equipe cadastrado ainda. Crie o primeiro acesso (perfil <strong>Dev</strong>) para liberar as áreas Professor, ADM e Dev.</div>'
-        : '<p class="mini">Entre com o nome e a senha cadastrados pela equipe <b>ou</b> use a digital neste aparelho.</p>') +
+        : '<p class="mini">Entre com o nome e a senha cadastrados pela equipe.</p>') +
       '<label class="campo-label">Nome</label>' +
       '<input id="equipeLoginNome' + sufixo + '" placeholder="Nome de usuário da equipe">' +
       '<label class="campo-label">Senha</label>' +
       '<input id="equipeLoginSenha' + sufixo + '" type="password" placeholder="Senha">' +
       (semEquipe ? '<label class="campo-label">Perfil</label><select id="equipeLoginPapel' + sufixo + '">' + opcoes + '</select>' : '') +
-      '<div class="flex-btn-bio" style="margin-top:6px;">' +
-        '<button class="btn" onclick="autenticarEquipe(\'' + papelRequerido + '\')"><i class="fas fa-sign-in-alt"></i> Entrar com senha</button>' +
-        '<button class="btn btn-bio" type="button" onclick="ucEquipeEntrarBio(\'' + papelRequerido + '\')"><i class="fas fa-fingerprint"></i> Digital / rosto</button>' +
-      '</div>' +
-      '<p class="aviso-bio-dica"><i class="fas fa-info-circle"></i> A digital é opcional e só funciona neste aparelho. A senha padrão continua valendo — sem conflito.</p>' +
+      '<button class="btn" onclick="autenticarEquipe(\'' + papelRequerido + '\')"><i class="fas fa-sign-in-alt"></i> Entrar</button>' +
     '</div>';
   return false;
 }
@@ -3792,6 +3855,7 @@ function abrirJogoArcade(tipo, nivelInicio) {
     arcade.canvas.height = 400;
   }
   arcade.ctx = arcade.canvas.getContext('2d');
+  if (tipo !== 'damas') { arcade.canvas.onclick = null; arcade.canvas.ontouchend = null; }   /* não deixa o toque das Damas vazar para outros jogos */
   if (tipo === 'snake') initSnake();
   else if (tipo === 'tetris') initTetris();
   else if (tipo === 'corrida') initCorridaArcade();
@@ -3801,6 +3865,7 @@ function abrirJogoArcade(tipo, nivelInicio) {
   else if (tipo === 'estrada') initEstrada();
   else if (tipo === 'mario') initMario();
   else if (tipo === 'pacman') initPacman();
+  else if (tipo === 'damas') initDamas();
   if (arcade.timer) clearInterval(arcade.timer);
   var gamesComRampa = ['snake', 'tetris', 'pulo', 'quebra', 'mario', 'corrida', 'surfe', 'pacman', 'estrada'];
   arcade.rampaAtiva = gamesComRampa.indexOf(tipo) >= 0;
@@ -6083,7 +6148,7 @@ function drawDamas(ctx) {
   var N = 8, cell = arcade.damasCell || 42, b = arcade.damasBoard;
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
-    ctx.fillStyle = (r + c) % 2 === 0 ? '#f0e6d0' : '#3d2b1f';
+    ctx.fillStyle = (r + c) % 2 === 0 ? '#f4f4f2' : '#141414';
     ctx.fillRect(c * cell, r * cell, cell, cell);
   }
   if (arcade.damasSel) {
@@ -6100,14 +6165,15 @@ function drawDamas(ctx) {
     ctx.beginPath(); ctx.arc(cx, cy + 2, rad, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
     var grd = ctx.createRadialGradient(cx - rad * 0.3, cy - rad * 0.35, 2, cx, cy, rad);
     if (isS) { grd.addColorStop(0, '#f8f8f8'); grd.addColorStop(0.5, '#c0c0c0'); grd.addColorStop(1, '#6a6a6a'); }
-    else { grd.addColorStop(0, '#555'); grd.addColorStop(0.5, '#1a1a1a'); grd.addColorStop(1, '#000'); }
+    else { grd.addColorStop(0, '#9aa1ab'); grd.addColorStop(0.5, '#3b4048'); grd.addColorStop(1, '#101215'); }
     ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fillStyle = grd; ctx.fill();
-    ctx.strokeStyle = isS ? '#9e9e9e' : '#333'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.strokeStyle = isS ? '#9e9e9e' : '#e3e8ec'; ctx.lineWidth = isS ? 1.5 : 2.6; ctx.stroke();
     ctx.beginPath(); ctx.arc(cx, cy - rad * 0.12, rad * 0.7, 0, Math.PI * 2);
     var g2 = ctx.createRadialGradient(cx, cy - rad * 0.3, 1, cx, cy, rad * 0.7);
     if (isS) { g2.addColorStop(0, '#fff'); g2.addColorStop(1, '#bdbdbd'); }
-    else { g2.addColorStop(0, '#444'); g2.addColorStop(1, '#111'); }
+    else { g2.addColorStop(0, '#6f7680'); g2.addColorStop(1, '#1c1f24'); }
     ctx.fillStyle = g2; ctx.fill();
+    if (!isS) { ctx.beginPath(); ctx.arc(cx - rad * 0.28, cy - rad * 0.36, rad * 0.16, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill(); ctx.beginPath(); ctx.arc(cx, cy - rad * 0.12, rad * 0.7, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.stroke(); }
     if (Math.abs(p) === 2) {
       ctx.fillStyle = isS ? '#ffc107' : '#ef5350';
       ctx.font = 'bold ' + Math.floor(cell * 0.32) + 'px sans-serif';
@@ -7923,7 +7989,7 @@ function renderAluno() {
           '<button class="btn btn-secondary" onclick="abrirAba(\'tab2\'); this.closest(\'.card\').remove();"><i class="fas fa-map-marker-alt"></i> Ir para o Check-in</button>' +
         '</div>'
       : '') +
-    '<div class="flex-btn" style="margin-bottom:8px;"><button class="btn btn-danger" onclick="sairAluno()"><i class="fas fa-sign-out-alt"></i> Sair da conta</button></div>' +
+    '<button class="btn btn-back" onclick="sairAluno()"><i class="fas fa-sign-out-alt"></i> Sair</button>' +
 
     /* ===== CABEÇALHO DO ALUNO ===== */
     '<div style="text-align:center; margin-bottom:10px;">' +
@@ -8200,11 +8266,7 @@ function renderAbaProfessor() {
       '</select>' +
       '<label class="campo-label">Observação (opcional)</label>' +
       '<input id="profCheckinObsAuto" placeholder="Ex: roda aberta, foco em ginga...">' +
-      '<div class="flex-btn-bio">' +
-        '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula</button>' +
-        '<button class="btn btn-bio" type="button" onclick="ucProfessorCheckinBio()"><i class="fas fa-fingerprint"></i> Check-in digital</button>' +
-      '</div>' +
-      '<p class="aviso-bio-dica">Ative a digital da equipe após o login (botão abaixo do painel) para usar o check-in por biometria.</p>';
+      '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula — fazer check-in</button>';
   }
   html += '</div>';
 
@@ -9461,6 +9523,16 @@ function renderAbaAdm() {
         '<button type="button" class="btn btn-danger btn-mini" style="margin-top:4px;" onclick="removerLogoApp(2)"><i class="fas fa-trash"></i> Remover</button>' +
       '</div>' +
     '</div>' +
+    '<h3 style="margin-top:12px; font-size:0.82rem;"><i class="fas fa-image"></i> Foto do topo (tela Início)</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Troque a foto que aparece atrás de "Treine. Conecte. Evolua." Envie da galeria do aparelho; vale para todos os alunos.</p>' +
+    '<div style="text-align:center;">' +
+      (CONFIG.fotoInicio && urlSegura(CONFIG.fotoInicio)
+        ? '<img id="previewFotoInicio" src="' + urlSegura(CONFIG.fotoInicio) + '" alt="Foto do topo" style="max-height:110px; max-width:100%; border-radius:10px; border:1px solid var(--card-border); margin:4px auto; display:block;">'
+        : '<div id="previewFotoInicio" class="sem-dados" style="padding:16px 0;">Foto padrão</div>') +
+      '<input type="file" id="cfgFotoInicioFile" accept="image/*" onchange="uploadFotoInicioApp(this)" style="font-size:0.7rem;">' +
+      '<input type="hidden" id="cfgFotoInicio" value="' + esc(CONFIG.fotoInicio || '') + '">' +
+      '<button type="button" class="btn btn-danger btn-mini" style="margin-top:4px;" onclick="removerFotoInicioApp()"><i class="fas fa-trash"></i> Voltar à foto padrão</button>' +
+    '</div>' +
     '<label class="campo-label">Tempo padrão do cronômetro (segundos)</label><input id="cfgTimer" type="number" min="10" max="3600" value="' + esc(CONFIG.tempoTimerSegundos) + '">' +
     '<label class="campo-label">Tolerância de atraso (minutos)</label><input id="cfgTolerancia" type="number" min="0" max="120" value="' + esc(CONFIG.toleranciaAtrasoMin) + '">' +
     '<label class="campo-label">Janela de check-in (minutos antes/depois da aula)</label><input id="cfgJanelaCheckin" type="number" min="0" max="60" value="' + esc(CONFIG.janelaCheckinMin) + '">' +
@@ -9676,6 +9748,7 @@ function salvarConfiguracaoAdm() {
     baseConhecimento: ($('cfgBaseConhecimento').value || '').trim(),
     logo1: logo1,
     logo2: logo2,
+    fotoInicio: urlSegura(($('cfgFotoInicio') && $('cfgFotoInicio').value || '').trim()),
     tempoTimerSegundos: Math.max(10, parseInt($('cfgTimer').value, 10) || 90),
     toleranciaAtrasoMin: Math.max(0, parseInt($('cfgTolerancia').value, 10) || 15),
     janelaCheckinMin: Math.max(0, parseInt($('cfgJanelaCheckin').value, 10) || 10),
@@ -12832,484 +12905,6 @@ iniciarApp();
 })(typeof window !== 'undefined' ? window : this);
 
 </script>
-
-<script>
-/* ▼ uc-compromisso-seguranca.js — v88 · check-in digital, equipe bio, sair header, regras 1h, hash */
-(function (g) {
-  'use strict';
-  var ANTECEDENCIA_MIN = 60;
-  var EQUIPE_BIO_KEY = 'uc_equipe_bio_v87';
-  function $(id) { return document.getElementById(id); }
-
-  /* ===== Header: sessão + Sair ===== */
-  g.ucSairRapido = function () {
-    if (g.sessaoEquipe && typeof g.sairEquipe === 'function') g.sairEquipe();
-    else if (g.sessaoAlunoId && typeof g.sairAluno === 'function') g.sairAluno();
-    else if (typeof g.mostrarToast === 'function') g.mostrarToast('Nenhuma sessão ativa.');
-    g.ucAtualizarChipSessao();
-  };
-  g.ucAtualizarChipSessao = function () {
-    var chip = $('sessaoChipHeader'), nomeEl = $('sessaoChipNome');
-    if (!chip) return;
-    var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
-    if (g.sessaoEquipe) {
-      chip.classList.add('visivel');
-      if (nomeEl) nomeEl.textContent = (g.sessaoEquipe.nome || 'Equipe') + ' · ' + (g.sessaoEquipe.papel || '');
-    } else if (aluno) {
-      chip.classList.add('visivel');
-      if (nomeEl) nomeEl.textContent = aluno.apelido || aluno.nome || 'Aluno';
-    } else {
-      chip.classList.remove('visivel');
-      if (nomeEl) nomeEl.textContent = '—';
-    }
-  };
-
-  /* ===== Hash SHA-256 + legado ===== */
-  var _hashLegado = typeof g.hashSenha === 'function' ? g.hashSenha : null;
-  function hashDjb2(senha) {
-    if (_hashLegado) return _hashLegado(senha);
-    var str = 'uc::' + String(senha || ''), h = 5381;
-    for (var i = 0; i < str.length; i++) { h = ((h << 5) + h) + str.charCodeAt(i); h = h & 0xffffffff; }
-    return 'h' + (h >>> 0).toString(16);
-  }
-  g.hashSenha = function (s) { return hashDjb2(s); };
-  g.hashSenhaAsync = function (senha) {
-    var plain = String(senha || '');
-    if (g.crypto && g.crypto.subtle && g.TextEncoder) {
-      return g.crypto.subtle.digest('SHA-256', new TextEncoder().encode('uc-v87::' + plain))
-        .then(function (buf) {
-          var a = new Uint8Array(buf), h = 'sha256:';
-          for (var i = 0; i < a.length; i++) h += ('0' + a[i].toString(16)).slice(-2);
-          return h;
-        }).catch(function () { return hashDjb2(plain); });
-    }
-    return Promise.resolve(hashDjb2(plain));
-  };
-  g.verificarSenhaHash = function (senha, hashSalvo) {
-    if (!hashSalvo) return Promise.resolve(false);
-    if (String(hashSalvo).indexOf('sha256:') === 0) {
-      return g.hashSenhaAsync(senha).then(function (h) { return h === hashSalvo; });
-    }
-    return Promise.resolve(hashDjb2(senha) === hashSalvo);
-  };
-
-  /* ===== Agendamento / compromisso ===== */
-  function agendamentoDoAlunoHoje(aluno) {
-    if (!aluno || !g.DB) return null;
-    var hoje = typeof g.dataLocalISO === 'function' ? g.dataLocalISO() : new Date().toISOString().slice(0, 10);
-    var lista = g.DB.listar('agendamentos').filter(function (a) {
-      return a && a.alunoId === aluno.id && a.data === hoje && a.status !== 'cancelado';
-    }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
-    return lista[0] || null;
-  }
-  function minutosDesdeISO(iso) {
-    if (!iso) return null;
-    var t = Date.parse(iso);
-    if (isNaN(t)) return null;
-    return Math.floor((Date.now() - t) / 60000);
-  }
-  function agendamentoValidoAntecedencia(ag, aula) {
-    if (!ag) return false;
-    var criadoMin = minutosDesdeISO(ag.criadoEm);
-    if (criadoMin === null) return true;
-    if (!aula || typeof g.minutosDoHM !== 'function') return criadoMin >= ANTECEDENCIA_MIN;
-    var inicio = g.minutosDoHM(aula.horaInicio);
-    if (inicio === null) return criadoMin >= ANTECEDENCIA_MIN;
-    var agora = typeof g.agoraEmMinutos === 'function' ? g.agoraEmMinutos() : 0;
-    return ((inicio - agora) + criadoMin) >= ANTECEDENCIA_MIN;
-  }
-  function registrarHistoricoCompromisso(payload) {
-    if (!g.DB || !g.DB.salvar) return Promise.resolve();
-    var id = 'comp_' + (payload.alunoId || 'x') + '_' + (payload.data || '') + '_' + Date.now().toString(36);
-    return g.DB.salvar('historicoCompromisso', Object.assign({
-      id: id, criadoEm: typeof g.agoraISO === 'function' ? g.agoraISO() : new Date().toISOString()
-    }, payload), id);
-  }
-  function atualizarBoxStatusAgendamento() {
-    var box = $('boxStatusAgendamentoCheckin');
-    if (!box) return;
-    var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
-    if (!aluno) {
-      var nome = ($('checkinFixoNomeAluno') && $('checkinFixoNomeAluno').value) || '';
-      if (nome && typeof g.encontrarAlunoPorNome === 'function') aluno = g.encontrarAlunoPorNome(nome);
-    }
-    if (!aluno) {
-      box.innerHTML = '<div class="aviso-info"><i class="fas fa-user-lock"></i> Faça login na aba Aluno (ou informe o nome) para validar o agendamento.</div>';
-      return;
-    }
-    var ag = agendamentoDoAlunoHoje(aluno);
-    var aula = typeof g.aulaDeHoje === 'function' ? g.aulaDeHoje() : null;
-    if (!ag) {
-      box.innerHTML = '<div class="alerta-dificuldade"><i class="fas fa-calendar-times"></i> <b>Sem agendamento para hoje.</b> Vá em Aluno → Agendar aula (≥ 1h de antecedência). Sem isso, check-in exige justificativa + autorização do professor.</div>';
-      if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
-      return;
-    }
-    if (agendamentoValidoAntecedencia(ag, aula)) {
-      box.innerHTML = '<div class="aviso-info" style="border-left-color:var(--primary-green);"><i class="fas fa-check-circle"></i> Agendamento válido para hoje' + (ag.hora ? ' · ' + ag.hora : '') + '. Pode fazer check-in (inclusive digital).</div>';
-    } else {
-      box.innerHTML = '<div class="alerta-dificuldade"><i class="fas fa-clock"></i> Agendamento com <b>menos de 1h de antecedência</b>. Justifique; professor autoriza → histórico de compromisso.</div>';
-      if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
-    }
-  }
-
-  g.ucPedirPermissoesApp = function () {
-    var linhas = [];
-    linhas.push('HTTPS / contexto seguro: ' + (g.isSecureContext ? 'sim ✅' : 'não ❌'));
-    if ('Notification' in g) {
-      linhas.push('Notificações: ' + Notification.permission);
-      if (Notification.permission === 'default' && typeof g.pedirPermissaoNotificacao === 'function') {
-        try { g.pedirPermissaoNotificacao(); } catch (e) {}
-      }
-    }
-    linhas.push('Biometria: ' + (typeof g.bioSuportado === 'function' && g.bioSuportado() ? 'disponível' : 'indisponível'));
-    if (typeof g.abrirModal === 'function') {
-      g.abrirModal('Permissões', '<ul class="mini" style="margin-left:16px;line-height:1.5;">' +
-        linhas.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul>', '');
-    } else if (typeof g.mostrarToast === 'function') g.mostrarToast(linhas.join(' · '));
-  };
-
-  /* ===== Check-in digital do ALUNO ===== */
-  g.ucCheckinComBiometria = function () {
-    if (typeof g.bioSuportado !== 'function' || !g.bioSuportado()) {
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria indisponível. Use o check-in normal.', 'erro');
-      return;
-    }
-    var cfg = typeof g.bioConfig === 'function' ? g.bioConfig() : null;
-    if (!cfg || !cfg.credId) {
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Ative a digital no painel do aluno (Acesso rápido) antes.', 'erro');
-      try { if (typeof g.abrirAba === 'function') g.abrirAba('tab3'); } catch (e) {}
-      return;
-    }
-    if (!g.DB || (g.DB.carregado && !g.DB.carregado('alunos'))) {
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Aguarde os dados carregarem.', 'erro');
-      return;
-    }
-    navigator.credentials.get({
-      publicKey: {
-        challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
-        rpId: location.hostname,
-        timeout: 60000,
-        userVerification: 'required',
-        allowCredentials: [{
-          id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(cfg.credId) : cfg.credId,
-          type: 'public-key',
-          transports: ['internal']
-        }]
-      }
-    }).then(function () {
-      var aluno = g.DB.buscar('alunos', cfg.alunoId);
-      if (!aluno) {
-        if (typeof g.mostrarToast === 'function') g.mostrarToast('Aluno da biometria não encontrado.', 'erro');
-        return;
-      }
-      g.sessaoAlunoId = aluno.id;
-      try { localStorage.setItem('uc_sessao_aluno_v87', aluno.id); } catch (e) {}
-      if ($('checkinFixoNomeAluno')) $('checkinFixoNomeAluno').value = aluno.nome || '';
-      g.ucAtualizarChipSessao();
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital OK — enviando check-in…');
-      if (typeof g.alunoCheckinLocalFixoSimples === 'function') g.alunoCheckinLocalFixoSimples();
-    }).catch(function (e) {
-      if (typeof g.mostrarToast === 'function') {
-        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Biometria cancelada.' : 'Biometria falhou. Use o check-in normal.', 'erro');
-      }
-    });
-  };
-
-  /* ===== Equipe: biometria (login qualquer aba) ===== */
-  function equipeBioCfg() {
-    try { return JSON.parse(localStorage.getItem(EQUIPE_BIO_KEY) || 'null'); } catch (e) { return null; }
-  }
-  g.ucEquipeAtivarBio = function () {
-    if (typeof g.bioSuportado !== 'function' || !g.bioSuportado()) {
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria indisponível neste aparelho.', 'erro');
-      return;
-    }
-    if (!g.sessaoEquipe) {
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Entre com a senha da equipe primeiro; depois ative a digital.', 'erro');
-      return;
-    }
-    var challenge = typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32);
-    var userId = typeof g.bioTexto === 'function' ? g.bioTexto('equipe:' + (g.sessaoEquipe.id || g.sessaoEquipe.nome || 'eq')) : new TextEncoder().encode('equipe');
-    navigator.credentials.create({
-      publicKey: {
-        challenge: challenge,
-        rp: { name: 'Universo Capoeira Equipe', id: location.hostname },
-        user: { id: userId, name: g.sessaoEquipe.nome || 'equipe', displayName: g.sessaoEquipe.nome || 'Equipe' },
-        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
-        timeout: 60000, attestation: 'none'
-      }
-    }).then(function (cred) {
-      var idB64 = typeof g.bioB64 === 'function' ? g.bioB64(cred.rawId) : btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId)));
-      localStorage.setItem(EQUIPE_BIO_KEY, JSON.stringify({
-        nome: g.sessaoEquipe.nome,
-        papel: g.sessaoEquipe.papel,
-        id: g.sessaoEquipe.id || '',
-        credId: idB64
-      }));
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital da equipe ativada neste aparelho!');
-      g.ucAtualizarChipSessao();
-    }).catch(function (e) {
-      if (typeof g.mostrarToast === 'function') {
-        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Cancelado.' : 'Não foi possível ativar a digital da equipe.', 'erro');
-      }
-    });
-  };
-  g.ucEquipeEntrarBio = function (papelRequerido) {
-    var cfg = equipeBioCfg();
-    if (!cfg || !cfg.credId) {
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Ative a digital após entrar com senha (botão no painel da equipe).', 'erro');
-      return;
-    }
-    navigator.credentials.get({
-      publicKey: {
-        challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
-        rpId: location.hostname,
-        timeout: 60000,
-        userVerification: 'required',
-        allowCredentials: [{
-          id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(cfg.credId) : cfg.credId,
-          type: 'public-key',
-          transports: ['internal']
-        }]
-      }
-    }).then(function () {
-      var membro = null;
-      if (g.DB && g.DB.listar) {
-        g.DB.listar('equipe').forEach(function (e) {
-          if (!membro && String(e.nome || '').toLowerCase() === String(cfg.nome || '').toLowerCase()) membro = e;
-        });
-      }
-      var papel = (membro && membro.papel) || cfg.papel || 'professor';
-      if (papelRequerido) {
-        var permitidos = { professor: ['professor', 'adm', 'dev'], adm: ['adm', 'dev'], dev: ['dev'] };
-        if ((permitidos[papelRequerido] || []).indexOf(papel) < 0) {
-          if (typeof g.mostrarToast === 'function') g.mostrarToast('Seu perfil (' + papel + ') não tem acesso a esta área.', 'erro');
-          return;
-        }
-      }
-      g.sessaoEquipe = { id: membro ? membro.id : (cfg.id || ''), nome: cfg.nome, papel: papel };
-      if (typeof g.mostrarToast === 'function') g.mostrarToast('Equipe autenticada por digital!');
-      g.ucAtualizarChipSessao();
-      try {
-        if (typeof g.revelarAcessoEquipe === 'function') g.revelarAcessoEquipe();
-        if (typeof g.renderizarAba === 'function' && g.abaAtual) g.renderizarAba(g.abaAtual);
-        else if (typeof g.renderAbaProfessor === 'function') g.renderAbaProfessor();
-      } catch (e) {}
-    }).catch(function (e) {
-      if (typeof g.mostrarToast === 'function') {
-        g.mostrarToast((e && e.name === 'NotAllowedError') ? 'Biometria cancelada. Use a senha.' : 'Biometria da equipe falhou. Use a senha.', 'erro');
-      }
-    });
-  };
-
-  /* ===== Check-in digital do PROFESSOR ===== */
-  g.ucProfessorCheckinBio = function () {
-    if (!g.sessaoEquipe) {
-      /* tenta autenticar por bio e depois check-in */
-      var cfg = equipeBioCfg();
-      if (!cfg) {
-        if (typeof g.mostrarToast === 'function') g.mostrarToast('Entre na equipe (senha ou digital) antes do check-in.', 'erro');
-        return;
-      }
-      g.ucEquipeEntrarBio('professor');
-      setTimeout(function () {
-        if (g.sessaoEquipe && typeof g.professorCheckinAula === 'function') g.professorCheckinAula();
-      }, 1200);
-      return;
-    }
-    if (typeof g.bioSuportado === 'function' && g.bioSuportado() && equipeBioCfg()) {
-      navigator.credentials.get({
-        publicKey: {
-          challenge: typeof g.bioDesafio === 'function' ? g.bioDesafio() : new Uint8Array(32),
-          rpId: location.hostname,
-          timeout: 60000,
-          userVerification: 'required',
-          allowCredentials: [{
-            id: typeof g.bioDeB64 === 'function' ? g.bioDeB64(equipeBioCfg().credId) : equipeBioCfg().credId,
-            type: 'public-key',
-            transports: ['internal']
-          }]
-        }
-      }).then(function () {
-        if (typeof g.mostrarToast === 'function') g.mostrarToast('Digital OK — registrando presença do professor…');
-        if (typeof g.professorCheckinAula === 'function') g.professorCheckinAula();
-      }).catch(function () {
-        if (typeof g.mostrarToast === 'function') g.mostrarToast('Biometria falhou. Use o botão normal de check-in.', 'erro');
-      });
-    } else if (typeof g.professorCheckinAula === 'function') {
-      g.professorCheckinAula();
-    }
-  };
-
-  /* ===== Wrap check-in aluno com regras ===== */
-  function instalarCheckin() {
-    if (typeof g.alunoCheckinLocalFixoSimples !== 'function' || g.alunoCheckinLocalFixoSimples.__ucComp) return;
-    var orig = g.alunoCheckinLocalFixoSimples;
-    g.alunoCheckinLocalFixoSimples = function () {
-      var nome = ($('checkinFixoNomeAluno') && $('checkinFixoNomeAluno').value || '').trim();
-      var aluno = typeof g.alunoLogado === 'function' ? g.alunoLogado() : null;
-      if (!aluno && nome && typeof g.encontrarAlunoPorNome === 'function') aluno = g.encontrarAlunoPorNome(nome);
-      var aula = typeof g.aulaDeHoje === 'function' ? g.aulaDeHoje() : null;
-      var ag = aluno ? agendamentoDoAlunoHoje(aluno) : null;
-      var precisaAuth = false, motivo = '';
-      if (!ag) { precisaAuth = true; motivo = 'sem_agendamento'; }
-      else if (!agendamentoValidoAntecedencia(ag, aula)) { precisaAuth = true; motivo = 'agendamento_tardio'; }
-      var atrasado = $('boxJustificativaAtraso') && $('boxJustificativaAtraso').style.display !== 'none';
-      if (atrasado) { precisaAuth = true; if (!motivo) motivo = 'atraso'; }
-      var just = ($('justificativaAtrasoInput') && $('justificativaAtrasoInput').value || '').trim();
-      if (precisaAuth && just.length < 4) {
-        if ($('boxJustificativaAtraso')) $('boxJustificativaAtraso').style.display = 'block';
-        if (typeof g.mostrarToast === 'function') {
-          g.mostrarToast(motivo === 'sem_agendamento'
-            ? 'Sem agendamento válido. Justifique (mín. 4 caracteres). Professor autoriza → histórico de compromisso.'
-            : 'Agendamento < 1h ou atraso. Justifique para o professor autorizar.', 'erro');
-        }
-        return;
-      }
-      var salvarOrig = g.DB && g.DB.salvar, patch = false;
-      if (salvarOrig && precisaAuth) {
-        g.DB.salvar = function (col, dados, id) {
-          if (col === 'presencas' && dados && !patch) {
-            patch = true;
-            dados.exigeAutorizacaoProfessor = true;
-            dados.motivoCompromisso = motivo;
-            dados.agendamentoId = ag ? ag.id : '';
-            dados.status = 'pendente';
-            dados.historicoCompromisso = true;
-            dados.justificativa = dados.justificativa || just;
-            try {
-              registrarHistoricoCompromisso({
-                alunoId: dados.alunoId || (aluno && aluno.id) || '',
-                alunoNome: dados.alunoNome || nome,
-                data: dados.data, hora: dados.hora, tipo: motivo,
-                justificativa: just, status: 'aguardando_autorizacao',
-                agendamentoId: ag ? ag.id : ''
-              });
-            } catch (e) {}
-          }
-          return salvarOrig.apply(this, arguments);
-        };
-      }
-      try { return orig.apply(this, arguments); }
-      finally { if (salvarOrig) g.DB.salvar = salvarOrig; }
-    };
-    g.alunoCheckinLocalFixoSimples.__ucComp = true;
-  }
-
-  /* ===== Login aluno: sha256 + legado ===== */
-  function instalarAuthAluno() {
-    if (typeof g.autenticarAlunoNuvem !== 'function' || g.autenticarAlunoNuvem.__ucHash) return;
-    g.autenticarAlunoNuvem = function (btn) {
-      var nome = ($('alunoLoginNome') && $('alunoLoginNome').value || '').trim();
-      var senha = ($('alunoLoginSenha') && $('alunoLoginSenha').value) || '';
-      if (!nome || !senha) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Informe nome e senha.', 'erro'); return; }
-      if (!g.DB || (g.DB.carregado && !g.DB.carregado('alunos'))) {
-        if (typeof g.mostrarToast === 'function') g.mostrarToast('Ainda carregando dados…', 'erro'); return;
-      }
-      var alvo = typeof g.normalizar === 'function' ? g.normalizar(nome) : nome.toLowerCase();
-      var achado = null;
-      g.DB.listar('alunos').forEach(function (a) {
-        if (achado) return;
-        var n = typeof g.normalizar === 'function' ? g.normalizar(a.nome) : String(a.nome || '').toLowerCase();
-        var ap = typeof g.normalizar === 'function' ? g.normalizar(a.apelido || '') : String(a.apelido || '').toLowerCase();
-        if (n === alvo || ap === alvo) achado = a;
-      });
-      if (!achado) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Aluno não encontrado.', 'erro'); return; }
-      if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Entrando...'; }
-      g.verificarSenhaHash(senha, achado.senhaHash).then(function (ok) {
-        if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Painel'; }
-        if (!ok) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Senha incorreta.', 'erro'); return; }
-        g.sessaoAlunoId = achado.id;
-        try { localStorage.setItem('uc_sessao_aluno_v87', achado.id); } catch (e) {}
-        if (String(achado.senhaHash || '').indexOf('sha256:') !== 0) {
-          g.hashSenhaAsync(senha).then(function (h) { try { g.DB.salvar('alunos', { senhaHash: h }, achado.id); } catch (e) {} });
-        }
-        if ($('alunoLoginSenha')) $('alunoLoginSenha').value = '';
-        if (typeof g.registroLog === 'function') g.registroLog('auth', 'Aluno entrou: ' + achado.nome);
-        if (typeof g.renderAluno === 'function') g.renderAluno();
-        if (typeof g.renderCheckin === 'function') g.renderCheckin();
-        g.ucAtualizarChipSessao();
-        if (typeof g.mostrarToast === 'function') g.mostrarToast('Bem-vindo(a), ' + (achado.apelido || achado.nome) + '!');
-      });
-    };
-    g.autenticarAlunoNuvem.__ucHash = true;
-  }
-
-  /* Injetar botão ativar bio da equipe nos painéis logados */
-  function injetarAtivarBioEquipe() {
-    if (!g.sessaoEquipe) return;
-    ['conteudoProfessor', 'conteudoAdm', 'conteudoDev'].forEach(function (cid) {
-      var box = $(cid);
-      if (!box || box.querySelector('#ucBtnAtivarBioEquipe')) return;
-      if (!box.children.length) return;
-      var div = document.createElement('div');
-      div.className = 'card';
-      div.id = 'ucCardBioEquipe';
-      div.style.border = '1px solid var(--accent-blue)';
-      div.innerHTML = '<h3 style="color:var(--accent-blue);"><i class="fas fa-fingerprint"></i> Acesso rápido da equipe</h3>' +
-        '<p class="mini">Ative a digital neste aparelho para entrar em qualquer aba da equipe sem digitar a senha. A senha continua valendo.</p>' +
-        '<button type="button" class="btn btn-bio" id="ucBtnAtivarBioEquipe" onclick="ucEquipeAtivarBio()"><i class="fas fa-fingerprint"></i> Ativar digital / rosto da equipe</button>' +
-        '<button type="button" class="btn btn-danger" style="margin-top:6px;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button>';
-      box.insertBefore(div, box.firstChild);
-    });
-  }
-
-  function instalarRenderHooks() {
-    if (typeof g.renderCheckin === 'function' && !g.renderCheckin.__ucComp) {
-      var rc = g.renderCheckin;
-      g.renderCheckin = function () { var r = rc.apply(this, arguments); try { atualizarBoxStatusAgendamento(); g.ucAtualizarChipSessao(); } catch (e) {} return r; };
-      g.renderCheckin.__ucComp = true;
-    }
-    if (typeof g.renderAluno === 'function' && !g.renderAluno.__ucChip) {
-      var ra = g.renderAluno;
-      g.renderAluno = function () { var r = ra.apply(this, arguments); try { g.ucAtualizarChipSessao(); } catch (e) {} return r; };
-      g.renderAluno.__ucChip = true;
-    }
-    ['renderAbaProfessor', 'renderAbaAdm', 'renderAbaDev'].forEach(function (fn) {
-      if (typeof g[fn] === 'function' && !g[fn].__ucBio) {
-        var o = g[fn];
-        g[fn] = function () { var r = o.apply(this, arguments); try { injetarAtivarBioEquipe(); g.ucAtualizarChipSessao(); } catch (e) {} return r; };
-        g[fn].__ucBio = true;
-      }
-    });
-    if (typeof g.sairAluno === 'function' && !g.sairAluno.__ucChip) {
-      var sa = g.sairAluno;
-      g.sairAluno = function () { var r = sa.apply(this, arguments); g.ucAtualizarChipSessao(); return r; };
-      g.sairAluno.__ucChip = true;
-    }
-    if (typeof g.sairEquipe === 'function' && !g.sairEquipe.__ucChip) {
-      var se = g.sairEquipe;
-      g.sairEquipe = function () { var r = se.apply(this, arguments); g.ucAtualizarChipSessao(); return r; };
-      g.sairEquipe.__ucChip = true;
-    }
-  }
-
-  function boot() {
-    try { instalarCheckin(); } catch (e) { console.warn(e); }
-    try { instalarAuthAluno(); } catch (e) { console.warn(e); }
-    try { instalarRenderHooks(); } catch (e) { console.warn(e); }
-    try { atualizarBoxStatusAgendamento(); } catch (e) {}
-    try { g.ucAtualizarChipSessao(); } catch (e) {}
-    try { injetarAtivarBioEquipe(); } catch (e) {}
-    if (typeof MutationObserver !== 'undefined') {
-      var t = 0;
-      new MutationObserver(function () {
-        if (t) return;
-        t = setTimeout(function () {
-          t = 0;
-          try { instalarCheckin(); instalarRenderHooks(); injetarAtivarBioEquipe(); g.ucAtualizarChipSessao(); } catch (e) {}
-        }, 150);
-      }).observe(document.body, { childList: true, subtree: true });
-    }
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(boot, 500); });
-  else setTimeout(boot, 500);
-
-  g.UCCompromisso = { ANTECEDENCIA_MIN: ANTECEDENCIA_MIN, agendamentoDoAlunoHoje: agendamentoDoAlunoHoje };
-})(typeof window !== 'undefined' ? window : this);
-</script>
-
 <!-- guardião das abas protegidas (sempre por último) -->
 <script>
 /* ▼ protecao.js */
@@ -13574,20 +13169,61 @@ function sim3dIniciar() {
   [['VERMELHO', 0x330000, 6.1], ['AMARELO', 0x332200, 5.5], ['VERDE', 0x00ff00, 4.9]].forEach(function (l) { var m = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), new THREE.MeshBasicMaterial({ color: l[1] })); m.position.set(0, l[2], 0.41); sgp.add(m); sem.m[l[0]] = m; });
   sgp.position.set(sem.x + 14, 0, sem.z); sgp.rotation.y = -Math.PI / 2; scene.add(sgp);
   /* carro completo (jogador e trânsito) */
+  function suave(g, lim) { /* normais suaves nas curvas, arestas vivas nos vincos */
+    var p = g.attributes.position, n = p.count, fn = [], keys = [], mp = {}, i, k, key;
+    var A = new V(), B = new V(), C = new V();
+    for (i = 0; i < n; i += 3) { A.fromBufferAttribute(p, i); B.fromBufferAttribute(p, i + 1); C.fromBufferAttribute(p, i + 2);
+      fn.push(new V().subVectors(C, B).cross(new V().subVectors(A, B)).normalize());
+      for (k = 0; k < 3; k++) { key = p.getX(i + k).toFixed(3) + ',' + p.getY(i + k).toFixed(3) + ',' + p.getZ(i + k).toFixed(3); keys.push(key); (mp[key] = mp[key] || []).push(i / 3); } }
+    var nr = new Float32Array(n * 3);
+    for (i = 0; i < n; i++) { var f0 = fn[Math.floor(i / 3)], sm = new V(), L = mp[keys[i]];
+      for (k = 0; k < L.length; k++) if (fn[L[k]].dot(f0) > lim) sm.add(fn[L[k]]);
+      if (sm.lengthSq() < 1e-8) sm.copy(f0); sm.normalize(); nr[i * 3] = sm.x; nr[i * 3 + 1] = sm.y; nr[i * 3 + 2] = sm.z; }
+    g.setAttribute('normal', new THREE.BufferAttribute(nr, 3)); return g;
+  }
+  function perfil(sh, larg, bt, bs) { /* silhueta lateral (x = comprimento, frente em +x) extrudada na largura, com quinas arredondadas */
+    var g = new THREE.ExtrudeGeometry(sh, { depth: larg, bevelEnabled: true, bevelThickness: bt, bevelSize: bs, bevelSegments: 4, curveSegments: 12 });
+    g.rotateY(Math.PI / 2); g.translate(-larg / 2, 0, 0); return suave(g, 0.72);
+  }
+  var FORMA = {};
+  (function () {
+    var s1 = new THREE.Shape(); /* carroceria: para-choque, capô, linha de cintura, porta-malas */
+    s1.moveTo(-3.95, 0.72); s1.lineTo(3.9, 0.72); s1.quadraticCurveTo(4.12, 0.72, 4.12, 0.95); s1.lineTo(4.12, 1.1); s1.quadraticCurveTo(4.12, 1.3, 3.75, 1.36);
+    s1.quadraticCurveTo(2.9, 1.42, 1.9, 1.52); s1.lineTo(-2.9, 1.52); s1.quadraticCurveTo(-3.7, 1.5, -4.0, 1.42); s1.quadraticCurveTo(-4.12, 1.36, -4.12, 1.1); s1.lineTo(-4.12, 0.95); s1.quadraticCurveTo(-4.12, 0.72, -3.95, 0.72);
+    var s2 = new THREE.Shape(); /* cabine: para-brisa inclinado, teto, vidro traseiro */
+    s2.moveTo(1.85, 1.6); s2.quadraticCurveTo(1.3, 2.05, 0.95, 2.3); s2.lineTo(-1.65, 2.3); s2.quadraticCurveTo(-2.35, 2.0, -2.75, 1.6); s2.lineTo(1.85, 1.6);
+    var s3 = new THREE.Shape(); /* teto na cor do carro */
+    s3.moveTo(1.0, 2.33); s3.quadraticCurveTo(0.85, 2.45, 0.6, 2.45); s3.lineTo(-1.35, 2.45); s3.quadraticCurveTo(-1.75, 2.45, -1.9, 2.33); s3.lineTo(1.0, 2.33);
+    FORMA.corpo = perfil(s1, 3.6, 0.18, 0.18); FORMA.cabine = perfil(s2, 3.0, 0.1, 0.1); FORMA.teto = perfil(s3, 2.9, 0.06, 0.06);
+  })();
   function criaCarro(cor, jog) {
     var g = new THREE.Group(), corpo = new THREE.Group(); g.add(corpo);
     var mb = new THREE.MeshPhysicalMaterial({ color: cor, metalness: 0.6, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.05 }), gl = new THREE.MeshPhysicalMaterial({ color: 0x0b1620, metalness: 0.9, roughness: 0.05 }),
-        bk = new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.7 }), tm = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 }), rm = new THREE.MeshStandardMaterial({ color: 0xc0c6cc, metalness: 0.9, roughness: 0.25 });
-    function cx(w, h, d, x, y, z, m) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; corpo.add(b); }
-    cx(4.2, 0.85, 8.6, 0, 0.95, 0, mb); cx(3.9, 0.35, 2.6, 0, 1.45, -2.8, mb); cx(3.9, 0.4, 2.0, 0, 1.45, 3.0, mb); cx(3.5, 0.95, 3.4, 0, 1.95, 0.3, gl); cx(3.3, 0.15, 2.6, 0, 2.5, 0.4, mb); cx(4.3, 0.35, 8.8, 0, 0.45, 0, bk);
-    cx(0.35, 0.3, 0.6, -2.15, 1.7, -1.6, mb); cx(0.35, 0.3, 0.6, 2.15, 1.7, -1.6, mb);
-    if (jog) { cx(4.0, 0.12, 0.9, 0, 2.25, 4.05, mb); cx(0.15, 0.5, 0.15, -1.6, 2.0, 3.9, bk); cx(0.15, 0.5, 0.15, 1.6, 2.0, 3.9, bk); }
+        bk = new THREE.MeshStandardMaterial({ color: 0x0d0d0d, roughness: 0.7 }), tm = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 }), rm = new THREE.MeshStandardMaterial({ color: 0xc0c6cc, metalness: 0.9, roughness: 0.25 }),
+        pr = new THREE.MeshStandardMaterial({ color: 0xf4f4f0, roughness: 0.6 }), cr = new THREE.MeshStandardMaterial({ color: 0xcfd6dc, metalness: 0.9, roughness: 0.2 });
+    function cx(w, h, d, x, y, z, m) { var b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; corpo.add(b); return b; }
+    function peca(geo, m) { var e = new THREE.Mesh(geo, m); e.castShadow = true; corpo.add(e); return e; }
+    function pilar(x, z1, y1, z2, y2, esp, m) { var L = Math.hypot(z2 - z1, y2 - y1), b = cx(esp, L, 0.15, x, (y1 + y2) / 2, (z1 + z2) / 2, m); b.rotation.x = Math.atan2(z2 - z1, y2 - y1); }
+    peca(FORMA.corpo, mb); peca(FORMA.cabine, gl); peca(FORMA.teto, mb);
+    pilar(-1.58, -1.9, 1.62, -1.0, 2.38, 0.14, mb); pilar(1.58, -1.9, 1.62, -1.0, 2.38, 0.14, mb);       /* colunas A */
+    cx(0.14, 0.78, 0.2, -1.6, 1.98, 0.3, mb); cx(0.14, 0.78, 0.2, 1.6, 1.98, 0.3, mb);                   /* colunas B */
+    pilar(-1.58, 1.8, 2.38, 2.85, 1.6, 0.14, mb); pilar(1.58, 1.8, 2.38, 2.85, 1.6, 0.14, mb);           /* colunas C */
+    cx(3.5, 0.14, 8.0, 0, 0.56, 0, bk);                                                                   /* assoalho / saias */
+    cx(1.5, 0.3, 0.1, 0, 1.0, -4.32, bk); cx(2.6, 0.2, 0.1, 0, 0.74, -4.3, bk); cx(1.4, 0.05, 0.06, 0, 1.0, -4.38, cr); /* grade, entrada de ar, friso cromado */
+    cx(3.2, 0.14, 0.16, 0, 0.6, 4.25, bk); cx(0.9, 0.22, 0.06, 0, 0.8, 4.34, pr);                        /* difusor e placa */
+    var esp1 = cx(0.42, 0.26, 0.6, -2.12, 1.74, -1.55, mb), esp2 = cx(0.42, 0.26, 0.6, 2.12, 1.74, -1.55, mb);   /* retrovisores */
+    esp1.rotation.y = 0.15; esp2.rotation.y = -0.15;
+    if (jog) { cx(3.5, 0.1, 0.8, 0, 2.0, 4.0, mb); cx(0.14, 0.4, 0.16, -1.4, 1.8, 3.9, bk); cx(0.14, 0.4, 0.16, 1.4, 1.8, 3.9, bk); }
     function lamp(w, h, x, y, z, col) { var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.12), new THREE.MeshStandardMaterial({ color: 0x222222, emissive: col, emissiveIntensity: 0 })); m.position.set(x, y, z); corpo.add(m); return m; }
     var o = { g: g, corpo: corpo, rodas: [], dian: [],
-      far: [lamp(0.9, 0.35, -1.5, 1.15, -4.33, 0xfff4d0), lamp(0.9, 0.35, 1.5, 1.15, -4.33, 0xfff4d0)], fre: [lamp(0.9, 0.3, -1.5, 1.25, 4.33, 0xff1111), lamp(0.9, 0.3, 1.5, 1.25, 4.33, 0xff1111)],
-      re: [lamp(0.4, 0.25, -0.6, 1.0, 4.33, 0xffffff), lamp(0.4, 0.25, 0.6, 1.0, 4.33, 0xffffff)], pe: [lamp(0.4, 0.25, -1.95, 1.0, -4.33, 0xffaa00), lamp(0.4, 0.25, -1.95, 1.0, 4.33, 0xffaa00)], pd: [lamp(0.4, 0.25, 1.95, 1.0, -4.33, 0xffaa00), lamp(0.4, 0.25, 1.95, 1.0, 4.33, 0xffaa00)] };
-    [[-2.1, -2.7], [2.1, -2.7], [-2.1, 2.7], [2.1, 2.7]].forEach(function (p, i) { var pv = new THREE.Group(), spn = new THREE.Group(); pv.position.set(p[0], 0.7, p[1]);
-      var t = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.8, 20), tm); t.rotation.z = Math.PI / 2; t.castShadow = true; var r = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.82, 12), rm); r.rotation.z = Math.PI / 2; spn.add(t); spn.add(r); pv.add(spn); g.add(pv); o.rodas.push(spn); if (i < 2) o.dian.push(pv); });
+      far: [lamp(0.8, 0.3, -1.25, 1.12, -4.33, 0xfff4d0), lamp(0.8, 0.3, 1.25, 1.12, -4.33, 0xfff4d0)], fre: [lamp(0.8, 0.28, -1.25, 1.12, 4.33, 0xff1111), lamp(0.8, 0.28, 1.25, 1.12, 4.33, 0xff1111)],
+      re: [lamp(0.3, 0.2, -0.45, 1.06, 4.33, 0xffffff), lamp(0.3, 0.2, 0.45, 1.06, 4.33, 0xffffff)], pe: [lamp(0.3, 0.22, -1.8, 0.98, -4.33, 0xffaa00), lamp(0.3, 0.22, -1.8, 0.98, 4.33, 0xffaa00)], pd: [lamp(0.3, 0.22, 1.8, 0.98, -4.33, 0xffaa00), lamp(0.3, 0.22, 1.8, 0.98, 4.33, 0xffaa00)] };
+    var sp = new THREE.MeshStandardMaterial({ color: 0x2a2f33, metalness: 0.7, roughness: 0.4 });
+    [[-1.78, -2.7], [1.78, -2.7], [-1.78, 2.7], [1.78, 2.7]].forEach(function (p, i) { var pv = new THREE.Group(), spn = new THREE.Group(); pv.position.set(p[0], 0.7, p[1]);
+      var t = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.62, 28), tm); t.rotation.z = Math.PI / 2; t.castShadow = true; var r = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.64, 20), rm); r.rotation.z = Math.PI / 2; spn.add(t); spn.add(r);
+      for (var k = 0; k < 5; k++) { var rb = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.72, 0.08), sp); rb.rotation.x = k * 1.2566; spn.add(rb); }
+      var ar = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.06, 6, 24, Math.PI), bk); ar.rotation.y = Math.PI / 2; ar.position.x = p[0] > 0 ? 0.22 : -0.22; pv.add(ar);   /* caixa de roda */
+      pv.add(spn); g.add(pv); o.rodas.push(spn); if (i < 2) o.dian.push(pv); });
     return o;
   }
   function luz(arr, v) { arr.forEach(function (l) { l.material.emissiveIntensity = v; }); }
@@ -13658,7 +13294,10 @@ function sim3dLoop() { if (SIM3D.loop) SIM3D.loop(); }
 </style>
 <div id="pm3d"><div id="pmCv" style="position:absolute;inset:0"></div><div class="vig"></div><div id="pmFl" style="position:absolute;inset:0;background:#b00;opacity:0;pointer-events:none"></div>
 <div class="hud" id="pmH"></div><div id="pmMsg" style="position:absolute;top:38%;width:100%;text-align:center;font-size:26px;font-weight:bold;color:#ff3b3b;text-shadow:0 0 12px #f00;pointer-events:none"></div>
+<div id="pmArr" style="position:absolute;inset:0;pointer-events:none;z-index:2;display:none"></div>
+<canvas id="pmMap" width="105" height="105" style="position:absolute;left:8px;top:70px;border:1px solid #5a1a1a;border-radius:8px;background:rgba(10,10,15,.8);pointer-events:none;display:none;z-index:2"></canvas>
 <div style="position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;z-index:3"><button class="bt" style="background:#7f1d1d" onclick="fecharPacHorror3D()">✕ Sair</button>
+<button class="bt" id="pmFP">🗺 Mapa</button>
 <div style="display:flex;gap:4px"><button class="bt" id="pmN1">1P</button><button class="bt" id="pmN2">2P</button><button class="bt" id="pmN3">3P</button></div>
 <div style="display:flex;gap:4px"><button class="bt" id="pmD1">Médio</button><button class="bt" id="pmD2">Difícil</button><button class="bt" id="pmD3">Impossível</button></div></div>
 <button class="dp" id="pmU" style="left:76px;bottom:140px">▲</button><button class="dp" id="pmLf" style="left:12px;bottom:76px">◀</button><button class="dp" id="pmRt" style="left:140px;bottom:76px">▶</button><button class="dp" id="pmDn" style="left:76px;bottom:12px">▼</button></div>
@@ -13677,11 +13316,21 @@ function pmIniciar() {
   function cf() { return CF[MM.nivel] || CF.facil; }
   var rd = new THREE.WebGLRenderer({ antialias: true }); rd.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); rd.setSize(innerWidth, innerHeight); rd.outputEncoding = THREE.sRGBEncoding; rd.shadowMap.enabled = true; rd.shadowMap.type = THREE.PCFSoftShadowMap; document.getElementById('pmCv').appendChild(rd.domElement);
   var scene = new THREE.Scene(); scene.background = new THREE.Color(0x050505); var cam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 400);
-  function enquadra() { var asp = innerWidth / innerHeight, d = 44 / Math.min(1, asp); cam.aspect = asp; cam.position.set(0, d * 0.93, d * 0.38); cam.lookAt(0, 0, 0); cam.updateProjectionMatrix(); scene.fog = new THREE.Fog(0x050505, d * 0.9, d * 1.7); rd.setSize(innerWidth, innerHeight); }
+  /* 1ª pessoa: com 1 jogador a câmera fica dentro do labirinto, nos olhos do Pac-Man (2P/3P usam a visão do mapa) */
+  var camMode = 'fp', fpYaw = null, np = 1; try { var cm0 = localStorage.getItem('uc_pm_cam'); if (cm0 === 'fp' || cm0 === 'tp' || cm0 === 'map') camMode = cm0; else if (localStorage.getItem('uc_pm_fp') === '0') camMode = 'map'; } catch (e) {}
+  function FP() { return camMode === 'fp' && np === 1; }
+  function TP() { return camMode === 'tp' && np === 1; }
+  function REL() { return FP() || TP(); }
+  function relDir(d, k) { return k === 'f' ? [d[0], d[1]] : k === 'l' ? [d[1], -d[0]] : k === 'r' ? [-d[1], d[0]] : [-d[0], -d[1]]; }
+  function enquadra() { var asp = innerWidth / innerHeight, d = 44 / Math.min(1, asp); cam.aspect = asp;
+    if (FP()) { cam.fov = 74; cam.near = 0.05; cam.rotation.order = 'YXZ'; scene.fog = new THREE.Fog(0x050505, 3, 24); }
+    else if (TP()) { cam.fov = 68; cam.near = 0.1; scene.fog = new THREE.Fog(0x050505, 9, 36); }
+    else { cam.fov = 55; cam.near = 0.1; cam.position.set(0, d * 0.93, d * 0.38); cam.lookAt(0, 0, 0); scene.fog = new THREE.Fog(0x050505, d * 0.9, d * 1.7); }
+    cam.updateProjectionMatrix(); rd.setSize(innerWidth, innerHeight); }
   enquadra(); addEventListener('resize', enquadra);
   scene.add(new THREE.AmbientLight(0x556677, 0.9)); var dl = new THREE.DirectionalLight(0x99aacc, 0.45); dl.position.set(10, 40, 10); scene.add(dl);
   var chao = new THREE.Mesh(new THREE.PlaneGeometry(N * C + 12, N * C + 12), new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.9 })); chao.rotation.x = -Math.PI / 2; chao.receiveShadow = true; scene.add(chao);
-  var M = [], D, pel = [], pw = [], P = [], G = [], assusta = 0, score = 0, tm = 60, over = false, flash = 0, T = 0, np = 1, msgT = 0, fr = 0, clk = new THREE.Clock();
+  var M = [], D, pel = [], pw = [], P = [], G = [], assusta = 0, score = 0, tm = 60, over = false, flash = 0, T = 0, msgT = 0, fr = 0, clk = new THREE.Clock();
   function aberta(x, y) { return x >= 0 && y >= 0 && x < N && y < N && M[y][x] === 0; }
   function viz(x, y) { return [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(function (d) { return aberta(x + d[0], y + d[1]); }); }
   function nb(c) { var x = c % N, y = Math.floor(c / N); return viz(x, y).map(function (d) { return (y + d[1]) * N + x + d[0]; }); }
@@ -13718,6 +13367,38 @@ function pmIniciar() {
     gera(P.concat(G)); pel = []; for (i = 0; i < NN; i++) pel[i] = aberta(i % N, Math.floor(i / N)) ? 1 : 0;
     pw.forEach(function (p) { scene.remove(p.m); }); pw = [[19, 19], [9, 1], [1, 9], [19, 9]].map(function (c) { var m = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 8), new THREE.MeshStandardMaterial({ color: 0xff6d00, emissive: 0xff3d00, emissiveIntensity: 1.5 })), p = w2(c[0], c[1]); m.position.set(p.x, 0.8, p.z); scene.add(m); return { c: c[1] * N + c[0], m: m, on: 1 }; });
     pelUp(); ['pmN1', 'pmN2', 'pmN3'].forEach(function (id, j) { document.getElementById(id).classList.toggle('on', j + 1 === np); }); ['facil', 'dificil', 'impossivel'].forEach(function (n, j) { document.getElementById('pmD' + (j + 1)).classList.toggle('on', MM.nivel === n); });
+    fpYaw = null; enquadra(); atualizaBotaoFP(); if (FP()) msg('1ª PESSOA · SETAS = FANTASMAS'); else if (TP()) msg('CÂMERA ATRÁS DO PAC-MAN');
+  }
+  function atualizaBotaoFP() { var b = document.getElementById('pmFP'), m = document.getElementById('pmMap'); if (b) b.textContent = FP() ? '👁 1ª pessoa' : TP() ? '🎥 Atrás' : '🗺 Mapa'; if (m) m.style.display = REL() ? 'block' : 'none'; }
+  function desenhaMapa() {
+    var cv = document.getElementById('pmMap'); if (!cv) return; var g = cv.getContext('2d'), k = cv.width / N, i, x, y;
+    g.clearRect(0, 0, cv.width, cv.height);
+    for (y = 0; y < N; y++) for (x = 0; x < N; x++) { if (M[y][x]) { g.fillStyle = '#3a3a44'; g.fillRect(x * k, y * k, k, k); } else if (pel[y * N + x]) { g.fillStyle = '#ffe082'; g.fillRect(x * k + k * 0.38, y * k + k * 0.38, k * 0.24, k * 0.24); } }
+    pw.forEach(function (w) { if (w.on) { g.fillStyle = '#ff6d00'; g.fillRect((w.c % N) * k + 1, Math.floor(w.c / N) * k + 1, k - 2, k - 2); } });
+    function at(e) { var f = e.mv ? e.t : 0; return [(e.x + (e.mv ? (e.tx - e.x) * f : 0) + 0.5) * k, (e.y + (e.mv ? (e.ty - e.y) * f : 0) + 0.5) * k]; }
+    G.forEach(function (gh) { if (gh.resp > 0) return; var q = at(gh); g.fillStyle = assusta > 0 ? '#3b6bff' : '#ff2a2a'; g.beginPath(); g.arc(q[0], q[1], k * 0.5, 0, 6.283); g.fill(); });
+    var p = P[0]; if (p && p.vivo) { var q = at(p); g.fillStyle = '#ffd600'; g.beginPath(); g.arc(q[0], q[1], k * 0.55, 0, 6.283); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(q[0], q[1]); g.lineTo(q[0] + p.dir[0] * k * 1.6, q[1] + p.dir[1] * k * 1.6); g.stroke(); }
+  }
+  var arrEl = [];
+  function setaFantasmas(on) {
+    var box = document.getElementById('pmArr'); if (!box) return;
+    if (!on || !P[0] || !P[0].vivo || fpYaw === null) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    var W = innerWidth, H = innerHeight, cx = W / 2, cy = H * 0.44, rx = W * 0.40, ry = H * 0.30, p = P[0], pp = p.m.g.position;
+    G.forEach(function (g, i) {
+      var el = arrEl[i];
+      if (!el) { el = document.createElement('div'); el.style.cssText = 'position:absolute;width:48px;margin-left:-24px;margin-top:-24px;text-align:center;';
+        el.innerHTML = '<svg width="34" height="34" viewBox="0 0 34 34" style="display:block;margin:0 auto;filter:drop-shadow(0 0 5px #000)"><path d="M17 2 L31 31 L17 24 L3 31 Z" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg><b style="display:block;font-size:11px;text-shadow:0 0 4px #000,0 0 4px #000"></b>';
+        box.appendChild(el); arrEl[i] = el; }
+      if (g.resp > 0) { el.style.display = 'none'; return; }
+      var gp = g.m.g.position, dx = gp.x - pp.x, dz = gp.z - pp.z, rel = Math.atan2(-dx, -dz) - fpYaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+      var dist = D[(g.y * N + g.x) * NN + (p.y * N + p.x)]; if (dist >= 999) dist = Math.round(Math.hypot(dx, dz) / C);
+      var near = dist <= 4, k = near ? 0.86 : 1, col = assusta > 0 ? '#4d7cff' : ['#ff2a2a', '#c04dff', '#ff8a1f'][i % 3];
+      el.style.display = 'block'; el.style.left = (cx - Math.sin(rel) * rx * k) + 'px'; el.style.top = (cy - Math.cos(rel) * ry * k) + 'px';
+      el.firstChild.style.transform = 'rotate(' + (-rel) + 'rad)'; el.firstChild.firstChild.setAttribute('fill', col);
+      el.lastChild.style.color = col; el.lastChild.textContent = '👻 ' + dist;
+      el.style.opacity = (Math.abs(rel) < 0.45 && dist < 6) ? '0.5' : '0.95'; el.style.transform = near ? 'scale(' + (1.15 + 0.15 * Math.sin(T * 12)) + ')' : 'none';
+    });
   }
   function msg(t) { document.getElementById('pmMsg').textContent = t; msgT = 2; }
   /* Minimax (poda alfa-beta): o fantasma maximiza, o Pac-Man mais próximo minimiza */
@@ -13741,8 +13422,11 @@ function pmIniciar() {
   }
   var KEYS = { w: [0, 0, [0, -1]], s: [0, 0, [0, 1]], a: [0, 0, [-1, 0]], d: [0, 0, [1, 0]] };
   var MAP = { w: [0, [0, -1]], a: [0, [-1, 0]], s: [0, [0, 1]], d: [0, [1, 0]], arrowup: [1, [0, -1]], arrowleft: [1, [-1, 0]], arrowdown: [1, [0, 1]], arrowright: [1, [1, 0]], i: [2, [0, -1]], j: [2, [-1, 0]], k: [2, [0, 1]], l: [2, [1, 0]] };
-  addEventListener('keydown', function (e) { if (!PM.on) return; var m = MAP[e.key.toLowerCase()]; if (m && P[m[0]]) { P[m[0]].want = m[1]; e.preventDefault(); } });
-  [['pmU', [0, -1]], ['pmLf', [-1, 0]], ['pmRt', [1, 0]], ['pmDn', [0, 1]]].forEach(function (b) { var el = document.getElementById(b[0]); ['pointerdown'].forEach(function (ev) { el.addEventListener(ev, function (x) { x.preventDefault(); if (P[0]) P[0].want = b[1]; }); }); });
+  addEventListener('keydown', function (e) { if (!PM.on) return; var kk = e.key.toLowerCase();
+    if (REL() && P[0]) { var rl = { w: 'f', arrowup: 'f', a: 'l', arrowleft: 'l', d: 'r', arrowright: 'r', s: 'b', arrowdown: 'b' }[kk]; if (rl) { P[0].want = relDir(P[0].dir, rl); e.preventDefault(); return; } }
+    var m = MAP[kk]; if (m && P[m[0]]) { P[m[0]].want = m[1]; e.preventDefault(); } });
+  [['pmU', [0, -1], 'f'], ['pmLf', [-1, 0], 'l'], ['pmRt', [1, 0], 'r'], ['pmDn', [0, 1], 'b']].forEach(function (b) { var el = document.getElementById(b[0]); ['pointerdown'].forEach(function (ev) { el.addEventListener(ev, function (x) { x.preventDefault(); if (P[0]) P[0].want = REL() ? relDir(P[0].dir, b[2]) : b[1]; }); }); });
+  document.getElementById('pmFP').onclick = function () { var ordem = ['fp', 'tp', 'map'], atual = FP() ? 'fp' : TP() ? 'tp' : 'map'; camMode = ordem[(ordem.indexOf(atual) + 1) % 3]; try { localStorage.setItem('uc_pm_cam', camMode); } catch (e) {} if (camMode !== 'map' && np !== 1) { novo(1); return; } fpYaw = null; enquadra(); atualizaBotaoFP(); msg(FP() ? '1ª PESSOA · SETAS = FANTASMAS' : TP() ? 'CÂMERA ATRÁS DO PAC-MAN' : 'VISÃO DE CIMA'); };
   [1, 2, 3].forEach(function (n) { document.getElementById('pmN' + n).onclick = function () { novo(n); }; });
   [['facil', 1], ['dificil', 2], ['impossivel', 3]].forEach(function (d) { document.getElementById('pmD' + d[1]).onclick = function () { MM.nivel = d[0]; try { localStorage.setItem('uc_mm', d[0]); } catch (e) {} novo(); }; });
   function loop() {
@@ -13763,6 +13447,14 @@ function pmIniciar() {
         P.forEach(function (p) { if (!p.vivo || p.inv > 0) return; if (Math.hypot(g.m.g.position.x - p.m.g.position.x, g.m.g.position.z - p.m.g.position.z) < 1.5) {
           if (ass) { score += 200; g.x = GS[g.gi][0]; g.y = GS[g.gi][1]; g.mv = 0; g.resp = 3; } else { p.vidas--; p.inv = 2.5; flash = 1; p.x = p.sx; p.y = p.sy; p.mv = 0; if (p.vidas <= 0) p.vivo = false; if (!P.some(function (q) { return q.vivo; })) { over = true; msg('GAME OVER'); } } } }); });
     }
+    var fpOn = FP(), tpOn = TP(); P.forEach(function (p, i) { var h = fpOn && i === 0; p.m.top.visible = !h; p.m.bot.visible = !h; });
+    if (P[0]) { P[0].m.l.position.y = fpOn ? 0.5 : tpOn ? 2.2 : 3; P[0].m.l.distance = (fpOn || tpOn) ? 20 : 14; }
+    if ((fpOn || tpOn) && P[0]) { var p0 = P[0], tg = Math.atan2(-p0.dir[0], -p0.dir[1]); if (fpYaw === null) fpYaw = tg; var dfa = tg - fpYaw; dfa = Math.atan2(Math.sin(dfa), Math.cos(dfa)); fpYaw += dfa * Math.min(1, dt * (fpOn ? 10 : 6));
+      var pp = p0.m.g.position;
+      if (fpOn) { cam.position.set(pp.x, 1.25 + (p0.mv ? Math.sin(T * 11) * 0.04 : 0), pp.z); cam.rotation.set(0, fpYaw, 0); }
+      else { var cfx = -Math.sin(fpYaw), cfz = -Math.cos(fpYaw); cam.position.set(pp.x - cfx * 4.3, 3.5, pp.z - cfz * 4.3); cam.lookAt(pp.x + cfx * 2.2, 0.5, pp.z + cfz * 2.2); }
+      if (fr % 3 === 0) desenhaMapa(); }
+    setaFantasmas((fpOn || tpOn) && !over);
     if (msgT > 0) { msgT -= dt; if (msgT <= 0) document.getElementById('pmMsg').textContent = over ? 'GAME OVER' : ''; }
     flash = Math.max(0, flash - dt * 1.5); document.getElementById('pmFl').style.opacity = flash * 0.5;
     if (fr % 8 === 0) document.getElementById('pmH').innerHTML = 'Pontos: <b style="color:#ffd600">' + score + '</b> · ' + P.map(function (p, i) { return 'P' + (i + 1) + ' ' + (p.vivo ? '♥'.repeat(p.vidas) : '☠'); }).join(' ') + '<br>Labirinto muda em <b>' + Math.ceil(tm) + 's</b> · IA ' + ({ facil: 'Médio', dificil: 'Difícil', impossivel: 'Impossível' }[MM.nivel] || 'Médio') + '<br><span style="font-size:11px;color:#9aa">P1 WASD/botões · P2 setas · P3 IJKL</span>';
@@ -13770,6 +13462,114 @@ function pmIniciar() {
   }
   PM.ok = true; PM.loop = loop; novo(1); loop();
 }
+</script>
+
+<script>
+/* ===== Interface Mobile Compacto — navegação e aparência (usa as funções reais do app) ===== */
+function ucMenu(force) {
+  var nav = document.getElementById('ucSideNav'), back = document.getElementById('ucBackdrop'), btn = document.getElementById('menuButton');
+  var abrir = (typeof force === 'boolean') ? force : !nav.classList.contains('open');
+  nav.classList.toggle('open', abrir); back.classList.toggle('open', abrir);
+  if (btn) btn.setAttribute('aria-expanded', String(abrir));
+}
+function ucSincronizarNav(id) {
+  var equipe = ['tabEquipe', 'tab4', 'tab5', 'tab6'];
+  document.querySelectorAll('[data-uc]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-uc') === id); });
+  var itemEquipe = document.querySelector('.uc-side [data-uc="tabEquipe"]');
+  if (itemEquipe && equipe.indexOf(id) >= 0) itemEquipe.classList.add('active');
+  ucMenu(false);
+  var el = document.getElementById(id); if (el) el.scrollTop = 0;
+}
+(function () {
+  var orig = window.abrirAba;
+  window.abrirAba = function (id, btn) {
+    var r = orig.apply(this, arguments);
+    try { ucSincronizarNav(id); } catch (e) {}
+    return r;
+  };
+})();
+function ucIrParaMural() {
+  abrirAba('tab1');
+  var el = document.getElementById('chatMessages'), card = el && el.closest ? el.closest('.card') : null;
+  if (card) { card.classList.remove('fechado'); setTimeout(function () { try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {} }, 120); }
+}
+function ucAplicarAparencia() {
+  var hero = document.getElementById('heroFotoInicio');
+  if (hero) {
+    if (!window.UC_HERO_PADRAO) window.UC_HERO_PADRAO = hero.getAttribute('src');
+    var uf = ''; try { uf = urlSegura(CONFIG.fotoInicio); } catch (e) {}
+    hero.style.display = ''; hero.src = uf || window.UC_HERO_PADRAO;
+  }
+  var logo = null, fundo = null;
+  try { logo = localStorage.getItem('uc_logo'); fundo = localStorage.getItem('uc_fundo'); } catch (e) {}
+  var l1 = document.getElementById('headerLogo1');
+  if (logo && l1) { l1.src = logo; l1.style.display = 'block'; }
+  document.body.style.backgroundImage = fundo ? 'url("' + fundo + '")' : '';
+}
+(function () {
+  var orig = window.aplicarConfig;
+  if (typeof orig === 'function') window.aplicarConfig = function () { var r = orig.apply(this, arguments); try { ucAplicarAparencia(); } catch (e) {} return r; };
+})();
+function ucLerImagem(arquivo, maxLado, tipo, qualidade) {
+  return new Promise(function (ok, erro) {
+    var leitor = new FileReader();
+    leitor.onerror = erro;
+    leitor.onload = function () {
+      var img = new Image();
+      img.onerror = erro;
+      img.onload = function () {
+        var k = Math.min(1, maxLado / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        ok(c.toDataURL(tipo, qualidade));
+      };
+      img.src = leitor.result;
+    };
+    leitor.readAsDataURL(arquivo);
+  });
+}
+function ucEscolherImagem(tipo, input) {
+  var arq = input.files && input.files[0];
+  if (!arq) return;
+  if (!/^image\//i.test(arq.type)) { mostrarToast('Selecione um arquivo de imagem.', 'erro'); return; }
+  var logo = tipo === 'logo';
+  ucLerImagem(arq, logo ? 300 : 1200, logo ? 'image/png' : 'image/jpeg', 0.75).then(function (data) {
+    try { localStorage.setItem(logo ? 'uc_logo' : 'uc_fundo', data); }
+    catch (e) { mostrarToast('Imagem grande demais para guardar neste aparelho.', 'erro'); return; }
+    ucAplicarAparencia();
+    mostrarToast(logo ? 'Logo atualizado.' : 'Foto de fundo atualizada.');
+  }).catch(function () { mostrarToast('Não foi possível abrir a imagem.', 'erro'); });
+  input.value = '';
+}
+function ucRemoverImagem(tipo) {
+  try { localStorage.removeItem(tipo === 'logo' ? 'uc_logo' : 'uc_fundo'); } catch (e) {}
+  if (tipo === 'logo') { try { aplicarConfig(); } catch (e) {} }
+  ucAplicarAparencia();
+  mostrarToast(tipo === 'logo' ? 'Logo padrão restaurado.' : 'Foto de fundo removida.');
+}
+function uploadFotoInicioApp(input) {
+  var arq = input.files && input.files[0];
+  if (!arq) return;
+  if (!/^image\//i.test(arq.type)) { mostrarToast('Selecione um arquivo de imagem.', 'erro'); return; }
+  mostrarToast('Processando foto...');
+  comprimirImagem(arq, 900, 0.72).then(function (d) {
+    var h = $('cfgFotoInicio'); if (h) h.value = d;
+    var prev = $('previewFotoInicio');
+    if (prev) {
+      if (prev.tagName === 'IMG') prev.src = d;
+      else { var img = document.createElement('img'); img.id = 'previewFotoInicio'; img.src = d; img.alt = 'Foto do topo'; img.style.cssText = 'max-height:110px; max-width:100%; border-radius:10px; border:1px solid var(--card-border); margin:4px auto; display:block;'; prev.parentNode.replaceChild(img, prev); }
+    }
+    input.value = '';
+    mostrarToast('Foto carregada. Clique em Salvar Configurações.');
+  }).catch(function () { mostrarToast('Não foi possível processar a imagem.', 'erro'); });
+}
+function removerFotoInicioApp() {
+  var h = $('cfgFotoInicio'); if (h) h.value = '';
+  var prev = $('previewFotoInicio');
+  if (prev && prev.tagName === 'IMG') { var div = document.createElement('div'); div.id = 'previewFotoInicio'; div.className = 'sem-dados'; div.style.padding = '16px 0'; div.textContent = 'Foto padrão'; prev.parentNode.replaceChild(div, prev); }
+  mostrarToast('Foto padrão restaurada. Clique em Salvar Configurações.');
+}
+document.addEventListener('DOMContentLoaded', function () { try { ucAplicarAparencia(); } catch (e) {} });
 </script>
 </body>
 </html>
