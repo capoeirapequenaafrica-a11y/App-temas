@@ -654,6 +654,14 @@ header#headerAppTopo .logos-header-box{ gap:10px; flex:1; }
 .status-firebase{ display:inline-flex; align-items:center; gap:5px; background:transparent !important; margin:0 !important; padding:0 !important; font-size:.72rem !important; font-weight:700; }
 .status-firebase:before{ content:""; width:8px; height:8px; border-radius:50%; background:currentColor; box-shadow:0 0 12px currentColor; }
 .status-online{ color:var(--green) !important; } .status-offline{ color:#ff8796 !important; }
+
+.tr-cal-dia.tr-cal-sel {
+  outline: 2px solid #ffc107 !important;
+  box-shadow: 0 0 0 2px rgba(255,193,7,0.35);
+  position: relative;
+}
+.tr-cal-dia.tr-cal-sel small { color: #ffc107; font-weight: 800; }
+
 /* Mobile compacto DESATIVADO */
 .tabs-container, #dicaAcessoEquipe, footer{ display:block !important; }
 #menuButton, .uc-backdrop, .uc-side, .uc-bottom, .uc-icon-btn{ display:none !important; }
@@ -1688,8 +1696,17 @@ function ucIrParaBackup() { location.href = ucUrlBackup(); }
       if (!vivo) { mostrarAviso('Alguns arquivos não carregaram.'); return; }
       var ruins = [];
       try { ruins = window.UCProtecao.diagnostico().filter(function (x) { return !x.ok; }); } catch (e) {}
-      if (ruins.length) mostrarAviso('Faltam partes do app (' + ruins.map(function (x) { return x.nome; }).join(', ') + ').');
-      else if (UC_ERROS_BOOT.length >= 6) mostrarAviso('Ocorreram vários erros ao iniciar.');
+      var criticos = ruins.filter(function (x) {
+        return (x.faltas || []).some(function (f) {
+          return f === 'botão da aba' || f === 'área da aba' || (typeof f === 'string' && f.charAt(0) === '#');
+        });
+      });
+      if (criticos.length && UC_ERROS_BOOT.length >= 3) {
+        mostrarAviso('Faltam partes do app (' + criticos.map(function (x) { return x.nome; }).join(', ') + ').');
+      } else if (UC_ERROS_BOOT.length >= 8) {
+        mostrarAviso('Ocorreram vários erros ao iniciar.');
+      }
+      if (ruins.length) { try { console.warn('[Protecao]', ruins); } catch (e2) {} }
     }, 6000);
   });
 })();
@@ -12164,26 +12181,98 @@ function trCalMontar(containerId, alunoId, modo) {
   trCalRender(containerId);
 }
 
+function trCalSelSet(containerId) {
+  if (!TR_CAL_SEL[containerId]) TR_CAL_SEL[containerId] = {};
+  return TR_CAL_SEL[containerId];
+}
+function trCalToggleSel(containerId, iso) {
+  var s = trCalSelSet(containerId);
+  if (s[iso]) delete s[iso]; else s[iso] = true;
+  trCalRender(containerId);
+}
+function trCalLimparSel(containerId) {
+  TR_CAL_SEL[containerId] = {};
+  trCalRender(containerId);
+}
+function trCalSelLista(containerId) {
+  return Object.keys(trCalSelSet(containerId)).sort();
+}
 function trCalRender(containerId) {
   var box = document.getElementById(containerId), st = TR_CALS[containerId];
   if (!box || !st) return;
   var aluno = DB.buscar('alunos', st.alunoId);
   if (!aluno) { box.innerHTML = '<p class="sem-dados">Escolha um aluno para ver o calendário.</p>'; return; }
   var hoje = dataLocalISO(), primeiro = new Date(st.ano, st.mes, 1), diasNoMes = new Date(st.ano, st.mes + 1, 0).getDate();
-  var treinou = 0, faltas = 0, min = 0, h = '<div class="tr-sem-nav"><button class="btn btn-secondary btn-mini" onclick="trCalMes(\'' + containerId + '\',-1)"><i class="fas fa-chevron-left"></i></button>' +
-    '<b>' + TR_MESES[st.mes] + ' ' + st.ano + '</b><button class="btn btn-secondary btn-mini" onclick="trCalMes(\'' + containerId + '\',1)"><i class="fas fa-chevron-right"></i></button></div><div class="tr-cal">';
+  var sel = trCalSelSet(containerId), nSel = Object.keys(sel).length;
+  var multi = !!st.multi;
+  var treinou = 0, faltas = 0, min = 0;
+  var h = '<div class="tr-sem-nav"><button class="btn btn-secondary btn-mini" onclick="trCalMes(\'' + containerId + '\',-1)"><i class="fas fa-chevron-left"></i></button>' +
+    '<b>' + TR_MESES[st.mes] + ' ' + st.ano + '</b><button class="btn btn-secondary btn-mini" onclick="trCalMes(\'' + containerId + '\',1)"><i class="fas fa-chevron-right"></i></button></div>';
+  h += '<div class="flex-btn" style="margin:6px 0;gap:6px;">' +
+    '<button type="button" class="btn btn-mini ' + (multi ? 'btn-gold' : 'btn-secondary') + '" onclick="trCalModoMulti(\'' + containerId + '\')"><i class="fas fa-check-double"></i> ' + (multi ? 'Seleção múltipla: ON' : 'Selecionar vários dias') + '</button>' +
+    (nSel ? '<button type="button" class="btn btn-mini btn-secondary" onclick="trCalLimparSel(\'' + containerId + '\')">Limpar (' + nSel + ')</button>' : '') +
+    '</div>';
+  h += '<div class="tr-cal">';
   TR_DIAS_CURTOS.forEach(function (d) { h += '<div class="tr-cal-cab">' + d + '</div>'; });
   for (var v = 0; v < primeiro.getDay(); v++) h += '<div class="tr-cal-dia tr-cal-vazio"></div>';
   for (var d = 1; d <= diasNoMes; d++) {
     var iso = st.ano + '-' + ('0' + (st.mes + 1)).slice(-2) + '-' + ('0' + d).slice(-2), e = trCalEstadoDia(aluno, iso, hoje);
     if (e.cls === 'ok') { treinou++; min += trItensDoDia(iso, aluno.id, e.p).total; }
     if (e.cls === 'falta') faltas++;
-    h += '<button type="button" class="tr-cal-dia ' + e.cls + (iso === hoje ? ' hoje' : '') + '" onclick="trCalDia(\'' + containerId + '\',\'' + iso + '\')"><span>' + d + '</span><small>' + e.ico + '</small></button>';
+    var marcado = !!sel[iso];
+    var cls = 'tr-cal-dia ' + e.cls + (iso === hoje ? ' hoje' : '') + (marcado ? ' tr-cal-sel' : '');
+    var click = multi
+      ? 'trCalToggleSel(\'' + containerId + '\',\'' + iso + '\')'
+      : 'trCalDia(\'' + containerId + '\',\'' + iso + '\')';
+    h += '<button type="button" class="' + cls + '" onclick="' + click + '"><span>' + d + '</span><small>' + (marcado ? '✓' : e.ico) + '</small></button>';
   }
-  h += '</div><div class="tr-legenda"><span><i style="background:#00e676"></i>treinou</span><span><i style="background:#ffc107"></i>pendente</span><span><i style="background:#ef5350"></i>não treinou</span><span><i style="background:#00d2ff"></i>aula prevista</span></div>' +
-    '<p class="mini" style="margin-top:6px;"><b>' + treinou + '</b> dia(s) treinado(s) · <b>' + faltas + '</b> sem treino · carga do mês <b>' + trMinParaTexto(min) + '</b>. Toque em um dia para ver os detalhes' +
-    (st.modo === 'equipe' ? ' e ajustar.' : ' ou pedir ajuste ao professor.') + '</p>';
+  h += '</div><div class="tr-legenda"><span><i style="background:#00e676"></i>treinou</span><span><i style="background:#ffc107"></i>pendente</span><span><i style="background:#ef5350"></i>não treinou</span><span><i style="background:#00d2ff"></i>aula prevista</span><span><i style="background:#ffc107;outline:2px solid #fff"></i>selecionado</span></div>' +
+    '<p class="mini" style="margin-top:6px;"><b>' + treinou + '</b> dia(s) treinado(s) · <b>' + faltas + '</b> sem treino · carga do mês <b>' + trMinParaTexto(min) + '</b>.</p>';
+  if (multi) {
+    h += '<p class="mini">Modo seleção: toque nos dias para marcar. ' + (nSel ? ('<b>' + nSel + '</b> selecionado(s).') : 'Nenhum dia selecionado.') + '</p>';
+    if (nSel && st.modo === 'equipe') {
+      h += '<div class="flex-btn" style="margin-top:8px;">' +
+        '<button class="btn" onclick="trCalLote(\'' + containerId + '\',\'treinou\')"><i class="fas fa-check"></i> Marcar ' + nSel + ' dia(s) como treinou</button>' +
+        '<button class="btn btn-danger" onclick="trCalLote(\'' + containerId + '\',\'naotreinou\')"><i class="fas fa-xmark"></i> Marcar como não treinou</button>' +
+        '</div>';
+    } else if (nSel && st.modo !== 'equipe') {
+      h += '<p class="mini">Aluno: use a seleção para pedir ajuste de vários dias ao professor (toque em um dia com a seleção desligada para detalhar).</p>';
+    }
+  } else {
+    h += '<p class="mini">Toque em um dia para ver detalhes' + (st.modo === 'equipe' ? ' e ajustar.' : ' ou pedir ajuste ao professor.') + ' Use <b>Selecionar vários dias</b> para marcar em lote.</p>';
+  }
   box.innerHTML = h;
+}
+function trCalModoMulti(containerId) {
+  var st = TR_CALS[containerId]; if (!st) return;
+  st.multi = !st.multi;
+  if (!st.multi) TR_CAL_SEL[containerId] = {};
+  trCalRender(containerId);
+}
+function trCalLote(containerId, acao) {
+  var st = TR_CALS[containerId]; if (!st || st.modo !== 'equipe' || !trEquipeLogada()) { mostrarToast('Só a equipe pode ajustar em lote.', 'erro'); return; }
+  var dias = trCalSelLista(containerId);
+  if (!dias.length) { mostrarToast('Selecione pelo menos um dia.', 'erro'); return; }
+  var aluno = DB.buscar('alunos', st.alunoId); if (!aluno) return;
+  var obs = prompt('Observação do ajuste em lote (' + dias.length + ' dia(s)):', acao === 'treinou' ? 'Ajuste em lote: treinou' : 'Ajuste em lote: não treinou') || '';
+  var i = 0;
+  function proximo() {
+    if (i >= dias.length) {
+      TR_CAL_SEL[containerId] = {};
+      st.multi = false;
+      mostrarToast('Ajuste aplicado em ' + dias.length + ' dia(s).');
+      trCalRender(containerId);
+      return;
+    }
+    var iso = dias[i++];
+    try {
+      Promise.resolve(trCalProf(aluno.id, iso, acao, obs)).catch(function () {}).then(proximo);
+    } catch (e) {
+      try { trCalProf(aluno.id, iso, acao); } catch (e2) {}
+      setTimeout(proximo, 50);
+    }
+  }
+  proximo();
 }
 function trCalMes(containerId, delta) {
   var st = TR_CALS[containerId]; if (!st) return;
@@ -12239,9 +12328,10 @@ function trCalPedirAjuste(alunoId, iso) {
   }).then(function () { fecharModal(); mostrarToast('Pedido enviado ao professor!'); registroLog('aluno', 'Pedido de ajuste de calendário ' + iso + ' (' + a.nome + ')'); if (typeof renderAluno === 'function') renderAluno(); });
 }
 
-function trCalProf(alunoId, iso, acao) {
-  var a = DB.buscar('alunos', alunoId); if (!a || !trEquipeLogada()) return;
-  var obs = (($('trCalObs') || {}).value || '').trim(), p = trPresencaDoDia(a, iso), quem = sessaoEquipe.nome || 'Professor';
+function trCalProf(alunoId, iso, acao, obsForcada) {
+  var a = DB.buscar('alunos', alunoId); if (!a || !trEquipeLogada()) return Promise.resolve();
+  var obs = (obsForcada != null && obsForcada !== '') ? String(obsForcada) : ((($('trCalObs') || {}).value || '').trim());
+  var p = trPresencaDoDia(a, iso), quem = (sessaoEquipe && sessaoEquipe.nome) || 'Professor';
   var fim = function (msg) { fecharModal(); mostrarToast(msg); registroLog('professor', msg + ' (' + a.nome + ', ' + iso + ')'); trCalRenderTodos(); if (typeof renderAbaProfessor === 'function') renderAbaProfessor(); };
   if (acao === 'treinou') {
     var it = trItensDoDia(iso, a.id, null), patch = { status: 'aprovado', observacaoProfessor: obs || 'Ajustado pelo professor no calendário.', avaliadoPor: quem, avaliadoEm: agoraISO(), treinoItens: it.itens, horasAula: trHoras(it.total) };
@@ -12323,10 +12413,72 @@ var UC_BIO_KEY = 'uc_bio_v87';
 var UC_ULTIMO_ALUNO_KEY = 'uc_ultimo_aluno_v87';
 
 function bioSuportado() {
-  return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && window.isSecureContext);
+  try {
+    return !!(window.isSecureContext && window.PublicKeyCredential && navigator.credentials &&
+      typeof navigator.credentials.create === 'function' && typeof navigator.credentials.get === 'function');
+  } catch (e) { return false; }
 }
+
+/* base64url (padrão WebAuthn) — evita falha no celular */
+function bioB64(buf) {
+  var b = buf instanceof ArrayBuffer ? new Uint8Array(buf) : (buf && buf.buffer ? new Uint8Array(buf.buffer) : new Uint8Array(buf || []));
+  var s = '';
+  for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+function bioDeB64(str) {
+  if (!str) return new Uint8Array(0);
+  var s = String(str).replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  try {
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  } catch (e) {
+    try {
+      var bin2 = atob(String(str)), out2 = new Uint8Array(bin2.length);
+      for (var j = 0; j < bin2.length; j++) out2[j] = bin2.charCodeAt(j);
+      return out2;
+    } catch (e2) { return new Uint8Array(0); }
+  }
+}
+function bioDesafio() {
+  var c = new Uint8Array(32);
+  (window.crypto || window.msCrypto).getRandomValues(c);
+  return c;
+}
+function bioTexto(s) {
+  try { return new TextEncoder().encode(String(s)).slice(0, 64); }
+  catch (e) {
+    var t = String(s), a = new Uint8Array(Math.min(64, t.length));
+    for (var i = 0; i < a.length; i++) a[i] = t.charCodeAt(i) & 255;
+    return a;
+  }
+}
+function bioErroMsg(e) {
+  if (!e) return 'Erro desconhecido.';
+  var n = e.name || '', m = e.message || String(e);
+  if (n === 'NotAllowedError') return 'Cancelado ou bloqueado pelo aparelho. Tente de novo e confirme a digital/rosto/PIN.';
+  if (n === 'InvalidStateError') return 'Esta digital já está cadastrada neste aparelho. Tente entrar ou desative e ative de novo.';
+  if (n === 'NotSupportedError') return 'Este aparelho/navegador não suporta biometria aqui.';
+  if (n === 'SecurityError') return 'Bloqueado por segurança. Abra o app pelo link HTTPS da academia (não por arquivo local).';
+  if (n === 'AbortError') return 'Operação cancelada.';
+  if (n === 'NetworkError') return 'Falha de rede ao validar. Tente de novo.';
+  return (n ? n + ': ' : '') + m;
+}
+function bioRpId() {
+  try {
+    var h = location.hostname || '';
+    if (!h || h === 'localhost' || h === '127.0.0.1') return h || undefined;
+    return h;
+  } catch (e) { return undefined; }
+}
+
 function bioConfig() {
-  try { var local = JSON.parse(localStorage.getItem(UC_BIO_KEY) || 'null'); if (local && local.credId) return local; } catch (e) {}
+  try {
+    var local = JSON.parse(localStorage.getItem(UC_BIO_KEY) || 'null');
+    if (local && local.credId) return local;
+  } catch (e) {}
   try {
     if (typeof DB !== 'undefined' && DB.listar) {
       var lista = DB.listar('bioCredenciais') || [];
@@ -12334,7 +12486,7 @@ function bioConfig() {
       var hit = a ? lista.filter(function (r) { return r.alunoId === a.id; })[0] : null;
       if (!hit && lista.length === 1) hit = lista[0];
       if (hit && hit.credId) {
-        var rec = { alunoId: hit.alunoId, nome: hit.displayName, credId: hit.credId, criadoEm: hit.criadoEm };
+        var rec = { alunoId: hit.alunoId, nome: hit.displayName || hit.nome, credId: hit.credId, criadoEm: hit.criadoEm };
         try { localStorage.setItem(UC_BIO_KEY, JSON.stringify(rec)); } catch (e2) {}
         return rec;
       }
@@ -12342,109 +12494,218 @@ function bioConfig() {
   } catch (e3) {}
   return null;
 }
-function bioB64(buf) { var b = new Uint8Array(buf), s = ''; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
-function bioDeB64(str) { var s = atob(str), b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
-function bioDesafio() { var c = new Uint8Array(32); (window.crypto || window.msCrypto).getRandomValues(c); return c; }
-function bioTexto(s) { return new TextEncoder().encode(String(s)); }
 
 function bioAtivar() {
   var a = alunoLogado();
   if (!a) { mostrarToast('Entre com sua senha primeiro.', 'erro'); return; }
-  if (!bioSuportado()) { mostrarToast('Este aparelho/navegador não permite digital neste endereço. Use a senha.', 'erro'); return; }
-  navigator.credentials.create({ publicKey: {
+  if (!bioSuportado()) {
+    mostrarToast('Biometria indisponível. Use HTTPS (site da academia) e um navegador atualizado.', 'erro');
+    return;
+  }
+  mostrarToast('Confirme a digital, o rosto ou o PIN no aparelho…');
+  var rpId = bioRpId();
+  var pubKey = {
     challenge: bioDesafio(),
-    rp: { name: 'Universo Capoeira', id: location.hostname },
-    user: { id: bioTexto(a.id), name: a.nome, displayName: a.apelido || a.nome },
-    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
-    timeout: 60000, attestation: 'none'
-  } }).then(function (cred) {
-    var rec = { alunoId: a.id, nome: a.apelido || a.nome, credId: bioB64(cred.rawId), criadoEm: agoraISO() };
-    try { localStorage.setItem(UC_BIO_KEY, JSON.stringify(rec)); } catch (e) {}
+    rp: { name: 'Universo Capoeira' },
+    user: {
+      id: bioTexto(a.id || a.nome || ('aluno_' + Date.now())),
+      name: String(a.nome || 'aluno').slice(0, 64),
+      displayName: String(a.apelido || a.nome || 'Aluno').slice(0, 64)
+    },
+    pubKeyCredParams: [
+      { type: 'public-key', alg: -7 },
+      { type: 'public-key', alg: -257 }
+    ],
+    authenticatorSelection: {
+      userVerification: 'required',
+      residentKey: 'preferred'
+    },
+    timeout: 90000,
+    attestation: 'none'
+  };
+  if (rpId) pubKey.rp.id = rpId;
+  /* não força só "platform" — alguns Androids falham; tenta platform primeiro via preferência implícita */
+
+  var tentar = function (opts) {
+    return navigator.credentials.create({ publicKey: opts });
+  };
+
+  tentar(pubKey).catch(function (e1) {
+    /* fallback: com authenticatorAttachment platform */
+    var opts2 = JSON.parse(JSON.stringify({
+      challenge: Array.from(pubKey.challenge),
+      rp: pubKey.rp,
+      user: { id: Array.from(pubKey.user.id), name: pubKey.user.name, displayName: pubKey.user.displayName },
+      pubKeyCredParams: pubKey.pubKeyCredParams,
+      authenticatorSelection: {
+        authenticatorAttachment: 'platform',
+        userVerification: 'required',
+        residentKey: 'preferred'
+      },
+      timeout: 90000,
+      attestation: 'none'
+    }));
+    opts2.challenge = bioDesafio();
+    opts2.user.id = bioTexto(a.id || a.nome || 'aluno');
+    return tentar(opts2);
+  }).then(function (cred) {
+    if (!cred || !cred.rawId) throw new Error('Credencial vazia');
+    var rec = {
+      alunoId: a.id,
+      nome: a.apelido || a.nome,
+      credId: bioB64(cred.rawId),
+      criadoEm: agoraISO(),
+      rpId: rpId || ''
+    };
+    try { localStorage.setItem(UC_BIO_KEY, JSON.stringify(rec)); } catch (e) {
+      mostrarToast('Não deu para salvar neste aparelho (armazenamento cheio?).', 'erro');
+      return;
+    }
     try {
       if (typeof DB !== 'undefined' && DB.salvar) {
-        DB.salvar('bioCredenciais', { id: 'bio_aluno_' + a.id, chave: 'aluno:' + a.id, alunoId: a.id, credId: rec.credId, displayName: rec.nome, criadoEm: rec.criadoEm, aparelho: (navigator.userAgent || '').slice(0, 120) });
-        a.bioCredId = rec.credId; a.bioAtualizadoEm = rec.criadoEm; DB.salvar('alunos', a);
+        DB.salvar('bioCredenciais', {
+          id: 'bio_aluno_' + a.id,
+          chave: 'aluno:' + a.id,
+          alunoId: a.id,
+          credId: rec.credId,
+          displayName: rec.nome,
+          criadoEm: rec.criadoEm,
+          rpId: rec.rpId,
+          aparelho: (navigator.userAgent || '').slice(0, 120)
+        });
+        try { a.bioCredId = rec.credId; a.bioAtualizadoEm = rec.criadoEm; DB.salvar('alunos', a); } catch (eA) {}
       }
     } catch (eDB) {}
-    mostrarToast('Acesso rápido ativado e salvo no banco!');
+    mostrarToast('Digital / rosto ativado neste aparelho!');
     registroLog('auth', 'Acesso por biometria ativado: ' + a.nome);
-    renderAluno();
+    try { renderAluno(); } catch (eR) {}
   }).catch(function (e) {
-    mostrarToast(e && e.name === 'NotAllowedError' ? 'Cancelado. Nada foi ativado.' : 'Não foi possível ativar a digital neste aparelho.', 'erro');
+    console.warn('[bioAtivar]', e);
+    mostrarToast(bioErroMsg(e), 'erro');
   });
 }
+
 function bioDesativar() {
   try { localStorage.removeItem(UC_BIO_KEY); } catch (e) {}
+  try {
+    var a = alunoLogado();
+    if (a && typeof DB !== 'undefined' && DB.listar) {
+      var lista = DB.listar('bioCredenciais') || [];
+      lista.forEach(function (r) {
+        if (r.alunoId === a.id && DB.excluir) try { DB.excluir('bioCredenciais', r.id); } catch (e2) {}
+      });
+    }
+  } catch (e3) {}
   mostrarToast('Acesso rápido desativado. Você continua entrando com a senha.');
-  renderAluno();
+  try { renderAluno(); } catch (e4) {}
 }
+
 function bioEntrar() {
   var cfg = bioConfig();
-  if (!cfg) { mostrarToast('Acesso rápido não está ativado neste aparelho.', 'erro'); return; }
-  if (!DB.carregado('alunos')) { mostrarToast('Aguarde os dados carregarem e tente de novo.', 'erro'); return; }
-  navigator.credentials.get({ publicKey: {
-    challenge: bioDesafio(), rpId: location.hostname, timeout: 60000, userVerification: 'required',
-    allowCredentials: [{ id: bioDeB64(cfg.credId), type: 'public-key', transports: ['internal'] }]
-  } }).then(function () {
-    var a = DB.buscar('alunos', cfg.alunoId);
+  if (!cfg || !cfg.credId) { mostrarToast('Acesso rápido não está ativado neste aparelho. Entre com a senha e ative no painel.', 'erro'); return; }
+  if (!bioSuportado()) { mostrarToast('Biometria indisponível neste navegador.', 'erro'); return; }
+  if (typeof DB !== 'undefined' && DB.carregado && !DB.carregado('alunos')) {
+    mostrarToast('Aguarde os dados carregarem e tente de novo.', 'erro');
+    return;
+  }
+  mostrarToast('Confirme a digital / rosto / PIN…');
+  var idBuf = bioDeB64(cfg.credId);
+  if (!idBuf || !idBuf.length) {
+    mostrarToast('Credencial inválida. Entre com a senha e ative a digital de novo.', 'erro');
+    return;
+  }
+  var getOpts = {
+    challenge: bioDesafio(),
+    timeout: 90000,
+    userVerification: 'required',
+    allowCredentials: [{ id: idBuf, type: 'public-key', transports: ['internal', 'hybrid'] }]
+  };
+  var rpId = bioRpId();
+  if (rpId) getOpts.rpId = rpId;
+
+  navigator.credentials.get({ publicKey: getOpts }).then(function (asserted) {
+    if (!asserted) throw new Error('Sem resposta do aparelho');
+    var a = null;
+    try { a = DB.buscar('alunos', cfg.alunoId); } catch (e) {}
+    if (!a) {
+      try {
+        DB.listar('alunos').forEach(function (x) {
+          if (!a && (x.id === cfg.alunoId || normalizar(x.nome) === normalizar(cfg.nome || ''))) a = x;
+        });
+      } catch (e2) {}
+    }
     if (!a) { mostrarToast('Aluno não encontrado. Entre com a senha.', 'erro'); return; }
     sessaoAlunoId = a.id;
+    try { localStorage.setItem('uc_sessao_aluno_v87', a.id); } catch (e3) {}
     registroLog('auth', 'Aluno entrou com biometria: ' + a.nome);
-    renderAluno(); renderCheckin();
+    try { renderAluno(); } catch (e4) {}
+    try { renderCheckin(); } catch (e5) {}
     mostrarToast('Bem-vindo(a), ' + (a.apelido || a.nome) + '!');
-  }).catch(function () { mostrarToast('Não reconhecido. Tente de novo ou use a senha.', 'erro'); });
+  }).catch(function (e) {
+    console.warn('[bioEntrar]', e);
+    mostrarToast(bioErroMsg(e), 'erro');
+  });
 }
 
 /* cartão "Acesso rápido" (painel do aluno) */
 function bioHtmlCard(logado) {
   var cfg = bioConfig(), ativo = cfg && cfg.alunoId === logado.id, sup = bioSuportado();
-  return '<div class="card tr-card" id="trCardAcesso"><h3><i class="fas fa-fingerprint"></i> Acesso rápido (opcional)</h3>' +
-    '<p class="mini" style="margin-bottom:8px;">Entre no seu painel com a <b>digital, o rosto ou o PIN do celular</b> em vez de digitar a senha. Só funciona neste aparelho e a senha continua valendo.</p>' +
+  var httpsOk = false;
+  try { httpsOk = !!window.isSecureContext; } catch (e) {}
+  var status = '';
+  if (!httpsOk) status = '<p class="mini" style="color:var(--danger);">Abra o app pelo link HTTPS da academia para usar a digital.</p>';
+  else if (!sup) status = '<p class="mini">Este navegador não oferece biometria. Use Chrome/Safari atualizado.</p>';
+  return '<div class="card tr-card" id="trCardAcesso" style="border:1px solid var(--accent-blue);">' +
+    '<h3><i class="fas fa-fingerprint"></i> Acesso rápido (digital / rosto)</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Depois de ativar, você entra sem digitar a senha <b>neste aparelho</b>. A senha continua valendo.</p>' +
+    status +
     (ativo
-      ? '<p class="mini" style="color:var(--primary-green);margin-bottom:6px;"><i class="fas fa-check-circle"></i> Ativado neste aparelho.</p><button class="btn btn-secondary" onclick="bioDesativar()"><i class="fas fa-ban"></i> Desativar</button>'
-      : (sup ? '<button class="btn" onclick="bioAtivar()"><i class="fas fa-fingerprint"></i> Ativar digital / rosto</button>'
-             : '<p class="mini">Indisponível neste navegador ou endereço. Use a senha normalmente.</p>')) + '</div>';
+      ? '<p class="mini" style="color:var(--primary-green);margin-bottom:6px;"><i class="fas fa-check-circle"></i> Ativado neste aparelho' + (cfg.nome ? ' (' + esc(cfg.nome) + ')' : '') + '.</p>' +
+        '<div class="flex-btn"><button class="btn btn-secondary" onclick="bioDesativar()"><i class="fas fa-ban"></i> Desativar</button>' +
+        '<button class="btn" onclick="bioAtivar()"><i class="fas fa-sync"></i> Reativar</button></div>'
+      : (sup
+          ? '<button class="btn btn-gold" onclick="bioAtivar()"><i class="fas fa-fingerprint"></i> Ativar digital / rosto / PIN</button>' +
+            '<p class="mini" style="margin-top:6px;">O celular vai pedir sua digital, rosto ou PIN para confirmar.</p>'
+          : '<p class="mini">Indisponível neste ambiente. Use a senha normalmente.</p>')) +
+    '</div>';
 }
 
-/* tela de login: nome lembrado + botão de digital */
+/* tela de login: sempre mostra área de digital */
 function bioInjetarLogin() {
   var card = $('cardAlunoLogin'); if (!card) return;
-  var nome = $('alunoLoginNome'), ultimo = ''; try { ultimo = localStorage.getItem(UC_ULTIMO_ALUNO_KEY) || ''; } catch (e) {}
+  var nome = $('alunoLoginNome'), ultimo = '';
+  try { ultimo = localStorage.getItem(UC_ULTIMO_ALUNO_KEY) || ''; } catch (e) {}
   if (nome && !nome.value && ultimo) nome.value = ultimo;
   var btn = $('btnBioEntrar'), dica = $('txtBioLoginDica'), cfg = bioConfig(), sup = bioSuportado();
-  /* se o HTML estático não existir, recria o bloco */
   if (!$('trBioLogin')) {
     var div = document.createElement('div'); div.id = 'trBioLogin'; div.style.margin = '8px 0 10px';
     div.innerHTML = '<button class="btn btn-gold" type="button" id="btnBioEntrar" onclick="bioEntrar()" style="display:none;"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto</button>' +
       '<p class="mini" id="txtBioLoginDica" style="margin-top:4px;line-height:1.35;"></p>';
-    var h = card.querySelector('h3'); if (h && h.parentNode) h.parentNode.insertBefore(div, h.nextSibling); else card.insertBefore(div, card.firstChild);
+    var h = card.querySelector('h3');
+    if (h && h.parentNode) h.parentNode.insertBefore(div, h.nextSibling);
+    else card.insertBefore(div, card.firstChild);
     btn = $('btnBioEntrar'); dica = $('txtBioLoginDica');
   }
-  if (btn && cfg && sup) {
+  if (btn && cfg && cfg.credId && sup) {
     btn.style.display = '';
-    btn.innerHTML = '<i class="fas fa-fingerprint"></i> Entrar com digital / rosto (' + esc(cfg.nome || 'aluno') + ')';
-    if (dica) dica.innerHTML = 'Ou entre com a sua senha abaixo.';
+    btn.innerHTML = '<i class="fas fa-fingerprint"></i> Entrar com digital / rosto' + (cfg.nome ? ' (' + esc(cfg.nome) + ')' : '');
+    if (dica) dica.innerHTML = 'Ou entre com a senha abaixo.';
   } else if (btn) {
     btn.style.display = 'none';
     if (dica) {
-      dica.innerHTML = sup
-        ? '<i class="fas fa-fingerprint"></i> <b>Digital / rosto:</b> entre com a senha uma vez, depois ative em <b>Acesso rápido</b> no seu painel. O botão aparece aqui nas próximas vezes.'
-        : '<i class="fas fa-info-circle"></i> Digital indisponível neste navegador/endereço (precisa <b>HTTPS</b>). Use a senha normalmente.';
+      var httpsOk = false;
+      try { httpsOk = !!window.isSecureContext; } catch (e2) {}
+      if (!httpsOk) {
+        dica.innerHTML = '<i class="fas fa-info-circle"></i> Digital precisa do site em <b>HTTPS</b> (link oficial da academia).';
+      } else if (!sup) {
+        dica.innerHTML = '<i class="fas fa-info-circle"></i> Este navegador não oferece biometria. Use a senha.';
+      } else {
+        dica.innerHTML = '<i class="fas fa-fingerprint"></i> <b>Digital / rosto:</b> entre com a senha, depois toque em <b>Ativar digital / rosto</b> no painel.';
+      }
     }
   }
 }
 
-</script>
-<script>
-/* ▼ treino-aluno.js */
-/* ================================================================
-   TREINO-ALUNO.JS — Universo Capoeira (v87) · painel do aluno
-   "Minha semana" (treinos e carga horária), pedido de treino específico
-   (entra na aula semanal) e acesso rápido. Salva o resumo da semana na nuvem.
-   ================================================================ */
-var TR_SEM_OFFSET = 0;      /* 0 = semana atual, -1 = anterior... */
-var TR_PED_SEL = {};
 
 function trPedToggle(id, btn) {
   TR_PED_SEL[id] = !TR_PED_SEL[id];
@@ -12852,7 +13113,7 @@ function trProfInjetar() {
   var div = document.createElement('div'); div.id = 'trProfBloco';
   div.innerHTML = '<div class="card tr-card" id="trCardAtalhos"><h3><i class="fas fa-dumbbell"></i> Treinos, agenda e boletim</h3><div class="tr-chips">' +
     '<button class="tr-chip" onclick="trIrPara(\'trCardPlano\')">📋 Plano da aula</button><button class="tr-chip" onclick="trIrPara(\'trCardPedidos\')">📥 Pedidos</button><button class="tr-chip" onclick="trIrPara(\'trCardCal\')">📆 Calendário</button>' +
-    '<button class="tr-chip" onclick="trIrPara(\'trCardBol\')">📄 Boletim</button><button class="tr-chip" onclick="trIrPara(\'trCardTestes\')">🧪 Testes</button><button class="tr-chip" onclick="trIrPara(\'trCardAdv\')">⚠️ Advertências</button><button class="tr-chip" onclick="trIrPara('trCardResetSenha')">🔑 Senhas</button></div></div>' +
+    '<button class="tr-chip" onclick="trIrPara(\'trCardBol\')">📄 Boletim</button><button class="tr-chip" onclick="trIrPara(\'trCardTestes\')">🧪 Testes</button><button class="tr-chip" onclick="trIrPara(\'trCardAdv\')">⚠️ Advertências</button><button class="tr-chip" onclick="trIrPara(\'trCardResetSenha\')">🔑 Senhas</button></div></div>' +
     htmlPedidosResetSenhaProf() +
     '<div class="card tr-card fechado" id="trCardPlano">' + trPlanoHtmlInterno() + '</div>' +
     '<div class="card tr-card fechado" id="trCardPedidos">' + trHtmlPedidos() + '</div>' +
@@ -13131,8 +13392,9 @@ iniciarApp();
       a.funcoes.forEach(function (fn) {
         if (typeof global[fn] !== 'function' && a.id !== 'tab1' && a.id !== 'tabJogos') f.push(fn + '()');
       });
-      if ((a.id === 'tab1' || a.id === 'tabJogos') && $(a.id) && botaoDaAba(a.id)) {
-        f = f.filter(function (x) { return x === 'botão da aba' || x === 'área da aba'; });
+      /* abas com muitas funções internas: só exige botão + área presentes */
+      if ((a.id === 'tab1' || a.id === 'tabJogos' || a.id === 'tab4' || a.id === 'tab5' || a.id === 'tab6') && $(a.id) && botaoDaAba(a.id)) {
+        f = f.filter(function (x) { return x === 'botão da aba' || x === 'área da aba' || (x && x.charAt(0) === '#'); });
       }
       return { id: a.id, nome: a.nome, ok: f.length === 0, faltas: f };
     });
