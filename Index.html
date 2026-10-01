@@ -627,7 +627,7 @@ footer a { color: var(--accent-blue); }
 #cardJogosGrupo, #cardRankingJogos { display: none !important; }
 
 /* =====================================================================
-   INTERFACE MOBILE COMPACTO — camada visual (menu lateral, barra inferior,
+   INTERFACE (legado) — camada visual (menu lateral, barra inferior,
    topo, cards, botões). Não altera dados nem funções do app.
    ===================================================================== */
 :root{
@@ -654,7 +654,32 @@ header#headerAppTopo .logos-header-box{ gap:10px; flex:1; }
 .status-firebase{ display:inline-flex; align-items:center; gap:5px; background:transparent !important; margin:0 !important; padding:0 !important; font-size:.72rem !important; font-weight:700; }
 .status-firebase:before{ content:""; width:8px; height:8px; border-radius:50%; background:currentColor; box-shadow:0 0 12px currentColor; }
 .status-online{ color:var(--green) !important; } .status-offline{ color:#ff8796 !important; }
-.tabs-container, #dicaAcessoEquipe, footer{ display:none !important; }
+/* Mobile compacto DESATIVADO */
+.tabs-container, #dicaAcessoEquipe, footer{ display:block !important; }
+#menuButton, .uc-backdrop, .uc-side, .uc-bottom, .uc-icon-btn{ display:none !important; }
+#headerLema, .uc-brand-txt small{
+  color: #00e676 !important;
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+  white-space: normal !important;
+  line-height: 1.25 !important;
+  max-width: 200px;
+}
+.uc-lema-banner{
+  text-align: center;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 230, 118, 0.45);
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.14), rgba(0, 200, 83, 0.06));
+  color: #00e676 !important;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
 .card{ border:1px solid var(--line) !important; border-radius:18px !important; background:var(--panel) !important; box-shadow:0 10px 24px #0002; padding:15px; }
 .card:hover{ border-color:var(--line); box-shadow:0 10px 24px #0002; }
 .card h3{ color:var(--mist); font-size:.98rem; font-weight:800; }
@@ -716,7 +741,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
       <img id="headerLogo2" class="app-logo-img" alt="Logo 2">
       <div class="app-title" id="headerAppTitle">
         <i class="fas fa-child-reaching"></i>
-        <span class="uc-brand-txt"><span id="headerTituloTexto">Universo Capoeira</span><small>MOBILE COMPACTO</small></span>
+        <span class="uc-brand-txt"><span id="headerTituloTexto">Universo Capoeira</span><small id="headerLema">A equipe é mais importante que o indivíduo</small></span>
       </div>
     </div>
     <span id="firebaseStatus" class="status-firebase status-offline">OFFLINE</span>
@@ -769,6 +794,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
       <button type="button" onclick="abrirAba('tabJogos')"><i class="fas fa-gamepad"></i>Abrir arcade</button>
       <button type="button" onclick="toggleAssistente()"><i class="fas fa-wand-magic-sparkles"></i>Assistente</button>
     </div>
+    <p class="uc-lema-banner" role="note">A equipe é mais importante que o indivíduo</p>
     <h2 class="uc-section-title">Hoje na roda</h2>
 
     <div class="card card-destaque brilho-azul" id="cardAvisoAvaliacaoObrigatoria" style="display:none; border:1px solid var(--danger);">
@@ -1119,7 +1145,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
   </div>
 
   <footer>
-    <span id="footerInfo">Universo Capoeira</span> &middot; <i class="fas fa-shield-alt"></i> Capoeira na Pequena África
+    <span id="footerInfo">Universo Capoeira</span> &middot; <span style="color:#00e676;font-weight:700;">A equipe é mais importante que o indivíduo</span> &middot; Capoeira na Pequena África
   </footer>
 
   <nav class="uc-bottom" aria-label="Atalhos">
@@ -2244,7 +2270,7 @@ function aplicarConfig() {
   var l1 = $('headerLogo1'), l2 = $('headerLogo2');
   if (CONFIG.logo1) { l1.src = CONFIG.logo1; l1.style.display = 'block'; } else { l1.style.display = 'none'; }
   if (CONFIG.logo2) { l2.src = CONFIG.logo2; l2.style.display = 'block'; } else { l2.style.display = 'none'; }
-  if ($('footerInfo')) $('footerInfo').textContent = CONFIG.tituloApp;
+  if ($('footerInfo')) $('footerInfo').innerHTML = esc(CONFIG.tituloApp) + ' · <span style="color:#00e676;font-weight:700;">A equipe é mais importante que o indivíduo</span>';
   timerDuracaoPadrao = CONFIG.tempoTimerSegundos || 90;
   if (!timerRodando) { timerSegundos = timerDuracaoPadrao; atualizarTimerUI(); }
   renderGraduacoes();
