@@ -942,6 +942,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
       <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação. <strong>Só é permitido 1 check-in por aula/dia.</strong></p>
       <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
       <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
+      <button class="btn btn-gold" id="btnBioCheckin" type="button" onclick="bioCheckinAluno()" style="display:none;"><i class="fas fa-fingerprint"></i> Check-in com digital / rosto</button>
       <button class="btn btn-secondary" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
     </div>
 
@@ -1068,6 +1069,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
       </select>
       <label class="campo-label">Contato (WhatsApp)</label>
       <input id="autoCadContato" placeholder="(21) 90000-0000" inputmode="tel">
+      <label class="campo-label">Tempo total de treino (anos e meses, opcional)</label><div style="display:flex;gap:8px;"><input id="autoCadTempoAnos" type="number" min="0" max="80" inputmode="numeric" placeholder="Anos"><input id="autoCadTempoMeses" type="number" min="0" max="11" inputmode="numeric" placeholder="Meses"></div>
       <label class="campo-label">Como você treina na academia?</label>
       <select id="autoCadTipoAluno">
         <option value="normal">Aluno normal (matrícula direta)</option>
@@ -1695,6 +1697,7 @@ function ucIrParaBackup() { location.href = ucUrlBackup(); }
       var vivo = (typeof abrirAba === 'function') && (typeof DB !== 'undefined') && window.UCProtecao;
       if (!vivo) { mostrarAviso('Alguns arquivos não carregaram.'); return; }
       var ruins = [];
+      try { window.UCProtecao.restaurar(); } catch (e0) {}   /* recria partes estruturais que sumiram antes de assustar o usuário */
       try { ruins = window.UCProtecao.diagnostico().filter(function (x) { return !x.ok; }); } catch (e) {}
       var criticos = ruins.filter(function (x) {
         return (x.faltas || []).some(function (f) {
@@ -2012,6 +2015,46 @@ function dentroJanelaCheckin(aula) {
   if (!j) return true; /* sem horário cadastrado pra hoje: não bloqueia */
   var agora = agoraEmMinutos();
   return agora >= j.abre && agora <= j.fecha;
+}
+
+/* Tempo de treino de capoeira: informado em anos/meses e continua contando desde a data informada */
+function ucMesesEntre(isoIni, agora) {
+  var d = new Date(isoIni); if (isNaN(d.getTime())) return 0;
+  var m = (agora.getFullYear() - d.getFullYear()) * 12 + (agora.getMonth() - d.getMonth());
+  if (agora.getDate() < d.getDate()) m--;
+  return Math.max(0, m);
+}
+function ucTempoTreinoMeses(a) {
+  if (!a || a.tempoTreinoMeses === undefined || a.tempoTreinoMeses === null || a.tempoTreinoMeses === '') return null;
+  return Number(a.tempoTreinoMeses) + ucMesesEntre(a.tempoTreinoEm || a.criadoEm, new Date());
+}
+function ucTempoTreinoTexto(a) {
+  var m = ucTempoTreinoMeses(a); if (m === null) return '';
+  var an = Math.floor(m / 12), me = m % 12, p = [];
+  if (an) p.push(an + (an === 1 ? ' ano' : ' anos'));
+  if (me || !an) p.push(me + (me === 1 ? ' mês' : ' meses'));
+  return p.join(' e ');
+}
+/* Tempo total de treino = soma da carga horária de todas as presenças aprovadas */
+function ucTempoTotalTreinoMin(aluno) {
+  if (!aluno) return 0;
+  var total = 0;
+  try {
+    trPresencasAluno(aluno).forEach(function (p) {
+      if (p.status !== 'aprovado') return;
+      total += trItensDoDia(p.data, aluno.id, p).total || 0;
+    });
+  } catch (e) {}
+  return total;
+}
+function ucTempoTotalTreinoTexto(aluno) {
+  var m = ucTempoTotalTreinoMin(aluno);
+  return m > 0 ? trMinParaTexto(m) : '0 min';
+}
+function ucLerTempoTreino(pre) {
+  var a = ($(pre + 'TempoAnos') || {}).value, m = ($(pre + 'TempoMeses') || {}).value;
+  if ((a === '' || a === undefined) && (m === '' || m === undefined)) return null;
+  return Math.max(0, Math.floor(Number(a) || 0)) * 12 + Math.max(0, Math.floor(Number(m) || 0));
 }
 
 /* Hash simples (djb2) - apenas para evitar senha em texto puro no banco.
@@ -2718,11 +2761,13 @@ function cadastrarAlunoNuvem(btn) {
     criadoEm: agoraISO(),
     ativo: true
   };
+  var tmpN = ucLerTempoTreino('autoCad');
+  if (tmpN !== null) { novo.tempoTreinoMeses = tmpN; novo.tempoTreinoEm = novo.criadoEm; }
 
   DB.salvar('alunos', novo).then(function (novoId) {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-check"></i> Concluir Cadastro'; }
     sessaoAlunoId = novoId;
-    ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadSenha', 'autoCadSenha2'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadTempoAnos', 'autoCadTempoMeses', 'autoCadSenha', 'autoCadSenha2'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     registroLog('cadastro', 'Novo aluno cadastrado: ' + nome);
     toggleAutoCadastroAluno(false);
     boasVindasNovoAluno = true;
@@ -8045,6 +8090,7 @@ function renderAluno() {
       '<h3 style="justify-content:center; margin:4px 0;"><i class="fas fa-id-card"></i> ' + esc(logado.apelido || logado.nome) + '</h3>' +
       '<p class="mini">' + esc(logado.nome) + '</p>' +
       '<p class="mini" style="color:var(--gold); font-size:0.8rem;"><i class="fas fa-medal"></i> ' + esc(logado.graduacao || 'Sem graduação registrada') + '</p>' +
+      (ucTempoTreinoTexto(logado) ? '<p class="mini"><i class="fas fa-hourglass-half"></i> Tempo total de treino: ' + esc(ucTempoTreinoTexto(logado)) + '</p>' : '') +
       (alunoEmFormacaoAprovado(logado) ? '<div style="margin-top:4px;">' + htmlIconeFormador() + '</div>' : '') +
       (logado.contato ? '<p class="mini"><i class="fab fa-whatsapp"></i> ' + esc(logado.contato) + '</p>' : '') +
     '</div>' +
@@ -8143,6 +8189,9 @@ function renderAluno() {
     '<label class="campo-label">Nome completo</label><input id="perfilNome" value="' + esc(logado.nome) + '">' +
     '<label class="campo-label">Apelido</label><input id="perfilApelido" value="' + esc(logado.apelido || '') + '">' +
     '<label class="campo-label">Contato (WhatsApp)</label><input id="perfilContato" value="' + esc(logado.contato || '') + '">' +
+    '<label class="campo-label">Tempo total de treino (anos e meses, opcional)</label>' +
+    '<div style="display:flex;gap:8px;"><input id="perfilTempoAnos" type="number" min="0" max="80" inputmode="numeric" placeholder="Anos" value="' + (ucTempoTreinoMeses(logado) === null ? '' : Math.floor(ucTempoTreinoMeses(logado) / 12)) + '">' +
+    '<input id="perfilTempoMeses" type="number" min="0" max="11" inputmode="numeric" placeholder="Meses" value="' + (ucTempoTreinoMeses(logado) === null ? '' : ucTempoTreinoMeses(logado) % 12) + '"></div>' +
     '<label class="campo-label">Graduação (alterada somente pela equipe)</label>' +
     '<input value="' + esc(logado.graduacao || '-') + '" disabled>' +
     (logado.tipoAluno === 'gympass'
@@ -8170,6 +8219,11 @@ function salvarPerfilAluno(btn) {
   var contato = ($('perfilContato').value || '').trim();
   if (nome.length < 3) { mostrarToast('Nome inválido.', 'erro'); return; }
   var dados = { nome: nome, apelido: apelido, contato: contato };
+  var tmpP = ucLerTempoTreino('perfil');
+  if (tmpP !== null) {
+    var atualP = ucTempoTreinoMeses(logado);
+    if (atualP === null || atualP !== tmpP) { dados.tempoTreinoMeses = tmpP; dados.tempoTreinoEm = agoraISO(); }
+  } else if (logado.tempoTreinoMeses !== undefined && logado.tempoTreinoMeses !== '') { dados.tempoTreinoMeses = ''; dados.tempoTreinoEm = agoraISO(); }
   if ($('perfilGympassLink')) dados.gympassLink = ($('perfilGympassLink').value || '').trim();
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Salvando...'; }
   DB.salvar('alunos', dados, logado.id).then(function () {
@@ -8259,12 +8313,42 @@ function enviarPedidoResetSenha(btn) {
 }
 
 /* Assistente: se aluno logado, permite trocar senha; se não, abre pedido */
+var ASSIST_SENHA = null;   /* { etapa: 'atual' | 'nova' | 'confirmar', tentativas, nova } */
+function assistenteSenhaAtiva() { return !!ASSIST_SENHA; }
+function assistenteSenhaCampo(oculto) { var i = $('assistenteInput'); if (i) { i.type = oculto ? 'password' : 'text'; i.placeholder = oculto ? 'Digite a senha...' : 'Pergunte algo...'; } }
+function assistenteSenhaEncerrar() { ASSIST_SENHA = null; assistenteSenhaCampo(false); }
+function assistenteSenhaProcessar(texto) {
+  var logado = alunoLogado(), s = ASSIST_SENHA;
+  var resp = function (m) { setTimeout(function () { assistenteAdicionarBolha('bot', m); }, 200); };
+  if (!logado || !s) { assistenteSenhaEncerrar(); resp('Sua sessão terminou. Entre de novo e peça a troca de senha.'); return; }
+  if (/^\s*cancelar\s*$/i.test(texto)) { assistenteSenhaEncerrar(); resp('Troca de senha cancelada. Sua senha continua a mesma.'); return; }
+  if (s.etapa === 'atual') {
+    if (hashSenha(texto) !== logado.senhaHash) {
+      s.tentativas++;
+      if (s.tentativas >= 3) { assistenteSenhaEncerrar(); registroLog('auth', 'Troca de senha pelo assistente bloqueada (3 erros): ' + logado.nome); resp('Senha atual incorreta 3 vezes. Por segurança, parei por aqui. Se esqueceu a senha, saia da conta e use "Esqueci a senha" para o professor liberar uma nova.'); return; }
+      resp('Senha atual incorreta. Tente de novo (' + s.tentativas + '/3) ou digite "cancelar".'); return;
+    }
+    s.etapa = 'nova'; resp('Senha confirmada. Agora digite a NOVA senha (mín. 4 caracteres).'); return;
+  }
+  if (s.etapa === 'nova') {
+    if (String(texto).length < 4) { resp('Muito curta. Use pelo menos 4 caracteres.'); return; }
+    if (hashSenha(texto) === logado.senhaHash) { resp('A nova senha precisa ser diferente da atual. Digite outra.'); return; }
+    s.nova = texto; s.etapa = 'confirmar'; resp('Digite a nova senha mais uma vez para confirmar.'); return;
+  }
+  if (texto !== s.nova) { s.etapa = 'nova'; s.nova = ''; resp('As senhas não conferem. Digite a nova senha de novo.'); return; }
+  var novaHash = hashSenha(s.nova);
+  assistenteSenhaEncerrar();
+  DB.salvar('alunos', { senhaHash: novaHash }, logado.id).then(function () {
+    registroLog('auth', 'Aluno trocou a senha pelo assistente: ' + logado.nome);
+    resp('Pronto! Sua senha foi alterada. Use a nova senha no próximo login.');
+  }).catch(function () { resp('Não consegui salvar agora. Tente de novo em instantes.'); });
+}
 function assistenteAtualizarSenhaAluno() {
   var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
   if (logado) {
-    mostrarToast('Vamos trocar sua senha. Informe a atual e a nova.');
-    try { trocarSenhaAluno(); } catch (e) { mostrarToast('Não foi possível abrir a troca de senha.', 'erro'); }
-    return 'Você está logado. Abri a troca de senha: digite a senha atual e a nova (mín. 4 caracteres).';
+    ASSIST_SENHA = { etapa: 'atual', tentativas: 0, nova: '' };
+    assistenteSenhaCampo(true);
+    return 'Posso trocar sua senha aqui. Para confirmar que é você, digite sua SENHA ATUAL (o campo fica oculto). Para desistir, digite "cancelar".';
   }
   try { abrirPedidoResetSenha(); } catch (e) {}
   return 'Você não está logado. Abri o pedido de nova senha para o professor aprovar.\n\n' +
@@ -8425,6 +8509,7 @@ function renderAbaProfessor() {
     '<label class="campo-label">Apelido na capoeira</label><input id="profCadApelido" placeholder="Opcional">' +
     '<label class="campo-label">Graduação</label><select id="profCadGraduacaoSelect"></select>' +
     '<label class="campo-label">Contato (WhatsApp, opcional)</label><input id="profCadContato" placeholder="(21) 90000-0000">' +
+    '<label class="campo-label">Tempo total de treino (anos e meses, opcional)</label><div style="display:flex;gap:8px;"><input id="profCadTempoAnos" type="number" min="0" max="80" inputmode="numeric" placeholder="Anos"><input id="profCadTempoMeses" type="number" min="0" max="11" inputmode="numeric" placeholder="Meses"></div>' +
     '<label class="campo-label">Como treina?</label><select id="profCadTipoAluno"><option value="normal">Aluno normal (matrícula direta)</option><option value="gympass">Aluno Gympass / Wellhub</option></select>' +
     '<button class="btn" onclick="cadastrarAlunoPeloProfessor(this)"><i class="fas fa-user-plus"></i> Cadastrar Aluno</button>' +
     '<p class="mini" style="margin-top:6px;">Uma senha provisória é gerada automaticamente — o aluno pode trocar depois em "Esqueci minha senha".</p></div>' +
@@ -8528,6 +8613,9 @@ function renderAbaProfessor() {
         pillStatusSolicitacao(s.status) + '</div>' +
         '<span class="mini">' + dataHoraBR(s.criadoEm) + '</span>' +
         (s.respostaProfessor ? '<div class="mini" style="color:var(--gold);">Resp.: ' + esc(s.respostaProfessor) + '</div>' : '') +
+        '<div class="flex-btn" style="margin-top:4px;">' +
+          '<button class="btn btn-secondary btn-mini" onclick="editarSolicitacao(\'' + s.id + '\')"><i class="fas fa-pen"></i> Editar</button>' +
+          '<button class="btn btn-danger btn-mini" onclick="excluirSolicitacao(\'' + s.id + '\')"><i class="fas fa-trash"></i> Excluir</button></div>' +
         '</div>';
     });
   }
@@ -8998,6 +9086,7 @@ function cadastrarAlunoPeloProfessor(btn) {
   if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
 
   var senhaProvisoria = gerarSenhaProvisoria();
+  var tmpProf = ucLerTempoTreino('profCad');
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Cadastrando...'; }
 
   DB.salvar('alunos', {
@@ -9009,10 +9098,12 @@ function cadastrarAlunoPeloProfessor(btn) {
     senhaHash: hashSenha(senhaProvisoria),
     criadoEm: agoraISO(),
     ativo: true,
-    cadastradoPeloProfessor: true
+    cadastradoPeloProfessor: true,
+    tempoTreinoMeses: tmpProf === null ? '' : tmpProf,
+    tempoTreinoEm: agoraISO()
   }).then(function () {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar Aluno'; }
-    ['profCadNome', 'profCadApelido', 'profCadContato'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    ['profCadNome', 'profCadApelido', 'profCadContato', 'profCadTempoAnos', 'profCadTempoMeses'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     registroLog('professor', 'Aluno cadastrado pelo professor: ' + nome);
     abrirModal('Aluno cadastrado!',
       '<p class="mini">Nome: <strong>' + esc(nome) + '</strong></p>' +
@@ -9251,6 +9342,32 @@ function salvarCheckinManualProfessor(aluno, poloId, status, obs, substituirId) 
     }
     renderAbaProfessor();
   });
+}
+
+function editarSolicitacao(id) {
+  var s = DB.buscar('solicitacoes', id); if (!s || !sessaoEquipe) return;
+  var op = function (v, r) { return '<option value="' + v + '"' + (s.status === v ? ' selected' : '') + '>' + r + '</option>'; };
+  abrirModal('Editar pedido · ' + esc(s.alunoNome || ''),
+    '<label class="campo-label">Tipo de treino</label><input id="edSolTipo" value="' + esc(s.tipo || '') + '">' +
+    '<label class="campo-label">Observação do aluno</label><textarea id="edSolObs" rows="2">' + esc(s.observacao || '') + '</textarea>' +
+    '<label class="campo-label">Data (aula em que entrou)</label><input id="edSolData" type="date" value="' + esc(s.dataPreferida || '') + '">' +
+    '<label class="campo-label">Status</label><select id="edSolStatus">' + op('pendente', 'Pendente') + op('aprovado', 'Aprovado') + op('realizado', 'Realizado') + op('rejeitado', 'Recusado') + '</select>' +
+    '<label class="campo-label">Resposta ao aluno</label><input id="edSolResp" value="' + esc(s.respostaProfessor || '') + '">',
+    '<button class="btn" onclick="salvarEdicaoSolicitacao(\'' + id + '\')"><i class="fas fa-save"></i> Salvar</button><button class="btn btn-back" onclick="fecharModal()">Cancelar</button>');
+}
+function salvarEdicaoSolicitacao(id) {
+  var tipo = (($('edSolTipo') || {}).value || '').trim();
+  if (!tipo) { mostrarToast('Informe o tipo de treino.', 'erro'); return; }
+  DB.salvar('solicitacoes', {
+    tipo: tipo, observacao: (($('edSolObs') || {}).value || '').trim(), dataPreferida: ($('edSolData') || {}).value || '',
+    status: ($('edSolStatus') || {}).value || 'pendente', respostaProfessor: (($('edSolResp') || {}).value || '').trim(),
+    respostaVistaAluno: false, respondidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Professor', respondidoEm: agoraISO()
+  }, id).then(function () { fecharModal(); mostrarToast('Pedido atualizado.'); registroLog('professor', 'Pedido de treino editado (' + id + ')'); renderAbaProfessor(); });
+}
+function excluirSolicitacao(id) {
+  var s = DB.buscar('solicitacoes', id); if (!s || !sessaoEquipe) return;
+  if (!confirm('Excluir o pedido de ' + (s.alunoNome || 'aluno') + ' (' + (s.tipo || '') + ')? Isso não pode ser desfeito.')) return;
+  DB.excluir('solicitacoes', id).then(function () { mostrarToast('Pedido excluído.'); registroLog('professor', 'Pedido de treino excluído: ' + (s.alunoNome || '') + ' — ' + (s.tipo || '')); renderAbaProfessor(); });
 }
 
 function decidirSolicitacao(id, status) {
@@ -9724,6 +9841,7 @@ function htmlListaAlunosAdm(alunos) {
     html += '<div class="lista-item" data-nome="' + esc(normalizar(a.nome + ' ' + (a.apelido || ''))) + '">' +
       '<div class="linha"><b>' + esc(a.nome) + '</b><span class="mini">' + esc(a.apelido || '') + '</span></div>' +
       '<span class="mini">' + esc(a.graduacao || '-') + (a.contato ? ' • ' + esc(a.contato) : '') +
+      (ucTempoTreinoTexto(a) ? ' • tempo total de treino: ' + esc(ucTempoTreinoTexto(a)) : '') +
       (a.tipoAluno === 'gympass' ? ' • <span class="pill" style="background:var(--gympass-red);color:#fff;">Gympass</span>' : '') + '</span>' +
       '<div class="flex-btn" style="margin-top:6px;">' +
         '<button class="btn btn-secondary btn-mini" onclick="alterarGraduacao(\'' + a.id + '\')"><i class="fas fa-medal"></i> Graduação</button>' +
@@ -10621,6 +10739,7 @@ function assistentePerguntar(texto) {
       assistenteAdicionarBolha('bot', assistenteMensagemBoasVindas());
     }
   }
+  if (assistenteSenhaAtiva()) { assistenteAdicionarBolha('user', '••••••'); assistenteSenhaProcessar(texto); return; }
   assistenteAdicionarBolha('user', texto);
   if (assistenteInterceptarAvaliacaoSemanal(texto)) return;
   if (assistenteInterceptarGerenciarAluno(texto)) return;
@@ -12159,6 +12278,7 @@ decidirPresenca = function (id, status) {
    Aparece na aba Check-in e no painel do Professor.
    ================================================================ */
 var TR_CALS = {};
+var TR_CAL_SEL = {};   /* dias selecionados por calendário (faltava declarar) */
 var TR_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 var TR_DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -12204,13 +12324,14 @@ function trCalRender(containerId) {
   if (!aluno) { box.innerHTML = '<p class="sem-dados">Escolha um aluno para ver o calendário.</p>'; return; }
   var hoje = dataLocalISO(), primeiro = new Date(st.ano, st.mes, 1), diasNoMes = new Date(st.ano, st.mes + 1, 0).getDate();
   var sel = trCalSelSet(containerId), nSel = Object.keys(sel).length;
-  var multi = !!st.multi;
+  var multi = !!st.multi, cid = "'" + containerId + "'";
   var treinou = 0, faltas = 0, min = 0;
-  var h = '<div class="tr-sem-nav"><button class="btn btn-secondary btn-mini" onclick="trCalMes(\'' + containerId + '\',-1)"><i class="fas fa-chevron-left"></i></button>' +
-    '<b>' + TR_MESES[st.mes] + ' ' + st.ano + '</b><button class="btn btn-secondary btn-mini" onclick="trCalMes(\'' + containerId + '\',1)"><i class="fas fa-chevron-right"></i></button></div>';
-  h += '<div class="flex-btn" style="margin:6px 0;gap:6px;">' +
-    '<button type="button" class="btn btn-mini ' + (multi ? 'btn-gold' : 'btn-secondary') + '" onclick="trCalModoMulti(\'' + containerId + '\')"><i class="fas fa-check-double"></i> ' + (multi ? 'Seleção múltipla: ON' : 'Selecionar vários dias') + '</button>' +
-    (nSel ? '<button type="button" class="btn btn-mini btn-secondary" onclick="trCalLimparSel(\'' + containerId + '\')">Limpar (' + nSel + ')</button>' : '') +
+  var h = '<div class="tr-sem-nav"><button class="btn btn-secondary btn-mini" onclick="trCalMes(' + cid + ',-1)"><i class="fas fa-chevron-left"></i></button>' +
+    '<b>' + TR_MESES[st.mes] + ' ' + st.ano + '</b><button class="btn btn-secondary btn-mini" onclick="trCalMes(' + cid + ',1)"><i class="fas fa-chevron-right"></i></button></div>';
+  h += '<div class="flex-btn" style="margin:6px 0;gap:6px;flex-wrap:wrap;">' +
+    '<button type="button" class="btn btn-mini ' + (multi ? 'btn-gold' : 'btn-secondary') + '" onclick="trCalModoMulti(' + cid + ')"><i class="fas fa-check-double"></i> ' + (multi ? 'Seleção múltipla: ON' : 'Selecionar vários dias') + '</button>' +
+    '<button type="button" class="btn btn-mini btn-secondary" onclick="trCalSelDiasAula(' + cid + ')"><i class="fas fa-calendar-check"></i> Dias de aula do mês</button>' +
+    (nSel ? '<button type="button" class="btn btn-mini btn-secondary" onclick="trCalLimparSel(' + cid + ')">Limpar (' + nSel + ')</button>' : '') +
     '</div>';
   h += '<div class="tr-cal">';
   TR_DIAS_CURTOS.forEach(function (d) { h += '<div class="tr-cal-cab">' + d + '</div>'; });
@@ -12221,27 +12342,59 @@ function trCalRender(containerId) {
     if (e.cls === 'falta') faltas++;
     var marcado = !!sel[iso];
     var cls = 'tr-cal-dia ' + e.cls + (iso === hoje ? ' hoje' : '') + (marcado ? ' tr-cal-sel' : '');
-    var click = multi
-      ? 'trCalToggleSel(\'' + containerId + '\',\'' + iso + '\')'
-      : 'trCalDia(\'' + containerId + '\',\'' + iso + '\')';
+    var click = multi ? 'trCalToggleSel(' + cid + ',\'' + iso + '\')' : 'trCalDia(' + cid + ',\'' + iso + '\')';
     h += '<button type="button" class="' + cls + '" onclick="' + click + '"><span>' + d + '</span><small>' + (marcado ? '✓' : e.ico) + '</small></button>';
   }
-  h += '</div><div class="tr-legenda"><span><i style="background:#00e676"></i>treinou</span><span><i style="background:#ffc107"></i>pendente</span><span><i style="background:#ef5350"></i>não treinou</span><span><i style="background:#00d2ff"></i>aula prevista</span><span><i style="background:#ffc107;outline:2px solid #fff"></i>selecionado</span></div>' +
+  h += '</div><div class="tr-legenda"><span><i style="background:#00e676"></i>treinou</span><span><i style="background:#ffc107"></i>pendente</span><span><i style="background:#ef5350"></i>não treinou</span><span><i style="background:#00d2ff"></i>aula prevista</span></div>' +
     '<p class="mini" style="margin-top:6px;"><b>' + treinou + '</b> dia(s) treinado(s) · <b>' + faltas + '</b> sem treino · carga do mês <b>' + trMinParaTexto(min) + '</b>.</p>';
   if (multi) {
     h += '<p class="mini">Modo seleção: toque nos dias para marcar. ' + (nSel ? ('<b>' + nSel + '</b> selecionado(s).') : 'Nenhum dia selecionado.') + '</p>';
-    if (nSel && st.modo === 'equipe') {
-      h += '<div class="flex-btn" style="margin-top:8px;">' +
-        '<button class="btn" onclick="trCalLote(\'' + containerId + '\',\'treinou\')"><i class="fas fa-check"></i> Marcar ' + nSel + ' dia(s) como treinou</button>' +
-        '<button class="btn btn-danger" onclick="trCalLote(\'' + containerId + '\',\'naotreinou\')"><i class="fas fa-xmark"></i> Marcar como não treinou</button>' +
-        '</div>';
-    } else if (nSel && st.modo !== 'equipe') {
-      h += '<p class="mini">Aluno: use a seleção para pedir ajuste de vários dias ao professor (toque em um dia com a seleção desligada para detalhar).</p>';
-    }
   } else {
     h += '<p class="mini">Toque em um dia para ver detalhes' + (st.modo === 'equipe' ? ' e ajustar.' : ' ou pedir ajuste ao professor.') + ' Use <b>Selecionar vários dias</b> para marcar em lote.</p>';
   }
+  if (st.modo === 'equipe' && trEquipeLogada()) {
+    h += '<div class="flex-btn" style="margin-top:8px;gap:6px;align-items:center;"><input type="date" id="trCalAddData_' + containerId + '" max="' + hoje + '" style="flex:1;">' +
+      '<button class="btn btn-mini" onclick="trCalAdicionarDia(' + cid + ')"><i class="fas fa-plus"></i> Adicionar dia treinado</button></div>';
+  }
+  if (nSel) {
+    var datas = Object.keys(sel).sort().map(function (x) { return x.slice(8) + '/' + x.slice(5, 7); }).join(', ');
+    h += '<p class="mini" style="margin-top:6px;">Datas: ' + datas + '</p>';
+    if (st.modo === 'equipe' && trEquipeLogada()) {
+      h += '<label class="campo-label">Observação (vale para todos os dias)</label>' +
+        '<input id="trCalLoteObs" value="' + esc(st.obsLote || '') + '" oninput="TR_CALS[\'' + containerId + '\'].obsLote=this.value" placeholder="Ex.: treinou em outro polo">' +
+        '<div class="flex-btn" style="margin-top:6px;gap:6px;flex-wrap:wrap;">' +
+        '<button class="btn" onclick="trCalLote(' + cid + ',\'treinou\')"><i class="fas fa-check"></i> Treinou</button>' +
+        '<button class="btn btn-danger" onclick="trCalLote(' + cid + ',\'naotreinou\')"><i class="fas fa-xmark"></i> Não treinou</button>' +
+        '<button class="btn btn-gold" onclick="trCalLoteEditarItens(' + cid + ')"><i class="fas fa-pen"></i> Editar itens</button></div>';
+    } else if (st.modo !== 'equipe') {
+      h += '<label class="campo-label">Motivo do pedido de ajuste</label>' +
+        '<textarea id="trCalLoteMotivo" rows="2" oninput="TR_CALS[\'' + containerId + '\'].motivoLote=this.value" placeholder="Ex.: treinei nesses dias mas esqueci o check-in">' + esc(st.motivoLote || '') + '</textarea>' +
+        '<button class="btn" style="margin-top:6px;" onclick="trCalPedirAjusteLote(' + cid + ')"><i class="fas fa-paper-plane"></i> Pedir ajuste dos ' + nSel + ' dia(s)</button>';
+    }
+  }
   box.innerHTML = h;
+}
+function trCalAdicionarDia(containerId) {
+  var st = TR_CALS[containerId], iso = ($('trCalAddData_' + containerId) || {}).value;
+  if (!st || !trEquipeLogada()) return;
+  if (!iso) { mostrarToast('Escolha a data do treino.', 'erro'); return; }
+  var a = DB.buscar('alunos', st.alunoId); if (!a) return;
+  if (!confirm('Marcar que ' + (a.apelido || a.nome) + ' treinou em ' + dataBR(iso) + '?')) return;
+  Promise.resolve(trCalAplicarDia(a, iso, 'treinou', '')).then(function () {
+    mostrarToast('Dia ' + dataBR(iso) + ' adicionado como treinado.'); registroLog('professor', 'Dia de treino adicionado (' + a.nome + ', ' + iso + ')');
+    trCalRenderTodos(); if (typeof renderAbaProfessor === 'function') try { renderAbaProfessor(); } catch (e) {}
+  });
+}
+function trCalSelDiasAula(containerId) {
+  var st = TR_CALS[containerId]; if (!st) return;
+  var n = new Date(st.ano, st.mes + 1, 0).getDate(), s = trCalSelSet(containerId), achou = 0;
+  for (var d = 1; d <= n; d++) {
+    var iso = st.ano + '-' + ('0' + (st.mes + 1)).slice(-2) + '-' + ('0' + d).slice(-2);
+    if (trAulasPrevistas(iso).length > 0) { s[iso] = true; achou++; }
+  }
+  st.multi = true;
+  if (!achou) mostrarToast('Nenhum dia de aula previsto neste mês.', 'erro');
+  trCalRender(containerId);
 }
 function trCalModoMulti(containerId) {
   var st = TR_CALS[containerId]; if (!st) return;
@@ -12249,30 +12402,109 @@ function trCalModoMulti(containerId) {
   if (!st.multi) TR_CAL_SEL[containerId] = {};
   trCalRender(containerId);
 }
+/* aplica treinou / não treinou em um dia, sem toast nem modal (uso em lote) */
+function trCalAplicarDia(a, iso, acao, obs) {
+  var p = trPresencaDoDia(a, iso), quem = (sessaoEquipe && sessaoEquipe.nome) || 'Professor';
+  if (acao === 'treinou') {
+    var it = trItensDoDia(iso, a.id, null);
+    var patch = { status: 'aprovado', observacaoProfessor: obs || 'Ajustado pelo professor no calendário.', avaliadoPor: quem, avaliadoEm: agoraISO(), treinoItens: it.itens, horasAula: trHoras(it.total) };
+    if (p) return DB.salvar('presencas', patch, p.id);
+    return DB.salvar('presencas', Object.assign({ alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', data: iso, hora: '', tipo: 'manual', poloId: '', poloNome: '', criadoEm: agoraISO() }, patch));
+  }
+  return DB.salvar('presencas', { status: 'rejeitado', observacaoProfessor: obs || 'Ajustado pelo professor no calendário.', avaliadoPor: quem, avaliadoEm: agoraISO() }, p.id);
+}
+function trCalLoteFim(containerId, msg) {
+  var st = TR_CALS[containerId];
+  TR_CAL_SEL[containerId] = {}; if (st) { st.multi = false; st.obsLote = ''; st.motivoLote = ''; }
+  fecharModal(); mostrarToast(msg); trCalRenderTodos();
+  if (typeof renderAbaProfessor === 'function') try { renderAbaProfessor(); } catch (e) {}
+}
 function trCalLote(containerId, acao) {
   var st = TR_CALS[containerId]; if (!st || st.modo !== 'equipe' || !trEquipeLogada()) { mostrarToast('Só a equipe pode ajustar em lote.', 'erro'); return; }
   var dias = trCalSelLista(containerId);
   if (!dias.length) { mostrarToast('Selecione pelo menos um dia.', 'erro'); return; }
   var aluno = DB.buscar('alunos', st.alunoId); if (!aluno) return;
-  var obs = prompt('Observação do ajuste em lote (' + dias.length + ' dia(s)):', acao === 'treinou' ? 'Ajuste em lote: treinou' : 'Ajuste em lote: não treinou') || '';
+  var obs = (($('trCalLoteObs') || {}).value || '').trim();
+  var ignorados = 0;
+  if (acao === 'naotreinou') {
+    var com = dias.filter(function (iso) { return !!trPresencaDoDia(aluno, iso); });
+    ignorados = dias.length - com.length; dias = com;
+    if (!dias.length) { mostrarToast('Nenhum dos dias escolhidos tem registro de presença; nada a alterar.', 'erro'); return; }
+  }
+  var txt = (acao === 'treinou' ? 'Marcar que treinou' : 'Marcar que NÃO treinou') + ' em ' + dias.length + ' dia(s) de ' + (aluno.apelido || aluno.nome) + '?' +
+    (ignorados ? '\n(' + ignorados + ' dia(s) sem registro de presença serão ignorados.)' : '');
+  if (!confirm(txt)) return;
   var i = 0;
-  function proximo() {
+  (function proximo() {
     if (i >= dias.length) {
-      TR_CAL_SEL[containerId] = {};
-      st.multi = false;
-      mostrarToast('Ajuste aplicado em ' + dias.length + ' dia(s).');
-      trCalRender(containerId);
+      trCalLoteFim(containerId, 'Ajuste aplicado em ' + dias.length + ' dia(s)' + (ignorados ? ' · ' + ignorados + ' ignorado(s) por não ter registro' : '') + '.');
+      registroLog('professor', 'Ajuste em lote (' + acao + ') em ' + dias.length + ' dia(s): ' + aluno.nome);
       return;
     }
     var iso = dias[i++];
-    try {
-      Promise.resolve(trCalProf(aluno.id, iso, acao, obs)).catch(function () {}).then(proximo);
-    } catch (e) {
-      try { trCalProf(aluno.id, iso, acao); } catch (e2) {}
-      setTimeout(proximo, 50);
-    }
-  }
-  proximo();
+    try { Promise.resolve(trCalAplicarDia(aluno, iso, acao, obs)).catch(function () {}).then(proximo); } catch (e) { proximo(); }
+  })();
+}
+
+/* editar itens do treino de vários dias de uma vez */
+var TR_LOTE_CTX = '';
+function trCalLoteEditarItens(containerId) {
+  var st = TR_CALS[containerId]; if (!st || !trEquipeLogada()) return;
+  var dias = trCalSelLista(containerId); if (!dias.length) { mostrarToast('Selecione pelo menos um dia.', 'erro'); return; }
+  TR_LOTE_CTX = containerId;
+  var lista = [TR_FIXOS.berimbau].concat(TR_CATS, [TR_FIXOS.cantoria]);
+  var h = '<p class="mini">Valem para os ' + dias.length + ' dia(s) escolhidos. Marque o que foi treinado e ajuste os minutos.</p>';
+  lista.forEach(function (c) {
+    var cid = c.cat || c.id;
+    h += '<div class="tr-linha-item"><label style="display:flex;gap:6px;align-items:center;font-size:.8rem;"><input type="checkbox" id="trEdC_' + cid + '" checked style="width:auto;margin:0;"> <i class="fas ' + c.icone + '"></i> ' + esc(c.nome) + '</label>' +
+      '<input type="number" min="0" max="240" step="5" id="trEdM_' + cid + '" value="' + c.min + '"><span class="mini">min</span></div>';
+  });
+  abrirModal('Itens do treino · ' + dias.length + ' dia(s)', h, '<button class="btn" onclick="trCalLoteSalvarItens()"><i class="fas fa-save"></i> Aplicar nos ' + dias.length + ' dia(s)</button><button class="btn btn-back" onclick="fecharModal()">Cancelar</button>');
+}
+function trCalLoteSalvarItens() {
+  var containerId = TR_LOTE_CTX, st = TR_CALS[containerId]; if (!st || !trEquipeLogada()) return;
+  var a = DB.buscar('alunos', st.alunoId); if (!a) return;
+  var dias = trCalSelLista(containerId), itens = [], pos = { berimbau: 'inicio', cantoria: 'fim' };
+  [TR_FIXOS.berimbau].concat(TR_CATS, [TR_FIXOS.cantoria]).forEach(function (c) {
+    var cid = c.cat || c.id, cb = $('trEdC_' + cid), mi = $('trEdM_' + cid);
+    if (cb && cb.checked) itens.push({ cat: cid, nome: c.nome, min: Math.max(0, Number(mi.value) || 0), pos: pos[cid] || 'meio', fixo: !!c.fixo });
+  });
+  if (!itens.length) { mostrarToast('Marque pelo menos um item.', 'erro'); return; }
+  var obs = (st.obsLote || '').trim();
+  if (!confirm('Aplicar estes itens em ' + dias.length + ' dia(s) de ' + (a.apelido || a.nome) + '?')) return;
+  var total = trMontar(itens).total, quem = sessaoEquipe.nome || 'Professor', i = 0;
+  (function proximo() {
+    if (i >= dias.length) { trCalLoteFim(containerId, 'Itens salvos em ' + dias.length + ' dia(s): ' + trMinParaTexto(total) + ' cada.'); return; }
+    var iso = dias[i++], p = trPresencaDoDia(a, iso);
+    var patch = { treinoItens: itens, horasAula: trHoras(total), status: 'aprovado', avaliadoPor: quem, avaliadoEm: agoraISO() };
+    if (obs) patch.observacaoProfessor = obs;
+    var pr = p ? DB.salvar('presencas', patch, p.id)
+      : DB.salvar('presencas', Object.assign({ alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', data: iso, hora: '', tipo: 'manual', poloId: '', poloNome: '', observacaoProfessor: obs || 'Lançado pelo professor no calendário.', criadoEm: agoraISO() }, patch));
+    try { Promise.resolve(pr).catch(function () {}).then(proximo); } catch (e) { proximo(); }
+  })();
+}
+
+/* aluno: pedido de ajuste para vários dias */
+function trCalPedirAjusteLote(containerId) {
+  var st = TR_CALS[containerId]; if (!st) return;
+  var a = DB.buscar('alunos', st.alunoId); if (!a) return;
+  var dias = trCalSelLista(containerId).filter(function (iso) { var e = trCalEstadoDia(a, iso, dataLocalISO()); return e.cls !== 'ok'; });
+  if (!dias.length) { mostrarToast('Esses dias já estão como treinados.', 'erro'); return; }
+  var motivo = (($('trCalLoteMotivo') || {}).value || '').trim();
+  if (motivo.length < 5) { mostrarToast('Explique o motivo em poucas palavras.', 'erro'); return; }
+  var pend = dias.map(function (iso) {
+    return DB.salvar('solicitacoes', {
+      alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', graduacao: a.graduacao || '',
+      tipo: 'Ajuste de calendário', ajusteCalendario: true, dataPreferida: iso, observacao: motivo, categorias: [],
+      status: 'pendente', respostaProfessor: '', criadoEm: agoraISO()
+    });
+  });
+  Promise.all(pend).then(function () {
+    TR_CAL_SEL[containerId] = {}; st.multi = false; st.motivoLote = '';
+    mostrarToast('Pedido enviado para ' + dias.length + ' dia(s)!');
+    registroLog('aluno', 'Pedido de ajuste de calendário em ' + dias.length + ' dia(s) (' + a.nome + ')');
+    trCalRender(containerId); if (typeof renderAluno === 'function') renderAluno();
+  });
 }
 function trCalMes(containerId, delta) {
   var st = TR_CALS[containerId]; if (!st) return;
@@ -12310,11 +12542,23 @@ function trCalDia(containerId, iso) {
     if (e.cls !== 'ok') acoes += '<button class="btn" onclick="trCalProf(\'' + aluno.id + '\',\'' + iso + '\',\'treinou\')"><i class="fas fa-check"></i> Marcar que treinou</button>';
     if (e.p && e.p.status !== 'rejeitado') acoes += '<button class="btn btn-danger" onclick="trCalProf(\'' + aluno.id + '\',\'' + iso + '\',\'naotreinou\')"><i class="fas fa-xmark"></i> Marcar que não treinou</button>';
     acoes += '<button class="btn btn-gold" onclick="trEditarItensDia(\'' + aluno.id + '\',\'' + iso + '\')"><i class="fas fa-pen"></i> Editar itens do treino</button>';
+    if (e.p) acoes += '<button class="btn btn-danger" onclick="trCalExcluirDia(\'' + aluno.id + '\',\'' + iso + '\')"><i class="fas fa-trash"></i> Excluir registro do dia</button>';
   } else if (e.cls !== 'ok') {
     corpo += '<label class="campo-label">Quer mudar ou registrar este dia? Explique ao professor:</label><textarea id="trCalMotivo" rows="3" placeholder="Ex.: treinei nesse dia mas esqueci de fazer o check-in"></textarea>';
     acoes += '<button class="btn" onclick="trCalPedirAjuste(\'' + aluno.id + '\',\'' + iso + '\')"><i class="fas fa-paper-plane"></i> Pedir ajuste ao professor</button>';
   }
   abrirModal(titulo, corpo, acoes + '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>');
+}
+
+function trCalExcluirDia(alunoId, iso) {
+  var a = DB.buscar('alunos', alunoId); if (!a || !trEquipeLogada()) return;
+  var lista = trPresencasAluno(a).filter(function (p) { return p.data === iso; });
+  if (!lista.length) { mostrarToast('Esse dia não tem registro.', 'erro'); return; }
+  if (!confirm('Excluir o registro de ' + dataBR(iso) + ' de ' + (a.apelido || a.nome) + '? Isso não pode ser desfeito.')) return;
+  Promise.all(lista.map(function (p) { return DB.excluir('presencas', p.id); })).then(function () {
+    fecharModal(); mostrarToast('Registro do dia excluído.'); registroLog('professor', 'Registro de treino excluído (' + a.nome + ', ' + iso + ')');
+    trCalRenderTodos(); if (typeof renderAbaProfessor === 'function') try { renderAbaProfessor(); } catch (e) {}
+  });
 }
 
 function trCalPedirAjuste(alunoId, iso) {
@@ -12354,6 +12598,12 @@ function trEditarItensDia(alunoId, iso) {
     h += '<div class="tr-linha-item"><label style="display:flex;gap:6px;align-items:center;font-size:.8rem;"><input type="checkbox" id="trEdC_' + cid + '"' + (on ? ' checked' : '') + ' style="width:auto;margin:0;"> <i class="fas ' + c.icone + '"></i> ' + esc(c.nome) + '</label>' +
       '<input type="number" min="0" max="240" step="5" id="trEdM_' + cid + '" value="' + (on ? mapa[cid] : c.min) + '"><span class="mini">min</span></div>';
   });
+  var conhecidos = lista.map(function (c) { return c.cat || c.id; }), extras = atual.itens.filter(function (i) { return !i.paralelo && conhecidos.indexOf(i.cat) < 0; });
+  extras.concat([{ cat: '', nome: '', min: 15, novo: true }]).forEach(function (x, k) {
+    h += '<div class="tr-linha-item"><label style="display:flex;gap:6px;align-items:center;font-size:.8rem;flex:1;"><input type="checkbox" id="trExC_' + k + '"' + (x.novo ? '' : ' checked') + ' style="width:auto;margin:0;"> ' +
+      '<input id="trExN_' + k + '" placeholder="' + (x.novo ? 'Adicionar outro item (nome)' : 'Item') + '" value="' + esc(x.nome || '') + '" data-cat="' + esc(x.cat || '') + '"></label>' +
+      '<input type="number" min="0" max="240" step="5" id="trExM_' + k + '" value="' + (Number(x.min) || 0) + '"><span class="mini">min</span></div>';
+  });
   abrirModal('Itens do treino · ' + dataBR(iso), h, '<button class="btn" onclick="trSalvarItensDia(\'' + alunoId + '\',\'' + iso + '\')"><i class="fas fa-save"></i> Salvar itens</button><button class="btn btn-back" onclick="fecharModal()">Cancelar</button>');
 }
 function trSalvarItensDia(alunoId, iso) {
@@ -12363,6 +12613,10 @@ function trSalvarItensDia(alunoId, iso) {
     var cid = c.cat || c.id, cb = $('trEdC_' + cid), mi = $('trEdM_' + cid);
     if (cb && cb.checked) itens.push({ cat: cid, nome: c.nome, min: Math.max(0, Number(mi.value) || 0), pos: pos[cid] || 'meio', fixo: !!c.fixo });
   });
+  for (var k = 0; $('trExN_' + k); k++) {
+    var nm = ($('trExN_' + k).value || '').trim(), ck = $('trExC_' + k);
+    if (nm && ck && ck.checked) itens.push({ cat: $('trExN_' + k).getAttribute('data-cat') || ('extra_' + Date.now() + '_' + k), nome: nm, min: Math.max(0, Number($('trExM_' + k).value) || 0), pos: 'meio' });
+  }
   if (!itens.length) { mostrarToast('Marque pelo menos um item.', 'erro'); return; }
   var total = trMontar(itens).total, p = trPresencaDoDia(a, iso), patch = { treinoItens: itens, horasAula: trHoras(total), status: 'aprovado', avaliadoPor: sessaoEquipe.nome || 'Professor', avaliadoEm: agoraISO() };
   var pronto = function () { fecharModal(); mostrarToast('Itens salvos: ' + trMinParaTexto(total)); trCalRenderTodos(); if (typeof renderAbaProfessor === 'function') renderAbaProfessor(); };
@@ -12481,7 +12735,7 @@ function bioConfig() {
   } catch (e) {}
   try {
     if (typeof DB !== 'undefined' && DB.listar) {
-      var lista = DB.listar('bioCredenciais') || [];
+      var lista = (DB.listar('bioCredenciais') || []).filter(function (r) { return !!r.alunoId; });
       var a = typeof alunoLogado === 'function' ? alunoLogado() : null;
       var hit = a ? lista.filter(function (r) { return r.alunoId === a.id; })[0] : null;
       if (!hit && lista.length === 1) hit = lista[0];
@@ -12705,6 +12959,154 @@ function bioInjetarLogin() {
     }
   }
 }
+
+
+/* ================================================================
+   BIOMETRIA — professor (cadastro, login e check-in) e check-in do aluno
+   Confirmação feita pelo próprio aparelho (digital / rosto / PIN) via WebAuthn.
+   ================================================================ */
+var UC_BIO_EQUIPE_KEY = 'uc_bio_equipe_v87';
+
+function ucBioCriar(idTexto, nome, exibir) {
+  var rpId = bioRpId();
+  var opts = {
+    challenge: bioDesafio(),
+    rp: { name: 'Universo Capoeira' },
+    user: { id: bioTexto(idTexto), name: String(nome || 'usuario').slice(0, 64), displayName: String(exibir || nome || 'Usuário').slice(0, 64) },
+    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+    authenticatorSelection: { userVerification: 'required', residentKey: 'preferred' },
+    timeout: 90000, attestation: 'none'
+  };
+  if (rpId) opts.rp.id = rpId;
+  return navigator.credentials.create({ publicKey: opts }).catch(function () {
+    opts.challenge = bioDesafio();
+    opts.authenticatorSelection = { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' };
+    return navigator.credentials.create({ publicKey: opts });
+  });
+}
+function ucBioVerificar(credId) {
+  var idBuf = bioDeB64(credId);
+  if (!idBuf || !idBuf.length) return Promise.reject(new Error('Credencial inválida. Cadastre a digital de novo.'));
+  var o = { challenge: bioDesafio(), timeout: 90000, userVerification: 'required', allowCredentials: [{ id: idBuf, type: 'public-key', transports: ['internal', 'hybrid'] }] };
+  var rpId = bioRpId(); if (rpId) o.rpId = rpId;
+  return navigator.credentials.get({ publicKey: o }).then(function (r) { if (!r) throw new Error('Sem resposta do aparelho'); return r; });
+}
+function bioEquipeCfg() {
+  try { var c = JSON.parse(localStorage.getItem(UC_BIO_EQUIPE_KEY) || 'null'); if (c && c.credId) return c; } catch (e) {}
+  return null;
+}
+
+function bioAtivarEquipe() {
+  if (!sessaoEquipe || !sessaoEquipe.id) { mostrarToast('Entre na equipe com a senha primeiro.', 'erro'); return; }
+  if (!bioSuportado()) { mostrarToast('Biometria indisponível. Use o link HTTPS da academia e um navegador atualizado.', 'erro'); return; }
+  var u = sessaoEquipe;
+  mostrarToast('Confirme a digital, o rosto ou o PIN no aparelho…');
+  ucBioCriar('equipe_' + u.id, u.nome, u.nome).then(function (cred) {
+    if (!cred || !cred.rawId) throw new Error('Credencial vazia');
+    var rec = { equipeId: u.id, nome: u.nome, credId: bioB64(cred.rawId), criadoEm: agoraISO() };
+    try { localStorage.setItem(UC_BIO_EQUIPE_KEY, JSON.stringify(rec)); } catch (e) { mostrarToast('Não deu para salvar neste aparelho.', 'erro'); return; }
+    try {
+      DB.salvar('bioCredenciais', { id: 'bio_equipe_' + u.id, chave: 'equipe:' + u.id, equipeId: u.id, credId: rec.credId, displayName: u.nome, criadoEm: rec.criadoEm, aparelho: (navigator.userAgent || '').slice(0, 120) });
+    } catch (e2) {}
+    mostrarToast('Digital / rosto cadastrado neste aparelho!');
+    registroLog('auth', 'Biometria cadastrada (equipe): ' + u.nome);
+    try { renderAbaProfessor(); } catch (e3) {}
+  }).catch(function (e) { mostrarToast(bioErroMsg(e), 'erro'); });
+}
+function bioDesativarEquipe() {
+  var c = bioEquipeCfg();
+  try { localStorage.removeItem(UC_BIO_EQUIPE_KEY); } catch (e) {}
+  try { if (c && DB.excluir) DB.excluir('bioCredenciais', 'bio_equipe_' + c.equipeId); } catch (e2) {}
+  mostrarToast('Digital desativada neste aparelho. Você continua entrando com a senha.');
+  try { renderAbaProfessor(); } catch (e3) {}
+}
+function bioEntrarEquipe(papelRequerido) {
+  var c = bioEquipeCfg();
+  if (!c) { mostrarToast('Digital não cadastrada neste aparelho. Entre com a senha e cadastre.', 'erro'); return; }
+  if (!bioSuportado()) { mostrarToast('Biometria indisponível neste navegador.', 'erro'); return; }
+  if (!DB.carregado('equipe')) { mostrarToast('Aguarde os dados carregarem e tente de novo.', 'erro'); return; }
+  mostrarToast('Confirme a digital / rosto / PIN…');
+  ucBioVerificar(c.credId).then(function () {
+    var u = DB.buscar('equipe', c.equipeId);
+    if (!u || u.ativo === false) { mostrarToast('Acesso da equipe não encontrado. Entre com a senha.', 'erro'); return; }
+    var permitidos = { professor: ['professor', 'adm', 'dev'], adm: ['adm', 'dev'], dev: ['dev'] };
+    if ((permitidos[papelRequerido] || []).indexOf(u.papel) < 0) { mostrarToast('Seu perfil (' + u.papel + ') não tem acesso a esta área.', 'erro'); return; }
+    sessaoEquipe = { id: u.id, nome: u.nome, papel: u.papel };
+    registroLog('equipe', 'Login equipe por biometria: ' + u.nome + ' (' + u.papel + ')');
+    mostrarToast('Bem-vindo(a), ' + u.nome + '!');
+    renderizarAba(abaAtual);
+  }).catch(function (e) { mostrarToast(bioErroMsg(e), 'erro'); });
+}
+function bioCheckinProfessor() {
+  var c = bioEquipeCfg();
+  if (!sessaoEquipe) { mostrarToast('Faça login na equipe.', 'erro'); return; }
+  if (!c || c.equipeId !== sessaoEquipe.id) { mostrarToast('Cadastre sua digital neste aparelho primeiro.', 'erro'); return; }
+  if (!bioSuportado()) { mostrarToast('Biometria indisponível neste navegador.', 'erro'); return; }
+  mostrarToast('Confirme a digital / rosto / PIN…');
+  ucBioVerificar(c.credId).then(function () {
+    registroLog('professor', 'Check-in por biometria: ' + sessaoEquipe.nome);
+    professorCheckinAula();
+  }).catch(function (e) { mostrarToast(bioErroMsg(e), 'erro'); });
+}
+function bioCheckinAluno() {
+  if (!bioSuportado()) { mostrarToast('A digital só funciona abrindo o app pelo link HTTPS da academia (não pelo arquivo baixado).', 'erro'); return; }
+  var cfg = bioConfig();
+  if (!cfg || !cfg.credId) { mostrarToast('Entre na aba Aluno e ative a digital em "Acesso rápido" primeiro.', 'erro'); return; }
+  var logado = alunoLogado();
+  if (logado && logado.id !== cfg.alunoId) { mostrarToast('A digital deste aparelho é de outro aluno.', 'erro'); return; }
+  var a = null; try { a = DB.buscar('alunos', cfg.alunoId); } catch (e) {}
+  if (!a) { mostrarToast('Aluno não encontrado. Entre com a senha.', 'erro'); return; }
+  if (!($('selectPoloFixoTreino') || {}).value) { mostrarToast('Selecione o polo do treino.', 'erro'); return; }
+  mostrarToast('Confirme a digital / rosto / PIN…');
+  ucBioVerificar(cfg.credId).then(function () {
+    if ($('checkinFixoNomeAluno')) $('checkinFixoNomeAluno').value = a.nome;
+    registroLog('auth', 'Check-in por biometria: ' + a.nome);
+    alunoCheckinLocalFixoSimples();
+  }).catch(function (e) { mostrarToast(bioErroMsg(e), 'erro'); });
+}
+
+/* mostra o botão de check-in por digital só onde a digital já foi ativada */
+(function () {
+  var rc = renderCheckin;
+  renderCheckin = function () {
+    var r = rc.apply(this, arguments);
+    try { var b = $('btnBioCheckin'), c = bioConfig(); if (b) b.style.display = ''; } catch (e) {}
+    return r;
+  };
+  var rp = renderAbaProfessor;
+  renderAbaProfessor = function () {
+    var r = rp.apply(this, arguments);
+    try {
+      var ref = document.querySelector('button[onclick="professorCheckinAula()"]') || document.querySelector('button[onclick="professorCheckoutAula()"]');
+      if (ref && ref.parentNode && !document.getElementById('profBioBox') && sessaoEquipe) {
+        var c = bioEquipeCfg(), meu = c && c.equipeId === sessaoEquipe.id, box = document.createElement('div');
+        box.id = 'profBioBox'; box.style.marginTop = '8px';
+        var presente = !!document.querySelector('button[onclick="professorCheckoutAula()"]');
+        box.innerHTML = meu
+          ? (presente ? '' : '<button class="btn btn-gold" type="button" onclick="bioCheckinProfessor()"><i class="fas fa-fingerprint"></i> Check-in com digital / rosto</button>') +
+            '<button class="btn btn-secondary btn-mini" type="button" onclick="bioDesativarEquipe()"><i class="fas fa-ban"></i> Desativar digital neste aparelho</button>'
+          : '<button class="btn btn-secondary" type="button" onclick="bioAtivarEquipe()"><i class="fas fa-fingerprint"></i> Cadastrar digital / rosto neste aparelho</button>';
+        if (!bioSuportado()) box.innerHTML += '<p class="mini" style="margin-top:4px;color:var(--gold);"><i class="fas fa-info-circle"></i> A digital só funciona abrindo o app pelo link HTTPS da academia (não pelo arquivo baixado).</p>';
+        ref.parentNode.appendChild(box);
+      }
+    } catch (e) { console.warn('[bio professor]', e); }
+    return r;
+  };
+  var ml = montarLoginEquipe;
+  montarLoginEquipe = function (container, papel) {
+    var r = ml.apply(this, arguments);
+    try {
+      var c = bioEquipeCfg(), card = container && container.querySelector('.lock-card');
+      if (c && card) {
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-gold';
+        b.innerHTML = '<i class="fas fa-fingerprint"></i> Entrar com digital / rosto (' + esc(c.nome || '') + ')';
+        b.onclick = function () { bioEntrarEquipe(papel); };
+        card.appendChild(b);
+      }
+    } catch (e) {}
+    return r;
+  };
+})();
 
 
 function trPedToggle(id, btn) {
