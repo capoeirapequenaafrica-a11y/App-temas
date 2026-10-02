@@ -942,7 +942,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
       <p style="font-size:0.68rem; color:var(--text-sub); margin-top:8px;"><i class="fas fa-info-circle"></i> Atraso e falta de compromisso sem justificativa aceita pelo professor afetam o resultado da graduação. <strong>Só é permitido 1 check-in por aula/dia.</strong></p>
       <div id="boxJaCheckinHoje" style="display:none; margin:8px 0; padding:8px 10px; border-radius:8px; border:1px solid var(--primary-green); background:rgba(0,230,118,0.1); font-size:0.78rem;"></div>
       <button class="btn" id="btnConfirmarCheckinLocal" onclick="alunoCheckinLocalFixoSimples()"><i class="fas fa-check"></i> Confirmar Presença Local</button>
-      <button class="btn btn-gold" id="btnBioCheckin" type="button" onclick="bioCheckinAluno()" style="display:none;"><i class="fas fa-fingerprint"></i> Check-in com digital / rosto</button>
+      <button class="btn btn-gold" id="btnBioCheckin" type="button" onclick="bioCheckinAluno()" style="display:none;"><i class="fas fa-fingerprint"></i> Check-in com digital / rosto / padrão</button>
       <button class="btn btn-secondary" onclick="renderCheckin()"><i class="fas fa-sync-alt"></i> Atualizar horário</button>
     </div>
 
@@ -1039,13 +1039,13 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
     <div class="card" id="cardAlunoLogin">
       <h3><i class="fas fa-user-lock"></i> Área do Aluno (Login)</h3>
       <div id="trBioLogin" style="margin:8px 0 10px;">
-        <button class="btn btn-gold" type="button" id="btnBioEntrar" onclick="bioEntrar()" style="display:none;"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto</button>
-        <p class="mini" id="txtBioLoginDica" style="margin-top:4px;line-height:1.35;"><i class="fas fa-fingerprint"></i> <b>Digital / rosto:</b> entre com a senha uma vez, depois ative em <b>Acesso rápido</b> no seu painel. O botão aparece aqui nas próximas vezes.</p>
+        <button class="btn btn-gold" type="button" id="btnBioEntrar" onclick="bioEntrar()" style="display:none;"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto / padrão</button>
+        <p class="mini" id="txtBioLoginDica" style="margin-top:4px;line-height:1.35;"><i class="fas fa-fingerprint"></i> <b>Digital / rosto / padrão:</b> entre com a senha uma vez, depois ative em <b>Acesso rápido</b> no seu painel. O botão aparece aqui nas próximas vezes.</p>
       </div>
       <label class="campo-label">Nome completo ou apelido</label>
-      <input id="alunoLoginNome" placeholder="Ex: João da Silva">
+      <input id="alunoLoginNome" placeholder="Ex: João da Silva" name="username" autocomplete="username">
       <label class="campo-label">Senha</label>
-      <input id="alunoLoginSenha" type="password" placeholder="Sua senha">
+      <input id="alunoLoginSenha" type="password" placeholder="Sua senha" name="password" autocomplete="current-password">
       <button class="btn" onclick="autenticarAlunoNuvem(this)"><i class="fas fa-sign-in-alt"></i> Entrar no Painel</button>
       <button class="btn btn-secondary" type="button" onclick="abrirPedidoResetSenha()" style="margin-top:6px;"><i class="fas fa-key"></i> Esqueci a senha</button>
       <div style="margin-top:8px; text-align:center; border-top:1px solid var(--card-border); padding-top:6px;">
@@ -1076,9 +1076,9 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
         <option value="gympass">Aluno Gympass / Wellhub</option>
       </select>
       <label class="campo-label">Senha de acesso</label>
-      <input id="autoCadSenha" type="password" placeholder="Mínimo 4 caracteres">
+      <input id="autoCadSenha" type="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
       <label class="campo-label">Repita a senha</label>
-      <input id="autoCadSenha2" type="password" placeholder="Repita a senha">
+      <input id="autoCadSenha2" type="password" placeholder="Repita a senha" autocomplete="new-password">
       <button class="btn" onclick="cadastrarAlunoNuvem(this)"><i class="fas fa-check"></i> Concluir Cadastro</button>
       <p class="mini" style="margin-top:6px;"><i class="fas fa-info-circle"></i> A senha é apenas um controle simples de acesso ao painel — não é autenticação de segurança.</p>
     </div>
@@ -2057,6 +2057,16 @@ function ucLerTempoTreino(pre) {
   return Math.max(0, Math.floor(Number(a) || 0)) * 12 + Math.max(0, Math.floor(Number(m) || 0));
 }
 
+/* Guarda a senha no gerenciador de senhas do próprio aparelho (cofre do navegador/Google/Apple).
+   O app NÃO grava a senha em texto no localStorage nem na nuvem. */
+function ucSalvarSenhaDispositivo(usuario, senha, exibir) {
+  try {
+    if (!usuario || !senha || !navigator.credentials || typeof window.PasswordCredential !== 'function') return;
+    var cred = new window.PasswordCredential({ id: String(usuario), password: String(senha), name: String(exibir || usuario) });
+    var r = navigator.credentials.store(cred); if (r && r.catch) r.catch(function () {});
+  } catch (e) {}
+}
+
 /* Hash simples (djb2) - apenas para evitar senha em texto puro no banco.
    NÃO é criptografia: veja as observações de segurança no relatório. */
 function hashSenha(senha) {
@@ -2704,6 +2714,7 @@ function autenticarAlunoNuvem(btn) {
     if (achado.senhaHash !== hashSenha(senha)) { mostrarToast('Senha incorreta.', 'erro'); return; }
     sessaoAlunoId = achado.id;
     registroLog('auth', 'Aluno entrou: ' + achado.nome);
+    ucSalvarSenhaDispositivo(nome, senha, achado.apelido || achado.nome);
     $('alunoLoginSenha').value = '';
     renderAluno();
     mostrarToast('Bem-vindo(a), ' + esc(achado.apelido || achado.nome) + '!');
@@ -2767,6 +2778,7 @@ function cadastrarAlunoNuvem(btn) {
   DB.salvar('alunos', novo).then(function (novoId) {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-check"></i> Concluir Cadastro'; }
     sessaoAlunoId = novoId;
+    ucSalvarSenhaDispositivo(nome, s1, apelido || nome);
     ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadTempoAnos', 'autoCadTempoMeses', 'autoCadSenha', 'autoCadSenha2'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     registroLog('cadastro', 'Novo aluno cadastrado: ' + nome);
     toggleAutoCadastroAluno(false);
@@ -8257,6 +8269,7 @@ function trocarSenhaAluno() {
   if (nova === null) return;
   if (String(nova).length < 4) { mostrarToast('Senha muito curta.', 'erro'); return; }
   DB.salvar('alunos', { senhaHash: hashSenha(nova) }, logado.id).then(function () {
+    ucSalvarSenhaDispositivo(logado.nome, nova, logado.apelido || logado.nome);
     mostrarToast('Senha alterada com sucesso.');
     registroLog('auth', 'Aluno trocou a senha: ' + logado.nome);
   });
@@ -8340,6 +8353,7 @@ function assistenteSenhaProcessar(texto) {
   assistenteSenhaEncerrar();
   DB.salvar('alunos', { senhaHash: novaHash }, logado.id).then(function () {
     registroLog('auth', 'Aluno trocou a senha pelo assistente: ' + logado.nome);
+    ucSalvarSenhaDispositivo(logado.nome, s.nova, logado.apelido || logado.nome);
     resp('Pronto! Sua senha foi alterada. Use a nova senha no próximo login.');
   }).catch(function () { resp('Não consegui salvar agora. Tente de novo em instantes.'); });
 }
@@ -12660,7 +12674,7 @@ renderCheckin = function () {
 /* ▼ aluno-acesso.js */
 /* ================================================================
    ALUNO-ACESSO.JS — Universo Capoeira (v87)
-   Entrada do aluno: senha (como sempre) OU digital/rosto/PIN do celular (opcional, neste aparelho).
+   Entrada do aluno: senha (como sempre) OU digital/rosto/padrão do celular (opcional, neste aparelho).
    A biometria é só um atalho de conveniência neste aparelho: a senha continua valendo em qualquer lugar.
    ================================================================ */
 var UC_BIO_KEY = 'uc_bio_v87';
@@ -12712,7 +12726,7 @@ function bioTexto(s) {
 function bioErroMsg(e) {
   if (!e) return 'Erro desconhecido.';
   var n = e.name || '', m = e.message || String(e);
-  if (n === 'NotAllowedError') return 'Cancelado ou bloqueado pelo aparelho. Tente de novo e confirme a digital/rosto/PIN.';
+  if (n === 'NotAllowedError') return 'Cancelado ou bloqueado pelo aparelho. Tente de novo e confirme a digital/rosto/padrão.';
   if (n === 'InvalidStateError') return 'Esta digital já está cadastrada neste aparelho. Tente entrar ou desative e ative de novo.';
   if (n === 'NotSupportedError') return 'Este aparelho/navegador não suporta biometria aqui.';
   if (n === 'SecurityError') return 'Bloqueado por segurança. Abra o app pelo link HTTPS da academia (não por arquivo local).';
@@ -12756,7 +12770,7 @@ function bioAtivar() {
     mostrarToast('Biometria indisponível. Use HTTPS (site da academia) e um navegador atualizado.', 'erro');
     return;
   }
-  mostrarToast('Confirme a digital, o rosto ou o PIN no aparelho…');
+  mostrarToast('Confirme a digital, o rosto ou o padrão no aparelho…');
   var rpId = bioRpId();
   var pubKey = {
     challenge: bioDesafio(),
@@ -12830,7 +12844,7 @@ function bioAtivar() {
         try { a.bioCredId = rec.credId; a.bioAtualizadoEm = rec.criadoEm; DB.salvar('alunos', a); } catch (eA) {}
       }
     } catch (eDB) {}
-    mostrarToast('Digital / rosto ativado neste aparelho!');
+    mostrarToast('Digital / rosto / padrão ativado neste aparelho!');
     registroLog('auth', 'Acesso por biometria ativado: ' + a.nome);
     try { renderAluno(); } catch (eR) {}
   }).catch(function (e) {
@@ -12862,7 +12876,7 @@ function bioEntrar() {
     mostrarToast('Aguarde os dados carregarem e tente de novo.', 'erro');
     return;
   }
-  mostrarToast('Confirme a digital / rosto / PIN…');
+  mostrarToast('Confirme a digital / rosto / padrão…');
   var idBuf = bioDeB64(cfg.credId);
   if (!idBuf || !idBuf.length) {
     mostrarToast('Credencial inválida. Entre com a senha e ative a digital de novo.', 'erro');
@@ -12910,7 +12924,7 @@ function bioHtmlCard(logado) {
   if (!httpsOk) status = '<p class="mini" style="color:var(--danger);">Abra o app pelo link HTTPS da academia para usar a digital.</p>';
   else if (!sup) status = '<p class="mini">Este navegador não oferece biometria. Use Chrome/Safari atualizado.</p>';
   return '<div class="card tr-card" id="trCardAcesso" style="border:1px solid var(--accent-blue);">' +
-    '<h3><i class="fas fa-fingerprint"></i> Acesso rápido (digital / rosto)</h3>' +
+    '<h3><i class="fas fa-fingerprint"></i> Acesso rápido (digital / rosto / padrão)</h3>' +
     '<p class="mini" style="margin-bottom:8px;">Depois de ativar, você entra sem digitar a senha <b>neste aparelho</b>. A senha continua valendo.</p>' +
     status +
     (ativo
@@ -12918,8 +12932,8 @@ function bioHtmlCard(logado) {
         '<div class="flex-btn"><button class="btn btn-secondary" onclick="bioDesativar()"><i class="fas fa-ban"></i> Desativar</button>' +
         '<button class="btn" onclick="bioAtivar()"><i class="fas fa-sync"></i> Reativar</button></div>'
       : (sup
-          ? '<button class="btn btn-gold" onclick="bioAtivar()"><i class="fas fa-fingerprint"></i> Ativar digital / rosto / PIN</button>' +
-            '<p class="mini" style="margin-top:6px;">O celular vai pedir sua digital, rosto ou PIN para confirmar.</p>'
+          ? '<button class="btn btn-gold" onclick="bioAtivar()"><i class="fas fa-fingerprint"></i> Ativar digital / rosto / padrão</button>' +
+            '<p class="mini" style="margin-top:6px;">O celular vai pedir sua digital, rosto ou padrão para confirmar.</p>'
           : '<p class="mini">Indisponível neste ambiente. Use a senha normalmente.</p>')) +
     '</div>';
 }
@@ -12933,7 +12947,7 @@ function bioInjetarLogin() {
   var btn = $('btnBioEntrar'), dica = $('txtBioLoginDica'), cfg = bioConfig(), sup = bioSuportado();
   if (!$('trBioLogin')) {
     var div = document.createElement('div'); div.id = 'trBioLogin'; div.style.margin = '8px 0 10px';
-    div.innerHTML = '<button class="btn btn-gold" type="button" id="btnBioEntrar" onclick="bioEntrar()" style="display:none;"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto</button>' +
+    div.innerHTML = '<button class="btn btn-gold" type="button" id="btnBioEntrar" onclick="bioEntrar()" style="display:none;"><i class="fas fa-fingerprint"></i> Entrar com digital / rosto / padrão</button>' +
       '<p class="mini" id="txtBioLoginDica" style="margin-top:4px;line-height:1.35;"></p>';
     var h = card.querySelector('h3');
     if (h && h.parentNode) h.parentNode.insertBefore(div, h.nextSibling);
@@ -12942,7 +12956,7 @@ function bioInjetarLogin() {
   }
   if (btn && cfg && cfg.credId && sup) {
     btn.style.display = '';
-    btn.innerHTML = '<i class="fas fa-fingerprint"></i> Entrar com digital / rosto' + (cfg.nome ? ' (' + esc(cfg.nome) + ')' : '');
+    btn.innerHTML = '<i class="fas fa-fingerprint"></i> Entrar com digital / rosto / padrão' + (cfg.nome ? ' (' + esc(cfg.nome) + ')' : '');
     if (dica) dica.innerHTML = 'Ou entre com a senha abaixo.';
   } else if (btn) {
     btn.style.display = 'none';
@@ -12954,7 +12968,7 @@ function bioInjetarLogin() {
       } else if (!sup) {
         dica.innerHTML = '<i class="fas fa-info-circle"></i> Este navegador não oferece biometria. Use a senha.';
       } else {
-        dica.innerHTML = '<i class="fas fa-fingerprint"></i> <b>Digital / rosto:</b> entre com a senha, depois toque em <b>Ativar digital / rosto</b> no painel.';
+        dica.innerHTML = '<i class="fas fa-fingerprint"></i> <b>Digital / rosto / padrão:</b> entre com a senha, depois toque em <b>Ativar digital / rosto / padrão</b> no painel.';
       }
     }
   }
@@ -12963,7 +12977,7 @@ function bioInjetarLogin() {
 
 /* ================================================================
    BIOMETRIA — professor (cadastro, login e check-in) e check-in do aluno
-   Confirmação feita pelo próprio aparelho (digital / rosto / PIN) via WebAuthn.
+   Confirmação feita pelo próprio aparelho (digital / rosto / padrão) via WebAuthn.
    ================================================================ */
 var UC_BIO_EQUIPE_KEY = 'uc_bio_equipe_v87';
 
@@ -13000,7 +13014,7 @@ function bioAtivarEquipe() {
   if (!sessaoEquipe || !sessaoEquipe.id) { mostrarToast('Entre na equipe com a senha primeiro.', 'erro'); return; }
   if (!bioSuportado()) { mostrarToast('Biometria indisponível. Use o link HTTPS da academia e um navegador atualizado.', 'erro'); return; }
   var u = sessaoEquipe;
-  mostrarToast('Confirme a digital, o rosto ou o PIN no aparelho…');
+  mostrarToast('Confirme a digital, o rosto ou o padrão no aparelho…');
   ucBioCriar('equipe_' + u.id, u.nome, u.nome).then(function (cred) {
     if (!cred || !cred.rawId) throw new Error('Credencial vazia');
     var rec = { equipeId: u.id, nome: u.nome, credId: bioB64(cred.rawId), criadoEm: agoraISO() };
@@ -13008,7 +13022,7 @@ function bioAtivarEquipe() {
     try {
       DB.salvar('bioCredenciais', { id: 'bio_equipe_' + u.id, chave: 'equipe:' + u.id, equipeId: u.id, credId: rec.credId, displayName: u.nome, criadoEm: rec.criadoEm, aparelho: (navigator.userAgent || '').slice(0, 120) });
     } catch (e2) {}
-    mostrarToast('Digital / rosto cadastrado neste aparelho!');
+    mostrarToast('Digital / rosto / padrão cadastrado neste aparelho!');
     registroLog('auth', 'Biometria cadastrada (equipe): ' + u.nome);
     try { renderAbaProfessor(); } catch (e3) {}
   }).catch(function (e) { mostrarToast(bioErroMsg(e), 'erro'); });
@@ -13025,7 +13039,7 @@ function bioEntrarEquipe(papelRequerido) {
   if (!c) { mostrarToast('Digital não cadastrada neste aparelho. Entre com a senha e cadastre.', 'erro'); return; }
   if (!bioSuportado()) { mostrarToast('Biometria indisponível neste navegador.', 'erro'); return; }
   if (!DB.carregado('equipe')) { mostrarToast('Aguarde os dados carregarem e tente de novo.', 'erro'); return; }
-  mostrarToast('Confirme a digital / rosto / PIN…');
+  mostrarToast('Confirme a digital / rosto / padrão…');
   ucBioVerificar(c.credId).then(function () {
     var u = DB.buscar('equipe', c.equipeId);
     if (!u || u.ativo === false) { mostrarToast('Acesso da equipe não encontrado. Entre com a senha.', 'erro'); return; }
@@ -13042,7 +13056,7 @@ function bioCheckinProfessor() {
   if (!sessaoEquipe) { mostrarToast('Faça login na equipe.', 'erro'); return; }
   if (!c || c.equipeId !== sessaoEquipe.id) { mostrarToast('Cadastre sua digital neste aparelho primeiro.', 'erro'); return; }
   if (!bioSuportado()) { mostrarToast('Biometria indisponível neste navegador.', 'erro'); return; }
-  mostrarToast('Confirme a digital / rosto / PIN…');
+  mostrarToast('Confirme a digital / rosto / padrão…');
   ucBioVerificar(c.credId).then(function () {
     registroLog('professor', 'Check-in por biometria: ' + sessaoEquipe.nome);
     professorCheckinAula();
@@ -13057,7 +13071,7 @@ function bioCheckinAluno() {
   var a = null; try { a = DB.buscar('alunos', cfg.alunoId); } catch (e) {}
   if (!a) { mostrarToast('Aluno não encontrado. Entre com a senha.', 'erro'); return; }
   if (!($('selectPoloFixoTreino') || {}).value) { mostrarToast('Selecione o polo do treino.', 'erro'); return; }
-  mostrarToast('Confirme a digital / rosto / PIN…');
+  mostrarToast('Confirme a digital / rosto / padrão…');
   ucBioVerificar(cfg.credId).then(function () {
     if ($('checkinFixoNomeAluno')) $('checkinFixoNomeAluno').value = a.nome;
     registroLog('auth', 'Check-in por biometria: ' + a.nome);
@@ -13083,9 +13097,9 @@ function bioCheckinAluno() {
         box.id = 'profBioBox'; box.style.marginTop = '8px';
         var presente = !!document.querySelector('button[onclick="professorCheckoutAula()"]');
         box.innerHTML = meu
-          ? (presente ? '' : '<button class="btn btn-gold" type="button" onclick="bioCheckinProfessor()"><i class="fas fa-fingerprint"></i> Check-in com digital / rosto</button>') +
+          ? (presente ? '' : '<button class="btn btn-gold" type="button" onclick="bioCheckinProfessor()"><i class="fas fa-fingerprint"></i> Check-in com digital / rosto / padrão</button>') +
             '<button class="btn btn-secondary btn-mini" type="button" onclick="bioDesativarEquipe()"><i class="fas fa-ban"></i> Desativar digital neste aparelho</button>'
-          : '<button class="btn btn-secondary" type="button" onclick="bioAtivarEquipe()"><i class="fas fa-fingerprint"></i> Cadastrar digital / rosto neste aparelho</button>';
+          : '<button class="btn btn-secondary" type="button" onclick="bioAtivarEquipe()"><i class="fas fa-fingerprint"></i> Cadastrar digital / rosto / padrão neste aparelho</button>';
         if (!bioSuportado()) box.innerHTML += '<p class="mini" style="margin-top:4px;color:var(--gold);"><i class="fas fa-info-circle"></i> A digital só funciona abrindo o app pelo link HTTPS da academia (não pelo arquivo baixado).</p>';
         ref.parentNode.appendChild(box);
       }
@@ -13099,7 +13113,7 @@ function bioCheckinAluno() {
       var c = bioEquipeCfg(), card = container && container.querySelector('.lock-card');
       if (c && card) {
         var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-gold';
-        b.innerHTML = '<i class="fas fa-fingerprint"></i> Entrar com digital / rosto (' + esc(c.nome || '') + ')';
+        b.innerHTML = '<i class="fas fa-fingerprint"></i> Entrar com digital / rosto / padrão (' + esc(c.nome || '') + ')';
         b.onclick = function () { bioEntrarEquipe(papel); };
         card.appendChild(b);
       }
@@ -13438,7 +13452,7 @@ function trTestarBoletim() { var al = trAlunoDeTeste(), ate = dataLocalISO(); ab
 function trTestarBio() {
   var linhas = ['Endereço seguro (https): ' + (window.isSecureContext ? '✅ sim' : '❌ não'), 'Suporte a biometria no navegador: ' + (window.PublicKeyCredential ? '✅ sim' : '❌ não')];
   var fim = function (extra) { abrirModal('Teste: acesso por digital', '<div class="tr-teste-faixa">🧪 MODO TESTE — nada é ativado</div>' + linhas.concat(extra ? [extra] : []).map(function (l) { return '<p class="mini">' + l + '</p>'; }).join(''), '<button class="btn btn-back" onclick="fecharModal()">Fechar</button>'); };
-  if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function (ok) { fim('Digital/rosto/PIN neste aparelho: ' + (ok ? '✅ disponível' : '❌ indisponível')); }).catch(function () { fim(''); });
+  if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function (ok) { fim('Digital/rosto/padrão neste aparelho: ' + (ok ? '✅ disponível' : '❌ indisponível')); }).catch(function () { fim(''); });
   else fim('');
 }
 function trTestarAdvertencia() {
