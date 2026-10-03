@@ -17098,5 +17098,512 @@ window.ucDockExtra.push(function () {
 })();
 </script>
 
+<!-- ===================================================================
+     ACRÉSCIMO — Sub-abas do Aluno (cor da graduação) + Área de Formação
+     Não remove nem altera código anterior: só acrescenta e "embrulha" funções.
+     =================================================================== -->
+<style id="ucAbasAlunoCss">
+.uc-g-oculto{display:none !important}
+#ucAlunoTabs{display:flex;gap:6px;overflow-x:auto;padding:4px 2px 8px;margin:0 0 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#ucAlunoTabs::-webkit-scrollbar{display:none}
+#ucAlunoTabs button{flex:none;display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:12px;font-size:.78rem;font-weight:800;cursor:pointer;touch-action:manipulation;
+  background:transparent;color:var(--text-main,#eee);border:2px solid var(--uc-grad-c1,#20c77a);border-bottom-width:4px;transition:transform .15s}
+#ucAlunoTabs button i{color:var(--uc-grad-c1,#20c77a)}
+#ucAlunoTabs button:active{transform:scale(.95)}
+#ucAlunoTabs button.ativa{background:var(--uc-grad-bg,#20c77a);color:var(--uc-grad-fg,#fff);border-color:var(--uc-grad-c2,#20c77a)}
+#ucAlunoTabs button.ativa i{color:var(--uc-grad-fg,#fff)}
+#ucAlunoTabs button.formacao{border-style:dashed}
+#cardAlunoPainel.uc-grad-borda{border:2px solid var(--uc-grad-c1,#20c77a) !important}
+#ucFormacaoArea{border:2px solid var(--gold,#ffc107);border-radius:16px;padding:12px;background:linear-gradient(160deg,rgba(255,193,7,.10),rgba(255,193,7,.02));margin-top:6px}
+#ucFormacaoArea h3{color:var(--gold,#ffc107);margin:12px 0 6px;display:flex;align-items:center;gap:8px;font-size:.92rem}
+#ucFormacaoArea h3:first-child{margin-top:0}
+.uc-fm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.uc-fm-box{text-align:center;padding:8px;border-radius:12px;border:1px solid var(--gold,#ffc107);background:rgba(0,0,0,.18)}
+.uc-fm-box b{display:block;font-size:1.25rem;color:var(--gold,#ffc107)}
+.uc-ftimer{display:inline-block;margin-top:6px;padding:6px 12px;border-radius:999px;background:var(--gold,#ffc107);color:#241a00;font-weight:800;font-size:.85rem}
+.uc-ftimer.fim{background:var(--primary-green,#20c77a);color:#04210f}
+.uc-fm-img{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.uc-fm-img img{width:112px;height:112px;object-fit:cover;border-radius:10px;border:1px solid var(--card-border,#2a3a48);cursor:pointer}
+.uc-fm-it{padding:8px 0;border-top:1px dashed var(--card-border,#2a3a48);font-size:.78rem}
+.uc-fm-it:first-of-type{border-top:0}
+.uc-fm-chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+</style>
+
+<script id="ucAbasFormacao">
+(function () {
+  'use strict';
+
+  /* ================= utilidades ================= */
+  var $q = function (id) { return document.getElementById(id); };
+  function eqAtiva() { return (typeof sessaoEquipe !== 'undefined') && sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0; }
+  function lst(c) { try { return DB.listar(c) || []; } catch (e) { return []; } }
+  function sn(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  function bt(txt, fn, cls) { return '<button type="button" class="btn btn-mini ' + (cls || '') + '" onclick="' + fn + '">' + txt + '</button>'; }
+  function minTxt(m) { var h = Math.floor(m / 60), r = m % 60; return h ? (h + 'h' + (r ? ' ' + r + 'min' : '')) : (r + ' min'); }
+  var DUR = 30;   /* minutos por aula de formação */
+
+  /* ================= cor da graduação ================= */
+  var CORES = {
+    crua: ['#e8dcc0', '#2a2410'], amarela: ['#f5c518', '#2a2410'], laranja: ['#ff8a1f', '#2a1500'], azul: ['#2c8cff', '#ffffff'],
+    verde: ['#20c77a', '#04210f'], roxa: ['#9b59d6', '#ffffff'], marrom: ['#8d5a3b', '#ffffff'], vermelha: ['#e53935', '#ffffff'], branca: ['#f2f2f2', '#1a1a1a']
+  };
+  function coresDaGraduacao(al) {
+    var g = sn((al && al.graduacao) || '').split(' - ').slice(1).join(' ') || sn((al && al.graduacao) || '');
+    var achadas = [];
+    Object.keys(CORES).forEach(function (k) { var i = g.indexOf(k); if (i >= 0) achadas.push({ k: k, i: i }); });
+    achadas.sort(function (a, b) { return a.i - b.i; });
+    var c1 = achadas[0] ? CORES[achadas[0].k] : ['#20c77a', '#04210f'];
+    var c2 = achadas[1] ? CORES[achadas[1].k] : c1;
+    var bg = achadas[1] ? 'linear-gradient(90deg,' + c1[0] + ' 0%,' + c1[0] + ' 48%,' + c2[0] + ' 52%,' + c2[0] + ' 100%)' : c1[0];
+    return { c1: c1[0], c2: c2[0], bg: bg, fg: c1[1] };
+  }
+  function pintar(al) {
+    var c = coresDaGraduacao(al), r = document.documentElement.style;
+    r.setProperty('--uc-grad-c1', c.c1); r.setProperty('--uc-grad-c2', c.c2); r.setProperty('--uc-grad-bg', c.bg); r.setProperty('--uc-grad-fg', c.fg);
+  }
+
+  /* ================= sub-abas do Aluno ================= */
+  var ABA = 'resumo';
+  var ABAS = [
+    { id: 'resumo', nome: 'Resumo', ic: 'fa-house' },
+    { id: 'aulas', nome: 'Aulas', ic: 'fa-book-open' },
+    { id: 'evolucao', nome: 'Evolução', ic: 'fa-chart-line' },
+    { id: 'perfil', nome: 'Perfil', ic: 'fa-user-edit' },
+    { id: 'formacao', nome: 'Formação', ic: 'fa-chalkboard-teacher', so: 'formador' },
+    { id: 'tudo', nome: 'Tudo', ic: 'fa-layer-group' }
+  ];
+  function grupoPorTitulo(t, atual) {
+    t = sn(t);
+    if (!t) return atual;
+    if (/perfil|acesso rapido|biometri|digital|liberdade|senha/.test(t)) return 'perfil';
+    if (/desempenho|carga hor|proxima aula|desafio|jogos|falar com|mensage|feedback|pergunta/.test(t)) return 'resumo';
+    if (/presenca|avaliac|certificad|boletim|teste de conhec|calendario|frequencia|evolucao|advertenc/.test(t)) return 'evolucao';
+    if (/aulas e along|pedir treino|pedidos|agendar|curricul|treino|aquecimento|semana|along/.test(t)) return 'aulas';
+    return atual;
+  }
+  function emFormacao() { try { return !!(typeof alunoEmFormacaoAprovado === 'function' && alunoEmFormacaoAprovado(alunoLogado())); } catch (e) { return false; } }
+
+  function classificar() {
+    var tab = $q('tab3'); if (!tab) return;
+    Array.prototype.forEach.call(tab.children, function (el) {
+      if (el.id === 'ucAlunoTabs' || el.id === 'cardAlunoLogin' || el.id === 'cardAlunoPrimeiroCadastro') return;
+      if (el.id === 'cardAlunoPainel') {
+        var atual = 'resumo';
+        Array.prototype.forEach.call(el.children, function (f) {
+          var h = f.tagName === 'H3' ? f : (f.querySelector ? f.querySelector(':scope > h3') : null);
+          if (h) atual = grupoPorTitulo(h.textContent, atual);
+          f.setAttribute('data-uc-g', atual);
+        });
+        return;
+      }
+      if (el.id === 'ucFormacaoArea') { el.setAttribute('data-uc-g', 'formacao'); return; }
+      var h2 = el.tagName === 'H3' ? el : (el.querySelector ? el.querySelector('h3') : null);
+      var g = grupoPorTitulo(h2 ? h2.textContent : (el.id || ''), 'resumo');
+      if (el.id === 'cardTesteConhecimento' || el.id === 'cardBoletimAluno') g = 'evolucao';
+      if (el.id === 'cardAgendaAluno' || el.id === 'cardCurriculoAluno') g = 'aulas';
+      el.setAttribute('data-uc-g', g);
+    });
+  }
+
+  function aplicar() {
+    var tab = $q('tab3'); if (!tab) return;
+    var tudo = ABA === 'tudo';
+    tab.querySelectorAll('[data-uc-g]').forEach(function (el) {
+      el.classList.toggle('uc-g-oculto', !(tudo || el.getAttribute('data-uc-g') === ABA));
+    });
+    var bar = $q('ucAlunoTabs');
+    if (bar) bar.querySelectorAll('button').forEach(function (b) { b.classList.toggle('ativa', b.getAttribute('data-aba') === ABA); });
+  }
+
+  function limpar() {
+    var tab = $q('tab3'); if (!tab) return;
+    tab.querySelectorAll('.uc-g-oculto').forEach(function (e) { e.classList.remove('uc-g-oculto'); });
+    var bar = $q('ucAlunoTabs'); if (bar) bar.style.display = 'none';
+    var p = $q('cardAlunoPainel'); if (p) p.classList.remove('uc-grad-borda');
+  }
+
+  var ocupado = false;
+  function organizar() {
+    if (ocupado) return; ocupado = true;
+    try {
+      var tab = $q('tab3'), al = (typeof alunoLogado === 'function') ? alunoLogado() : null;
+      if (!tab) return;
+      if (!al) { limpar(); return; }
+      pintar(al);
+      var formador = emFormacao();
+      if (ABA === 'formacao' && !formador) ABA = 'resumo';
+      /* área de formação */
+      var area = $q('ucFormacaoArea');
+      if (formador) {
+        if (!area) {
+          area = document.createElement('div'); area.id = 'ucFormacaoArea';
+          var painel = $q('cardAlunoPainel'); painel.parentNode.insertBefore(area, painel.nextSibling);
+        }
+        renderFormacao(area, al);
+      } else if (area) { area.remove(); }
+      /* barra */
+      var bar = $q('ucAlunoTabs');
+      if (!bar) { bar = document.createElement('div'); bar.id = 'ucAlunoTabs'; bar.setAttribute('role', 'tablist'); tab.insertBefore(bar, tab.firstChild); }
+      bar.style.display = 'flex';
+      var html = ABAS.filter(function (a) { return !a.so || (a.so === 'formador' && formador); }).map(function (a) {
+        return '<button type="button" role="tab" data-aba="' + a.id + '" class="' + (a.id === 'formacao' ? 'formacao' : '') + '" onclick="ucAlunoAba(\'' + a.id + '\')"><i class="fas ' + a.ic + '"></i>' + a.nome + '</button>';
+      }).join('');
+      if (bar.getAttribute('data-sig') !== html) { bar.innerHTML = html; bar.setAttribute('data-sig', html); }
+      var painel2 = $q('cardAlunoPainel'); if (painel2) painel2.classList.add('uc-grad-borda');
+      classificar();
+      aplicar();
+    } catch (e) { console.warn('[abas aluno]', e); }
+    finally { ocupado = false; }
+  }
+  window.ucAlunoAba = function (id) { ABA = id; aplicar(); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {} };
+
+  /* reorganiza sempre que o painel for redesenhado */
+  (function () {
+    var o = window.renderAluno;
+    if (typeof o === 'function') window.renderAluno = function () {
+      var r = o.apply(this, arguments);
+      setTimeout(organizar, 0); setTimeout(organizar, 400);
+      return r;
+    };
+    var deb = null;
+    function agendar() { clearTimeout(deb); deb = setTimeout(organizar, 120); }
+    function ligar() {
+      var tab = $q('tab3'), painel = $q('cardAlunoPainel');
+      if (tab && window.MutationObserver) {
+        var mo = new MutationObserver(function (m) {
+          if (ocupado) return;
+          for (var i = 0; i < m.length; i++) { if (m[i].type === 'childList') { agendar(); break; } }
+        });
+        mo.observe(tab, { childList: true });
+        if (painel) mo.observe(painel, { childList: true });
+      }
+    }
+    ligar();
+  })();
+
+  /* o card "Aulas e Alongamentos" do professor é a área de Formação: só o aluno em formação (ou a equipe) vê */
+  (function () {
+    var o = window.htmlCardAulasConteudoAluno;
+    if (typeof o !== 'function') return;
+    window.htmlCardAulasConteudoAluno = function () {
+      if (!(emFormacao() || eqAtiva())) return '';
+      return o.apply(this, arguments);
+    };
+  })();
+
+  /* ================= ÁREA DE FORMAÇÃO (aluno) ================= */
+  function aulasDoAluno(a) {
+    return lst('formacaoProfessor').filter(function (x) { return x.tipo === 'aula-formacao' && (x.alunoId === a.id); })
+      .sort(function (p, q) { return String(q.criadoEm || '').localeCompare(String(p.criadoEm || '')); });
+  }
+  function fimISO(x) { return new Date(new Date(x.inicioISO || x.criadoEm).getTime() + DUR * 60000).toISOString(); }
+  function emAndamento(a) {
+    var agora = Date.now();
+    return aulasDoAluno(a).filter(function (x) { return x.status !== 'recusada' && new Date(fimISO(x)).getTime() > agora; })[0] || null;
+  }
+  function materiaisFormacao() {
+    return lst('aulasConteudo')   /* tudo que o professor publica na área de Formação aparece aqui */
+      .sort(function (p, q) { return String(q.atualizadoEm || q.criadoEm || '').localeCompare(String(p.atualizadoEm || p.criadoEm || '')); });
+  }
+  function rotuloCat(c) { return c === 'quadril' ? 'Alongamento de quadril' : (c === 'formacao' ? 'Formação' : (c || '')); }
+
+  function renderFormacao(area, al) {
+    var ae = document.activeElement;
+    if (ae && area.contains(ae) && /INPUT|TEXTAREA/.test(ae.tagName)) return;   /* não atrapalha quem está digitando */
+    var aulas = aulasDoAluno(al), conf = aulas.filter(function (x) { return x.status === 'confirmada'; });
+    var pend = aulas.filter(function (x) { return x.status === 'pendente'; });
+    var ativa = emAndamento(al), mats = materiaisFormacao();
+    var h = '<h3><i class="fas fa-chalkboard-teacher"></i> Área do aluno em formação ' + (typeof htmlIconeFormador === 'function' ? htmlIconeFormador() : '') + '</h3>' +
+      '<p class="mini">Aqui você prepara e registra as aulas que vai dar. Cada aula conta <b>' + DUR + ' minutos</b>.</p>' +
+      '<div class="uc-fm-grid"><div class="uc-fm-box"><b>' + conf.length + '</b><span class="mini">aulas confirmadas</span></div>' +
+      '<div class="uc-fm-box"><b>' + minTxt(conf.length * DUR) + '</b><span class="mini">de prática</span></div></div>';
+
+    /* 1. check-in da aula */
+    h += '<h3><i class="fas fa-stopwatch"></i> Check-in da aula que vou dar</h3>';
+    if (ativa) {
+      h += '<div class="aviso-info"><b>Aula em andamento:</b> ' + esc(ativa.tema || '') + '<br><span class="mini">Check-in às ' + esc(ativa.hora || '') + ' · ' +
+        (ativa.status === 'confirmada' ? 'confirmada pelo professor' : 'aguardando confirmação do professor') + '</span><br>' +
+        '<span class="uc-ftimer" data-fim="' + fimISO(ativa) + '">…</span></div>';
+    } else {
+      h += '<label class="campo-label">Turma / tema da aula</label>' +
+        '<input id="ucFormTema" placeholder="Ex: turma infantil — ginga e alongamento de quadril">' +
+        '<button class="btn btn-gold" onclick="ucFormCheckin(this)"><i class="fas fa-map-marker-alt"></i> Fazer check-in (aula de ' + DUR + ' min)</button>' +
+        '<p class="mini">Faça o check-in quando começar a aula. O professor confirma depois.</p>';
+    }
+    if (pend.length && !ativa) h += '<div class="mini" style="margin-top:6px;">' + pend.length + ' aula(s) aguardando confirmação do professor.</div>';
+
+    /* 2. materiais */
+    h += '<h3><i class="fas fa-images"></i> Materiais do professor (alongamento de quadril e mais)</h3>';
+    if (!mats.length) h += '<p class="sem-dados">O professor ainda não publicou materiais de formação.</p>';
+    mats.forEach(function (m) {
+      var fotos = (Array.isArray(m.fotos) ? m.fotos : []).filter(function (f) { return urlSegura(f); });
+      h += '<div class="uc-fm-it"><div class="linha"><b>' + esc(m.titulo || 'Material') + '</b><span class="pill pill-info">' + esc(rotuloCat(m.categoria)) + '</span></div>' +
+        (m.texto ? '<div style="white-space:pre-wrap;line-height:1.4;margin-top:4px;">' + esc(m.texto) + '</div>' : '') +
+        (fotos.length ? '<div class="uc-fm-img">' + fotos.map(function (f) { return '<img src="' + urlSegura(f) + '" alt="Material de formação" onclick="abrirFotoAulaAmpliada(this.src)">'; }).join('') + '</div>' : '') + '</div>';
+    });
+
+    /* 3. IA */
+    h += '<h3><i class="fas fa-robot"></i> Tire sua dúvida com a IA</h3>' +
+      '<div class="uc-fm-chips">' + bt('Quadril', "ucFormPergunta('alongamento de quadril')") + bt('Aquecimento', "ucFormPergunta('aquecimento')") + bt('Mobilidade', "ucFormPergunta('mobilidade')") + bt('Protocolo de aula', "ucFormPergunta('protocolo de aula')") + '</div>' +
+      '<textarea id="ucFormDuvida" rows="2" placeholder="Ex: como adaptar o alongamento de quadril para crianças?"></textarea>' +
+      '<button class="btn" onclick="ucFormPergunta()"><i class="fas fa-paper-plane"></i> Perguntar à IA</button>';
+
+    /* 4. histórico */
+    h += '<h3><i class="fas fa-clock-rotate-left"></i> Minhas aulas de formação</h3>';
+    if (!aulas.length) h += '<p class="sem-dados">Nenhum check-in de aula ainda.</p>';
+    aulas.slice(0, 8).forEach(function (x) {
+      var st = x.status === 'confirmada' ? 'pill-ok' : (x.status === 'recusada' ? 'pill-no' : 'pill-pend');
+      h += '<div class="uc-fm-it"><div class="linha"><span>' + dataBR(x.data) + ' ' + esc(x.hora || '') + ' · ' + DUR + ' min</span><span class="pill ' + st + '">' + esc(x.status) + '</span></div>' +
+        '<div class="mini">' + esc(x.tema || '') + '</div>' + (x.respostaProfessor ? '<div class="mini" style="color:var(--gold);">Prof.: ' + esc(x.respostaProfessor) + '</div>' : '') + '</div>';
+    });
+    area.innerHTML = h;
+  }
+
+  window.ucFormCheckin = function (btn) {
+    var a = alunoLogado();
+    if (!a || !emFormacao()) { mostrarToast('Só alunos aprovados na formação fazem esse check-in.', 'erro'); return; }
+    var tema = (($q('ucFormTema') || {}).value || '').trim();
+    if (tema.length < 3) { mostrarToast('Diga a turma ou o tema da aula.', 'erro'); return; }
+    if (emAndamento(a)) { mostrarToast('Você já tem uma aula em andamento.', 'erro'); return; }
+    if (btn) btn.disabled = true;
+    var agora = agoraISO();
+    DB.salvar('formacaoProfessor', { tipo: 'aula-formacao', alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', tema: tema.slice(0, 160),
+      data: dataLocalISO(), hora: horaLocalHM(), inicioISO: agora, duracaoMin: DUR, status: 'pendente', criadoEm: agora }).then(function () {
+      mostrarToast('Check-in feito! Aula de ' + DUR + ' min iniciada.');
+      try { registroLog('aluno', 'Check-in de aula de formação: ' + a.nome + ' — ' + tema); } catch (e) {}
+      try { notificar('Aula de formação', (a.apelido || a.nome) + ' iniciou: ' + tema); } catch (e) {}
+      organizar();
+    }).catch(function () { if (btn) btn.disabled = false; mostrarToast('Não foi possível registrar. Tente de novo.', 'erro'); });
+  };
+
+  window.ucFormPergunta = function (texto) {
+    var t = texto || (($q('ucFormDuvida') || {}).value || '').trim();
+    if (!t) { mostrarToast('Escreva sua dúvida.', 'erro'); return; }
+    if (typeof assistentePerguntar === 'function') {
+      var campo = $q('assistenteInput'); if (campo) campo.value = t;
+      assistentePerguntar(t);
+      if (!texto && $q('ucFormDuvida')) $q('ucFormDuvida').value = '';
+    }
+  };
+
+  /* contagem regressiva das aulas em andamento */
+  setInterval(function () {
+    document.querySelectorAll('.uc-ftimer').forEach(function (e) {
+      var r = new Date(e.getAttribute('data-fim')).getTime() - Date.now();
+      if (r <= 0) { if (!e.classList.contains('fim')) { e.classList.add('fim'); e.textContent = 'Aula de ' + DUR + ' min concluída ✔'; try { organizar(); } catch (x) {} } return; }
+      var m = Math.floor(r / 60000), s = Math.floor((r % 60000) / 1000);
+      e.textContent = 'Restam ' + ('0' + m).slice(-2) + ':' + ('0' + s).slice(-2);
+    });
+  }, 1000);
+
+  /* ================= PROFESSOR ================= */
+  function pendCheckins() { return lst('formacaoProfessor').filter(function (x) { return x.tipo === 'aula-formacao' && x.status === 'pendente'; }).sort(function (a, b) { return String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); }); }
+  function totalConf(alunoId) { return lst('formacaoProfessor').filter(function (x) { return x.tipo === 'aula-formacao' && x.status === 'confirmada' && x.alunoId === alunoId; }).length; }
+
+  function itemCheckin(x) {
+    return '<div class="uc-fm-it"><div class="linha"><b>' + esc(x.alunoApelido || x.alunoNome) + '</b><span class="mini">' + dataBR(x.data) + ' ' + esc(x.hora || '') + '</span></div>' +
+      '<div class="mini">' + esc(x.tema || '') + ' · ' + DUR + ' min · já confirmadas: ' + totalConf(x.alunoId) + '</div>' +
+      '<input id="ucFcResp_' + x.id + '" placeholder="Recado (opcional)">' +
+      '<div class="uc-it-b">' + bt('<i class="fas fa-check"></i> Confirmar aula', "ucFormAulaDecidir('" + x.id + "','confirmada')") + bt('<i class="fas fa-xmark"></i> Recusar', "ucFormAulaDecidir('" + x.id + "','recusada')", 'btn-danger') + '</div></div>';
+  }
+  window.ucFormAulaDecidir = function (id, status) {
+    var x = DB.buscar('formacaoProfessor', id); if (!x) return;
+    var resp = (($q('ucFcResp_' + id) || {}).value || '').trim();
+    DB.salvar('formacaoProfessor', { status: status, respostaProfessor: resp, respondidoPor: (sessaoEquipe && sessaoEquipe.nome) || 'Professor', respondidoEm: agoraISO() }, id).then(function () {
+      try { registroLog('professor', 'Aula de formação de ' + x.alunoNome + ' → ' + status); } catch (e) {}
+      mostrarToast(status === 'confirmada' ? 'Aula confirmada (+' + DUR + ' min).' : 'Aula recusada.');
+      try { UC_DOCK.sig = ''; ucDockRender(); } catch (e) {}
+      try { var b = $q('conteudoProfessor'); if (b && b.offsetParent !== null) renderAbaProfessor(); } catch (e) {}
+    });
+  };
+
+  function cardCheckinsProf() {
+    var p = pendCheckins();
+    var h = '<div class="card' + (p.length ? ' uc-prio pulsa' : '') + '" id="ucCardAulasFormacao" data-colapsavel-pronto="1" style="' + (p.length ? '' : 'border:1px solid var(--gold,#ffc107);') + '">' +
+      '<h3 style="color:var(--gold,#ffc107);"><i class="fas fa-stopwatch"></i> Aulas de formação — check-ins <span class="badge-count">' + p.length + '</span></h3>';
+    h += p.length ? p.map(itemCheckin).join('') : '<p class="sem-dados">Nenhum check-in de aula aguardando confirmação.</p>';
+    return h + '<p class="mini" style="margin-top:6px;">Cada aula confirmada soma ' + DUR + ' minutos para o aluno em formação.</p></div>';
+  }
+
+  (function () {
+    var o = window.renderAbaProfessor;
+    if (typeof o !== 'function') return;
+    window.renderAbaProfessor = function () {
+      var r = o.apply(this, arguments);
+      try {
+        var box = $q('conteudoProfessor');
+        if (box && eqAtiva() && box.firstElementChild) {
+          /* categorias novas no formulário de aulas */
+          var sel = $q('aulaConteudoCategoria');
+          if (sel && !sel.querySelector('option[value="quadril"]')) {
+            [['quadril', 'Formação — alongamento de quadril'], ['formacao', 'Formação — material geral']].forEach(function (c) {
+              var op = document.createElement('option'); op.value = c[0]; op.textContent = c[1]; sel.insertBefore(op, sel.firstChild);
+            });
+          }
+          var antigo = $q('ucCardAulasFormacao'); if (antigo) antigo.remove();
+          var d = document.createElement('div'); d.innerHTML = cardCheckinsProf();
+          var card = d.firstElementChild, ref = $q('ucCardFormacaoProf');
+          if (pendCheckins().length) box.insertBefore(card, box.firstElementChild);
+          else if (ref && ref.nextSibling) box.insertBefore(card, ref.nextSibling);
+          else box.insertBefore(card, box.children[1] || null);
+        }
+      } catch (e) { console.warn('Card aulas formação', e); }
+      return r;
+    };
+  })();
+
+  /* central de notificações: sobe como prioridade */
+  window.ucDockExtra = window.ucDockExtra || [];
+  window.ucDockExtra.push(function () {
+    if (!eqAtiva()) return null;
+    var p = pendCheckins(); if (!p.length) return null;
+    return { id: 'aulasFormacao', icone: 'fa-stopwatch', titulo: 'Aulas de formação', n: p.length, urgente: true, prio: true, nova: true,
+      resumo: p.length + ' aula(s) de formação para confirmar', html: p.map(itemCheckin).join('') };
+  });
+
+  /* aviso ativo (som, vibração, assistente) quando chega check-in novo */
+  var VISTOS = null;
+  setInterval(function () {
+    try {
+      if (!eqAtiva()) { VISTOS = null; return; }
+      if (!DB.carregado('formacaoProfessor')) return;
+      var p = pendCheckins();
+      if (VISTOS === null) { VISTOS = {}; p.forEach(function (x) { VISTOS[x.id] = 1; }); return; }
+      var novos = p.filter(function (x) { return !VISTOS[x.id]; }); novos.forEach(function (x) { VISTOS[x.id] = 1; });
+      if (!novos.length) return;
+      var x = novos[0], extra = novos.length > 1 ? ' (+' + (novos.length - 1) + ')' : '';
+      try { if (navigator.vibrate) navigator.vibrate([200, 80, 200]); } catch (e) {}
+      try { ucBip(); } catch (e) {}
+      try { UC_DOCK.sig = ''; UC_DOCK.abertas.aulasFormacao = true; ucDockRender(); } catch (e) {}
+      try { ucDockPeek('<b>⏱️ Aula de formação' + extra + '</b><span class="uc-it-s">' + esc(x.alunoApelido || x.alunoNome) + ' · ' + esc(x.tema || '') + '</span><div class="uc-it-b">' +
+        bt('<i class="fas fa-check"></i> Confirmar', "ucFormAulaDecidir('" + x.id + "','confirmada');ucDockPeekFechar()") + bt('Ver', 'ucDockPeekFechar();ucDockAbrir()') + '</div>', 12000); } catch (e) {}
+      try { notificar('Aula de formação', (x.alunoApelido || x.alunoNome) + ' fez check-in: ' + (x.tema || '')); } catch (e) {}
+      try { if (typeof assistenteAdicionarBolha === 'function') assistenteAdicionarBolha('bot', '🔔 ' + (x.alunoApelido || x.alunoNome) + ' fez check-in de uma aula de formação' + extra + ': ' + (x.tema || '') + '. Toque no sino para confirmar.'); } catch (e) {}
+      var fab = $q('assistenteFab');
+      if (fab && !(typeof assistenteAberto !== 'undefined' && assistenteAberto)) { fab.setAttribute('data-n', String((parseInt(fab.getAttribute('data-n') || '0', 10) || 0) + novos.length)); fab.classList.add('uc-fab-aviso'); }
+    } catch (e) {}
+  }, 2500);
+
+  /* primeira organização (caso o aluno já esteja logado ao abrir) */
+  setTimeout(organizar, 800);
+})();
+</script>
+
+<!-- ===================================================================
+     ACRÉSCIMO — "Aulas e Alongamentos" do professor = Formação de Professor
+     (a IA aprende com o que o professor publica e o material vai para a aba do aluno em formação)
+     Só acrescenta/embrulha; nada do código anterior foi removido.
+     =================================================================== -->
+<script id="ucIaFormacao">
+(function () {
+  'use strict';
+  function lst(c) { try { return DB.listar(c) || []; } catch (e) { return []; } }
+  function sn(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  function eqAtiva() { return (typeof sessaoEquipe !== 'undefined') && sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0; }
+  function formador() { try { return !!(typeof alunoEmFormacaoAprovado === 'function' && alunoLogado() && alunoEmFormacaoAprovado(alunoLogado())); } catch (e) { return false; } }
+  function restrita(a) { return true; }   /* tudo que o professor publica nessa área é só da formação */
+  function podeVer(a) { return !restrita(a) || eqAtiva() || formador(); }
+  function aulas() {
+    return lst('aulasConteudo').filter(podeVer).sort(function (p, q) { return String(q.atualizadoEm || q.criadoEm || '').localeCompare(String(p.atualizadoEm || p.criadoEm || '')); });
+  }
+  function toks(t) { return sn(t).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(function (w) { return w.length >= 4; }).map(function (w) { return w.replace(/(oes|es|s)$/, ''); }); }
+
+  /* ---------- 1) rótulo do card do professor ---------- */
+  (function () {
+    var o = window.renderAbaProfessor;
+    if (typeof o !== 'function') return;
+    window.renderAbaProfessor = function () {
+      var r = o.apply(this, arguments);
+      try {
+        var box = document.getElementById('conteudoProfessor'); if (!box) return r;
+        box.querySelectorAll('h3').forEach(function (h) {
+          if (h.getAttribute('data-uc-form-rot') || !/Aulas e Alongamentos/.test(h.textContent)) return;
+          if (!h.querySelector('.badge-count') && !h.closest('.card')) return;
+          h.setAttribute('data-uc-form-rot', '1');
+          Array.prototype.forEach.call(h.childNodes, function (n) {
+            if (n.nodeType === 3 && /Aulas e Alongamentos/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace('Aulas e Alongamentos', 'Formação de Professor — Aulas e Alongamentos');
+          });
+          var card = h.closest('.card'), p = card && card.querySelector('p.mini');
+          if (p && /Cadastre aulas/.test(p.textContent)) {
+            p.innerHTML = '🎓 <b>Área da formação de professor.</b> Tudo que você publicar aqui vai para a aba <b>Formação</b> do aluno em formação, e a <b>IA aprende</b> com o texto para responder as dúvidas deles. O material fica <b>só para o aluno em formação</b> (alunos comuns não veem).';
+          }
+        });
+      } catch (e) { console.warn('rótulo formação', e); }
+      return r;
+    };
+  })();
+
+  /* ---------- 2) aba do aluno em formação: mostra TUDO que o professor publicou aqui ---------- */
+
+  /* ---------- 3) a IA responde com o material publicado pelo professor ---------- */
+  function melhorAula(pergunta) {
+    var q = toks(pergunta), best = null;
+    if (!q.length) return null;
+    aulas().forEach(function (a) {
+      var tt = toks(a.titulo || ''); if (!tt.length) return;
+      var hit = tt.filter(function (w) { return q.indexOf(w) >= 0; }).length;
+      var sc = hit / tt.length;
+      var corpo = toks((a.texto || '') + ' ' + (a.categoria || ''));
+      var hitC = q.filter(function (w) { return corpo.indexOf(w) >= 0; }).length;
+      var sc2 = sc + Math.min(0.4, hitC * 0.1);
+      if (sc >= 0.6 || (hitC >= 3 && sc2 >= 0.5)) { if (!best || sc2 > best.sc) best = { a: a, sc: sc2 }; }
+    });
+    return best && best.a;
+  }
+  function respostaDaAula(a) {
+    var fotos = (Array.isArray(a.fotos) ? a.fotos : []).length;
+    var corpo = String(a.texto || '').trim();
+    if (corpo.length > 900) corpo = corpo.slice(0, 900) + '…';
+    return '🎓 ' + (a.titulo || 'Material') + '\n\n' + (corpo || 'O professor publicou este material só com fotos.') +
+      (fotos ? '\n\n📸 ' + fotos + ' foto(s) na aba ' + (restrita(a) || formador() ? 'Formação' : 'Aluno → Aulas') + '.' : '') +
+      '\n\n(Conteúdo publicado pelo professor' + (a.autor ? ' ' + a.autor : '') + '.)';
+  }
+  (function () {
+    var o = window.assistenteFormacaoProfessor;
+    if (typeof o !== 'function') return;
+    window.assistenteFormacaoProfessor = function (texto) {
+      try { var a = melhorAula(texto); if (a) return respostaDaAula(a); } catch (e) {}
+      return o.apply(this, arguments);
+    };
+  })();
+
+  /* ---------- 4) a IA de conversa também recebe o material como base de conhecimento ---------- */
+  function baseDoProfessor() {
+    var l = aulas().filter(function (a) { return a.texto; }).slice(0, 12), t = '';
+    l.forEach(function (a) { t += '- ' + (a.titulo || 'Aula') + ' (' + (a.categoria || '') + '): ' + String(a.texto).replace(/\s+/g, ' ').slice(0, 600) + '\n'; });
+    return t.slice(0, 6000);
+  }
+  (function () {
+    var o = window.chamarAssistenteIA;
+    if (typeof o !== 'function') return;
+    window.chamarAssistenteIA = function () {
+      var extra = ''; try { extra = baseDoProfessor(); } catch (e) {}
+      if (!extra || typeof CONFIG === 'undefined') return o.apply(this, arguments);
+      var orig = CONFIG.baseConhecimento;
+      CONFIG.baseConhecimento = (orig ? orig + '\n\n' : '') + 'MATERIAL DE FORMAÇÃO PUBLICADO PELO PROFESSOR (use para responder as dúvidas dos alunos em formação):\n' + extra;
+      try { return o.apply(this, arguments); } finally { CONFIG.baseConhecimento = orig; }   /* o corpo da requisição é montado na hora da chamada */
+    };
+  })();
+
+  /* ---------- 5) botão "Perguntar à IA" em cada material da aba Formação ---------- */
+  (function () {
+    var area = function () { return document.getElementById('ucFormacaoArea'); };
+    function enriquecer() {
+      var a = area(); if (!a) return;
+      a.querySelectorAll('.uc-fm-it').forEach(function (it) {
+        if (it.getAttribute('data-ia') || !it.querySelector('.uc-fm-img, .pill-info')) return;
+        var b = it.querySelector('b'); if (!b) return;
+        it.setAttribute('data-ia', '1');
+        var d = document.createElement('div'); d.className = 'uc-it-b';
+        var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn btn-mini'; bt.innerHTML = '<i class="fas fa-robot"></i> Perguntar à IA sobre este material';
+        var titulo = b.textContent; bt.onclick = function () { if (window.ucFormPergunta) window.ucFormPergunta(titulo); };
+        d.appendChild(bt); it.appendChild(d);
+      });
+    }
+    setInterval(enriquecer, 1500);
+  })();
+})();
+</script>
+
 </body>
 </html>
