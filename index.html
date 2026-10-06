@@ -118,42 +118,33 @@ header {
   display: flex;
   overflow-x: auto;
   background: #0b171d;
-  padding: 6px 4px;
-  gap: 6px;
+  padding: 4px;
+  gap: 4px;
   border: 1px solid var(--card-border);
-  border-radius: 10px;
+  border-radius: 8px;
   width: 100%;
-  scrollbar-width: thin;
-  scrollbar-color: var(--primary-green) #0b171d;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
-  scroll-snap-type: x proximity;
+  scrollbar-width: none;
 }
-.tabs::-webkit-scrollbar { height: 4px; display: block; }
-.tabs::-webkit-scrollbar-thumb { background: var(--primary-green); border-radius: 4px; }
-.tabs::-webkit-scrollbar-track { background: transparent; }
+.tabs::-webkit-scrollbar { display: none; }
 .tabs button {
-  flex: 0 0 auto;
-  min-width: 72px;
-  padding: 8px 6px;
+  flex: 1;
+  min-width: 58px;
+  padding: 7px 3px;
   background: transparent;
   border: none;
   color: var(--text-sub);
-  font-weight: 700;
-  font-size: 0.72rem;
-  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.68rem;
+  border-radius: 8px;
   cursor: pointer;
   white-space: nowrap;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   transition: background 0.15s ease, color 0.15s ease;
-  scroll-snap-align: center;
 }
-.tabs button i { font-size: 1.55rem; line-height: 1; color: var(--gold); }
-.tabs button.active { color: #fff; background: linear-gradient(135deg, var(--primary-green-dark), #009624); box-shadow: 0 2px 8px rgba(0, 200, 83, 0.35); }
-.tabs button.active i { color: #fff; }
+.tabs button.active { color: #fff; background: linear-gradient(135deg, var(--primary-green-dark), #009624); box-shadow: 0 2px 6px rgba(0, 200, 83, 0.3); }
 
 /* ---- Abas retráteis: toque na faixa para recolher/mostrar ---- */
 .tabs-alca { display: flex; align-items: center; justify-content: space-between; width: 100%; background: transparent; border: 0; color: var(--text-sub); font-size: 0.72rem; padding: 2px 4px 5px; cursor: pointer; }
@@ -777,16 +768,16 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
   <!-- ================= ABAS ================= -->
   <div class="tabs-container" id="tabsContainer">
     <button type="button" class="tabs-alca" id="btnRecolherAbas" aria-expanded="true" onclick="toggleAbasRetrateis()">
-      <span id="rotuloAbaAtual"><i class="fas fa-house"></i>Início</span>
+      <span id="rotuloAbaAtual"><i class="fas fa-home"></i>Início</span>
       <span class="tabs-alca-dica"><span class="tabs-alca-txt">abas</span> <i class="fas fa-chevron-up seta-abas"></i></span>
     </button>
     <div class="tabs" id="protectedSystemTabs">
-      <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-house"></i>Início</button>
-      <button onclick="abrirAba('tab2', this)"><i class="fas fa-location-crosshairs"></i>Check-in</button>
-      <button onclick="abrirAba('tab3', this)"><i class="fas fa-user"></i>Aluno</button>
+      <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-people-group"></i>Início</button>
+      <button onclick="abrirAba('tab2', this)"><i class="fas fa-map-marker-alt"></i>Check-in</button>
+      <button onclick="abrirAba('tab3', this)"><i class="fas fa-user-ninja"></i>Aluno</button>
       <button onclick="abrirAba('tabFormacao', this)"><i class="fas fa-child-reaching"></i>Formação</button>
-      <button onclick="abrirAba('tabJogos', this)"><i class="fas fa-trophy"></i>Jogos</button>
-      <button onclick="toggleMenuEquipe()" id="btnToggleEquipe" style="display:flex;"><i class="fas fa-users"></i>Equipe</button>
+      <button onclick="abrirAba('tabJogos', this)"><i class="fas fa-gamepad"></i>Jogos</button>
+      <button onclick="toggleMenuEquipe()" id="btnToggleEquipe" style="display:flex;"><i class="fas fa-users-cog"></i>Equipe</button>
     </div>
     <div class="tabs tabs-equipe" id="tabsEquipe" style="display:none;">
       <button onclick="abrirAba('tab4', this)"><i class="fas fa-drum"></i>Professor</button>
@@ -795,9 +786,8 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
     </div>
   </div>
 
-  <div id="avisoAgendaObrig" role="alert" onclick="ucAvisoAgendaToggle()" style="margin:0 0 8px;padding:7px 10px;border-radius:10px;border:2px solid var(--danger);background:rgba(239,83,80,.12);font-size:.76rem;line-height:1.4;cursor:pointer;transition:opacity .35s ease,max-height .35s ease,padding .3s ease,margin .3s ease;">
-    ⚠️ <b>Agendamento obrigatório</b> <span id="avisoAgendaMais" style="display:none">— Check-in sem agendar gera advertência automática. Atraso não tem justificativa. Exceto alunos Wellhub/Gympass (vale a qualquer hora).</span> <u id="avisoAgendaLink" style="opacity:.8">ver mais</u>
-    <button type="button" id="btnFecharAvisoAgenda" aria-label="Fechar aviso" onclick="event.stopPropagation();ucFecharAvisoAgenda();" style="float:right;background:transparent;border:0;color:var(--text-sub);font-size:1rem;line-height:1;padding:0 2px;cursor:pointer;">×</button>
+  <div id="avisoAgendaObrig" role="alert" onclick="ucAvisoAgendaToggle()" style="margin:0 0 8px;padding:7px 10px;border-radius:10px;border:2px solid var(--danger);background:rgba(239,83,80,.12);font-size:.76rem;line-height:1.4;cursor:pointer;">
+    ⚠️ <b>Agende o treino antes do check-in.</b> <span id="avisoAgendaMais" style="display:none">Escolha dia e hora e faça o check-in nesse horário (passou, é atraso). Sem agendar, o check-in não vale e gera advertência. Atraso não tem justificativa. Wellhub/Gympass: vale a qualquer hora.</span> <u id="avisoAgendaLink" style="opacity:.8">ver mais</u>
   </div>
 
   <p class="mini" id="dicaAcessoEquipe" style="text-align:center; margin:-4px 0 6px; opacity:0.55;">Área de aluno · toque e segure o logo para acesso da equipe</p>
@@ -1790,21 +1780,21 @@ var GRADUACOES_PADRAO = [
   'Iniciante - Corda Crua',
   'Aluno - Crua e Amarela',
   'Aluno - Amarela',
+  'Aluno - Crua e Laranja',
   'Aluno - Amarela e Laranja',
   'Aluno - Laranja',
-  'Aluno - Laranja e Azul',
+  'Aluno - Crua e Azul',
+  'Aluno - Amarela e Azul',
   'Aluno Formado - Azul',
   'Aluno Formado - Azul e Verde',
-  'Aluno Formado - Verde',
-  'Aluno Formado - Verde e Roxa',
-  'Aluno Formado - Roxa',
-  'Aluno Formado - Roxa e Marrom',
-  'Aluno Formado - Marrom',
-  'Aluno Formado - Marrom e Vermelha',
-  'Professor - Vermelha',
-  'Professor - Vermelha e Branca',
-  'Contramestre - Branca',
-  'Mestre - Branca'
+  'Graduado - Verde',
+  'Graduado - Verde e Roxa',
+  'Instrutor - Roxa',
+  'Instrutor - Roxa e Marrom',
+  'Professor - Marrom',
+  'Professor - Contramestre',
+  'Professor - Marrom e Vermelha',
+  'Mestre - Vermelha'
 ];
 
 var EQUIPE_PAPEIS = [
@@ -2114,8 +2104,7 @@ function mostrarToast(msg, tipo) {
   t.className = 'toast' + (tipo === 'erro' ? ' erro' : '');
   t.style.display = 'block';
   clearTimeout(t._timer);
-  var ms = (String(msg || '').length > 80) ? 5200 : 3600;
-  t._timer = setTimeout(function () { t.style.display = 'none'; }, ms);
+  t._timer = setTimeout(function () { t.style.display = 'none'; }, 3200);
 }
 
 function abrirModal(titulo, corpoHtml, acoesHtml) {
@@ -2593,11 +2582,11 @@ function atualizarRotuloAba(id) {
   var el = $('rotuloAbaAtual');
   if (!el) return;
   var mapa = {
-    tab1: '<i class="fas fa-house"></i>Início',
-    tab2: '<i class="fas fa-location-crosshairs"></i>Check-in',
-    tab3: '<i class="fas fa-user"></i>Aluno',
+    tab1: '<i class="fas fa-people-group"></i>Início',
+    tab2: '<i class="fas fa-map-marker-alt"></i>Check-in',
+    tab3: '<i class="fas fa-user-ninja"></i>Aluno',
     tabFormacao: '<i class="fas fa-child-reaching"></i>Formação',
-    tabJogos: '<i class="fas fa-trophy"></i>Jogos',
+    tabJogos: '<i class="fas fa-gamepad"></i>Jogos',
     tab4: '<i class="fas fa-drum"></i>Professor',
     tab5: '<i class="fas fa-sliders-h"></i>ADM',
     tab6: '<i class="fas fa-code"></i>Dev'
@@ -8674,6 +8663,8 @@ function renderAbaProfessor() {
       '<select id="profCheckinPoloAuto"><option value="">— selecionar —</option>' +
       polos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + '</option>'; }).join('') +
       '</select>' +
+      '<label class="campo-label">Atividade de hoje (entra no ranking e nas metas)</label>' +
+      '<select id="profCheckinAtividade"><option value="aula">Aula normal</option><option value="roda">Roda</option><option value="apresentacao">Apresentação de capoeira</option></select>' +
       '<label class="campo-label">Observação (opcional)</label>' +
       '<input id="profCheckinObsAuto" placeholder="Ex: roda aberta, foco em ginga...">' +
       '<button class="btn" onclick="professorCheckinAula()"><i class="fas fa-map-marker-alt"></i> Estou na aula — fazer check-in</button>';
@@ -8898,6 +8889,13 @@ function renderAbaProfessor() {
       '<div><label class="campo-label">Musicalidade (0-10)</label><input id="avalMusicalidade" type="number" min="0" max="10" step="0.5" value="8"></div>' +
     '</div>' +
     '<label class="campo-label">Compromisso (0-10)</label><input id="avalCompromisso" type="number" min="0" max="10" step="0.5" value="8">' +
+    '<p class="mini" id="avalResumoSemana" style="margin:6px 0;"></p>' +
+    '<label class="campo-label">Tocar instrumento (0-10)</label><input id="avalInstrumento" type="number" min="0" max="10" step="0.5" value="8">' +
+    '<div id="avalToquesBox"><div class="grade-3">' +
+      '<div><label class="campo-label">Angola</label><input id="avalToqueAngola" type="number" min="0" max="10" step="0.5" value="8"></div>' +
+      '<div><label class="campo-label">Benguela</label><input id="avalToqueBenguela" type="number" min="0" max="10" step="0.5" value="8"></div>' +
+      '<div><label class="campo-label">Regional</label><input id="avalToqueRegional" type="number" min="0" max="10" step="0.5" value="8"></div>' +
+    '</div></div>' +
     '<label class="campo-label">Desenvolvimento na semana</label>' +
     '<textarea id="avalDesenvolvimento" placeholder="Ex: Melhorou a ginga e as esquivas; ainda trava no berimbau; mais presente nas rodas..."></textarea>' +
     '<label class="campo-label">Observação geral / feedback</label>' +
@@ -9382,6 +9380,7 @@ function professorCheckinAula() {
     hora: hora,
     poloId: polo ? polo.id : '',
     poloNome: polo ? polo.nome : '',
+    atividade: ($('profCheckinAtividade') || {}).value || 'aula',
     observacao: ($('profCheckinObsAuto') || {}).value ? $('profCheckinObsAuto').value.trim() : '',
     status: 'presente',
     criadoEm: agoraISO()
@@ -9819,6 +9818,10 @@ function salvarAvaliacao() {
     ritmo: ritmo,
     musicalidade: musicalidade,
     compromisso: compromisso,
+    instrumento: (typeof ucNumAval === 'function') ? ucNumAval('avalInstrumento') : null,
+    toqueAngola: (typeof ucNumAval === 'function') ? ucNumAval('avalToqueAngola') : null,
+    toqueBenguela: (typeof ucNumAval === 'function') ? ucNumAval('avalToqueBenguela') : null,
+    toqueRegional: (typeof ucNumAval === 'function') ? ucNumAval('avalToqueRegional') : null,
     desenvolvimento: ($('avalDesenvolvimento') || {}).value ? $('avalDesenvolvimento').value.trim() : '',
     observacao: ($('avalObservacao').value || '').trim(),
     data: dataLocalISO(),
@@ -17787,12 +17790,7 @@ window.ucDockExtra.push(function () {
 .fm-rel{border:1px solid var(--card-border);border-radius:8px;padding:6px 8px;margin:6px 0}.fm-rel summary{cursor:pointer;font-size:.8rem}.fm-txt{white-space:pre-wrap;line-height:1.4;font-size:.8rem;margin-top:4px}
 .fm-ia{border:1px solid var(--primary-green);border-radius:8px;padding:6px 8px;margin-top:6px;font-size:.8rem}
 .fm-chat{max-height:260px;overflow-y:auto;margin:6px 0}.fm-b{padding:7px 9px;border-radius:10px;margin:5px 10% 5px 0;white-space:pre-wrap;font-size:.8rem;line-height:1.4;background:rgba(255,255,255,.07)}.fm-b.fm-u{background:rgba(0,230,118,.15);margin:5px 0 5px 18%}
-.tabs button i{font-size:1.6rem;line-height:1}.tabs button{min-width:74px;flex:0 0 auto;padding:9px 8px}.tabs-container .tabs:not(.tabs-equipe){flex-wrap:nowrap}
-.tabs-scroll-hint{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--primary-green);opacity:.7;font-size:.85rem;animation:tabsHintPulse 1.4s ease-in-out infinite}
-@keyframes tabsHintPulse{0%,100%{opacity:.35;transform:translateY(-50%) translateX(0)}50%{opacity:.9;transform:translateY(-50%) translateX(3px)}}
-.tabs-container{position:relative}
-#avisoAgendaObrig.encolhido{padding:3px 8px!important;font-size:.7rem!important}
-#avisoAgendaObrig.oculto{opacity:0;max-height:0;padding:0 8px!important;margin:0!important;overflow:hidden;pointer-events:none;border-width:0!important}
+.tabs button i{font-size:1.45rem;line-height:1}.tabs button{min-width:66px;flex:0 0 auto}.tabs-container .tabs:not(.tabs-equipe){flex-wrap:nowrap}
 </style>
 <script id="ucFormacaoTab">
 (function () {
@@ -18120,177 +18118,108 @@ function ucAvisoCheckinAgenda() {
 
 <script id="ucAvisoAgenda">
 function ucAvisoAgendaToggle(forcar) {
-  var b = document.getElementById('avisoAgendaObrig'), m = document.getElementById('avisoAgendaMais'), l = document.getElementById('avisoAgendaLink');
-  if (!b || b.classList.contains('oculto')) return;
-  var abrir = typeof forcar === 'boolean' ? forcar : (m && m.style.display === 'none');
-  if (m) m.style.display = abrir ? 'inline' : 'none';
-  if (l) l.textContent = abrir ? 'fechar' : 'toque p/ detalhes';
-  b.classList.toggle('encolhido', !abrir);
+  var b = document.getElementById('avisoAgendaObrig'), m = document.getElementById('avisoAgendaMais'), l = document.getElementById('avisoAgendaLink'); if (!b) return;
+  var abrir = typeof forcar === 'boolean' ? forcar : m.style.display === 'none';
+  m.style.display = abrir ? 'inline' : 'none'; l.textContent = abrir ? 'fechar' : 'ver mais';
 }
-function ucFecharAvisoAgenda() {
-  var b = document.getElementById('avisoAgendaObrig');
-  if (!b) return;
-  b.classList.add('oculto');
-  try { localStorage.setItem('ucAvisoAgendaOcultoAte', String(Date.now() + 6 * 3600 * 1000)); } catch (e) {}
-}
-function ucRestaurarAvisoAgendaSePreciso() {
-  var b = document.getElementById('avisoAgendaObrig'); if (!b) return;
-  try {
-    var ate = Number(localStorage.getItem('ucAvisoAgendaOcultoAte') || 0);
-    if (ate && Date.now() < ate) { b.classList.add('oculto'); return; }
-  } catch (e) {}
-  b.classList.remove('oculto');
-}
-setTimeout(function () {
-  var b = document.getElementById('avisoAgendaObrig');
-  if (!b || b.classList.contains('oculto')) return;
-  ucAvisoAgendaToggle(false);
-  b.classList.add('encolhido');
-  var l = document.getElementById('avisoAgendaLink');
-  if (l) l.textContent = 'toque p/ detalhes';
-}, 10000);
-setTimeout(function () {
-  var b = document.getElementById('avisoAgendaObrig');
-  if (b && !b.classList.contains('oculto')) ucFecharAvisoAgenda();
-}, 45000);
-ucRestaurarAvisoAgendaSePreciso();
+setTimeout(function () { var b = document.getElementById('avisoAgendaObrig'); if (b) { ucAvisoAgendaToggle(false); b.style.cssText += 'padding:3px 8px;font-size:.7rem;'; var t = b.querySelector('b'); if (t) { t.textContent = 'Agendamento obrigatório'; } var l = document.getElementById('avisoAgendaLink'); if (l) l.textContent = 'toque p/ detalhes'; } }, 12000);
 (function () {
   var o = window.abrirAba; if (typeof o !== 'function') return;
-  window.abrirAba = function () {
-    var r = o.apply(this, arguments);
-    try {
-      var a = document.querySelector('.tabs button.active');
-      if (a && a.scrollIntoView) a.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
-      /* mostra o aviso de novo só na aba Check-in se já passou o tempo de ocultar */
-      var id = arguments[0];
-      if (id === 'tab2') {
-        try {
-          var ate = Number(localStorage.getItem('ucAvisoAgendaOcultoAte') || 0);
-          if (!ate || Date.now() >= ate) {
-            var b = document.getElementById('avisoAgendaObrig');
-            if (b) { b.classList.remove('oculto'); b.classList.add('encolhido'); ucAvisoAgendaToggle(false); }
-          }
-        } catch (e2) {}
-      }
-    } catch (e) {}
-    return r;
-  };
+  window.abrirAba = function () { var r = o.apply(this, arguments); try { var a = document.querySelector('.tabs button.active'); if (a && a.scrollIntoView) a.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); } catch (e) {} return r; };
 })();
 </script>
-
-<script id="ucNotificacoesMsgs">
-/* Mensagens padronizadas — aluno e professor (toasts + Notification API) */
-window.UC_MSG = {
-  aluno: {
-    avisoObrig: { t: '⚠️ Agendamento obrigatório', c: 'Check-in sem agendar gera advertência automática. Exceto alunos Wellhub.' },
-    checkinOk: function (dia, hora) { return { t: '✅ Check-in confirmado', c: 'Treino de ' + dia + ' às ' + hora + ' registrado com sucesso. Bom treino!' }; },
-    checkinAtraso: function (hora) { return { t: '⚠️ Check-in com atraso', c: 'Seu agendamento era às ' + hora + '. O atraso foi registrado e entrará no relatório.' }; },
-    checkinSemAg: { t: '❌ Check-in não autorizado', c: 'Você não tem agendamento. Isso gera advertência de “Falta de Compromisso”. Solicite validação ao professor se necessário.' },
-    presencaAceita: { t: '✅ Presença aceita pelo professor', c: 'Sua presença foi validada. A advertência de “Falta de Compromisso” permanece no relatório.' },
-    wellhub: { t: '✅ Check-in Wellhub confirmado', c: 'Presença registrada com sucesso. Bom treino!' },
-    falta: function (hora) { return { t: '⚠️ Falta registrada', c: 'Você tinha agendamento às ' + hora + ' e não fez check-in. A falta entrou no relatório.' }; },
-    lembrete: function (hora) { return { t: '📅 Lembrete de treino', c: 'Você tem treino agendado hoje às ' + hora + '. Não esqueça de fazer o check-in no horário.' }; },
-    novaAdv: function (data) { return { t: '⚠️ Nova advertência', c: 'Foi registrada “Falta de Compromisso” por check-in sem agendamento em ' + data + '.' }; }
-  },
-  prof: {
-    checkinOk: function (nome, hora) { return { t: '✅ Check-in confirmado', c: nome + ' fez check-in no horário do treino de ' + hora + '.' }; },
-    checkinAtraso: function (nome, hora) { return { t: '⚠️ Check-in com atraso', c: nome + ' fez check-in atrasado (agendamento era às ' + hora + '). Atraso registrado no relatório.' }; },
-    semAg: function (nome) { return { t: '❌ Tentativa sem agendamento', c: nome + ' tentou fazer check-in sem agendamento. Advertência de “Falta de Compromisso” gerada automaticamente.' }; },
-    solicitacao: function (nome) { return { t: '📩 Solicitação de presença', c: nome + ' pediu que você valide a presença (sem agendamento). A advertência já foi gerada e permanecerá.' }; },
-    aceita: function (nome) { return { t: '✅ Presença aceita', c: 'Você aceitou a presença de ' + nome + '. A advertência de “Falta de Compromisso” continua no relatório.' }; },
-    wellhub: function (nome) { return { t: '✅ Check-in Wellhub', c: nome + ' (Wellhub) registrou presença. Sem necessidade de validação.' }; },
-    falta: function (nome, hora) { return { t: '⚠️ Falta registrada', c: nome + ' tinha agendamento às ' + hora + ' e não fez check-in. Falta de compromisso registrada.' }; },
-    novaAdv: function (nome, dataHora) { return { t: '⚠️ Nova advertência', c: nome + ' recebeu advertência de “Falta de Compromisso” por check-in sem agendamento em ' + dataHora + '.' }; },
-    resumo: function (x, y, z, w) { return { t: '📊 Resumo do dia', c: x + ' presenças | ' + y + ' atrasos | ' + z + ' faltas de compromisso | ' + w + ' solicitações pendentes.' }; },
-    pendentes: function (n) { return { t: '⏳ Solicitações pendentes', c: 'Você tem ' + n + ' solicitações de presença aguardando validação.' }; }
-  },
-  relatorio: {
-    alunoCurto: function (mes) { return { t: '📋 Relatório mensal disponível', c: 'Seu relatório de ' + mes + ' já está pronto. Veja presenças, atrasos e advertências.' }; },
-    profCurto: function (mes) { return { t: '📊 Relatório mensal disponível', c: 'O relatório de ' + mes + ' da academia está pronto. Confira o resumo completo.' }; }
-  }
-};
-
-/** Emite toast + push (se permitido). tipo: 'ok' | 'erro' | undefined */
-window.ucEmitirMsg = function (msg, tipo) {
-  if (!msg) return;
-  var titulo = msg.t || '', corpo = msg.c || '';
-  var texto = titulo + (corpo ? ' — ' + corpo : '');
-  try { mostrarToast(texto, tipo === 'erro' ? 'erro' : undefined); } catch (e) {}
-  try { if (typeof notificar === 'function') notificar(titulo, corpo); } catch (e2) {}
-};
-
-/* Integra mensagens no check-in e nas advertências automáticas */
+<script id="ucRankingGrupos">
 (function () {
-  var _ucAdv = window.ucAdvertenciaAuto;
-  if (typeof _ucAdv === 'function') {
-    window.ucAdvertenciaAuto = function (al, nome, motivo, data) {
-      var r = _ucAdv.apply(this, arguments);
-      try {
-        var ehSemAg = String(motivo || '').indexOf('sem agend') >= 0;
-        var mAluno = ehSemAg
-          ? (window.UC_MSG.aluno.novaAdv(typeof dataBR === 'function' ? dataBR(data) : data))
-          : { t: '⚠️ Nova advertência', c: 'Foi registrada advertência por atraso em ' + (typeof dataBR === 'function' ? dataBR(data) : data) + '.' };
-        /* toast já é mostrado dentro de ucAdvertenciaAuto; reforça push */
-        try { if (typeof notificar === 'function') notificar(mAluno.t, mAluno.c); } catch (e) {}
-        var nomeExibir = (al && (al.apelido || al.nome)) || nome || 'Aluno';
-        var mProf = ehSemAg
-          ? window.UC_MSG.prof.semAg(nomeExibir)
-          : window.UC_MSG.prof.checkinAtraso(nomeExibir, (typeof horaLocalHM === 'function' ? horaLocalHM() : ''));
-        try { if (typeof notificar === 'function') notificar(mProf.t, mProf.c); } catch (e2) {}
-      } catch (e3) {}
-      return r;
-    };
+var GRUPOS = ['Iniciante', 'Aluno', 'Aluno Formado', 'Graduado', 'Instrutor', 'Professor', 'Mestre', 'Sem graduação'];
+var ANT = ['Iniciante - Corda Crua','Aluno - Crua e Amarela','Aluno - Amarela','Aluno - Amarela e Laranja','Aluno - Laranja','Aluno - Laranja e Azul','Aluno Formado - Azul','Aluno Formado - Azul e Verde','Aluno Formado - Verde','Aluno Formado - Verde e Roxa','Aluno Formado - Roxa','Aluno Formado - Roxa e Marrom','Aluno Formado - Marrom','Aluno Formado - Marrom e Vermelha','Professor - Vermelha','Professor - Vermelha e Branca','Contramestre - Branca','Mestre - Branca'];
+var META = 70;
+function q(i) { return document.getElementById(i); }
+function L(c) { try { return DB.listar(c) || []; } catch (e) { return []; } }
+function T(x) { return esc(x); }
+function mig() { try { if (CONFIG && Array.isArray(CONFIG.graduacoes) && JSON.stringify(CONFIG.graduacoes) === JSON.stringify(ANT)) CONFIG.graduacoes = GRADUACOES_PADRAO.slice(); } catch (e) {} }
+function grupoDe(g) {
+  var n = normalizar(String(g || '').split(' - ')[0]);
+  return { 'iniciante': 'Iniciante', 'aluno': 'Aluno', 'aluno formado': 'Aluno Formado', 'graduado': 'Graduado', 'instrutor': 'Instrutor', 'professor': 'Professor', 'contramestre': 'Professor', 'mestre': 'Mestre' }[n] || 'Sem graduação';
+}
+window.ucGrupoGrad = grupoDe;
+function iso(x) { return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
+function semana() { var d = new Date(); d.setHours(0, 0, 0, 0); var a = new Date(d); a.setDate(d.getDate() - ((d.getDay() + 6) % 7)); var b = new Date(a); b.setDate(a.getDate() + 6); return { ini: iso(a), fim: iso(b) }; }
+function ctx() {
+  var S = semana(), ev = [];
+  L('professorPresenca').forEach(function (p) { if (p.data >= S.ini && p.data <= S.fim && (p.atividade === 'roda' || p.atividade === 'apresentacao') && ev.indexOf(p.data) < 0) ev.push(p.data); });
+  return { S: S, pres: L('presencas'), adv: L('advertencias'), av: L('avaliacoes'), aulas: Math.max(1, L('horarios').length || 2), eventos: ev, sem: semanaISOAtual() };
+}
+function metas(a, C) {
+  var full = grupoDe(a.graduacao) !== 'Iniciante', nn = normalizar(a.nome);
+  var pres = C.pres.filter(function (p) { return (p.alunoId === a.id || normalizar(p.alunoNome) === nn) && p.data >= C.S.ini && p.data <= C.S.fim; });
+  var ap = pres.filter(function (p) { return p.status === 'aprovado'; });
+  var atr = pres.filter(function (p) { return (p.atrasoMin || 0) > 0; }).length;
+  var adv = C.adv.filter(function (v) { return v.alunoId === a.id && v.data >= C.S.ini && v.data <= C.S.fim; }).length;
+  var faltas = Math.max(0, C.aulas - ap.length);
+  var comp = Math.max(0, Math.min(100, Math.round(Math.min(1, ap.length / C.aulas) * 100 - atr * 10 - adv * 15)));
+  var av = C.av.filter(function (x) { return x.alunoId === a.id && x.semana === C.sem; })[0] || null;
+  var it = [{ k: 'Compromisso', v: comp }, { k: 'Avaliação', v: av ? Math.round(mediaAvaliacao(av) * 10) : null }, { k: 'Instrumento', v: av && av.instrumento != null ? Math.round(av.instrumento * 10) : null }];
+  if (full) {
+    var t = av ? [av.toqueAngola, av.toqueBenguela, av.toqueRegional].filter(function (v) { return v != null && !isNaN(v); }) : [];
+    it.push({ k: 'Toques', v: t.length ? Math.round(t.reduce(function (s, v) { return s + Number(v); }, 0) / t.length * 10) : null });
+    if (C.eventos.length) { var fez = ap.filter(function (p) { return C.eventos.indexOf(p.data) >= 0; }).length; it.push({ k: 'Rodas/Apres.', v: Math.min(100, Math.round(fez / C.eventos.length * 100)), t: fez + '/' + C.eventos.length }); }
   }
-
-  var _checkin = window.alunoCheckinLocalFixoSimples;
-  if (typeof _checkin === 'function') {
-    window.alunoCheckinLocalFixoSimples = function () {
-      var nome = (($('checkinFixoNomeAluno') || {}).value || '').trim();
-      var aluno = null;
-      try { aluno = encontrarAlunoPorNome(nome); } catch (e) {}
-      var ehW = !!(aluno && aluno.tipoAluno === 'gympass');
-      var atrasado = (($('boxJustificativaAtraso') || {}).style || {}).display !== 'none';
-      if (ehW) atrasado = false;
-      var semAg = false;
-      try { semAg = !ehW && typeof temAgendamentoHoje === 'function' && !temAgendamentoHoje(aluno); } catch (e) {}
-      var horaAg = null;
-      try { horaAg = (typeof horaAgendadaHoje === 'function' && horaAgendadaHoje()) || (typeof aulaDeHoje === 'function' && aulaDeHoje() && aulaDeHoje().horaInicio) || ''; } catch (e) {}
-      var dia = (typeof dataBR === 'function' && typeof dataLocalISO === 'function') ? dataBR(dataLocalISO()) : '';
-      var horaAgora = (typeof horaLocalHM === 'function') ? horaLocalHM() : '';
-
-      var origThen = null;
-      /* intercepta o fluxo após o save via monkey-patch de mostrarToast na próxima chamada de sucesso */
-      var _toast = window.mostrarToast;
-      var jaEmitiu = false;
-      window.mostrarToast = function (msg, tipo) {
-        if (!jaEmitiu && msg && String(msg).indexOf('Check-in') >= 0 && tipo !== 'erro') {
-          jaEmitiu = true;
-          window.mostrarToast = _toast;
-          var m;
-          if (ehW) m = window.UC_MSG.aluno.wellhub;
-          else if (semAg) m = window.UC_MSG.aluno.checkinSemAg;
-          else if (atrasado) m = window.UC_MSG.aluno.checkinAtraso(horaAg || horaAgora);
-          else m = window.UC_MSG.aluno.checkinOk(dia, horaAgora);
-          window.ucEmitirMsg(m, (semAg || atrasado) ? 'erro' : 'ok');
-          /* professor */
-          var nomeExibir = (aluno && (aluno.apelido || aluno.nome)) || nome || 'Aluno';
-          var mp;
-          if (ehW) mp = window.UC_MSG.prof.wellhub(nomeExibir);
-          else if (semAg) mp = window.UC_MSG.prof.semAg(nomeExibir);
-          else if (atrasado) mp = window.UC_MSG.prof.checkinAtraso(nomeExibir, horaAg || '');
-          else mp = window.UC_MSG.prof.checkinOk(nomeExibir, horaAgora);
-          try { if (typeof notificar === 'function') notificar(mp.t, mp.c); } catch (e) {}
-          return;
-        }
-        return _toast.apply(this, arguments);
-      };
-      try {
-        return _checkin.apply(this, arguments);
-      } finally {
-        setTimeout(function () { window.mostrarToast = _toast; }, 8000);
-      }
-    };
-  }
+  var vals = it.filter(function (x) { return x.v != null; });
+  return { a: a, grupo: grupoDe(a.graduacao), it: it, score: Math.round(vals.reduce(function (s, x) { return s + x.v; }, 0) / (vals.length || 1)), pres: ap.length, faltas: faltas, atr: atr, adv: adv };
+}
+function chips(m) {
+  return m.it.map(function (x) { var ok = x.v != null && x.v >= META; return '<span class="mini" style="display:inline-block;margin:2px 4px 0 0;padding:1px 6px;border-radius:8px;border:1px solid ' + (x.v == null ? 'var(--card-border)' : (ok ? 'var(--primary-green)' : 'var(--danger)')) + '">' + (x.v == null ? '⏳' : (ok ? '✔' : '✖')) + ' ' + x.k + (x.v != null ? ' ' + (x.t || x.v) : '') + '</span>'; }).join('');
+}
+function porGrupo() {
+  mig(); var C = ctx(), g = {};
+  L('alunos').forEach(function (a) { var m = metas(a, C); (g[m.grupo] = g[m.grupo] || []).push(m); });
+  return g;
+}
+function bloco(g, completo) {
+  var h = '';
+  GRUPOS.forEach(function (n) {
+    var l = g[n]; if (!l || !l.length) return;
+    l.sort(function (a, b) { return b.score - a.score || b.pres - a.pres; });
+    h += '<div style="margin-top:8px"><b style="color:var(--gold)">' + n + '</b> <span class="mini">(' + l.length + ')</span></div>';
+    (completo ? l : l.slice(0, 3)).forEach(function (m, i) {
+      h += '<div class="lista-item"><div class="linha"><span>' + (['🥇', '🥈', '🥉'][i] || (i + 1) + 'º') + ' <b>' + T(m.a.nome) + '</b>' + (m.a.apelido ? ' (' + T(m.a.apelido) + ')' : '') + '</span><span class="badge-count">' + m.score + ' pts</span></div>' +
+        (completo ? '<div class="mini">' + T(m.a.graduacao || '') + ' • ' + m.pres + ' presença(s) • faltas ' + m.faltas + ' • atrasos ' + m.atr + (m.adv ? ' • ⚠️ ' + m.adv + ' advert.' : '') + '</div>' + chips(m) : '') + '</div>';
+    });
+  });
+  return h;
+}
+window.renderRanking = function () {
+  var card = q('cardRankingInicio'); if (!card) return;
+  var g = porGrupo(), h = bloco(g, false);
+  if (!h) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  var t = card.querySelector('h3'); if (t) t.innerHTML = '<i class="fas fa-trophy"></i> Ranking da semana por graduação';
+  q('conteudoRankingInicio').innerHTML = h;
+};
+window.renderRankingCompleto = function () {
+  var card = q('cardRankingCompletoInicio'); if (!card) return;
+  var g = porGrupo(), h = bloco(g, true);
+  if (!h) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  var t = card.querySelector('h3'); if (t) t.innerHTML = '<i class="fas fa-bullseye"></i> Metas da semana por graduação';
+  var p = card.querySelector('p'); if (p) p.innerHTML = 'Meta: ' + META + ' pts em cada item. Iniciante: instrumento, compromisso/faltas e avaliação. Demais: também toques (Angola, Benguela, Regional) e rodas/apresentações. ⏳ = ainda não avaliado.';
+  var eu = ''; try { var al = alunoLogado(); if (al) { var m = metas(al, ctx()); eu = '<div class="aviso-info" style="margin-bottom:6px"><b>🎯 Suas metas (' + m.grupo + ')</b><br>' + chips(m) + '</div>'; } } catch (e) {}
+  q('listaRankingCompletoInicio').innerHTML = eu + h;
+};
+/* avaliação semanal do professor: campos extras */
+window.ucNumAval = function (id) { var e = q(id); if (!e || e.offsetParent === null) return null; var v = parseFloat(e.value); return isNaN(v) ? null : Math.max(0, Math.min(10, v)); };
+window.ucAvalExtra = function () {
+  var sel = q('avalAluno'); if (!sel) return; var a = DB.buscar('alunos', sel.value), full = a && grupoDe(a.graduacao) !== 'Iniciante';
+  var tb = q('avalToquesBox'); if (tb) tb.style.display = full ? 'block' : 'none';
+  var sm = (q('avalSemana') || {}).value || semanaISOAtual();
+  var ex = a ? L('avaliacoes').filter(function (x) { return x.alunoId === a.id && x.semana === sm; })[0] : null;
+  [['avalInstrumento', 'instrumento'], ['avalToqueAngola', 'toqueAngola'], ['avalToqueBenguela', 'toqueBenguela'], ['avalToqueRegional', 'toqueRegional']].forEach(function (c) { var e = q(c[0]); if (e && ex && ex[c[1]] != null) e.value = ex[c[1]]; });
+  var r = q('avalResumoSemana'); if (r && a) { var m = metas(a, ctx()); r.innerHTML = '<b>' + grupoDe(a.graduacao) + '</b> • esta semana: ' + m.pres + ' presença(s), faltas ' + m.faltas + ', atrasos ' + m.atr + (m.adv ? ', ⚠️ ' + m.adv + ' advertência(s)' : '') + (full ? ' • rodas/apresentações marcadas no check-in do professor entram automaticamente' : ''); }
+};
+(function () {
+  var c = window.carregarDesenvolvimentoAluno; if (typeof c === 'function') window.carregarDesenvolvimentoAluno = function () { var v = c.apply(this, arguments); try { ucAvalExtra(); } catch (e) {} return v; };
+  var r = window.renderAbaProfessor; if (typeof r === 'function') window.renderAbaProfessor = function () { var v = r.apply(this, arguments); setTimeout(function () { try { ucAvalExtra(); } catch (e) {} }, 200); return v; };
+})();
 })();
 </script>
 </body>
