@@ -1074,10 +1074,15 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
       <input id="autoCadContato" placeholder="(21) 90000-0000" inputmode="tel">
       <label class="campo-label">Tempo total de treino (anos e meses, opcional)</label><div style="display:flex;gap:8px;"><input id="autoCadTempoAnos" type="number" min="0" max="80" inputmode="numeric" placeholder="Anos"><input id="autoCadTempoMeses" type="number" min="0" max="11" inputmode="numeric" placeholder="Meses"></div>
       <label class="campo-label">Como você treina na academia?</label>
-      <select id="autoCadTipoAluno">
+      <select id="autoCadTipoAluno" onchange="ucToggleGympassCadastro()">
         <option value="normal">Aluno normal (matrícula direta)</option>
         <option value="gympass">Aluno Gympass / Wellhub</option>
       </select>
+      <div id="boxAutoCadGympass" style="display:none; margin:6px 0 4px; padding:10px; border-radius:10px; border:1px solid var(--gympass-red); background:rgba(255,0,79,0.08);">
+        <label class="campo-label" style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Link / página do seu Wellhub (Gympass)</label>
+        <input id="autoCadGympassLink" placeholder="Cole aqui o link do seu perfil ou check-in no app Wellhub">
+        <p class="mini" style="margin-top:4px;">Obrigatório para alunos Gympass. O professor usa esse link para validar seus check-ins no Portal de Parceiros.</p>
+      </div>
       <label class="campo-label">Senha de acesso</label>
       <input id="autoCadSenha" type="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password">
       <label class="campo-label">Repita a senha</label>
@@ -1101,11 +1106,13 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
     <div class="card" id="cardAgendaAluno">
       <h3 class="titulo-colapsavel" onclick="alternarCard(this)"><i class="fas fa-calendar-plus"></i> Agendar aula <i class="fas fa-chevron-down seta-colapsavel"></i></h3>
       <div class="card-corpo-colapsavel">
-        <p class="mini">Agende com antecedência. No dia da aula faça o <b>check-in</b>. Falta ou atraso entram no relatório e podem gerar advertência.</p>
+        <p class="mini">Agende com <b>data e horário</b> para evitar atrasos. Chegue antes do início — atraso e falta entram no relatório e podem gerar advertência. No dia, faça o <b>check-in</b> na janela do horário da aula.</p>
+        <div id="boxSugestaoHorariosFixos" class="mini" style="margin-bottom:8px;"></div>
         <label class="campo-label">Data da aula</label>
         <input type="date" id="agendaData" required>
-        <label class="campo-label">Horário (opcional)</label>
-        <input type="time" id="agendaHora">
+        <label class="campo-label">Horário de início <span style="color:var(--danger);">*</span></label>
+        <input type="time" id="agendaHora" required>
+        <p class="mini" style="margin:-2px 0 6px; color:var(--text-sub);">Obrigatório. Use o horário oficial da turma quando houver (veja acima).</p>
         <label class="campo-label">Observação (opcional)</label>
         <input type="text" id="agendaObs" placeholder="Ex.: aula de ginga / berimbau">
         <button class="btn" type="button" onclick="agendarAulaAluno()"><i class="fas fa-calendar-check"></i> Confirmar agendamento</button>
@@ -1788,7 +1795,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['iaAprendizado', 'alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins'];
+var COLECOES = ['iaAprendizado', 'alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'agendamentos'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -2785,6 +2792,11 @@ function cadastrarAlunoNuvem(btn) {
   if (categoria !== 'infantil') categoria = 'adulto';
   var tipoAluno = (($('autoCadTipoAluno') || {}).value || 'normal');
   if (tipoAluno !== 'gympass') tipoAluno = 'normal';
+  var gympassLink = (($('autoCadGympassLink') || {}).value || '').trim();
+  if (tipoAluno === 'gympass' && gympassLink.length < 8) {
+    mostrarToast('Aluno Gympass precisa informar o link/página do Wellhub.', 'erro');
+    return;
+  }
 
   var novo = {
     nome: nome,
@@ -2793,6 +2805,7 @@ function cadastrarAlunoNuvem(btn) {
     categoria: categoria,
     contato: contato,
     tipoAluno: tipoAluno,
+    gympassLink: tipoAluno === 'gympass' ? gympassLink : '',
     senhaHash: hashSenha(s1),
     criadoEm: agoraISO(),
     ativo: true
@@ -2804,7 +2817,7 @@ function cadastrarAlunoNuvem(btn) {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-check"></i> Concluir Cadastro'; }
     sessaoAlunoId = novoId;
     ucSalvarSenhaDispositivo(nome, s1, apelido || nome);
-    ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadTempoAnos', 'autoCadTempoMeses', 'autoCadSenha', 'autoCadSenha2'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadTempoAnos', 'autoCadTempoMeses', 'autoCadSenha', 'autoCadSenha2', 'autoCadGympassLink'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     registroLog('cadastro', 'Novo aluno cadastrado: ' + nome);
     toggleAutoCadastroAluno(false);
     boasVindasNovoAluno = true;
@@ -2973,6 +2986,108 @@ function alunoEmFormacaoAprovado(aluno) {
   var f = inscricaoFormacaoDoAluno(aluno || alunoLogado());
   return !!(f && f.status === 'aprovado');
 }
+
+function ucToggleGympassCadastro() {
+  var sel = $('autoCadTipoAluno');
+  var box = $('boxAutoCadGympass');
+  if (!box) return;
+  var isG = sel && sel.value === 'gympass';
+  box.style.display = isG ? 'block' : 'none';
+  if (!isG && $('autoCadGympassLink')) $('autoCadGympassLink').value = '';
+}
+function ucToggleGympassCadastroProf() {
+  var sel = $('profCadTipoAluno');
+  var box = $('boxProfCadGympass');
+  if (!box) return;
+  var isG = sel && sel.value === 'gympass';
+  box.style.display = isG ? 'block' : 'none';
+  if (!isG && $('profCadGympassLink')) $('profCadGympassLink').value = '';
+}
+
+/* Card de check-in de formação na aba Check-in (visível para alunos aprovados na formação) */
+function renderCheckinFormacaoTab() {
+  var card = $('cardFormacaoProfessor');
+  var box = $('boxFormacaoProfConteudo');
+  if (!card || !box) return;
+  var al = typeof alunoLogado === 'function' ? alunoLogado() : null;
+  var formador = al && typeof alunoEmFormacaoAprovado === 'function' && alunoEmFormacaoAprovado(al);
+  if (!formador) {
+    card.style.cssText = 'display:none !important;';
+    card.setAttribute('aria-hidden', 'true');
+    box.innerHTML = '';
+    return;
+  }
+  card.style.cssText = 'border:1px solid var(--gold); display:block !important;';
+  card.removeAttribute('aria-hidden');
+  var DUR = 45;
+  try {
+    var aulas = (DB.listar('formacaoProfessor') || []).filter(function (x) {
+      return x.tipo === 'aula-formacao' && x.alunoId === al.id;
+    }).sort(function (p, q) { return String(q.criadoEm || '').localeCompare(String(p.criadoEm || '')); });
+    var conf = aulas.filter(function (x) { return x.status === 'confirmada'; });
+    var pend = aulas.filter(function (x) { return x.status === 'pendente'; });
+    var agora = Date.now();
+    function fimISO(x) { return new Date(new Date(x.inicioISO || x.criadoEm).getTime() + DUR * 60000).toISOString(); }
+    var ativa = aulas.filter(function (x) { return x.status !== 'recusada' && new Date(fimISO(x)).getTime() > agora; })[0] || null;
+    var h = '<h3 style="color:var(--gold);"><i class="fas fa-chalkboard-teacher"></i> Check-in — Aula de Formação ' +
+      (typeof htmlIconeFormador === 'function' ? htmlIconeFormador() : '') + '</h3>' +
+      '<p class="mini" style="margin-bottom:8px;">Aluno em formação: registre aqui a aula que você vai dar. Cada aula confirmada soma <b>' + DUR + ' min</b>.</p>' +
+      '<div style="display:flex;gap:8px;margin-bottom:10px;">' +
+      '<div style="flex:1;text-align:center;padding:8px;border-radius:10px;background:rgba(255,193,7,0.12);border:1px solid var(--gold);"><b>' + conf.length + '</b><br><span class="mini">confirmadas</span></div>' +
+      '<div style="flex:1;text-align:center;padding:8px;border-radius:10px;background:rgba(255,193,7,0.12);border:1px solid var(--gold);"><b>' + (conf.length * DUR) + ' min</b><br><span class="mini">de prática</span></div></div>';
+    if (ativa) {
+      h += '<div class="aviso-info"><b>Aula em andamento:</b> ' + esc(ativa.tema || '') +
+        '<br><span class="mini">Check-in às ' + esc(ativa.hora || '') + ' · ' +
+        (ativa.status === 'confirmada' ? 'confirmada pelo professor' : 'aguardando confirmação') + '</span></div>';
+    } else {
+      h += '<label class="campo-label">Turma / tema da aula</label>' +
+        '<input id="ucFormTemaCheckin" placeholder="Ex: turma infantil — ginga e alongamento">' +
+        '<button class="btn btn-gold" onclick="ucFormCheckinFromTab2(this)"><i class="fas fa-map-marker-alt"></i> Fazer check-in (aula de ' + DUR + ' min)</button>' +
+        '<p class="mini">Faça o check-in quando começar a aula. O professor confirma depois.</p>';
+    }
+    if (pend.length && !ativa) h += '<p class="mini" style="margin-top:6px;">' + pend.length + ' aula(s) aguardando confirmação do professor.</p>';
+    if (aulas.length) {
+      h += '<h3 style="margin-top:12px;font-size:0.85rem;"><i class="fas fa-clock-rotate-left"></i> Últimas aulas</h3>';
+      aulas.slice(0, 5).forEach(function (x) {
+        var st = x.status === 'confirmada' ? 'pill-ok' : (x.status === 'recusada' ? 'pill-no' : 'pill-pend');
+        h += '<div class="lista-item"><div class="linha"><span class="mini">' + (typeof dataBR === 'function' ? dataBR(x.data) : x.data) + ' ' + esc(x.hora || '') + '</span>' +
+          '<span class="pill ' + st + '">' + esc(x.status) + '</span></div><div class="mini">' + esc(x.tema || '') + '</div></div>';
+      });
+    }
+    box.innerHTML = h;
+  } catch (e) {
+    console.warn('renderCheckinFormacaoTab', e);
+    box.innerHTML = '<p class="mini">Área de formação disponível. Abra a aba <b>Aluno → Formação</b> se preferir o painel completo.</p>' +
+      '<button class="btn btn-gold" onclick="abrirAba(\'tab3\')"><i class="fas fa-chalkboard-teacher"></i> Ir para Formação</button>';
+  }
+}
+window.ucFormCheckinFromTab2 = function (btn) {
+  var a = alunoLogado();
+  if (!a || !alunoEmFormacaoAprovado(a)) { mostrarToast('Só alunos aprovados na formação fazem esse check-in.', 'erro'); return; }
+  var tema = (($('ucFormTemaCheckin') || {}).value || '').trim();
+  if (tema.length < 3) { mostrarToast('Diga a turma ou o tema da aula.', 'erro'); return; }
+  var DUR = 45;
+  var aulas = (DB.listar('formacaoProfessor') || []).filter(function (x) { return x.tipo === 'aula-formacao' && x.alunoId === a.id; });
+  function fimISO(x) { return new Date(new Date(x.inicioISO || x.criadoEm).getTime() + DUR * 60000).toISOString(); }
+  var ativa = aulas.filter(function (x) { return x.status !== 'recusada' && new Date(fimISO(x)).getTime() > Date.now(); })[0];
+  if (ativa) { mostrarToast('Você já tem uma aula em andamento.', 'erro'); return; }
+  if (btn) btn.disabled = true;
+  var agora = agoraISO();
+  DB.salvar('formacaoProfessor', {
+    tipo: 'aula-formacao', alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '',
+    tema: tema.slice(0, 160), data: dataLocalISO(), hora: horaLocalHM(), inicioISO: agora,
+    duracaoMin: DUR, status: 'pendente', criadoEm: agora
+  }).then(function () {
+    mostrarToast('Check-in de formação feito! Aula de ' + DUR + ' min iniciada.');
+    try { registroLog('aluno', 'Check-in de aula de formação (tab Check-in): ' + a.nome + ' — ' + tema); } catch (e) {}
+    try { notificar('Aula de formação', (a.apelido || a.nome) + ' iniciou: ' + tema); } catch (e) {}
+    renderCheckin();
+    try { if (typeof organizar === 'function') organizar(); } catch (e) {}
+  }).catch(function () {
+    if (btn) btn.disabled = false;
+    mostrarToast('Não foi possível registrar. Tente de novo.', 'erro');
+  });
+};
 
 function htmlIconeFormador() {
   return '<span class="pill" style="background:linear-gradient(135deg,#ffc107,#ff8f00); color:#1a1a1a; font-weight:800;" title="Formação infantil — pode dar aulas">' +
@@ -7617,6 +7732,11 @@ function baixarCertificado(id) {
       return;
     }
     var hora = (document.getElementById('agendaHora') || {}).value || '';
+    if (!hora) {
+      if (typeof mostrarToast === 'function') mostrarToast('Informe o horário de início da aula.', 'erro');
+      if (fb) fb.innerHTML = '<span style="color:var(--danger);">Horário é obrigatório para evitar atrasos.</span>';
+      return;
+    }
     var obs = ((document.getElementById('agendaObs') || {}).value || '').trim();
     DB.salvar('agendamentos', {
       id: 'ag_' + aluno.id + '_' + data + (hora ? '_' + hora.replace(':','') : ''),
@@ -7644,6 +7764,23 @@ function baixarCertificado(id) {
         di.min = m; di.setAttribute('data-min-set', '1');
       } catch (e) {}
     }
+    try {
+      var sug = document.getElementById('boxSugestaoHorariosFixos');
+      if (sug && typeof DB !== 'undefined') {
+        var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        var hs = (DB.listar('horarios') || []).slice().sort(function (a,b){ return Number(a.diaSemana)-Number(b.diaSemana); });
+        if (hs.length) {
+          sug.innerHTML = '<b style="color:var(--primary-green);"><i class="fas fa-calendar-week"></i> Horários fixos da academia:</b><br>' +
+            hs.map(function (h) {
+              return (dias[Number(h.diaSemana)] || '?') + ' ' + (h.horaInicio||'') + (h.horaFim ? '–'+h.horaFim : '') +
+                (h.poloNome ? ' · '+h.poloNome : '');
+            }).join('<br>') +
+            '<br><span style="opacity:.85;">Prefira agendar nestes horários para não atrasar o início da turma.</span>';
+        } else {
+          sug.innerHTML = '<span style="color:var(--text-sub);">Sem horário fixo cadastrado ainda — o professor pode cadastrar em Equipe → Professor.</span>';
+        }
+      }
+    } catch (e) {}
     if (!box) return;
     var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
     if (!aluno) { box.innerHTML = '<p class="sem-dados">Faça login para ver e criar agendamentos.</p>'; return; }
@@ -7822,6 +7959,7 @@ function renderCheckin() {
   avaliarAtrasoHoje();
   atualizarEstadoBotaoCheckin();
   atualizarIconeFormadorUI();
+  try { renderCheckinFormacaoTab(); } catch (e) { console.warn('formacao checkin tab', e); }
 }
 
 function atualizarEstadoBotaoCheckin() {
@@ -8553,7 +8691,11 @@ function renderAbaProfessor() {
     '<label class="campo-label">Graduação</label><select id="profCadGraduacaoSelect"></select>' +
     '<label class="campo-label">Contato (WhatsApp, opcional)</label><input id="profCadContato" placeholder="(21) 90000-0000">' +
     '<label class="campo-label">Tempo total de treino (anos e meses, opcional)</label><div style="display:flex;gap:8px;"><input id="profCadTempoAnos" type="number" min="0" max="80" inputmode="numeric" placeholder="Anos"><input id="profCadTempoMeses" type="number" min="0" max="11" inputmode="numeric" placeholder="Meses"></div>' +
-    '<label class="campo-label">Como treina?</label><select id="profCadTipoAluno"><option value="normal">Aluno normal (matrícula direta)</option><option value="gympass">Aluno Gympass / Wellhub</option></select>' +
+    '<label class="campo-label">Como treina?</label><select id="profCadTipoAluno" onchange="ucToggleGympassCadastroProf()"><option value="normal">Aluno normal (matrícula direta)</option><option value="gympass">Aluno Gympass / Wellhub</option></select>' +
+    '<div id="boxProfCadGympass" style="display:none; margin:6px 0 4px; padding:10px; border-radius:10px; border:1px solid var(--gympass-red); background:rgba(255,0,79,0.08);">' +
+    '<label class="campo-label" style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Link / página Wellhub do aluno</label>' +
+    '<input id="profCadGympassLink" placeholder="Cole o link do perfil/check-in Wellhub do aluno">' +
+    '<p class="mini" style="margin-top:4px;">Recomendado: facilita validar check-ins no Portal de Parceiros.</p></div>' +
     '<button class="btn" onclick="cadastrarAlunoPeloProfessor(this)"><i class="fas fa-user-plus"></i> Cadastrar Aluno</button>' +
     '<p class="mini" style="margin-top:6px;">Uma senha provisória é gerada automaticamente — o aluno pode trocar depois em "Esqueci minha senha".</p></div>' +
 
@@ -9123,6 +9265,7 @@ function cadastrarAlunoPeloProfessor(btn) {
   var contato = ($('profCadContato').value || '').trim();
   var tipoAluno = (($('profCadTipoAluno') || {}).value || 'normal');
   if (tipoAluno !== 'gympass') tipoAluno = 'normal';
+  var gympassLink = (($('profCadGympassLink') || {}).value || '').trim();
 
   if (nome.length < 3) { mostrarToast('Informe o nome completo do aluno.', 'erro'); return; }
   var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome) === normalizar(nome); });
@@ -9138,6 +9281,7 @@ function cadastrarAlunoPeloProfessor(btn) {
     graduacao: graduacao,
     contato: contato,
     tipoAluno: tipoAluno,
+    gympassLink: tipoAluno === 'gympass' ? gympassLink : '',
     senhaHash: hashSenha(senhaProvisoria),
     criadoEm: agoraISO(),
     ativo: true,
@@ -9146,7 +9290,7 @@ function cadastrarAlunoPeloProfessor(btn) {
     tempoTreinoEm: agoraISO()
   }).then(function () {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-user-plus"></i> Cadastrar Aluno'; }
-    ['profCadNome', 'profCadApelido', 'profCadContato', 'profCadTempoAnos', 'profCadTempoMeses'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    ['profCadNome', 'profCadApelido', 'profCadContato', 'profCadTempoAnos', 'profCadTempoMeses', 'profCadGympassLink'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     registroLog('professor', 'Aluno cadastrado pelo professor: ' + nome);
     abrirModal('Aluno cadastrado!',
       '<p class="mini">Nome: <strong>' + esc(nome) + '</strong></p>' +
