@@ -787,7 +787,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
   </div>
 
   <div id="avisoAgendaObrig" role="alert" onclick="ucAvisoAgendaToggle()" style="margin:0 0 8px;padding:7px 10px;border-radius:10px;border:2px solid var(--danger);background:rgba(239,83,80,.12);font-size:.76rem;line-height:1.4;cursor:pointer;">
-    ⚠️ <b>Agende o treino antes do check-in.</b> <span id="avisoAgendaMais" style="display:none">Escolha dia e hora e faça o check-in nesse horário (passou, é atraso). Sem agendar, o check-in não vale e gera advertência. Atraso não tem justificativa. Wellhub/Gympass: vale a qualquer hora.</span> <u id="avisoAgendaLink" style="opacity:.8">ver mais</u>
+    ⚠️ <b>Agende o treino antes do check-in.</b> <span id="avisoAgendaMais" style="display:none">Escolha dia e hora e faça o check-in nesse horário (passou, é atraso). Sem agendar, o check-in não vale e gera advertência. Atraso gera advertência, mas pode ser justificado até 6h do dia seguinte (só assunto pessoal ou escola). Wellhub/Gympass: vale a qualquer hora.</span> <u id="avisoAgendaLink" style="opacity:.8">ver mais</u>
   </div>
 
   <p class="mini" id="dicaAcessoEquipe" style="text-align:center; margin:-4px 0 6px; opacity:0.55;">Área de aluno · toque e segure o logo para acesso da equipe</p>
@@ -7196,7 +7196,7 @@ function identificarAlunosParaAdvertencia() {
     var comAtraso = presDoAluno.filter(function (p) { return (p.atrasoMin || 0) > 0; });
 
     if (rejeitadas.length >= 2) motivos.push(rejeitadas.length + ' presença(s) recusada(s) pelo professor');
-    var _advA = DB.listar('advertencias').filter(function (v) { return v.origem === 'automatica' && v.alunoId === a.id; });
+    var _advA = DB.listar('advertencias').filter(function (v) { return v.origem === 'automatica' && !v.justificada && v.alunoId === a.id; });
     if (_advA.length) motivos.push(_advA.length + ' advertência(s) automática(s): falta de compromisso e atraso');
     if (comAtraso.length >= 3) motivos.push(comAtraso.length + ' chegada(s) com atraso registrada(s)');
 
@@ -7367,7 +7367,7 @@ function analisarDesempenhoAtletico(aluno) {
   if (pontoFraco && pontoFraco.media !== null && pontoFraco.media < 7) {
     recomendacoes.push('Foque em treinos de ' + pontoFraco.nome.toLowerCase() + ' — use "Pedir Treino Específico" na aba Aluno.');
   }
-  try { var _adv = DB.listar('advertencias').filter(function (v) { return v.origem === 'automatica' && v.alunoId === aluno.id; }); if (_adv.length) recomendacoes.push('⚠️ ' + _adv.length + ' advertência(s) automática(s) por falta de compromisso e atraso (check-in sem agendamento ou atrasado).'); } catch (e) {}
+  try { var _adv = DB.listar('advertencias').filter(function (v) { return v.origem === 'automatica' && !v.justificada && v.alunoId === aluno.id; }); if (_adv.length) recomendacoes.push('⚠️ ' + _adv.length + ' advertência(s) automática(s) por falta de compromisso e atraso (check-in sem agendamento ou atrasado).'); } catch (e) {}
   if (comAtraso.length >= 2) recomendacoes.push('Trabalhe a pontualidade: atrasos frequentes afetam o compromisso e a graduação.');
   if (mediaGeral !== null && mediaGeral >= 8) recomendacoes.push('Ótimo nível técnico — participe de rodas e apresentações para consolidar.');
   if (!avals.length) recomendacoes.push('Aguarde a primeira avaliação do professor para um diagnóstico mais preciso.');
@@ -18076,15 +18076,62 @@ function temAgendamentoHoje(al) {
   if (!al) return false;
   try { return DB.listar('agendamentos').some(function (a) { return a.alunoId === al.id && a.data === dataLocalISO() && a.status !== 'cancelado'; }); } catch (e) { return false; }
 }
+function ucAdvKey(id, data, motivo) { return id + '_' + data + (motivo.indexOf('sem agend') >= 0 ? '_sa' : '_at'); }
 function ucAdvertenciaAuto(al, nome, motivo, data) {
-  var id = al && al.id ? al.id : 'sem_' + String(nome || '').toLowerCase().replace(/\W+/g, '_');
+  var id = al && al.id ? al.id : 'sem_' + String(nome || '').toLowerCase().replace(/\W+/g, '_'), k = ucAdvKey(id, data, motivo);
   var base = { alunoId: id, alunoNome: al ? al.nome : nome, criadoEm: agoraISO() };
-  DB.salvar('advertencias', Object.assign({ id: 'advauto_' + id + '_' + data + (motivo.indexOf('sem agend') >= 0 ? '_sa' : '_at'), tipo: 'agendamento', origem: 'automatica', data: data, texto: 'Advertência automática: ' + motivo + '.' }, base));
-  if (al) DB.salvar('mensagensPrivadas', { id: 'advmsg_' + id + '_' + data + (motivo.indexOf('sem agend') >= 0 ? '_sa' : '_at'), alunoId: al.id, alunoNome: al.nome, alunoApelido: al.apelido || '',
-    texto: 'Advertência automática (' + dataBR(data) + '): ' + motivo + '. O professor pode aceitar sua presença, mas a advertência continua no seu relatório. Agende sempre o treino antes, escolhendo o horário em que vai chegar.',
-    de: 'professor', tipo: 'advertencia', professorNome: 'Sistema', lidaPeloAluno: false, lidaPeloProfessor: true, criadoEm: agoraISO() });
-  mostrarToast('⚠️ Advertência automática registrada: ' + motivo + '.', 'erro');
+  DB.salvar('advertencias', Object.assign({ tipo: 'agendamento', origem: 'automatica', data: data, justificavel: k.slice(-3) === '_at', texto: 'Advertência automática: ' + motivo + '.' }, base), 'advauto_' + k);
+  var just = k.slice(-3) === '_at' ? ' Se o atraso foi por assunto pessoal ou escola, você pode justificar na aba Check-in até as 6h do dia seguinte.' : '';
+  if (al) DB.salvar('mensagensPrivadas', { alunoId: al.id, alunoNome: al.nome, alunoApelido: al.apelido || '',
+    texto: 'Advertência automática (' + dataBR(data) + '): ' + motivo + '. O professor pode aceitar sua presença, mas a advertência continua no seu relatório.' + just,
+    de: 'professor', tipo: 'advertencia', professorNome: 'Sistema', lidaPeloAluno: false, lidaPeloProfessor: true, criadoEm: agoraISO() }, 'advmsg_' + k);
+  mostrarToast('⚠️ Advertência automática registrada: ' + motivo + '.' + (just ? ' Você pode justificar até 6h de amanhã.' : ''), 'erro');
 }
+/* justificativa de atraso: até 6h do dia seguinte, só assunto pessoal ou escola */
+function ucPrazoJust(data) { var p = String(data).split('-'); return new Date(+p[0], +p[1] - 1, +p[2] + 1, 6, 0, 0); }
+function ucPendJust(al) {
+  if (!al) return [];
+  return DB.listar('presencas').filter(function (p) { return p.alunoId === al.id && p.advertencia && !p.semAgendamento && (p.atrasoMin || 0) > 0 && !p.advertenciaJustificada && !p.justificativaStatus && new Date() <= ucPrazoJust(p.data); });
+}
+function ucStatusJust(al) {
+  if (!al) return [];
+  return DB.listar('presencas').filter(function (p) { return p.alunoId === al.id && p.advertencia && p.justificativaStatus && p.justificativaStatus !== 'aceita'; });
+}
+function ucJustRender() {
+  var ref = document.getElementById('btnConfirmarCheckinLocal'); if (!ref) return;
+  var box = document.getElementById('ucJustAtrasoBox');
+  if (!box) { box = document.createElement('div'); box.id = 'ucJustAtrasoBox'; ref.parentNode.insertBefore(box, ref); }
+  var al = null; try { al = alunoLogado(); } catch (e) {}
+  var l = ucPendJust(al), st = ucStatusJust(al);
+  if (!l.length && !st.length) { box.innerHTML = ''; box.dataset.sig = ''; return; }
+  var sg = l.map(function (p) { return p.id; }).join() + '|' + st.map(function (p) { return p.id + p.justificativaStatus; }).join();
+  if (box.dataset.sig === sg) return;
+  var ae = document.activeElement; if (ae && box.contains(ae)) return;
+  box.dataset.sig = sg;
+  box.innerHTML = st.map(function (p) { return '<div class="mini" style="margin:6px 0;">' + (p.justificativaStatus === 'pendente' ? '⏳ Justificativa de ' + dataBR(p.data) + ' enviada, aguardando o professor.' : '❌ Justificativa de ' + dataBR(p.data) + ' recusada: a advertência permanece.') + '</div>'; }).join('') + l.map(function (p) {
+    var pz = ucPrazoJust(p.data);
+    return '<div style="margin:8px 0;padding:8px 10px;border-radius:8px;border:2px solid var(--gold);background:rgba(255,193,7,.1);font-size:.75rem;"><b>⏰ Justificar atraso de ' + dataBR(p.data) + '</b> (' + p.atrasoMin + ' min)<br><span class="mini">Prazo: ' + dataBR(iso6(pz)) + ' às 06:00. Só vale assunto pessoal ou escola.</span>' +
+      '<select id="ucJT_' + p.id + '"><option value="Pessoal">Assunto pessoal</option><option value="Escola">Escola</option></select>' +
+      '<input id="ucJX_' + p.id + '" placeholder="Explique o motivo (mín. 5 letras)">' +
+      '<button class="btn btn-gold" onclick="ucJustificar(\'' + p.id + '\')">Enviar justificativa</button></div>';
+  }).join('');
+}
+function iso6(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+window.ucJustificar = function (id) {
+  var p = DB.buscar('presencas', id), al = alunoLogado();
+  if (!p || !al || p.alunoId !== al.id) return;
+  if (new Date() > ucPrazoJust(p.data)) { mostrarToast('Prazo encerrado (6h do dia seguinte).', 'erro'); return; }
+  var tipo = (document.getElementById('ucJT_' + id) || {}).value, txt = ((document.getElementById('ucJX_' + id) || {}).value || '').trim();
+  if (tipo !== 'Pessoal' && tipo !== 'Escola') { mostrarToast('Só é aceito assunto pessoal ou escola.', 'erro'); return; }
+  if (txt.length < 5) { mostrarToast('Explique o motivo.', 'erro'); return; }
+  var tx = tipo + ' — ' + txt.slice(0, 300);
+  DB.salvar('presencas', { justificativa: tx, justificativaTipo: tipo, justificativaStatus: 'pendente', justificadoEm: agoraISO() }, id);
+  DB.salvar('advertencias', { justificativaPendente: true, justificativa: tx }, 'advauto_' + p.alunoId + '_' + p.data + '_at');
+  try { notificar('Justificativa de atraso para avaliar', (al.apelido || al.nome) + ': ' + tx); } catch (e) {}
+  var b = document.getElementById('ucJustAtrasoBox'); if (b) { b.dataset.sig = ''; }
+  mostrarToast('Justificativa enviada. A advertência só sai se o professor aceitar.');
+  ucJustRender();
+};
 function ucAvisoCheckinAgenda() {
   var card = document.getElementById('btnConfirmarCheckinLocal'); if (!card) return;
   var box = document.getElementById('ucAvisoSemAgenda');
@@ -18093,7 +18140,7 @@ function ucAvisoCheckinAgenda() {
   if (al && al.tipoAluno === 'gympass') { box.style.cssText += 'border-color:var(--primary-green);background:rgba(0,230,118,.1);'; box.innerHTML = '✅ <b>Wellhub/Gympass:</b> seu check-in vale a qualquer hora, sem agendamento e sem validação do professor.'; return; }
   var ok = temAgendamentoHoje(al);
   box.style.borderColor = ok ? 'var(--primary-green)' : 'var(--danger)'; box.style.background = ok ? 'rgba(0,230,118,.1)' : 'rgba(239,83,80,.12)';
-  box.innerHTML = ok ? '✅ Você agendou o treino de hoje. O atraso conta a partir do horário que escolheu e <b>não tem justificativa</b>: chegou atrasado, gera advertência.'
+  box.innerHTML = ok ? '✅ Você agendou o treino de hoje. O atraso conta a partir do horário que escolheu. Chegou atrasado: gera advertência, que pode ser justificada até 6h do dia seguinte (só assunto pessoal ou escola).'
     : '⚠️ <b>Você não agendou o treino de hoje.</b> Se fizer check-in agora, ele <b>não será válido</b> e gera <b>advertência automática</b> (falta de compromisso e atraso). Agende na aba Aluno → Agendar aula.';
 }
 (function () {
@@ -18109,10 +18156,10 @@ function ucAvisoCheckinAgenda() {
   if (typeof a === 'function') window.avaliarAtrasoHoje = function () {
     var v = a.apply(this, arguments);
     try { var b = document.getElementById('boxJustificativaAtraso'), t = document.getElementById('justificativaAtrasoInput');
-      if (b && b.style.display !== 'none') { if (t) t.style.display = 'none'; var p = b.querySelector('p'); if (p) p.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Atraso <b>não tem justificativa</b>: este check-in gera advertência automática e vai para o professor.'; } ucAvisoCheckinAgenda(); } catch (e) {}
+      if (b && b.style.display !== 'none') { if (t) t.style.display = 'none'; var p = b.querySelector('p'); if (p) p.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Você está chegando com atraso. Este check-in gera advertência automática. Você pode <b>justificar até 6h do dia seguinte</b> (só assunto pessoal ou escola), na aba Check-in.'; } ucAvisoCheckinAgenda(); } catch (e) {}
     return v;
   };
-  setInterval(function () { try { var t = document.getElementById('tab2'); if (t && t.classList.contains('active')) ucAvisoCheckinAgenda(); } catch (e) {} }, 4000);
+  setInterval(function () { try { var t = document.getElementById('tab2'); if (t && t.classList.contains('active')) { ucAvisoCheckinAgenda(); ucJustRender(); } } catch (e) {} }, 3000);
 })();
 </script>
 
@@ -18153,8 +18200,8 @@ function metas(a, C) {
   var full = grupoDe(a.graduacao) !== 'Iniciante', nn = normalizar(a.nome);
   var pres = C.pres.filter(function (p) { return (p.alunoId === a.id || normalizar(p.alunoNome) === nn) && p.data >= C.S.ini && p.data <= C.S.fim; });
   var ap = pres.filter(function (p) { return p.status === 'aprovado'; });
-  var atr = pres.filter(function (p) { return (p.atrasoMin || 0) > 0; }).length;
-  var adv = C.adv.filter(function (v) { return v.alunoId === a.id && v.data >= C.S.ini && v.data <= C.S.fim; }).length;
+  var atr = pres.filter(function (p) { return (p.atrasoMin || 0) > 0 && !p.advertenciaJustificada; }).length;
+  var adv = C.adv.filter(function (v) { return v.alunoId === a.id && !v.justificada && v.data >= C.S.ini && v.data <= C.S.fim; }).length;
   var faltas = Math.max(0, C.aulas - ap.length);
   var comp = Math.max(0, Math.min(100, Math.round(Math.min(1, ap.length / C.aulas) * 100 - atr * 10 - adv * 15)));
   var av = C.av.filter(function (x) { return x.alunoId === a.id && x.semana === C.sem; })[0] || null;
@@ -18222,5 +18269,39 @@ window.ucAvalExtra = function () {
 })();
 })();
 </script>
+
+<script id="ucJustProf">
+(function () {
+  function q(i) { return document.getElementById(i); }
+  function T(x) { return esc(x); }
+  function eq() { return typeof sessaoEquipe !== 'undefined' && sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0; }
+  function pend() { return DB.listar('presencas').filter(function (p) { return p.justificativaStatus === 'pendente'; }); }
+  window.ucJustDecidir = function (id, ok) {
+    var p = DB.buscar('presencas', id); if (!p || !eq()) return;
+    var st = ok ? 'aceita' : 'recusada';
+    DB.salvar('presencas', { justificativaStatus: st, advertenciaJustificada: !!ok, justificativaDecididaEm: agoraISO() }, id);
+    DB.salvar('advertencias', { justificada: !!ok, justificativaPendente: false }, 'advauto_' + p.alunoId + '_' + p.data + '_at');
+    DB.salvar('mensagensPrivadas', { alunoId: p.alunoId, alunoNome: p.alunoNome || '', texto: 'Sua justificativa do atraso de ' + dataBR(p.data) + ' foi ' + (ok ? 'ACEITA: a advertência foi retirada.' : 'RECUSADA: a advertência permanece.'), de: 'professor', tipo: 'aviso', professorNome: 'Professor', lidaPeloAluno: false, lidaPeloProfessor: true, criadoEm: agoraISO() });
+    mostrarToast(ok ? 'Justificativa aceita.' : 'Justificativa recusada.');
+    try { renderAbaProfessor(); } catch (e) {}
+  };
+  function card() {
+    var l = pend(); if (!l.length) return null;
+    var d = document.createElement('div'); d.className = 'card'; d.id = 'ucCardJust'; d.style.border = '1px solid var(--gold)';
+    d.innerHTML = '<h3 style="color:var(--gold)"><i class="fas fa-clock"></i> Justificativas de atraso <span class="badge-count">' + l.length + '</span></h3>' + l.map(function (p) {
+      return '<div class="lista-item"><div><b>' + T(p.alunoNome || '') + '</b> <span class="mini">' + dataBR(p.data) + ' · atraso ' + (p.atrasoMin || 0) + ' min</span></div><div class="mini">' + T(p.justificativa || '') + '</div>' +
+        '<button class="btn btn-gold" onclick="ucJustDecidir(\'' + p.id + '\', true)">Aceitar</button> <button class="btn btn-secondary" onclick="ucJustDecidir(\'' + p.id + '\', false)">Recusar</button></div>';
+    }).join('');
+    return d;
+  }
+  var o = window.renderAbaProfessor;
+  if (typeof o === 'function') window.renderAbaProfessor = function () {
+    var r = o.apply(this, arguments);
+    try { var b = q('conteudoProfessor'), a = q('ucCardJust'); if (a) a.remove(); if (b && eq() && b.firstElementChild) { var c = card(); if (c) b.insertBefore(c, b.children[1] || null); } } catch (e) {}
+    return r;
+  };
+})();
+</script>
+
 </body>
 </html>
