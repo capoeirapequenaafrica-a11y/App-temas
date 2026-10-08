@@ -1803,7 +1803,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['iaAprendizado', 'alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'agendamentos', 'advertencias'];
+var COLECOES = ['iaAprendizado', 'alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'agendamentos'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -14689,7 +14689,7 @@ function ucGruposDuplicados() {
     return { nome: lista[0].a.nome, principal: lista[0], outros: lista.slice(1) };
   });
 }
-function ucPodeUnir() { return !!sessaoEquipe && ['adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0; }
+function ucPodeUnir() { return !!sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0; }
 function ucAvisoDuplicados() {
   if (!ucPodeUnir()) return '';
   var g = ucGruposDuplicados();
@@ -14700,7 +14700,7 @@ function ucAvisoDuplicados() {
 }
 function ucCardDuplicados() {
   if (!ucPodeUnir()) return '';
-  var g = ucGruposDuplicados(), clones = ((DB.clones || {}).alunos || []).length;
+  var g = ucGruposDuplicados(), podeApagarCopias = !!sessaoEquipe && ['adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0, clones = podeApagarCopias ? ((DB.clones || {}).alunos || []).length : 0;
   return '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-object-group"></i> Cadastros duplicados de alunos</h3>' +
     '<p class="mini" style="margin-bottom:6px;">' + (g.length ? g.length + ' aluno(s) aparecem mais de uma vez.' : 'Nenhum aluno repetido por nome.') + ' Ao unir, o histórico (presenças, avaliações, mensagens) vai para o cadastro principal e a senha é preservada.</p>' +
     (g.length ? '<button type="button" class="btn btn-gold" onclick="ucRevisarDuplicados()"><i class="fas fa-object-group"></i> Revisar e unir duplicados</button>' : '') +
@@ -14708,7 +14708,7 @@ function ucCardDuplicados() {
     '</div>';
 }
 function ucRevisarDuplicados() {
-  if (!ucPodeUnir()) { mostrarToast('Só ADM ou Dev podem unir cadastros.', 'erro'); return; }
+  if (!ucPodeUnir()) { mostrarToast('Só professor, ADM ou Dev podem unir cadastros.', 'erro'); return; }
   var g = ucGruposDuplicados();
   if (!g.length) { mostrarToast('Não há cadastros repetidos.'); return; }
   var padrao = ucSenhaPadraoImport(), h = '<p class="mini">Em cada grupo, o cadastro marcado como <b>fica</b> recebe o histórico e a senha dos outros, que depois são apagados.</p>';
@@ -18235,7 +18235,6 @@ function bloco(g, completo) {
   });
   return h;
 }
-window.ucMetas = metas; window.ucCtx = ctx; window.ucChips = chips; window.ucMETA = META;
 window.renderRanking = function () {
   var card = q('cardRankingInicio'); if (!card) return;
   var g = porGrupo(), h = bloco(g, false);
@@ -18304,291 +18303,24 @@ window.ucAvalExtra = function () {
 })();
 </script>
 
-<script id="ucEntenda">
-/* ================================================================
-   ENTENDA + PAINEL DE ADVERTÊNCIAS — Universo Capoeira
-   1) Aba "Entenda" (aluno): IA explica cada item avaliado do ranking
-   2) Advertência automática: avaliação semanal obrigatória não feita até domingo
-   3) Relatório semanal de falta de compromisso (eventos/rodas/apresentações)
-   4) Painel do professor: filtrar por item, colocar/retirar advertências
-   ================================================================ */
+<script id="ucUnirProfessor">
 (function () {
-  'use strict';
-  var DESDE_AVAL = '2026-10-07T00:00:00'; /* só avaliações com prazo depois disso geram advertência automática */
-  function q(i) { return document.getElementById(i); }
-  function T(x) { return esc(x); }
-  function L(c) { try { return DB.listar(c) || []; } catch (e) { return []; } }
-  function eq() { return typeof sessaoEquipe !== 'undefined' && sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0; }
-  function iso(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
-  function meta() { return window.ucMETA || 70; }
-
-  var REGRAS = 'REGRAS DO UNIVERSO CAPOEIRA (use só isto para explicar): ' +
-    '1) Compromisso é uma nota de 0 a 100 por semana: presença sobe, cada atraso sem justificativa tira 10 e cada advertência tira 15. ' +
-    '2) Falta ou atraso em apresentação, roda ou evento SEM justificativa gera um relatório de falta de compromisso toda semana, e isso pesa direto na hora de pegar graduação. ' +
-    '3) O aluno deve agendar o treino com antecedência. Se atrasar, pode justificar no Check-in (motivo pessoal ou escola) até 6h do dia seguinte; o professor aceita ou não. ' +
-    '4) Atraso não justificado, ou treino sem agendamento, gera advertência automática, sem precisar de autorização do professor. ' +
-    '5) A avaliação semanal de perguntas é obrigatória; se não for feita até domingo, gera advertência automática. ' +
-    '6) O professor pode colocar ou retirar advertências a qualquer momento. ' +
-    '7) A meta é ' + 70 + ' pontos em cada item. Iniciante é avaliado em compromisso, avaliação e instrumento; os demais também em toques (Angola, Benguela, Regional) e rodas/apresentações.';
-
-  var ITENS = [
-    { k: 'compromisso', ico: '🤝', t: 'Compromisso', r: 'Nota de 0 a 100 da semana. Presença nas aulas sobe a nota; cada atraso sem justificativa tira 10 pontos e cada advertência tira 15. Falta ou atraso em roda, apresentação ou evento sem justificativa gera um relatório de falta de compromisso toda semana, e esses relatórios pesam direto na hora de pegar graduação.' },
-    { k: 'faltas', ico: '❌', t: 'Faltas', r: 'Aulas da semana em que você não teve presença aprovada. Em roda, apresentação ou evento, a falta sem justificativa entra no relatório de compromisso.' },
-    { k: 'atrasos', ico: '⏰', t: 'Atrasos', r: 'Agende o treino com antecedência. Se atrasar, justifique na aba Check-in (motivo pessoal ou escola) até 6h do dia seguinte; o professor aceita ou não. Atraso sem justificativa gera advertência automática, sem o professor precisar autorizar.' },
-    { k: 'avaliacao', ico: '📝', t: 'Avaliação semanal', r: 'As perguntas da semana são obrigatórias e o prazo vai até domingo. Se não for feita, gera advertência automática. Responda na aba Aluno.' },
-    { k: 'eventos', ico: '🥁', t: 'Rodas e apresentações', r: 'Presença em roda, apresentação e eventos conta bastante. Falta ou atraso sem justificativa vira relatório de falta de compromisso da semana.' },
-    { k: 'instrumento', ico: '🎶', t: 'Instrumento e Toques', r: 'Nota do professor de 0 a 100 sobre o seu instrumento. Quem não é iniciante também é avaliado nos toques de Angola, Benguela e Regional.' },
-    { k: 'advertencias', ico: '⚠️', t: 'Advertências', r: 'Podem ser automáticas (atraso sem justificativa, treino sem agendar, avaliação semanal não feita) ou colocadas pelo professor. O professor pode retirar ou colocar. Cada advertência da semana tira 15 pontos do compromisso.' },
-    { k: 'graduacao', ico: '🎖️', t: 'Como isso afeta a graduação', r: 'Os relatórios de falta de compromisso e as advertências entram na avaliação para troca de corda. Quanto menos relatórios, mais perto da próxima graduação.' }
-  ];
-
-  /* ---------- semanas, eventos e relatório de compromisso ---------- */
-  function semanaRange(off) { var d = new Date(); d.setHours(0, 0, 0, 0); var a = new Date(d); a.setDate(d.getDate() - ((d.getDay() + 6) % 7) + off * 7); var b = new Date(a); b.setDate(a.getDate() + 6); return { ini: iso(a), fim: iso(b) }; }
-  function presAluno(a, S) { var nn = normalizar(a.nome); return L('presencas').filter(function (p) { return (p.alunoId === a.id || normalizar(p.alunoNome) === nn) && p.data >= S.ini && p.data <= S.fim; }); }
-  function eventosDe(S) { var ev = []; L('professorPresenca').forEach(function (p) { if (p.data >= S.ini && p.data <= S.fim && (p.atividade === 'roda' || p.atividade === 'apresentacao') && ev.indexOf(p.data) < 0) ev.push(p.data); }); return ev; }
-  function relatorio(a, off) {
-    var S = semanaRange(off || 0), ev = eventosDe(S), pres = presAluno(a, S), advs = L('advertencias'), fe = [], ae = [];
-    ev.forEach(function (dt) {
-      var j = advs.some(function (v) { return v.id === 'advev_' + a.id + '_' + dt && v.justificada; });
-      var pr = pres.filter(function (p) { return p.data === dt && p.status === 'aprovado'; })[0];
-      if (!pr) { if (!j) fe.push(dt); } else if ((pr.atrasoMin || 0) > 0 && !pr.advertenciaJustificada && !j) ae.push({ data: dt, min: pr.atrasoMin });
-    });
-    var ativas = advs.filter(function (v) { return v.alunoId === a.id && v.data >= S.ini && v.data <= S.fim && !v.justificada; });
-    return { S: S, ev: ev, faltasEv: fe, atrasosEv: ae, advs: ativas, gera: !!(fe.length || ae.length) };
-  }
-  function semanasComRelatorio(a, n) { var c = 0; for (var i = 0; i < n; i++) { if (relatorio(a, -i).gera) c++; } return c; }
-  function advAtivas(a) { return L('advertencias').filter(function (v) { return v.alunoId === a.id && !v.justificada; }).sort(function (x, y) { return String(y.data || '').localeCompare(String(x.data || '')); }); }
-  function avalDaSemana(a) {
-    var t = null; try { t = testeSemanalDaTurmaAtual(); } catch (e) {}
-    if (!t) return { teste: null, feita: null };
-    return { teste: t, feita: L('notasAvaliacoesSemanais').some(function (n) { return n.testeId === t.id && n.alunoId === a.id; }) };
-  }
-  function texto8(a) { var n = semanasComRelatorio(a, 8); return n + ' relatório(s) de falta de compromisso nas últimas 8 semanas'; }
-
-  /* ---------- advertência automática: avaliação semanal não feita ---------- */
-  function verificarAval() {
+  var o = window.renderAbaProfessor;
+  if (typeof o !== 'function') return;
+  window.renderAbaProfessor = function () {
+    var r = o.apply(this, arguments);
     try {
-      if (!['alunos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'advertencias'].every(function (c) { return DB.carregado(c); })) return;
-      var logado = null; try { logado = alunoLogado(); } catch (e) {}
-      if (!logado && !eq()) return;
-      var agora = Date.now(), desde = new Date(DESDE_AVAL).getTime();
-      L('avaliacoesSemanaisTurma').forEach(function (t) {
-        if (!t.prazo) return; var pz = new Date(t.prazo).getTime();
-        if (isNaN(pz) || pz > agora || pz < desde) return;
-        L('alunos').forEach(function (a) {
-          if (!eq() && (!logado || a.id !== logado.id)) return;
-          if (a.criadoEm && new Date(a.criadoEm).getTime() > pz - 3 * 86400000) return;
-          if (L('notasAvaliacoesSemanais').some(function (n) { return n.testeId === t.id && n.alunoId === a.id; })) return;
-          var id = 'advauto_' + a.id + '_' + t.id + '_av';
-          if (DB.buscar('advertencias', id)) return;
-          var data = iso(new Date(pz)), motivo = 'avaliação semanal obrigatória não feita' + (t.temaNome ? ' (' + t.temaNome + ')' : '');
-          DB.salvar('advertencias', { alunoId: a.id, alunoNome: a.nome, tipo: 'avaliacao_semanal', origem: 'automatica', data: data, justificavel: false, justificada: false, testeId: t.id, texto: 'Advertência automática: ' + motivo + '.', criadoEm: agoraISO() }, id);
-          DB.salvar('mensagensPrivadas', { alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', texto: 'Advertência automática (' + dataBR(data) + '): ' + motivo + '. A avaliação semanal é obrigatória e o prazo é domingo. O professor pode retirar a advertência.', de: 'professor', tipo: 'advertencia', professorNome: 'Sistema', lidaPeloAluno: false, lidaPeloProfessor: true, criadoEm: agoraISO() }, 'advmsg_' + id);
-          if (logado && a.id === logado.id) mostrarToast('⚠️ Advertência automática: ' + motivo + '.', 'erro');
-        });
-      });
-    } catch (e) { console.warn('[ucEntenda] verificarAval', e); }
-  }
-
-  /* ---------- aba ENTENDA (aluno) ---------- */
-  function injetarAba() {
-    var grp = q('protectedSystemTabs'); if (!grp) return;
-    if (!q('btnAbaEntenda')) {
-      var b = document.createElement('button'); b.id = 'btnAbaEntenda'; b.setAttribute('onclick', "abrirAba('tabEntenda', this)");
-      b.innerHTML = '<i class="fas fa-circle-question"></i>Entenda';
-      grp.insertBefore(b, q('btnToggleEquipe') || null);
-    }
-    if (!q('tabEntenda')) {
-      var area = document.createElement('div'); area.id = 'tabEntenda'; area.className = 'tab-content';
-      var ref = q('tabEquipe') || q('tab4'); if (ref && ref.parentNode) ref.parentNode.insertBefore(area, ref); else document.body.appendChild(area);
-    }
-  }
-  function dadosTexto(a) {
-    if (!a) return 'Aluno não identificado (sem login).';
-    var m = window.ucMetas(a, window.ucCtx()), r = relatorio(a, 0);
-    return 'Aluno: ' + (a.apelido || a.nome) + ', graduação ' + (a.graduacao || '-') + '. Esta semana: presenças ' + m.pres + ', faltas ' + m.faltas + ', atrasos sem justificativa ' + m.atr + ', advertências ativas ' + m.adv + '. Notas: ' +
-      m.it.map(function (x) { return x.k + ' ' + (x.v == null ? 'ainda não avaliado' : x.v); }).join(', ') + '. Faltas em roda/apresentação sem justificativa: ' + r.faltasEv.length + '. ' + texto8(a) + '. Meta: ' + meta() + ' pontos por item.';
-  }
-  function resumoAluno(a) {
-    var m = window.ucMetas(a, window.ucCtx()), r = relatorio(a, 0), av = avalDaSemana(a), n8 = semanasComRelatorio(a, 8), ativas = advAtivas(a).slice(0, 5), pend = [];
-    try { pend = ucPendJust(a); } catch (e) {}
-    var h = '<div class="card" style="border:1px solid var(--gold)"><h3 style="color:var(--gold)"><i class="fas fa-chart-line"></i> Seu resumo da semana</h3>' +
-      '<div class="mini">' + T(a.graduacao || '') + ' • ' + m.pres + ' presença(s) • faltas ' + m.faltas + ' • atrasos ' + m.atr + ' • advertências ' + m.adv + '</div>' + window.ucChips(m);
-    if (av.teste && av.feita === false) h += '<div class="aviso-info" style="margin-top:8px;border:1px solid var(--danger)">📝 <b>Avaliação semanal pendente.</b> Faça até domingo ou ela gera advertência. <button class="btn btn-mini" data-uc-act="ir" data-aba="tab3">Ir para Aluno</button></div>';
-    if (pend.length) h += '<div class="aviso-info" style="margin-top:8px;border:1px solid var(--gold)">⏰ Você tem <b>' + pend.length + ' atraso(s)</b> para justificar (pessoal ou escola). <button class="btn btn-mini" data-uc-act="ir" data-aba="tab2">Ir para Check-in</button></div>';
-    h += '<div class="mini" style="margin-top:8px"><b>Relatório de compromisso desta semana:</b> ' +
-      (r.gera ? '<span style="color:var(--danger)">gerado — ' + (r.faltasEv.length ? r.faltasEv.length + ' falta(s) em evento/roda sem justificativa' : '') + (r.faltasEv.length && r.atrasosEv.length ? ', ' : '') + (r.atrasosEv.length ? r.atrasosEv.length + ' atraso(s) em evento/roda' : '') + '</span>' : '<span style="color:var(--primary-green)">nenhuma falta de compromisso 👏</span>') + '</div>' +
-      '<div class="mini">🎖️ ' + n8 + (n8 ? ' — isso pesa na graduação.' : '. Continue assim!') + '</div>';
-    if (ativas.length) h += '<div class="mini" style="margin-top:6px"><b>Advertências ativas:</b></div>' + ativas.map(function (v) { return '<div class="mini" style="margin-top:2px">' + (v.origem === 'automatica' ? '🤖' : '👨‍🏫') + ' ' + dataBR(v.data || '') + ' — ' + T(v.texto || v.motivo || 'Advertência') + '</div>'; }).join('');
-    return h + '</div>';
-  }
-  function renderEntenda() {
-    injetarAba(); var box = q('tabEntenda'); if (!box) return;
-    var a = null; try { a = alunoLogado(); } catch (e) {}
-    var h = '<div class="card"><h3><i class="fas fa-circle-question"></i> Entenda o seu ranking</h3><p class="mini">Cada item que o professor avalia, o que ele significa e o que fazer para melhorar. Toque em <b>🤖 Explicar</b> para a IA explicar com os seus números.</p></div>';
-    if (a) h += resumoAluno(a); else h += '<div class="aviso-info">Entre como aluno para ver seus números. As regras abaixo valem para todos.</div>';
-    ITENS.forEach(function (it) {
-      h += '<div class="card" id="ucIt_' + it.k + '"><h3>' + it.ico + ' ' + T(it.t) + '</h3><p class="mini" style="font-size:.78rem;line-height:1.45">' + T(it.r) + '</p>' +
-        '<button class="btn btn-mini" data-uc-act="ia" data-item="' + it.k + '"><i class="fas fa-robot"></i> Explicar com IA</button><div class="mini" id="ucIaOut_' + it.k + '" style="margin-top:8px;white-space:pre-wrap"></div></div>';
-    });
-    h += '<div class="card"><h3><i class="fas fa-robot"></i> Pergunte à IA</h3><textarea id="ucIaPergunta" rows="2" placeholder="Ex.: por que meu compromisso está baixo?" style="width:100%"></textarea>' +
-      '<button class="btn" style="margin-top:6px" data-uc-act="ia-livre"><i class="fas fa-paper-plane"></i> Perguntar</button><div class="mini" id="ucIaOut_livre" style="margin-top:8px;white-space:pre-wrap"></div></div>';
-    box.innerHTML = h;
-    verificarAval();
-  }
-  function chamarIA(prompt, out, fallback) {
-    out.innerHTML = '<span class="spinner-btn"></span> A IA está explicando...';
-    var url = ''; try { url = CONFIG.iaProxyUrl || ''; } catch (e) {}
-    if (!url) { out.textContent = fallback; return; }
-    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-      mensagens: [{ role: 'user', content: REGRAS + '\n\n' + prompt }],
-      contexto: (typeof montarContextoAluno === 'function' ? montarContextoAluno() : ''),
-      baseConhecimento: ((CONFIG && CONFIG.baseConhecimento) || '') + '\n' + REGRAS })
-    }).then(function (r) { return r.json(); }).then(function (d) { out.textContent = (d && d.resposta) ? d.resposta : fallback; }).catch(function () { out.textContent = fallback; });
-  }
-  function acaoIA(k) {
-    var it = ITENS.filter(function (x) { return x.k === k; })[0], out = q('ucIaOut_' + k); if (!it || !out) return;
-    var a = null; try { a = alunoLogado(); } catch (e) {}
-    var d = dadosTexto(a);
-    chamarIA('Explique em até 6 linhas, de forma simples e amiga, o item "' + it.t + '" para o aluno: o que significa, como a minha situação está e o que eu faço para melhorar. ' + d, out, it.r + (a ? '\n\n' + d : ''));
-  }
-  function acaoIALivre() {
-    var el = q('ucIaPergunta'), out = q('ucIaOut_livre'), p = el && el.value.trim(); if (!p) { mostrarToast('Escreva sua pergunta.', 'erro'); return; }
-    var a = null; try { a = alunoLogado(); } catch (e) {}
-    chamarIA('Responda em até 6 linhas, de forma simples e amiga, a pergunta do aluno sobre o ranking: "' + p + '". ' + dadosTexto(a), out, 'A IA não está disponível agora. Veja as regras acima: ' + ITENS.map(function (x) { return x.t; }).join(', ') + '.');
-  }
-
-  /* ---------- painel do professor ---------- */
-  var filtro = 'todos', aberto = {};
-  var FILTROS = [['todos', 'Todos'], ['compromisso', 'Compromisso'], ['faltas', 'Faltas'], ['atrasos', 'Atrasos'], ['avaliacao', 'Avaliação'], ['eventos', 'Rodas/Apres.'], ['advertencias', 'Advertências']];
-  function linhaAluno(a, C) {
-    var m = window.ucMetas(a, C), r = relatorio(a, 0), av = avalDaSemana(a), ativas = advAtivas(a);
-    var comp = m.it.filter(function (x) { return x.k === 'Compromisso'; })[0];
-    var prob = {
-      compromisso: comp && comp.v != null && comp.v < meta(), faltas: m.faltas > 0, atrasos: m.atr > 0,
-      avaliacao: av.feita === false, eventos: r.gera, advertencias: ativas.length > 0
-    };
-    return { a: a, m: m, r: r, av: av, ativas: ativas, prob: prob };
-  }
-  function detalhe(x) {
-    var a = x.a, h = '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--card-border)">';
-    h += '<div class="mini"><b>Relatório da semana:</b> ' + (x.r.gera ? '<span style="color:var(--danger)">falta de compromisso</span>' : 'sem faltas de compromisso') + ' • ' + texto8(a) + '</div>';
-    x.r.faltasEv.forEach(function (dt) { h += '<div class="mini" style="margin-top:3px">❌ Falta em roda/apresentação ' + dataBR(dt) + ' <button class="btn btn-secondary btn-mini" data-uc-act="just-ev" data-id="' + a.id + '" data-data="' + dt + '">Justificar</button></div>'; });
-    x.r.atrasosEv.forEach(function (o) { h += '<div class="mini" style="margin-top:3px">⏰ Atraso de ' + o.min + ' min em roda/apresentação ' + dataBR(o.data) + ' <button class="btn btn-secondary btn-mini" data-uc-act="just-ev" data-id="' + a.id + '" data-data="' + o.data + '">Justificar</button></div>'; });
-    var todas = L('advertencias').filter(function (v) { return v.alunoId === a.id && v.tipo !== 'compromisso_evento'; }).sort(function (p, q2) { return String(q2.data || '').localeCompare(String(p.data || '')); }).slice(0, 8);
-    if (!todas.length) h += '<div class="mini" style="margin-top:3px">Nenhuma advertência registrada.</div>';
-    todas.forEach(function (v) {
-      var off = !!v.justificada;
-      h += '<div class="mini" style="margin-top:4px;' + (off ? 'opacity:.55;text-decoration:line-through' : '') + '">' + (v.origem === 'automatica' ? '🤖 automática' : '👨‍🏫 professor') + ' • ' + dataBR(v.data || '') + ' — ' + T(v.texto || v.motivo || '') + '</div>' +
-        '<button class="btn ' + (off ? 'btn-secondary' : 'btn-gold') + ' btn-mini" data-uc-act="' + (off ? 'restaurar' : 'retirar') + '" data-id="' + v.id + '">' + (off ? 'Restaurar' : 'Retirar') + '</button>';
-    });
-    h += '<div style="margin-top:8px"><button class="btn btn-danger btn-mini" data-uc-act="advertir" data-id="' + a.id + '"><i class="fas fa-triangle-exclamation"></i> Colocar advertência</button> <button class="btn btn-secondary btn-mini" data-uc-act="relatorio" data-id="' + a.id + '"><i class="fas fa-file-lines"></i> Relatório</button></div></div>';
-    return h;
-  }
-  function painel() {
-    var C = window.ucCtx(), rows = L('alunos').map(function (a) { return linhaAluno(a, C); });
-    rows.sort(function (p, q2) { return q2.m.score - p.m.score; });
-    var cont = {}; FILTROS.forEach(function (f) { cont[f[0]] = f[0] === 'todos' ? rows.length : rows.filter(function (x) { return x.prob[f[0]]; }).length; });
-    var vis = rows.filter(function (x) { return filtro === 'todos' || x.prob[filtro]; });
-    var d = document.createElement('div'); d.className = 'card'; d.id = 'ucPainelRank'; d.style.border = '1px solid var(--accent-blue)';
-    var h = '<h3 style="color:var(--accent-blue)"><i class="fas fa-table-list"></i> Painel do ranking e advertências</h3>' +
-      '<p class="mini">Todos os itens do ranking num lugar só. Toque no aluno para ver detalhes, colocar ou retirar advertência. Advertências automáticas (🤖) podem ser retiradas por você.</p><div style="margin:6px 0">';
-    FILTROS.forEach(function (f) { h += '<button class="btn btn-mini ' + (filtro === f[0] ? '' : 'btn-secondary') + '" style="margin:2px 3px 2px 0" data-uc-act="filtro" data-f="' + f[0] + '">' + f[1] + ' (' + cont[f[0]] + ')</button>'; });
-    h += '</div>';
-    if (!vis.length) h += '<p class="sem-dados">Nenhum aluno neste filtro. 👏</p>';
-    vis.forEach(function (x) {
-      var a = x.a, ab = !!aberto[a.id];
-      h += '<div class="lista-item"><div class="linha" data-uc-act="toggle" data-id="' + a.id + '" style="cursor:pointer"><span><b>' + T(a.nome) + '</b>' + (a.apelido ? ' (' + T(a.apelido) + ')' : '') + '<br><span class="mini">' + T(a.graduacao || '') + '</span></span><span class="badge-count">' + x.m.score + ' pts</span></div>' +
-        window.ucChips(x.m) + '<div class="mini">faltas ' + x.m.faltas + ' • atrasos ' + x.m.atr + ' • ⚠️ ' + x.ativas.length + ' ativa(s)' + (x.av.feita === false ? ' • 📝 avaliação pendente' : '') + (x.r.gera ? ' • 🥁 relatório de compromisso' : '') + '</div>' + (ab ? detalhe(x) : '') + '</div>';
-    });
-    d.innerHTML = h; return d;
-  }
-  function refazerProf() { try { renderAbaProfessor(); } catch (e) {} }
-  function msgAluno(a, texto, tipo) { DB.salvar('mensagensPrivadas', { alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', texto: texto, de: 'professor', tipo: tipo || 'aviso', professorNome: (sessaoEquipe && sessaoEquipe.nome) || 'Professor', lidaPeloAluno: false, lidaPeloProfessor: true, criadoEm: agoraISO() }); }
-  function ajustarAtraso(id, ok) { /* retirar advertência de atraso também retira o desconto de atraso */
-    var mm = /^advauto_(.+)_(\d{4}-\d{2}-\d{2})_at$/.exec(id); if (!mm) return;
-    L('presencas').filter(function (p) { return p.alunoId === mm[1] && p.data === mm[2] && (p.atrasoMin || 0) > 0; }).forEach(function (p) { DB.salvar('presencas', { advertenciaJustificada: !!ok }, p.id); });
-  }
-  function modalAdvertir(id) {
-    var a = DB.buscar('alunos', id); if (!a) return;
-    abrirModal('Advertência para ' + (a.apelido || a.nome),
-      '<label class="campo-label">Motivo</label><select id="ucAdvMotivo"><option>Falta de compromisso</option><option>Falta</option><option>Atraso</option><option>Avaliação semanal não feita</option><option>Falta em roda/apresentação/evento</option><option>Outro</option></select>' +
-      '<label class="campo-label">Mensagem para o aluno</label><textarea id="ucAdvTexto" rows="4" placeholder="Explique o motivo com respeito."></textarea>',
-      '<button class="btn btn-danger" data-uc-act="salvar-adv" data-id="' + a.id + '"><i class="fas fa-paper-plane"></i> Colocar e avisar aluno</button>');
-  }
-  function salvarAdv(id) {
-    var a = DB.buscar('alunos', id); if (!a || !eq()) return;
-    var mot = (q('ucAdvMotivo') || {}).value || 'Outro', tx = ((q('ucAdvTexto') || {}).value || '').trim(), hoje = iso(new Date());
-    var texto = 'Advertência do professor (' + mot + ')' + (tx ? ': ' + tx : '.');
-    DB.salvar('advertencias', { alunoId: a.id, alunoNome: a.nome, tipo: 'professor', motivo: mot, origem: 'professor', data: hoje, justificada: false, texto: texto, autor: (sessaoEquipe && sessaoEquipe.nome) || 'Professor', criadoEm: agoraISO() });
-    msgAluno(a, texto, 'advertencia');
-    try { registroLog('professor', 'Advertência (' + mot + ') colocada em ' + a.nome); } catch (e) {}
-    fecharModal(); mostrarToast('Advertência colocada.'); aberto[a.id] = true; refazerProf();
-  }
-  function mudarAdv(id, retirar) {
-    var v = DB.buscar('advertencias', id); if (!v || !eq()) return;
-    DB.salvar('advertencias', retirar ? { justificada: true, removidaPorProfessor: true, removidaEm: agoraISO() } : { justificada: false, removidaPorProfessor: false }, id);
-    ajustarAtraso(id, retirar);
-    var a = DB.buscar('alunos', v.alunoId);
-    if (a) msgAluno(a, retirar ? 'O professor retirou uma advertência sua (' + dataBR(v.data || '') + '). Obrigado pelo compromisso!' : 'O professor restaurou uma advertência (' + dataBR(v.data || '') + ').', 'aviso');
-    try { registroLog('professor', (retirar ? 'Advertência retirada de ' : 'Advertência restaurada para ') + (v.alunoNome || '')); } catch (e) {}
-    mostrarToast(retirar ? 'Advertência retirada.' : 'Advertência restaurada.'); refazerProf();
-  }
-  function justEvento(alunoId, data, desfazer) {
-    var a = DB.buscar('alunos', alunoId); if (!a || !eq()) return;
-    DB.salvar('advertencias', { alunoId: a.id, alunoNome: a.nome, tipo: 'compromisso_evento', origem: 'professor', data: data, justificada: true, texto: 'Falta/atraso em roda ou apresentação justificado pelo professor.', criadoEm: agoraISO() }, 'advev_' + a.id + '_' + data);
-    msgAluno(a, 'O professor justificou sua falta/atraso em roda ou apresentação de ' + dataBR(data) + '.', 'aviso');
-    mostrarToast('Justificado.'); refazerProf();
-  }
-  function modalRelatorio(id) {
-    var a = DB.buscar('alunos', id); if (!a) return;
-    var r = relatorio(a, 0), m = window.ucMetas(a, window.ucCtx());
-    var t = 'Relatório de compromisso — ' + (a.apelido || a.nome) + ' (' + (a.graduacao || '') + ')\nSemana ' + dataBR(r.S.ini) + ' a ' + dataBR(r.S.fim) + '\n' +
-      'Presenças: ' + m.pres + ' • Faltas: ' + m.faltas + ' • Atrasos sem justificativa: ' + m.atr + ' • Advertências ativas: ' + advAtivas(a).length + '\n' +
-      'Faltas em roda/apresentação sem justificativa: ' + (r.faltasEv.length ? r.faltasEv.map(dataBR).join(', ') : 'nenhuma') + '\n' +
-      'Atrasos em roda/apresentação: ' + (r.atrasosEv.length ? r.atrasosEv.map(function (o) { return dataBR(o.data) + ' (' + o.min + ' min)'; }).join(', ') : 'nenhum') + '\n' +
-      texto8(a) + '.\nSituação: ' + (r.gera ? 'RELATÓRIO DE FALTA DE COMPROMISSO GERADO — pesa na graduação.' : 'sem falta de compromisso na semana.');
-    abrirModal('Relatório semanal', '<pre id="ucRelTxt" style="white-space:pre-wrap;font-size:.74rem">' + T(t) + '</pre>', '<button class="btn" data-uc-act="copiar-rel"><i class="fas fa-copy"></i> Copiar</button>');
-  }
-
-  /* ---------- eventos (um único listener) ---------- */
-  document.addEventListener('click', function (e) {
-    var el = e.target.closest ? e.target.closest('[data-uc-act]') : null; if (!el) return;
-    var act = el.getAttribute('data-uc-act'), id = el.getAttribute('data-id');
-    try {
-      if (act === 'ia') acaoIA(el.getAttribute('data-item'));
-      else if (act === 'ia-livre') acaoIALivre();
-      else if (act === 'ir') abrirAba(el.getAttribute('data-aba'));
-      else if (act === 'filtro') { filtro = el.getAttribute('data-f'); refazerProf(); }
-      else if (act === 'toggle') { aberto[id] = !aberto[id]; refazerProf(); }
-      else if (act === 'advertir') modalAdvertir(id);
-      else if (act === 'salvar-adv') salvarAdv(id);
-      else if (act === 'retirar') mudarAdv(id, true);
-      else if (act === 'restaurar') mudarAdv(id, false);
-      else if (act === 'just-ev') justEvento(id, el.getAttribute('data-data'));
-      else if (act === 'relatorio') modalRelatorio(id);
-      else if (act === 'copiar-rel') { var t = (q('ucRelTxt') || {}).textContent || ''; if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { mostrarToast('Relatório copiado.'); }); }
-    } catch (err) { console.warn('[ucEntenda]', err); }
-  });
-
-  /* ---------- ganchos ---------- */
-  var ro = window.renderizarAba;
-  if (typeof ro === 'function') window.renderizarAba = function (id) { var r = ro.apply(this, arguments); if (id === 'tabEntenda') { try { renderEntenda(); } catch (e) { console.warn(e); } } return r; };
-  var rp = window.renderAbaProfessor;
-  if (typeof rp === 'function') window.renderAbaProfessor = function () {
-    var r = rp.apply(this, arguments);
-    try {
-      var b = q('conteudoProfessor'), old = q('ucPainelRank'); if (old) old.remove();
-      if (b && eq() && window.ucMetas) { verificarAval(); var c = painel(); b.insertBefore(c, b.children[1] || null); }
-    } catch (e) { console.warn('[ucEntenda] painel', e); }
+      var b = document.getElementById('conteudoProfessor');
+      var velho = document.getElementById('ucCardDupProf'); if (velho) velho.remove();
+      if (b && b.firstElementChild && ucPodeUnir()) {
+        var w = document.createElement('div'); w.id = 'ucCardDupProf';
+        w.innerHTML = ucCardDuplicados();
+        if (w.firstElementChild) b.insertBefore(w, b.children[1] || null);
+      }
+    } catch (e) {}
     return r;
   };
-  window.ucEntendaRender = renderEntenda;
-  injetarAba();
-  setInterval(function () { injetarAba(); verificarAval(); }, 20000);
-  setTimeout(verificarAval, 6000);
 })();
 </script>
-
 </body>
 </html>
