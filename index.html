@@ -14325,6 +14325,11 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
   /* ===== SALVAR ===== */
   function salvar(status) {
+    var ciclo = cicloAvaliacao();
+    if (status === 'finalizada' && (!ciclo || Date.now() > ciclo.prazo.getTime())) {
+      toast('Fora do período de avaliação. Você ainda pode salvar rascunhos.', 'erro');
+      return;
+    }
     var aluno = alunoSelecionado();
     if (!aluno) { toast('Selecione o aluno.', 'erro'); return; }
     var periodo = el('ucPeriodo').value.trim();
@@ -14770,6 +14775,178 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       .catch(function () { toast('Não foi possível salvar a data.', 'erro'); });
   }
 
+
+  /* ===== INDICADOS POR GRADUAÇÃO (aba Início) ===== */
+  /* Indicação prevista pela graduação atual (regras da tabela) */
+  function indicacaoDe(cor) {
+    var c = String(cor || '').toLowerCase();
+    if (!c) return '—';
+    var a = c.indexOf('amarela') >= 0, l = c.indexOf('laranja') >= 0, z = c.indexOf('azul') >= 0;
+    if (z && l) return 'Azul';
+    if (z) return '—';
+    if (l && a) return 'Laranja';
+    if (l) return 'Laranja e Azul';
+    if (a && c.indexOf('crua') < 0) return 'Amarela e Laranja';
+    if (a || c.indexOf('crua') >= 0) return 'Amarela';
+    return '—';
+  }
+
+  function renderIndicados() {
+    var card = el('ucIndicados');
+    if (!card) return;
+    card.style.display = cicloAtivo() ? '' : 'none';
+    if (!cicloAtivo()) return;
+
+    var alunos = listar('alunos').filter(function (a) { return a.ativo !== false && String(a.nome || '').trim(); });
+    var finais = listar('avaliacoesSemestrais').filter(function (d) { return d.status === 'finalizada'; });
+
+    var ultima = {};
+    finais.forEach(function (d) {
+      var atual = ultima[d.alunoId];
+      if (!atual || String(d.periodo) > String(atual.periodo)) ultima[d.alunoId] = d;
+    });
+
+    var linhas = alunos.filter(function (a) {
+      return !(ultima[a.id] && ultima[a.id].revelado);
+    }).map(function (a) {
+      var av = ultima[a.id] || null;
+      return {
+        nome: a.nome,
+        graduacaoAtual: a.graduacao || '',
+        indicado: av ? (av.cordaSugerida || '—') : indicacaoDe(a.graduacao),
+        av: av
+      };
+    }).sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); });
+
+    var sig = JSON.stringify(linhas.map(function (l) {
+      return [l.nome, l.graduacaoAtual, l.indicado, l.av && [l.av.id, l.av.aptoFinal, l.av.cordaFinal]];
+    }));
+    if (card.getAttribute('data-sig') === sig) return;
+    card.setAttribute('data-sig', sig);
+
+    var html = '<h3><i class="fas fa-users"></i> Alunos cadastrados</h3>' +
+      '<p class="uc-mini">A situação de cada aluno atualiza depois da avaliação finalizada pelo professor.</p>';
+    if (!linhas.length) {
+      html += '<p class="uc-mini">Nenhum aluno cadastrado.</p>';
+    } else {
+      html += linhas.map(function (l) {
+        var status, receber = '';
+        if (!l.av) {
+          status = '<span style="color:var(--text-sub,#9fb3bf);font-weight:700">⏳ Aguardando avaliação</span>';
+        } else if (l.av.aptoFinal) {
+          status = '<span style="color:#00c853;font-weight:700">✅ Apto</span>';
+          receber = '<div class="uc-mini">Vai receber: <b>' + esc(l.av.cordaFinal || '—') + '</b></div>';
+        } else {
+          status = '<span style="color:#ef5350;font-weight:700">❌ Não apto</span>';
+        }
+        return '<div class="uc-item"><div style="display:flex;justify-content:space-between;gap:8px"><b>' + esc(l.nome) +
+          '</b>' + status + '</div>' +
+          '<div class="uc-mini">Graduação atual: <b>' + esc(l.graduacaoAtual || '—') + '</b></div>' +
+          '<div class="uc-mini">Indicado: <b>' + esc(l.indicado) + '</b></div>' + receber + '</div>';
+      }).join('');
+    }
+    card.innerHTML = html;
+  }
+
+  function garantirIndicados() {
+    var inicio = el('tab1');
+    if (!inicio || el('ucIndicados')) return;
+    var c = document.createElement('div');
+    c.id = 'ucIndicados';
+    c.className = 'card';
+    var ref = el('ucCronoBatizado');
+    inicio.insertBefore(c, ref ? ref.nextSibling : inicio.firstChild);
+    renderIndicados();
+  }
+
+
+  /* ===== PRAZO DA ÚLTIMA AVALIAÇÃO (ADM edita; aparece na Início) ===== */
+  var PRAZO_PADRAO = '2026-11-30T23:59';
+  function dataPrazo() {
+    var d = listar('config').filter(function (c) { return c.id === 'prazoAvaliacao'; })[0];
+    var dt = new Date(d && d.iso ? d.iso : PRAZO_PADRAO);
+    return isNaN(dt.getTime()) ? new Date(PRAZO_PADRAO) : dt;
+  }
+  /* ===== CICLOS DE AVALIAÇÃO =====
+     1ª (junho): visível de 1/mai a 31/ago, prazo 30/jun.
+     Última (novembro): visível de 1/set até o batizado, prazo = data do ADM (30/nov). */
+  function cicloAtivo(agora) {
+    agora = agora || new Date();
+    var y = agora.getFullYear();
+    if (agora >= new Date(y, 4, 1) && agora <= new Date(y, 7, 31, 23, 59, 59)) {
+      return { nome: '1ª avaliação (junho)', prazo: new Date(y, 5, 30, 23, 59, 59) };
+    }
+    var prazoNov = dataPrazo();
+    var inicio = new Date(prazoNov.getFullYear(), 8, 1);
+    if (agora >= inicio && agora <= dataBatizado()) {
+      return { nome: 'Última avaliação (novembro)', prazo: prazoNov };
+    }
+    return null;
+  }
+
+  /* Avaliação (botão e finalização): 1ª de 1/jan a 30/jun; última de 1/jul até o prazo (30/nov) */
+  function cicloAvaliacao(agora) {
+    agora = agora || new Date();
+    var y = agora.getFullYear();
+    var prazo1 = new Date(y, 5, 30, 23, 59, 59);
+    if (agora >= new Date(y, 0, 1) && agora <= prazo1) {
+      return { nome: '1ª avaliação (junho)', prazo: prazo1 };
+    }
+    var pn = dataPrazo();
+    var prazo2 = new Date(y, pn.getMonth(), pn.getDate(), 23, 59, 59);
+    if (agora >= new Date(y, 6, 1) && agora <= prazo2) {
+      return { nome: 'Última avaliação (novembro)', prazo: prazo2 };
+    }
+    return null;
+  }
+
+  function renderPrazo() {
+    var c = el('ucPrazo');
+    if (!c) return;
+    var ciclo = cicloAtivo();
+    c.style.display = ciclo ? '' : 'none';
+    if (!ciclo) return;
+    var alvo = ciclo.prazo;
+    var dias = Math.ceil((alvo.getTime() - Date.now()) / 86400000);
+    var txt = ciclo.nome + ' · até ' + alvo.toLocaleDateString('pt-BR');
+    var t = c.querySelector('.uc-prazo-txt');
+    if (t) t.textContent = dias > 0 ? txt + ' (faltam ' + dias + ' dia(s))' : txt + ' — prazo encerrado';
+  }
+  function garantirPrazo() {
+    var inicio = el('tab1');
+    if (!inicio || el('ucPrazo')) return;
+    var c = document.createElement('div');
+    c.id = 'ucPrazo';
+    c.className = 'card';
+    c.innerHTML = '<h3><i class="fas fa-calendar-check"></i> Prazo das avaliações</h3><div class="uc-prazo-txt" style="font-weight:700"></div>';
+    var ref = el('ucCronoBatizado');
+    inicio.insertBefore(c, ref ? ref.nextSibling : inicio.firstChild);
+    renderPrazo();
+  }
+
+  function garantirAdmPrazo() {
+    var box = el('conteudoAdm');
+    if (!box || el('ucAdmPrazo')) return;
+    var d = dataPrazo();
+    var dia = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var c = document.createElement('div');
+    c.id = 'ucAdmPrazo';
+    c.className = 'card';
+    c.innerHTML = '<h3><i class="fas fa-calendar-check"></i> Prazo da última avaliação</h3>' +
+      '<p class="uc-mini">Depois desta data não é possível finalizar avaliações. Rascunhos continuam podendo ser salvos.</p>' +
+      '<label class="campo-label">Último dia</label><input type="date" id="ucAdmPrazoDia" value="' + dia + '">' +
+      '<button class="btn" type="button" id="ucAdmPrazoSalvar" style="margin-top:8px"><i class="fas fa-save"></i> Salvar prazo</button>';
+    box.insertBefore(c, box.firstChild);
+    el('ucAdmPrazoSalvar').addEventListener('click', function () {
+      var dia2 = el('ucAdmPrazoDia').value;
+      if (!dia2) { toast('Informe o último dia.', 'erro'); return; }
+      Promise.resolve(DB.salvar('config', { iso: dia2 + 'T23:59' }, 'prazoAvaliacao'))
+        .then(function () { toast('Prazo salvo.'); renderPrazo(); })
+        .catch(function () { toast('Não foi possível salvar o prazo.', 'erro'); });
+    });
+  }
+
+
   /* ===== INJEÇÃO (abas são redesenhadas ao abrir, então recolocamos os blocos) ===== */
   function garantirProfessor() {
     var box = el('conteudoProfessor');
@@ -14789,6 +14966,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       g.className = 'card';
       box.insertBefore(g, box.firstChild.nextSibling);
     }
+    var btnAval = el('ucBtnAvalSemestral');
+    if (btnAval) btnAval.style.display = cicloAvaliacao() ? '' : 'none';
     renderGestao(false);
   }
 
@@ -14807,6 +14986,9 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
   function ciclo() {
     try { garantirCronometroInicio(); } catch (e) { console.warn('[ucCrono]', e); }
+    try { garantirPrazo(); renderPrazo(); } catch (e) { console.warn('[ucPrazo]', e); }
+    try { garantirAdmPrazo(); } catch (e) { console.warn('[ucAdmPrazo]', e); }
+    try { garantirIndicados(); renderIndicados(); } catch (e) { console.warn('[ucInd]', e); }
     try { garantirAdmBatizado(); } catch (e) { console.warn('[ucAdmBat]', e); }
     try { garantirProfessor(); } catch (e) { console.warn('[ucAval] professor', e); }
     try { garantirAluno(); } catch (e) { console.warn('[ucAval] aluno', e); }
