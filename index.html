@@ -737,6 +737,14 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style id="estiloJarvisAssistente">
+#assistentePainel { background:#0b0f19 !important; border:1px solid #00f3ff !important; box-shadow:0 0 18px rgba(0,243,255,.25) !important; }
+#assistentePainel .assistente-header h4 { color:#00f3ff !important; letter-spacing:2px; text-shadow:0 0 8px rgba(0,243,255,.4); }
+#assistentePainel .assistente-bolha.bot { background:#1f2937 !important; color:#e2e8f0 !important; border:1px solid #374151 !important; }
+#assistentePainel .assistente-bolha.user { background:#00f3ff !important; color:#0b0f19 !important; font-weight:500; }
+#assistentePainel .assistente-atalho { background:#111827 !important; color:#00f3ff !important; border:1px solid #00f3ff !important; }
+#assistenteFab { background:#0b0f19 !important; color:#00f3ff !important; border:1px solid #00f3ff !important; box-shadow:0 0 12px rgba(0,243,255,.35) !important; }
+</style>
 </head>
 <body>
 <div class="app-frame">
@@ -1592,12 +1600,12 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
 
 <!-- Assistente Virtual -->
 <div id="dicaAssistentePrimeiroAcesso" class="dica-assistente-bolha" style="display:none;" onclick="toggleAssistente()">Precisa de ajuda? 👋</div>
-<button id="assistenteFab" onclick="toggleAssistente()" title="Assistente Capoeira" aria-label="Abrir assistente">
+<button id="assistenteFab" onclick="toggleAssistente()" title="J.A.R.V.I.S." aria-label="Abrir assistente">
   <i class="fas fa-robot"></i>
 </button>
 <div id="assistentePainel">
   <div class="assistente-header">
-    <h4><i class="fas fa-robot"></i> Assistente Capoeira</h4>
+    <h4><i class="fas fa-robot"></i> J.A.R.V.I.S.</h4>
     <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
   </div>
   <div class="assistente-msgs" id="assistenteMsgs"></div>
@@ -1782,7 +1790,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'enquetes'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -15412,6 +15420,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   }
 
   function tratarAcao(texto) {
+    if (tratarConversa(texto)) return true;
     var t = normalizar(texto).trim();
     var pap = papelAtual();
     var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
@@ -15475,6 +15484,15 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
         return true;
       }
     }
+    var tNorm = normalizar(texto).trim();
+    var funcao = funcoesAssistente().filter(function (f) {
+      return f.ativo && (f.palavras || []).some(function (p) { return p && tNorm.indexOf(p) >= 0; });
+    })[0];
+    if (funcao) {
+      usuarioFala(texto);
+      botFala(funcao.resposta);
+      return true;
+    }
     return false;
   }
 
@@ -15488,6 +15506,359 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (tratarAcao(texto)) return;
     return assistentePerguntarBase.apply(this, arguments);
   };
+
+
+  /* ===== ENQUETE: nome do assistente (alunos sugerem e votam; equipe encerra) ===== */
+  var ENQ_ID = 'nome_assistente';
+  function enqueteAtual() {
+    return listar('enquetes').filter(function (e) { return e.id === ENQ_ID; })[0] ||
+      { id: ENQ_ID, aberta: true, opcoes: [], vencedor: '' };
+  }
+  function nomeAssistenteAtual() {
+    var c = listar('config').filter(function (x) { return x.id === 'assistente'; })[0];
+    return (c && c.nome) || 'J.A.R.V.I.S.';
+  }
+  function aplicarNomeAssistente() {
+    var h = document.querySelector('#assistentePainel .assistente-header h4');
+    if (h) h.innerHTML = '<i class="fas fa-robot"></i> ' + esc(nomeAssistenteAtual());
+    var fab = el('assistenteFab');
+    if (fab) fab.title = nomeAssistenteAtual();
+  }
+  function salvarEnquete(e) { return Promise.resolve(DB.salvar('enquetes', e, ENQ_ID)); }
+
+  window.ucEnqueteVotar = function (opId) {
+    var logado = alunoLogado();
+    if (!logado) { toast('Entre na aba Aluno para votar.', 'erro'); return; }
+    var e = enqueteAtual();
+    if (!e.aberta) { toast('A enquete está encerrada.', 'erro'); return; }
+    e.opcoes.forEach(function (o) {
+      o.votos = (o.votos || []).filter(function (v) { return v !== logado.id; });
+      if (o.id === opId) o.votos.push(logado.id);
+    });
+    salvarEnquete(e).then(function () { toast('Voto registrado.'); })
+      .catch(function () { toast('Não foi possível votar.', 'erro'); });
+  };
+
+  window.ucEnqueteSugerir = function () {
+    var logado = alunoLogado();
+    if (!logado) { toast('Entre na aba Aluno para sugerir.', 'erro'); return; }
+    var inp = el('ucEnqSugestao');
+    var nome = ((inp && inp.value) || '').trim();
+    if (nome.length < 2 || nome.length > 30) { toast('Use de 2 a 30 letras.', 'erro'); return; }
+    var e = enqueteAtual();
+    if (!e.aberta) { toast('A enquete está encerrada.', 'erro'); return; }
+    if (e.opcoes.some(function (o) { return chave(o.nome) === chave(nome); })) { toast('Esse nome já foi sugerido.', 'erro'); return; }
+    e.opcoes.push({ id: 'op' + Date.now(), nome: nome, votos: [], sugeridoPor: logado.apelido || logado.nome });
+    salvarEnquete(e).then(function () { toast('Nome sugerido.'); })
+      .catch(function () { toast('Não foi possível sugerir.', 'erro'); });
+  };
+
+  window.ucEnqueteEncerrar = function () {
+    var pap = papelAtual();
+    if (pap !== 'professor' && pap !== 'adm') { toast('Só a equipe encerra a enquete.', 'erro'); return; }
+    var e = enqueteAtual();
+    if (!e.opcoes.length) { toast('Ainda não há nomes.', 'erro'); return; }
+    var max = Math.max.apply(null, e.opcoes.map(function (o) { return (o.votos || []).length; }));
+    if (max === 0) { toast('Ninguém votou ainda.', 'erro'); return; }
+    var empatados = e.opcoes.filter(function (o) { return (o.votos || []).length === max; });
+    var vencedor = empatados[0];
+    abrirModal('Encerrar enquete',
+      '<p class="mini">Vencedor: <b>' + esc(vencedor.nome) + '</b> (' + max + ' voto(s)).' +
+      (empatados.length > 1 ? ' Houve empate: fica o primeiro da lista.' : '') +
+      ' O assistente passa a usar esse nome.</p>',
+      '<button class="btn" type="button" onclick="ucConfirmarEncerrar(\'' + vencedor.id + '\')">Confirmar</button>');
+  };
+
+  window.ucConfirmarEncerrar = function (opId) {
+    var e = enqueteAtual();
+    var op = e.opcoes.filter(function (o) { return o.id === opId; })[0];
+    if (!op) return;
+    e.aberta = false;
+    e.vencedor = op.nome;
+    Promise.all([
+      salvarEnquete(e),
+      Promise.resolve(DB.salvar('config', { nome: op.nome }, 'assistente'))
+    ]).then(function () {
+      fecharModal();
+      toast('Nome escolhido: ' + op.nome);
+      aplicarNomeAssistente();
+    }).catch(function () { toast('Não foi possível encerrar.', 'erro'); });
+  };
+
+  window.ucEnqueteReabrir = function () {
+    var e = enqueteAtual();
+    e.aberta = true;
+    salvarEnquete(e).then(function () { toast('Enquete reaberta.'); })
+      .catch(function () { toast('Não foi possível reabrir.', 'erro'); });
+  };
+
+  function renderEnquete(card, modo) {
+    var e = enqueteAtual();
+    var pap = papelAtual();
+    var logado = alunoLogado();
+    var sig = JSON.stringify([e.aberta, e.vencedor, e.opcoes, !!logado, pap]);
+    if (card.getAttribute('data-sig') === sig) return;
+    card.setAttribute('data-sig', sig);
+
+    var total = e.opcoes.reduce(function (a, o) { return a + (o.votos || []).length; }, 0);
+    var html = '<h3><i class="fas fa-poll"></i> Escolha o nome do assistente</h3>' +
+      '<p class="uc-mini">' + (e.aberta
+        ? 'Sugira um nome e vote no seu favorito. Cada aluno tem um voto e pode mudar.'
+        : 'Enquete encerrada. Nome escolhido: <b>' + esc(e.vencedor || '') + '</b>') + '</p>';
+    if (!e.opcoes.length) html += '<p class="uc-mini">Ninguém sugeriu nomes ainda.</p>';
+    html += e.opcoes.map(function (o) {
+      var n = (o.votos || []).length;
+      var pct = total ? Math.round(n / total * 100) : 0;
+      var meu = logado && (o.votos || []).indexOf(logado.id) >= 0;
+      return '<div class="uc-item"><div style="display:flex;justify-content:space-between;gap:8px"><b>' + esc(o.nome) +
+        '</b><span class="uc-mini">' + n + ' voto(s)</span></div>' +
+        '<div style="height:8px;background:#0a1419;border-radius:4px;overflow:hidden;margin:4px 0"><div style="width:' + pct + '%;height:100%;background:var(--primary-green,#00c853)"></div></div>' +
+        (e.aberta && logado
+          ? '<button class="btn btn-secondary btn-mini" type="button" onclick="ucEnqueteVotar(\'' + o.id + '\')">' + (meu ? '✅ Seu voto' : 'Votar') + '</button>'
+          : '') + '</div>';
+    }).join('');
+    if (e.aberta && logado) {
+      html += '<div class="uc-linha" style="margin-top:8px"><div><input type="text" id="ucEnqSugestao" maxlength="30" placeholder="Sugerir um nome"></div>' +
+        '<button class="btn btn-mini" type="button" onclick="ucEnqueteSugerir()" style="width:auto">Sugerir</button></div>';
+    }
+    if (modo === 'equipe' && (pap === 'professor' || pap === 'adm')) {
+      html += e.aberta
+        ? '<button class="btn btn-gold" type="button" onclick="ucEnqueteEncerrar()" style="margin-top:8px"><i class="fas fa-flag-checkered"></i> Encerrar e definir o vencedor</button>'
+        : '<button class="btn btn-secondary" type="button" onclick="ucEnqueteReabrir()" style="margin-top:8px"><i class="fas fa-redo"></i> Reabrir enquete</button>';
+    }
+    card.innerHTML = html;
+  }
+
+  function garantirEnquete() {
+    var painel = el('cardAlunoPainel');
+    if (painel && !el('ucEnqueteAluno')) {
+      var a = document.createElement('div');
+      a.id = 'ucEnqueteAluno';
+      a.className = 'card';
+      a.style.display = 'none';
+      painel.insertBefore(a, painel.firstChild);
+    }
+    var box = el('conteudoProfessor');
+    if (box && !el('ucEnqueteEquipe')) {
+      var q = document.createElement('div');
+      q.id = 'ucEnqueteEquipe';
+      q.className = 'card';
+      box.insertBefore(q, box.firstChild);
+    }
+    var ca = el('ucEnqueteAluno');
+    if (ca) {
+      var logado = alunoLogado();
+      ca.style.display = logado ? '' : 'none';
+      if (logado) renderEnquete(ca, 'aluno');
+    }
+    var cq = el('ucEnqueteEquipe');
+    if (cq) renderEnquete(cq, 'equipe');
+    aplicarNomeAssistente();
+  }
+
+
+  /* ===== CONVERSA COM O ALUNO (ao entrar no app) ===== */
+  var convEstado = null;          /* 'estado' | 'checkin' | 'proxima' */
+  var convAlunoSaudado = null;
+  function iniciarConversaAluno(aluno) {
+    if (!aluno) return;
+    var painel = $('assistentePainel');
+    if (painel && !assistenteAberto) { assistenteAberto = true; painel.classList.add('aberto'); }
+    var primeiro = String(aluno.apelido || aluno.nome || 'camará').split(' ')[0];
+    convEstado = 'estado';
+    botFala('Olá, ' + primeiro + '! Axé 🥋 Como você está hoje? Pode responder: bem, cansado, ou se sentiu alguma dor.');
+  }
+  function tratarConversa(texto) {
+    if (!convEstado) return false;
+    var t = normalizar(texto).trim();
+    var sim = /^(sim|s|vou|claro|quero|bora|ok|pode|isso)\b/.test(t);
+    var nao = /^(nao|n|não|agora nao|nao quero)\b/.test(t);
+
+    if (convEstado === 'estado') {
+      if (t.indexOf('?') >= 0) { convEstado = null; return false; }
+      usuarioFala(texto);
+      if (/dor|machuc|lesao|tont|mal estar|passando mal|febre|desmai/.test(t)) {
+        convEstado = null;
+        botFala('Sinto muito. Antes de treinar, procure um médico ou fisioterapeuta e avise o professor. Cuide de você primeiro. Em caso de urgência, procure um pronto-socorro.');
+        return true;
+      }
+      var resp = /cansad/.test(t) ? 'Descanse bem e beba água.' : 'Que bom ouvir isso!';
+      var aula = aulaDeHoje();
+      if (aula) {
+        convEstado = 'checkin';
+        botFala(resp + ' Você tem aula hoje às ' + (aula.horaInicio || 'o horário cadastrado') + '. Vai comparecer? Se sim, eu te levo ao check-in. (sim ou não)');
+      } else {
+        convEstado = 'proxima';
+        botFala(resp + ' Não há aula cadastrada para hoje. Quer ver a próxima aula? (sim ou não)');
+      }
+      return true;
+    }
+
+    if (convEstado === 'checkin') {
+      if (!sim && !nao) { convEstado = null; return false; }
+      usuarioFala(texto);
+      convEstado = null;
+      if (sim) {
+        abrirAba('tab2');
+        botFala('Ótimo! Abri a aba Check-in. Toque no botão de check-in quando estiver no local. Bom treino! 🙌');
+      } else {
+        botFala('Tudo certo. Se mudar de ideia, é só me chamar.');
+      }
+      return true;
+    }
+
+    if (convEstado === 'proxima') {
+      if (!sim && !nao) { convEstado = null; return false; }
+      usuarioFala(texto);
+      convEstado = null;
+      if (sim) botFala(assistenteInfoProximaAula());
+      else botFala('Tudo bem. Até a próxima! 🥋');
+      return true;
+    }
+    return false;
+  }
+
+  function garantirConversaAluno() {
+    var logado = alunoLogado();
+    if (!logado) { convAlunoSaudado = null; convEstado = null; return; }
+    if (convAlunoSaudado === logado.id) return;
+    convAlunoSaudado = logado.id;
+    setTimeout(function () { iniciarConversaAluno(alunoLogado()); }, 1200);
+  }
+
+
+  /* ===== DIAGNÓSTICO E FUNÇÕES DO ASSISTENTE (área Dev, pelo celular) ===== */
+  window.__ucErros = window.__ucErros || [];
+  function registrarErro(m) {
+    window.__ucErros.unshift({ t: new Date().toLocaleTimeString('pt-BR'), m: String(m).slice(0, 160) });
+    window.__ucErros = window.__ucErros.slice(0, 30);
+  }
+  window.addEventListener('error', function (ev) {
+    registrarErro((ev.message || 'erro') + ' (' + String(ev.filename || '').split('/').pop() + ':' + (ev.lineno || '') + ')');
+  });
+  window.addEventListener('unhandledrejection', function (ev) {
+    registrarErro('promessa: ' + ((ev.reason && ev.reason.message) || ev.reason));
+  });
+
+  function funcoesAssistente() {
+    var c = listar('config').filter(function (x) { return x.id === 'assistente_funcoes'; })[0];
+    return (c && Array.isArray(c.lista)) ? c.lista.slice() : [];
+  }
+  function salvarFuncoesAssistente(lista) {
+    return Promise.resolve(DB.salvar('config', { lista: lista }, 'assistente_funcoes'));
+  }
+  window.ucFuncaoSalvar = function () {
+    var pal = ((el('ucFuncPalavras') || {}).value || '').trim();
+    var resp = ((el('ucFuncResposta') || {}).value || '').trim();
+    if (pal.length < 2 || resp.length < 3) { toast('Preencha as palavras e a resposta.', 'erro'); return; }
+    var lista = funcoesAssistente();
+    lista.push({
+      id: 'f' + Date.now(),
+      palavras: pal.split(',').map(function (p) { return chave(p); }).filter(Boolean),
+      resposta: resp,
+      ativo: true
+    });
+    salvarFuncoesAssistente(lista).then(function () {
+      toast('Função salva.');
+      el('ucFuncPalavras').value = '';
+      el('ucFuncResposta').value = '';
+      renderDiagnostico(true);
+    }).catch(function () { toast('Não foi possível salvar.', 'erro'); });
+  };
+  window.ucFuncaoAlternar = function (id) {
+    var lista = funcoesAssistente();
+    lista.forEach(function (f) { if (f.id === id) f.ativo = !f.ativo; });
+    salvarFuncoesAssistente(lista).then(function () { renderDiagnostico(true); })
+      .catch(function () { toast('Não foi possível alterar.', 'erro'); });
+  };
+  window.ucLimparErros = function () { window.__ucErros = []; renderDiagnostico(true); };
+
+  window.ucDiagTestar = function () {
+    var out = el('ucDiagResultado');
+    var msgs = $('assistenteMsgs');
+    var painel = $('assistentePainel');
+    if (!msgs || !painel) { toast('Assistente não encontrado nesta tela.', 'erro'); return; }
+    if (!assistenteAberto) { assistenteAberto = true; painel.classList.add('aberto'); }
+    var perguntas = ['ajuda', 'próxima aula', 'minha graduação', 'quanto custa a mensalidade'];
+    var resultados = [], i = 0;
+    out.style.display = 'block';
+    out.innerHTML = '<p class="uc-mini">Testando... (as perguntas aparecem no chat do assistente)</p>';
+    (function proxima() {
+      if (i >= perguntas.length) {
+        out.innerHTML = '<div class="uc-item"><b>Resultado do teste</b>' +
+          resultados.map(function (r) { return '<div class="uc-mini">' + esc(r) + '</div>'; }).join('') + '</div>';
+        return;
+      }
+      var antes = msgs.children.length;
+      assistentePerguntar(perguntas[i]);
+      setTimeout(function () {
+        var novas = msgs.children.length - antes;
+        resultados.push(perguntas[i] + ': ' + (novas >= 2 ? '✅ respondeu' : '❌ sem resposta'));
+        i++;
+        proxima();
+      }, 1800);
+    })();
+  };
+
+  function renderDiagnostico(forcar) {
+    var card = el('ucDiagJarvis');
+    if (!card) return;
+    var funcs = funcoesAssistente();
+    var sig = JSON.stringify([window.__ucErros.length, window.__ucErros[0] && window.__ucErros[0].t, funcs, nomeAssistenteAtual(), !!$('assistentePainel')]);
+    if (!forcar && card.getAttribute('data-sig') === sig) return;
+    card.setAttribute('data-sig', sig);
+
+    var ok = function (v) { return v ? '✅' : '❌'; };
+    var html = '<h3><i class="fas fa-robot"></i> Diagnóstico do Assistente</h3>' +
+      '<div class="uc-item">' +
+        '<div class="uc-mini">' + ok(!!$('assistentePainel')) + ' Painel do assistente</div>' +
+        '<div class="uc-mini">' + ok(!!$('assistenteFab')) + ' Botão flutuante</div>' +
+        '<div class="uc-mini">' + ok(typeof window.assistentePerguntar === 'function') + ' Função de perguntas</div>' +
+        '<div class="uc-mini">Nome atual: <b>' + esc(nomeAssistenteAtual()) + '</b></div>' +
+        '<div class="uc-mini">Funções personalizadas: ' + funcs.length + ' (' + funcs.filter(function (f) { return f.ativo; }).length + ' ativas)</div>' +
+        '<div class="uc-mini">Erros recentes: ' + window.__ucErros.length + '</div>' +
+      '</div>' +
+      '<div class="uc-linha" style="margin-top:8px">' +
+        '<button class="btn btn-gold btn-mini" type="button" onclick="ucDiagTestar()"><i class="fas fa-play"></i> Testar assistente</button>' +
+        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucLimparErros()"><i class="fas fa-eraser"></i> Limpar erros</button>' +
+      '</div>' +
+      '<div id="ucDiagResultado" style="display:none;margin-top:8px"></div>';
+
+    if (window.__ucErros.length) {
+      html += '<div class="uc-item"><b>Últimos erros</b>' +
+        window.__ucErros.slice(0, 8).map(function (e) { return '<div class="uc-mini">' + esc(e.t) + ' · ' + esc(e.m) + '</div>'; }).join('') +
+        '</div>';
+    }
+
+    html += '<div class="uc-item"><b>Nova função do assistente</b>' +
+      '<p class="uc-mini">Quando alguém escrever uma dessas palavras (separadas por vírgula), o assistente responde o texto abaixo.</p>' +
+      '<input type="text" id="ucFuncPalavras" placeholder="ex: horario do treino, quando treina">' +
+      '<textarea id="ucFuncResposta" placeholder="Resposta do assistente"></textarea>' +
+      '<button class="btn btn-mini" type="button" onclick="ucFuncaoSalvar()" style="margin-top:6px"><i class="fas fa-save"></i> Salvar função</button></div>';
+
+    if (funcs.length) {
+      html += funcs.map(function (f) {
+        return '<div class="uc-item"><div style="display:flex;justify-content:space-between;gap:8px"><b class="uc-mini">' +
+          esc(f.palavras.join(', ')) + '</b><span class="uc-mini">' + (f.ativo ? '✅ ativa' : '⏸ desligada') + '</span></div>' +
+          '<div class="uc-mini">' + esc(f.resposta) + '</div>' +
+          '<button class="btn btn-secondary btn-mini" type="button" onclick="ucFuncaoAlternar(\'' + f.id + '\')" style="margin-top:4px">' +
+          (f.ativo ? 'Desligar' : 'Ligar') + '</button></div>';
+      }).join('');
+    }
+    card.innerHTML = html;
+  }
+
+  function garantirDiagnostico() {
+    var box = el('conteudoDev');
+    if (!box) return;
+    if (!el('ucDiagJarvis')) {
+      var c = document.createElement('div');
+      c.id = 'ucDiagJarvis';
+      c.className = 'card';
+      box.insertBefore(c, box.firstChild);
+    }
+    renderDiagnostico(false);
+  }
 
   /* ===== INJEÇÃO (abas são redesenhadas ao abrir, então recolocamos os blocos) ===== */
   function garantirProfessor() {
@@ -15533,6 +15904,9 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     try { garantirIndicados(); renderIndicados(); } catch (e) { console.warn('[ucInd]', e); }
     try { garantirAdmBatizado(); } catch (e) { console.warn('[ucAdmBat]', e); }
     try { garantirProfessor(); } catch (e) { console.warn('[ucAval] professor', e); }
+    try { garantirDiagnostico(); } catch (e) { console.warn('[ucDiag]', e); }
+    try { garantirConversaAluno(); } catch (e) { console.warn('[ucConversa]', e); }
+    try { garantirEnquete(); } catch (e) { console.warn('[ucEnquete]', e); }
     try { garantirBannerTeste(); } catch (e) { console.warn('[ucTeste]', e); }
     try { garantirSimulacaoAluno(); } catch (e) { console.warn('[ucSim]', e); }
     try { garantirAluno(); } catch (e) { console.warn('[ucAval] aluno', e); }
