@@ -15081,9 +15081,36 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       '<div class="uc-mini">• Faltas: máximo de 2 no 1º semestre; no 2º semestre o professor decide</div></div>' +
     '<div class="uc-item"><b>Laranja → Laranja e Azul</b><div class="uc-mini">Cobrança alta de compromisso · bom domínio técnico e musical</div></div>' +
     '<div class="uc-item"><b>Laranja e Azul → Azul</b><div class="uc-mini">Mais de 18 anos · mais de 5 anos de capoeira</div></div>';
-  function htmlSimulacao(aluno) {
+  function ultimaAvaliacaoDoAluno(alunoId) {
+    return listar('avaliacoesSemestrais').filter(function (d) {
+      return d.alunoId === alunoId && d.status === 'finalizada';
+    }).sort(function (x, y) { return String(y.periodo).localeCompare(String(x.periodo)); })[0] || null;
+  }
+
+  /* O que o app registrou desde a data-base (1º de janeiro ou última avaliação) */
+  function acumuladoDesde(alunoId, baseISO) {
+    var base = baseISO || '';
+    var pres = listar('presencas').filter(function (p) {
+      return p.alunoId === alunoId && (!base || String(p.data || '') >= base);
+    });
+    var dias = base ? Math.max(0, Math.ceil((Date.now() - new Date(base + 'T00:00:00').getTime()) / 86400000)) : 0;
+    return {
+      base: base,
+      presencas: pres.filter(function (p) { return p.status === 'aprovado'; }).length,
+      faltas: pres.filter(function (p) { return p.status === 'falta'; }).length,
+      atrasos: pres.filter(function (p) { return (p.atrasoMin || 0) > 0; }).length,
+      semanas: Math.ceil(dias / 7)
+    };
+  }
+
+  function htmlSimulacao(aluno, doc, acum) {
+    acum = acum || { presencas: 0, faltas: 0, atrasos: 0, semanas: 0 };
     SIM_CAMPOS = [];
-    function campo(key, label) { SIM_CAMPOS.push({ key: 'sim_' + key, label: label }); return sl('sim_' + key, label); }
+    var notasDoc = (doc && doc.notas) || {};
+    function campo(key, label) {
+      SIM_CAMPOS.push({ key: 'sim_' + key, label: label });
+      return sl('sim_' + key, label, notasDoc[key] != null ? notasDoc[key] : undefined);
+    }
     var chutes = CHUTES.map(function (m) {
       return campo('chu_' + m.id + '_E', 'Chute ' + m.nome + ' — lado E') + campo('chu_' + m.id + '_D', 'Chute ' + m.nome + ' — lado D');
     }).join('');
@@ -15101,23 +15128,29 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
         campo('toq_' + t + '_E', 'Toque ' + t + ' — movimentação E') + campo('toq_' + t + '_D', 'Toque ' + t + ' — movimentação D');
     }).join('');
     var jogos = JOGOS.map(function (j) { return campo('jog_' + j, 'Jogo ' + j); }).join('');
-    var cordaPadrao = CORDAS.indexOf(aluno.graduacao) >= 0 ? aluno.graduacao : 'Crua';
-    var anos = aluno.anosCapoeira != null ? aluno.anosCapoeira : (aluno.anosTreino != null ? aluno.anosTreino : '');
+    var cordaBase = (doc && doc.cordaAtual) || aluno.graduacao;
+    var cordaPadrao = CORDAS.indexOf(cordaBase) >= 0 ? cordaBase : 'Crua';
+    var anos = doc && doc.anos != null ? doc.anos : (aluno.anosCapoeira != null ? aluno.anosCapoeira : (aluno.anosTreino != null ? aluno.anosTreino : ''));
+    var idade = doc && doc.idade != null ? doc.idade : (aluno.idade != null ? aluno.idade : '');
+    var nums = (doc && doc.nums) || {};
+    var textos = (doc && doc.textos) || {};
     return '' +
       '<label class="campo-label">Semestre</label><select id="simSemestre">' +
         '<option value="1">1º semestre (junho)</option><option value="2">2º semestre (novembro)</option></select>' +
       '<label class="campo-label">Minha corda atual</label><select id="simCorda">' +
         CORDAS.map(function (c) { return '<option value="' + c + '"' + (c === cordaPadrao ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select>' +
-      '<div class="uc-linha"><div><label class="campo-label">Idade</label><input type="number" id="simIdade" min="0" value="' + (aluno.idade != null ? aluno.idade : '') + '"></div>' +
+      '<div class="uc-linha"><div><label class="campo-label">Idade</label><input type="number" id="simIdade" min="0" value="' + idade + '"></div>' +
       '<div><label class="campo-label">Anos de capoeira</label><input type="number" id="simAnos" min="0" value="' + anos + '"></div></div>' +
       acc('Chutes', chutes, true) + acc('Esquivas', esq) + acc('Decidas', dec) + acc('Sequências', seq) +
       acc('Toques de berimbau', toques) + acc('Jogos', jogos) +
       acc('Berimbau e compromisso', '<label class="campo-label">Berimbau</label><select id="simBerimbau">' +
-        '<option value="nao">Não sei</option><option value="aprendizado">Em aprendizado</option><option value="sim">Sim</option></select>' +
-        '<div class="uc-linha"><div><label class="campo-label">Faltas</label><input type="number" id="simFaltas" min="0" value="0"></div>' +
-        '<div><label class="campo-label">Atrasos</label><input type="number" id="simAtrasos" min="0" value="0"></div></div>' +
-        '<div class="uc-linha"><div><label class="campo-label">Semanas no período</label><input type="number" id="simSemanas" min="0" value="0"></div>' +
-        '<div><label class="campo-label">Aulas regulares presentes</label><input type="number" id="simPresencas" min="0" value="0"></div></div>');
+        '<option value="nao"' + (textos.ins_Berimbau === 'nao' || !textos.ins_Berimbau ? ' selected' : '') + '>Não sei</option>' +
+        '<option value="aprendizado"' + (textos.ins_Berimbau === 'aprendizado' ? ' selected' : '') + '>Em aprendizado</option>' +
+        '<option value="sim"' + (textos.ins_Berimbau === 'sim' ? ' selected' : '') + '>Sim</option></select>' +
+        '<div class="uc-linha"><div><label class="campo-label">Faltas</label><input type="number" id="simFaltas" min="0" value="' + Math.max(nums.comp_faltas || 0, acum.faltas) + '"></div>' +
+        '<div><label class="campo-label">Atrasos</label><input type="number" id="simAtrasos" min="0" value="' + Math.max(nums.comp_atrasos || 0, acum.atrasos) + '"></div></div>' +
+        '<div class="uc-linha"><div><label class="campo-label">Semanas no período</label><input type="number" id="simSemanas" min="0" value="' + Math.max(nums.comp_semanas || 0, acum.semanas) + '"></div>' +
+        '<div><label class="campo-label">Aulas regulares presentes</label><input type="number" id="simPresencas" min="0" value="' + Math.max(nums.pa_reg_pres || 0, acum.presencas) + '"></div></div>');
   }
 
   function simCalcular() {
@@ -15182,8 +15215,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     box.style.display = 'block';
     box.innerHTML =
       '<div class="uc-res ' + (apto ? 'uc-apto' : 'uc-nao-apto') + '">' +
-        '<div style="font-size:1.2rem;font-weight:700;margin-bottom:6px">' + (apto ? '✅ Estaria apto' : '❌ Não estaria apto') + '</div>' +
-        '<div>Corda simulada: <b>' + esc(sugerida) + '</b></div>' +
+        '<div style="font-size:1.2rem;font-weight:700;margin-bottom:6px">' + (apto ? '✅ Na simulação, estaria apto' : '❌ Na simulação, não estaria apto') + '</div>' +
+        '<div>Corda da simulação: <b>' + esc(sugerida) + '</b></div>' +
         '<div class="uc-mini" style="margin-top:6px">Técnica: ' + mediaTec + '% · Toques/jogos: ' + mediaMus + '%</div>' +
         (motivos.length ? '<div style="margin-top:8px;font-size:.85rem">' + motivos.map(esc).join('<br>') + '</div>' : '') +
       '</div>' +
@@ -15202,17 +15235,61 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
     if (!logado) { card.style.display = 'none'; card.setAttribute('data-aluno', ''); return; }
     card.style.display = '';
-    if (card.getAttribute('data-aluno') === logado.id) return;
-    card.setAttribute('data-aluno', logado.id);
+    var doc = ultimaAvaliacaoDoAluno(logado.id);
+    var baseISO = '';   /* tudo que estiver guardado no app, em qualquer graduação */
+    var acum = acumuladoDesde(logado.id, baseISO);
+    var assinatura = logado.id + '|' + (doc ? doc.id + '|' + (doc.atualizadoEm || '') : '') +
+      '|' + baseISO + '|' + acum.presencas + '|' + acum.faltas + '|' + acum.atrasos + '|' + acum.semanas;
+    if (card.getAttribute('data-aluno') === assinatura) return;
+    card.setAttribute('data-aluno', assinatura);
+    var resumo = doc
+      ? '<div class="uc-item"><b>Minha última avaliação (período ' + esc(doc.periodo) + ')</b>' +
+        '<div class="uc-mini">Técnica: ' + doc.mediaTecnica + '% · Toques/jogos: ' + doc.mediaMusical + '%' +
+        (doc.frequenciaSemanal != null ? ' · Frequência: ' + doc.frequenciaSemanal + '/semana' : '') + '</div>' +
+        (doc.textos && doc.textos.obs ? '<div class="uc-mini">Obs.: ' + esc(doc.textos.obs) + '</div>' : '') +
+        '<div class="uc-mini">Tudo que está guardado no app: ' + acum.presencas + ' presença(s), ' + acum.faltas + ' falta(s) e ' + acum.atrasos + ' atraso(s). Na simulação entra o maior valor entre o app e o boletim, para não contar duas vezes.</div>' +
+        '<div class="uc-mini">O resultado oficial e a graduação são revelados no batizado.</div></div>'
+      : '<div class="uc-mini">Você ainda não tem avaliação finalizada. No app há ' + acum.presencas + ' presença(s), ' + acum.faltas + ' falta(s) e ' + acum.atrasos + ' atraso(s).</div>';
     card.innerHTML = '<h3><i class="fas fa-chart-line"></i> Simular minha avaliação</h3>' +
-      '<p class="uc-mini">Teste suas notas para ver se estaria apto e o que melhorar.</p>' +
-      htmlSimulacao(logado) +
+      resumo +
+      '<p class="uc-mini" style="margin-top:8px">Esta é só uma simulação: ajuste as notas abaixo para ver como estaria em uma próxima avaliação. Nada é salvo.</p>' +
+      htmlSimulacao(logado, doc, acum) +
       '<button class="btn" type="button" id="simBtn" style="margin-top:8px"><i class="fas fa-play"></i> Simular</button>' +
       '<button class="btn btn-gold" type="button" id="simCriterios" style="margin-top:8px"><i class="fas fa-list"></i> Ver o que será cobrado de mim</button>' +
       '<div id="simResultado" style="display:none"></div>';
+    restaurarEdicaoSimulacao(card, logado.id);
     el('simBtn').addEventListener('click', simCalcular);
+    simCalcular();
     el('simCriterios').addEventListener('click', function () {
       abrirModal('O que será cobrado de mim', CRITERIOS_HTML, '<button class="btn" type="button" onclick="fecharModal()">Entendi</button>');
+    });
+  }
+
+  /* Guarda o que o aluno ajustou, para não perder quando a tela é redesenhada */
+  window.__simEstado = null;
+  function guardarEdicaoSimulacao() {
+    var card = el('ucSimulacaoAluno');
+    var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (!card || !logado) return;
+    var campos = [];
+    card.querySelectorAll('input, select, textarea').forEach(function (e) {
+      if (e.type === 'button') return;
+      campos.push({ key: e.getAttribute('data-key') || e.id, valor: e.value });
+    });
+    window.__simEstado = { alunoId: logado.id, campos: campos };
+  }
+  function restaurarEdicaoSimulacao(card, alunoId) {
+    var est = window.__simEstado;
+    if (!est || est.alunoId !== alunoId) return;
+    est.campos.forEach(function (c) {
+      if (!c.key) return;
+      var e = card.querySelector('[data-key="' + c.key + '"]') || card.querySelector('#' + c.key);
+      if (!e) return;
+      e.value = c.valor;
+      if (e.getAttribute('data-tipo') === 'nota') {
+        var sp = card.querySelector('#v_' + c.key);
+        if (sp) sp.textContent = e.value + '%';
+      }
     });
   }
 
@@ -15227,7 +15304,9 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       sm.addEventListener('input', function (ev) {
         var t = ev.target;
         if (t && t.type === 'range') { var sp = el('v_' + t.getAttribute('data-key')); if (sp) sp.textContent = t.value + '%'; }
+        guardarEdicaoSimulacao();
       });
+      sm.addEventListener('change', guardarEdicaoSimulacao);
       painel.insertBefore(sm, painel.firstChild);
     }
     renderSimulacao();
