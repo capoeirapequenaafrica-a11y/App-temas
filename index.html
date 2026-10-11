@@ -1607,6 +1607,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
     <button class="assistente-atalho" onclick="assistentePerguntar('como fazer check-in')">Como fazer check-in</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('check-in deu erro')">Check-in com erro</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('esqueci minha senha')">Esqueci a senha</button>
+    <button class="assistente-atalho" onclick="assistentePerguntar('pedir nova senha')">Pedir nova senha</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('pedir treino')">Pedir treino</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('minha graduação')">Minha graduação</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('meu desempenho')">Desempenho</button>
@@ -2640,6 +2641,21 @@ function renderizarAba(id) {
 /* ---------------------------------------------------------------
    7. AUTENTICAÇÃO
    --------------------------------------------------------------- */
+/* Contagem de senhas erradas por aluno (fica no aparelho) */
+function lerFalhasLogin() { try { return JSON.parse(localStorage.getItem('uc_falhas_login') || '{}'); } catch (e) { return {}; } }
+function registrarFalhaLogin(nome) {
+  var f = lerFalhasLogin(), k = normalizar(nome);
+  f[k] = (f[k] || 0) + 1;
+  try { localStorage.setItem('uc_falhas_login', JSON.stringify(f)); localStorage.setItem('uc_ultima_falha', nome); } catch (e) {}
+  return f[k];
+}
+function limparFalhasLogin(nome) {
+  var f = lerFalhasLogin();
+  delete f[normalizar(nome)];
+  try { localStorage.setItem('uc_falhas_login', JSON.stringify(f)); } catch (e) {}
+}
+function falhasLogin(nome) { return lerFalhasLogin()[normalizar(nome)] || 0; }
+
 function autenticarAlunoNuvem(btn) {
   var nome = ($('alunoLoginNome').value || '').trim();
   var senha = $('alunoLoginSenha').value || '';
@@ -2653,12 +2669,22 @@ function autenticarAlunoNuvem(btn) {
   var alvo = normalizar(nome);
   var achado = null;
   DB.listar('alunos').forEach(function (a) {
-    if (!achado && (normalizar(a.nome) === alvo || normalizar(a.apelido) === alvo)) achado = a;
+    if (!achado && a.ativo !== false && (normalizar(a.nome) === alvo || normalizar(a.apelido) === alvo)) achado = a;
   });
   setTimeout(function () {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar no Painel'; }
     if (!achado) { mostrarToast('Aluno não encontrado. Faça o cadastro.', 'erro'); return; }
-    if (achado.senhaHash !== hashSenha(senha)) { mostrarToast('Senha incorreta.', 'erro'); return; }
+    if (achado.senhaHash !== hashSenha(senha)) {
+      var nFalhas = registrarFalhaLogin(nome);
+      if (nFalhas >= 3) {
+        mostrarToast('3 senhas erradas. Abri o pedido de nova senha para o professor.', 'erro');
+        abrirPedidoResetSenha();
+      } else {
+        mostrarToast('Senha incorreta. Tentativa ' + nFalhas + ' de 3.', 'erro');
+      }
+      return;
+    }
+    limparFalhasLogin(nome);
     sessaoAlunoId = achado.id;
     registroLog('auth', 'Aluno entrou: ' + achado.nome);
     $('alunoLoginSenha').value = '';
@@ -2697,7 +2723,7 @@ function cadastrarAlunoNuvem(btn) {
     return;
   }
 
-  var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome).replace(/\s+/g, ' ').trim() === normalizar(nome).replace(/\s+/g, ' ').trim(); });
+  var duplicado = DB.listar('alunos').some(function (a) { return a.ativo !== false && normalizar(a.nome).replace(/\s+/g, ' ').trim() === normalizar(nome).replace(/\s+/g, ' ').trim(); });
   if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
 
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Salvando...'; }
@@ -8997,7 +9023,7 @@ function cadastrarAlunoPeloProfessor(btn) {
   if (tipoAluno !== 'gympass') tipoAluno = 'normal';
 
   if (nome.length < 3) { mostrarToast('Informe o nome completo do aluno.', 'erro'); return; }
-  var duplicado = DB.listar('alunos').some(function (a) { return normalizar(a.nome).replace(/\s+/g, ' ').trim() === normalizar(nome).replace(/\s+/g, ' ').trim(); });
+  var duplicado = DB.listar('alunos').some(function (a) { return a.ativo !== false && normalizar(a.nome).replace(/\s+/g, ' ').trim() === normalizar(nome).replace(/\s+/g, ' ').trim(); });
   if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
 
   if (window.__cadastroEmCurso) return;
@@ -10636,14 +10662,7 @@ function assistentePerguntar(texto) {
       assistenteAdicionarBolha('bot', resp);
       return;
     }
-    if (!CONFIG.iaProxyUrl) {
-      assistenteAdicionarBolha('bot', 'Não entendi completamente, e o assistente de IA ainda não foi configurado pelo ADM.\n\nTente perguntar, por exemplo:\n• "próxima aula"\n• "meu check-in"\n• "horários"\n• "pedir treino"\n• "ajuda"');
-      return;
-    }
-    assistenteAdicionarBolha('bot', '💭 Pensando...');
-    var bolhas = document.querySelectorAll('#assistenteMsgs .assistente-bolha.bot');
-    var ultimaBolha = bolhas[bolhas.length - 1];
-    chamarAssistenteIA(texto, ultimaBolha);
+    assistenteAdicionarBolha('bot', 'Não entendi essa pergunta. Tente, por exemplo:\n• "próxima aula"\n• "meu check-in"\n• "horários"\n• "pedir treino"\n• "ajuda"');
   }, 280);
 }
 
@@ -10695,6 +10714,16 @@ function assistenteProcessar(texto) {
       '• O professor precisa aprovar\n' +
       '• Aluno Gympass/Wellhub: o check-in do benefício é feito no próprio app Wellhub — o professor valida no Portal de Parceiros\n\n' +
       'Se der erro, peça ao professor para registrar o check-in manual na área Equipe.';
+  }
+
+  if (/nova senha|senha nova|gerar.*senha|pedir.*senha|pedir.*nova|nao consigo entrar|nao consigo logar|senha errada/.test(t)) {
+    var ultimaFalha = '';
+    try { ultimaFalha = localStorage.getItem('uc_ultima_falha') || ''; } catch (e) {}
+    if (ultimaFalha && falhasLogin(ultimaFalha) >= 3) {
+      abrirPedidoResetSenha();
+      return 'Você errou a senha 3 vezes, então abri o pedido de nova senha com seu nome já preenchido. Confira o nome e toque em "Enviar pedido ao professor". O professor libera a senha provisória.\n\nPor segurança, a nova senha não é gerada automaticamente: quem libera é o professor.';
+    }
+    return 'Para pedir uma nova senha, toque em "Esqueci a senha" aqui embaixo, confirme seu nome e envie. O professor recebe o pedido e libera uma senha provisória.\n\nSe você errar a senha 3 vezes, eu abro esse pedido para você automaticamente.';
   }
 
   if (/esqueci.*senha|nao lembro.*senha|perdi.*senha|trocar.*senha|redefinir.*senha|recuperar.*senha|atualizar.*senha|mudar.*senha/.test(t)) {
@@ -10855,7 +10884,7 @@ function chamarAssistenteIA(texto, bolhaCarregando) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       mensagens: historicoAssistenteIA.slice(-12),
-      contexto: montarContextoAluno(),
+      perfil: (typeof sessaoEquipe !== 'undefined' && sessaoEquipe) ? 'professor' : (alunoLogado() ? 'aluno' : 'visitante'),
       baseConhecimento: CONFIG.baseConhecimento || ''
     })
   }).then(function (r) { return r.json(); })
@@ -14288,7 +14317,11 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
     var motivos = [], avisos = [];
     if (comAmarela && d.textos.ins_Berimbau !== 'sim') motivos.push('Berimbau obrigatório não dominado');
-    if (faltas > REGRAS.maxFaltas) motivos.push('Excesso de faltas de compromisso (' + faltas + ')');
+    var segundoSem = /S2$/i.test(el('ucPeriodo').value.trim());
+    if (faltas > REGRAS.maxFaltas) {
+      if (segundoSem) avisos.push('Faltas no 2º semestre: o professor decide (algumas são justificadas fora do app).');
+      else motivos.push('Excesso de faltas de compromisso (' + faltas + ')');
+    }
     if (atrasos > REGRAS.maxAtrasos) motivos.push('Mais de ' + REGRAS.maxAtrasos + ' atrasos (' + atrasos + ')');
     if (mediaTec < REGRAS.notaMinimaTecnica) motivos.push('Média técnica baixa (' + mediaTec + '%)');
 
@@ -14486,40 +14519,134 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     }));
   }
 
+  function alunosAtivos() { return listar('alunos').filter(function (a) { return a.ativo !== false; }); }
+  function contarAvaliacoes(alunoId) {
+    return listar('avaliacoesSemestrais').filter(function (d) { return d.alunoId === alunoId; }).length;
+  }
+  var CAMPOS_JUNTAR = [
+    { k: 'nome', t: 'Nome' }, { k: 'apelido', t: 'Apelido' }, { k: 'contato', t: 'Contato' },
+    { k: 'graduacao', t: 'Graduação' }, { k: 'tipoAluno', t: 'Tipo' }, { k: 'senhaHash', t: 'Senha' },
+    { k: 'foto', t: 'Foto' }, { k: 'gympassLink', t: 'Link Gympass' }, { k: 'categoria', t: 'Categoria' }
+  ];
+  function preenchido(v) { return v !== undefined && v !== null && v !== '' && v !== false; }
+  function pontuacaoCadastro(a) {
+    return Object.keys(a).filter(function (k) { return k !== 'id' && preenchido(a[k]); }).length;
+  }
+  function escolherMaisCompleto(grupo) {
+    return grupo.slice().sort(function (x, y) {
+      var d = pontuacaoCadastro(y) - pontuacaoCadastro(x);
+      if (d) return d;
+      return String(x.criadoEm || '').localeCompare(String(y.criadoEm || ''));
+    })[0];
+  }
+
+  /* Agrupa possíveis duplicados: mesmo nome (sem acento/espaços), mesmo contato, ou mesmo primeiro nome + apelido */
+  function gruposDuplicados() {
+    var alunos = alunosAtivos(), pai = {};
+    function achar(x) { while (pai[x] !== x) { pai[x] = pai[pai[x]]; x = pai[x]; } return x; }
+    function unir(x, y) { pai[achar(x)] = achar(y); }
+    alunos.forEach(function (a) { pai[a.id] = a.id; });
+    var marcas = {};
+    function marcar(valor, a, tipo) {
+      if (!valor) return;
+      var k = tipo + ':' + valor;
+      (marcas[k] = marcas[k] || []).push(a.id);
+    }
+    alunos.forEach(function (a) {
+      var nome = chave(a.nome).replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+      var tel = String(a.contato || '').replace(/\D/g, '');
+      var primeiro = nome.split(' ')[0] || '';
+      var apel = chave(a.apelido || '');
+      marcar(nome.length >= 3 ? nome : '', a, 'nome');
+      marcar(tel.length >= 8 ? tel : '', a, 'contato');
+      marcar(primeiro && apel ? primeiro + '|' + apel : '', a, 'primeiro+apelido');
+    });
+    Object.keys(marcas).forEach(function (k) {
+      var ids = marcas[k];
+      for (var i = 1; i < ids.length; i++) unir(ids[0], ids[i]);
+    });
+    var grupos = {};
+    alunos.forEach(function (a) { var r = achar(a.id); (grupos[r] = grupos[r] || []).push(a); });
+    return Object.keys(grupos).map(function (r) { return grupos[r]; }).filter(function (g) { return g.length > 1; });
+  }
+
+  function motivosGrupo(g) {
+    var m = [];
+    function igual(f) {
+      var v = g.map(f).filter(Boolean);
+      return v.length > 1 && v.every(function (x) { return x === v[0]; });
+    }
+    if (igual(function (a) { return chave(a.nome); })) m.push('mesmo nome');
+    if (igual(function (a) { return String(a.contato || '').replace(/\D/g, '').length >= 8 ? String(a.contato).replace(/\D/g, '') : ''; })) m.push('mesmo contato');
+    if (igual(function (a) { var p = chave(a.nome).split(' ')[0]; return p && chave(a.apelido || '') ? p + '|' + chave(a.apelido) : ''; })) m.push('mesmo primeiro nome e apelido');
+    return m.length ? m : ['parecido'];
+  }
+
+  function htmlGrupoDuplicado(g, idx) {
+    var principal = escolherMaisCompleto(g);
+    var html = '<div class="uc-dup"><b>Possível duplicado ' + (idx + 1) + '</b> ' +
+      '<span class="uc-mini">(' + esc(motivosGrupo(g).join(' · ')) + ')</span>' +
+      '<p class="uc-mini">Nada é apagado. Os dados são juntados em um só cadastro; o outro fica arquivado com o histórico. ' +
+      'Escolha o principal e, quando algum dado for diferente, escolha qual vale.</p>' +
+      '<div class="uc-mini"><b>Cadastro principal:</b></div>';
+    g.forEach(function (a) {
+      html += '<label class="uc-item" style="display:block;cursor:pointer">' +
+        '<input type="radio" name="ucPrinc' + idx + '" value="' + esc(a.id) + '"' + (a.id === principal.id ? ' checked' : '') + ' style="width:auto;margin-right:6px">' +
+        '<b>' + esc(a.nome) + '</b> <span class="uc-mini">' + esc(a.graduacao || 'sem graduação') + ' · ' +
+        esc(a.contato || 'sem contato') + ' · ' + contarAvaliacoes(a.id) + ' avaliação(ões)</span></label>';
+    });
+    html += '<div class="uc-mini" style="margin-top:6px"><b>Dados:</b></div>';
+    CAMPOS_JUNTAR.forEach(function (c) {
+      var opts = g.filter(function (a) { return preenchido(a[c.k]); });
+      if (!opts.length) return;
+      var distintos = {};
+      opts.forEach(function (a) { distintos[String(a[c.k])] = true; });
+      if (Object.keys(distintos).length === 1) {
+        var valorTxt = c.k === 'senhaHash' ? 'definida' : esc(opts[0][c.k]);
+        html += '<div class="uc-mini">' + c.t + ': <b>' + valorTxt + '</b> (de ' + esc(opts[0].nome) + ')</div>';
+      } else {
+        var padrao = opts.some(function (a) { return a.id === principal.id; }) ? principal.id : opts[0].id;
+        html += '<div class="uc-mini"><b>' + c.t + ' diferente nos cadastros. Qual vale?</b></div>';
+        opts.forEach(function (a) {
+          var txt = c.k === 'senhaHash' ? 'senha definida' : esc(a[c.k]);
+          html += '<label style="display:block;margin:2px 0 4px 8px;cursor:pointer">' +
+            '<input type="radio" name="ucCampo' + idx + '_' + c.k + '" value="' + esc(a.id) + '"' + (a.id === padrao ? ' checked' : '') + ' style="width:auto;margin-right:6px">' +
+            esc(a.nome) + ': ' + txt + '</label>';
+        });
+      }
+    });
+    html += '<button class="btn btn-gold btn-mini" type="button" onclick="ucJuntarGrupo(' + idx + ')" style="margin-top:8px"><i class="fas fa-object-group"></i> Juntar estes cadastros</button></div>';
+    return html;
+  }
+
   function renderGestao(forcar) {
     var card = el('ucGestaoAlunos');
     if (!card) return;
-    var lista = ordenarPorNome(listar('alunos'));
+    var lista = ordenarPorNome(alunosAtivos());
     var sig = assinatura(lista);
     if (!forcar && card.getAttribute('data-sig') === sig) return;
     card.setAttribute('data-sig', sig);
 
     var busca = el('ucGestBusca') ? el('ucGestBusca').value : '';
-    var grupos = {};
-    lista.forEach(function (a) { var k = chave(a.nome); (grupos[k] = grupos[k] || []).push(a); });
-    var dups = Object.keys(grupos).filter(function (k) { return grupos[k].length > 1; });
+    var grupos = gruposDuplicados();
+    window.__ucGrupos = grupos;
 
     var html = '<h3><i class="fas fa-users-cog"></i> Gestão de Alunos</h3>' +
-      '<p class="uc-mini">Editar cadastro, graduação atual, senha provisória e excluir cadastros duplicados.</p>';
+      '<p class="uc-mini">Editar cadastro, graduação atual, senha provisória e juntar cadastros duplicados.</p>' +
+      '<button class="btn btn-gold btn-mini" type="button" onclick="ucEntrarAlunoTeste()"><i class="fas fa-flask"></i> Testar a aba do aluno (aluno fictício)</button>';
 
-    if (dups.length) {
-      html += '<div class="uc-dup"><b>⚠️ Possíveis duplicados (mesmo nome):</b>' +
-        '<div class="uc-linha" style="margin:6px 0"><button class="btn btn-danger btn-mini" type="button" onclick="ucMesclarDuplicados()"><i class="fas fa-compress-arrows-alt"></i> Mesclar: manter o cadastro mais completo</button></div>' +
-        dups.map(function (k) {
-          return grupos[k].map(function (a) {
-            return '<div class="uc-item"><span>' + esc(a.nome) + '</span> <span class="uc-mini">' +
-              (a.senhaHash ? 'com senha' : 'sem senha') + ' • ' + esc(a.graduacao || 'sem graduação') + '</span>' +
-              '<div class="uc-linha" style="margin-top:4px"><button class="btn btn-danger btn-mini" type="button" onclick="ucExcluirAluno(\'' + a.id + '\')"><i class="fas fa-trash"></i> Excluir este cadastro</button></div></div>';
-          }).join('');
-        }).join('') + '</div>';
+    if (grupos.length) {
+      html += '<div class="uc-dup"><b>⚠️ ' + grupos.length + ' possível(is) duplicado(s)</b></div>' +
+        grupos.map(htmlGrupoDuplicado).join('');
+    } else {
+      html += '<p class="uc-mini" style="margin-top:8px">Nenhum possível duplicado.</p>';
     }
 
     html += '<input type="text" id="ucGestBusca" placeholder="Buscar aluno..." value="' + esc(busca) + '" style="margin:8px 0">';
     html += lista.map(function (a) {
       return '<div class="uc-item" data-nome="' + esc(chave(a.nome + ' ' + (a.apelido || ''))) + '">' +
         '<b>' + esc(a.nome) + '</b> <span class="uc-mini">' + esc(a.apelido || '') + '</span>' +
-        '<div class="uc-mini">' + esc(a.graduacao || 'sem graduação') + ''+
-          (a.contato ? ' • ' + esc(a.contato) : '') + '</div>' +
+        '<div class="uc-mini">' + esc(a.graduacao || 'sem graduação') + (a.contato ? ' • ' + esc(a.contato) : '') + '</div>' +
         '<div class="uc-linha" style="margin-top:6px;flex-wrap:wrap">' +
           '<button class="btn btn-secondary btn-mini" type="button" onclick="ucEditarAluno(\'' + a.id + '\')"><i class="fas fa-pen"></i> Editar</button>' +
           '<button class="btn btn-secondary btn-mini" type="button" onclick="ucSenhaProvisoria(\'' + a.id + '\')"><i class="fas fa-key"></i> Senha provisória</button>' +
@@ -14536,67 +14663,60 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     });
   }
 
-  /* ===== MESCLAR DUPLICADOS: mantém o cadastro com mais detalhes ===== */
-  function gruposDuplicados() {
-    var g = {};
-    listar('alunos').forEach(function (a) { var k = chave(a.nome); (g[k] = g[k] || []).push(a); });
-    return Object.keys(g).filter(function (k) { return g[k].length > 1; }).map(function (k) { return g[k]; });
-  }
-  function preenchido(v) { return v !== undefined && v !== null && v !== '' && v !== false; }
-  function pontuacaoCadastro(a) {
-    return Object.keys(a).filter(function (k) { return k !== 'id' && preenchido(a[k]); }).length;
-  }
-  function escolherMaisCompleto(grupo) {
-    return grupo.slice().sort(function (x, y) {
-      var d = pontuacaoCadastro(y) - pontuacaoCadastro(x);
-      if (d) return d;
-      return String(x.criadoEm || '').localeCompare(String(y.criadoEm || ''));
-    })[0];
-  }
-
-  window.ucMesclarDuplicados = function () {
-    var grupos = gruposDuplicados();
-    if (!grupos.length) { toast('Nenhum duplicado encontrado.'); return; }
-    var lista = grupos.map(function (g) {
-      var k = escolherMaisCompleto(g);
-      return '<li>' + esc(k.nome) + ' — fica o cadastro mais completo (' + g.length + ' cadastros no total)</li>';
-    }).join('');
-    abrirModal('Mesclar duplicados',
-      '<p class="mini">Em cada grupo fica o cadastro com mais informações. Os dados que faltam nele são completados a partir dos outros, e as avaliações dos cadastros removidos passam para o que ficou.</p>' +
-      '<ul class="mini">' + lista + '</ul>',
-      '<button class="btn btn-danger" type="button" onclick="ucConfirmarMesclar()">Confirmar mesclagem</button>');
+  /* Juntar: combina os dados num cadastro principal; os outros são arquivados (não apagados) */
+  window.ucJuntarGrupo = function (idx) {
+    var g = (window.__ucGrupos || [])[idx];
+    if (!g) { toast('Atualize a lista e tente de novo.', 'erro'); return; }
+    var pr = document.querySelector('input[name="ucPrinc' + idx + '"]:checked');
+    if (!pr) { toast('Escolha o cadastro principal.', 'erro'); return; }
+    var principal = g.filter(function (a) { return a.id === pr.value; })[0];
+    var dados = {}, resumo = [];
+    CAMPOS_JUNTAR.forEach(function (c) {
+      var opts = g.filter(function (a) { return preenchido(a[c.k]); });
+      if (!opts.length) return;
+      var r = document.querySelector('input[name="ucCampo' + idx + '_' + c.k + '"]:checked');
+      var escolhido = r ? g.filter(function (a) { return a.id === r.value; })[0] : opts[0];
+      if (!escolhido || !preenchido(escolhido[c.k])) return;
+      if (String(principal[c.k]) !== String(escolhido[c.k])) {
+        dados[c.k] = escolhido[c.k];
+        resumo.push(c.t + ' (de ' + escolhido.nome + ')');
+      }
+    });
+    var arquivar = g.filter(function (a) { return a.id !== principal.id; }).map(function (a) { return a.id; });
+    window.__ucPendente = { keepId: principal.id, dados: dados, arquivar: arquivar };
+    abrirModal('Juntar cadastros',
+      '<p class="mini">Manter <b>' + esc(principal.nome) + '</b> como cadastro principal.</p>' +
+      (resumo.length
+        ? '<p class="mini">Dados que passam para ele:</p><ul class="mini">' + resumo.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'
+        : '<p class="mini">Nenhum dado precisa ser trocado.</p>') +
+      '<p class="mini">Os outros cadastros ficam <b>arquivados</b> (nada é apagado). As avaliações e presenças deles passam para o principal.</p>',
+      '<button class="btn" type="button" onclick="ucConfirmarJuntar()">Confirmar</button>');
   };
 
-  window.ucConfirmarMesclar = function () {
-    var grupos = gruposDuplicados();
-    var p = Promise.resolve();
-    grupos.forEach(function (g) {
-      var keep = escolherMaisCompleto(g);
-      var completar = {};
-      g.forEach(function (a) {
-        if (a.id === keep.id) return;
-        Object.keys(a).forEach(function (k) {
-          if (k !== 'id' && !preenchido(keep[k]) && preenchido(a[k]) && completar[k] === undefined) completar[k] = a[k];
-        });
-      });
-      if (Object.keys(completar).length) {
-        p = p.then(function () { return DB.salvar('alunos', completar, keep.id); });
-      }
-      g.forEach(function (a) {
-        if (a.id === keep.id) return;
-        p = p.then(function () {
-          var avs = listar('avaliacoesSemestrais').filter(function (d) { return d.alunoId === a.id; });
-          return Promise.all(avs.map(function (d) {
-            return DB.salvar('avaliacoesSemestrais', { alunoId: keep.id, alunoNome: keep.nome }, d.id);
-          }));
-        }).then(function () { return DB.excluir('alunos', a.id); });
+  window.ucConfirmarJuntar = function () {
+    var p = window.__ucPendente;
+    if (!p) return;
+    var fim = Promise.resolve();
+    if (Object.keys(p.dados).length) {
+      fim = fim.then(function () { return DB.salvar('alunos', p.dados, p.keepId); });
+    }
+    p.arquivar.forEach(function (oid) {
+      fim = fim.then(function () {
+        var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.alunoId === oid; });
+        return Promise.all(docs.map(function (d) { return DB.salvar('avaliacoesSemestrais', { alunoId: p.keepId }, d.id); }));
+      }).then(function () {
+        var pres = listar('presencas').filter(function (d) { return d.alunoId === oid; });
+        return Promise.all(pres.map(function (d) { return DB.salvar('presencas', { alunoId: p.keepId }, d.id); }));
+      }).then(function () {
+        return DB.salvar('alunos', { ativo: false, mescladoEm: p.keepId, mescladoEmData: agoraISO() }, oid);
       });
     });
-    p.then(function () {
+    fim.then(function () {
       fecharModal();
-      toast('Duplicados mesclados.');
+      window.__ucPendente = null;
+      toast('Cadastros juntados. Nada foi apagado.');
       renderGestao(true);
-    }).catch(function () { toast('Não foi possível concluir a mesclagem. Tente de novo.', 'erro'); });
+    }).catch(function () { toast('Não foi possível juntar. Tente de novo.', 'erro'); });
   };
 
   function nomeEmUso(nome, idIgnorar) {
@@ -14947,6 +15067,349 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   }
 
 
+
+  /* ===== SIMULAÇÃO DA AVALIAÇÃO (aluno): não salva e não vale como avaliação ===== */
+  var SIM_CAMPOS = [];
+  var CRITERIOS_HTML =
+    '<div class="uc-item"><b>Corda crua → Amarela</b><div class="uc-mini">Frequência mínima de 2 aulas por semana · bom compromisso</div></div>' +
+    '<div class="uc-item"><b>Corda amarela → Amarela e Laranja</b><div class="uc-mini">Frequência mínima de 2 aulas por semana · bom compromisso</div></div>' +
+    '<div class="uc-item"><b>Amarela e Laranja → Laranja ⚠️ cobrança dobrada</b>' +
+      '<div class="uc-mini">• Frequência mínima de 2 aulas por semana</div>' +
+      '<div class="uc-mini">• Máximo de 10 atrasos</div>' +
+      '<div class="uc-mini">• Berimbau obrigatório</div>' +
+      '<div class="uc-mini">• Dominar todos os ritmos</div>' +
+      '<div class="uc-mini">• Faltas: máximo de 2 no 1º semestre; no 2º semestre o professor decide</div></div>' +
+    '<div class="uc-item"><b>Laranja → Laranja e Azul</b><div class="uc-mini">Cobrança alta de compromisso · bom domínio técnico e musical</div></div>' +
+    '<div class="uc-item"><b>Laranja e Azul → Azul</b><div class="uc-mini">Mais de 18 anos · mais de 5 anos de capoeira</div></div>';
+  function htmlSimulacao(aluno) {
+    SIM_CAMPOS = [];
+    function campo(key, label) { SIM_CAMPOS.push({ key: 'sim_' + key, label: label }); return sl('sim_' + key, label); }
+    var chutes = CHUTES.map(function (m) {
+      return campo('chu_' + m.id + '_E', 'Chute ' + m.nome + ' — lado E') + campo('chu_' + m.id + '_D', 'Chute ' + m.nome + ' — lado D');
+    }).join('');
+    var esq = ESQUIVAS.map(function (m) {
+      return campo('esq_' + m.id + '_E', m.nome + ' — lado E') + campo('esq_' + m.id + '_D', m.nome + ' — lado D');
+    }).join('');
+    var dec = DECIDAS.map(function (m) {
+      return campo('dec_' + m.id + '_E', m.nome + ' — lado E') + campo('dec_' + m.id + '_D', m.nome + ' — lado D');
+    }).join('');
+    var seq = SEQUENCIAS.map(function (m) {
+      return campo('seq_' + m.id + '_E', m.nome + ' — lado E') + campo('seq_' + m.id + '_D', m.nome + ' — lado D');
+    }).join('');
+    var toques = TOQUES.map(function (t) {
+      return campo('toq_' + t + '_saber', 'Toque ' + t + ' — sabe jogar') +
+        campo('toq_' + t + '_E', 'Toque ' + t + ' — movimentação E') + campo('toq_' + t + '_D', 'Toque ' + t + ' — movimentação D');
+    }).join('');
+    var jogos = JOGOS.map(function (j) { return campo('jog_' + j, 'Jogo ' + j); }).join('');
+    var cordaPadrao = CORDAS.indexOf(aluno.graduacao) >= 0 ? aluno.graduacao : 'Crua';
+    var anos = aluno.anosCapoeira != null ? aluno.anosCapoeira : (aluno.anosTreino != null ? aluno.anosTreino : '');
+    return '' +
+      '<label class="campo-label">Semestre</label><select id="simSemestre">' +
+        '<option value="1">1º semestre (junho)</option><option value="2">2º semestre (novembro)</option></select>' +
+      '<label class="campo-label">Minha corda atual</label><select id="simCorda">' +
+        CORDAS.map(function (c) { return '<option value="' + c + '"' + (c === cordaPadrao ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select>' +
+      '<div class="uc-linha"><div><label class="campo-label">Idade</label><input type="number" id="simIdade" min="0" value="' + (aluno.idade != null ? aluno.idade : '') + '"></div>' +
+      '<div><label class="campo-label">Anos de capoeira</label><input type="number" id="simAnos" min="0" value="' + anos + '"></div></div>' +
+      acc('Chutes', chutes, true) + acc('Esquivas', esq) + acc('Decidas', dec) + acc('Sequências', seq) +
+      acc('Toques de berimbau', toques) + acc('Jogos', jogos) +
+      acc('Berimbau e compromisso', '<label class="campo-label">Berimbau</label><select id="simBerimbau">' +
+        '<option value="nao">Não sei</option><option value="aprendizado">Em aprendizado</option><option value="sim">Sim</option></select>' +
+        '<div class="uc-linha"><div><label class="campo-label">Faltas</label><input type="number" id="simFaltas" min="0" value="0"></div>' +
+        '<div><label class="campo-label">Atrasos</label><input type="number" id="simAtrasos" min="0" value="0"></div></div>' +
+        '<div class="uc-linha"><div><label class="campo-label">Semanas no período</label><input type="number" id="simSemanas" min="0" value="0"></div>' +
+        '<div><label class="campo-label">Aulas regulares presentes</label><input type="number" id="simPresencas" min="0" value="0"></div></div>');
+  }
+
+  function simCalcular() {
+    var notas = {};
+    document.querySelectorAll('#ucSimulacaoAluno [data-tipo="nota"]').forEach(function (e) {
+      notas[e.getAttribute('data-key')] = parseInt(e.value, 10) || 0;
+    });
+    var corda = el('simCorda').value;
+    var comAmarela = /amarela|laranja|azul/i.test(corda);
+    var idade = parseInt(el('simIdade').value, 10) || 0;
+    var anos = parseInt(el('simAnos').value, 10) || 0;
+    var faltas = parseInt(el('simFaltas').value, 10) || 0;
+    var atrasos = parseInt(el('simAtrasos').value, 10) || 0;
+    var semanas = parseInt(el('simSemanas').value, 10) || 0;
+    var presencas = parseInt(el('simPresencas').value, 10) || 0;
+    var berimbau = el('simBerimbau').value;
+    var segundo = el('simSemestre').value === '2';
+
+    var tec = [], mus = [];
+    Object.keys(notas).forEach(function (k) {
+      if (/^sim_chu_MeiaSolta_/.test(k) && !comAmarela) return;
+      if (/^sim_(chu|esq|dec|seq)_/.test(k)) tec.push(notas[k]);
+      if (/^sim_(toq|jog)_/.test(k)) mus.push(notas[k]);
+    });
+    var mediaTec = media(tec), mediaMus = media(mus);
+    var freq = semanas > 0 ? Math.round(presencas / semanas * 10) / 10 : null;
+
+    var motivos = [], dicas = [];
+    if (comAmarela && berimbau !== 'sim') {
+      motivos.push('Berimbau obrigatório a partir de Amarela ainda não dominado');
+      dicas.push('Treinar o berimbau até tocar sem ajuda');
+    }
+    if (faltas > REGRAS.maxFaltas) {
+      if (segundo) {
+        dicas.push('Faltas no 2º semestre são decididas pelo professor (algumas são justificadas fora do app)');
+      } else {
+        motivos.push('Faltas de compromisso acima do limite (' + faltas + ')');
+        dicas.push('Chegar a no máximo ' + REGRAS.maxFaltas + ' faltas no 1º semestre');
+      }
+    }
+    if (atrasos > REGRAS.maxAtrasos) {
+      motivos.push('Mais de ' + REGRAS.maxAtrasos + ' atrasos (' + atrasos + ')');
+      dicas.push('Reduzir os atrasos e justificar os que acontecerem');
+    }
+    if (mediaTec < REGRAS.notaMinimaTecnica) {
+      motivos.push('Média técnica abaixo de ' + REGRAS.notaMinimaTecnica + '% (' + mediaTec + '%)');
+    }
+    if (freq !== null && freq < REGRAS.freqMinSemana) {
+      dicas.push('Frequência de ' + freq + ' aula(s) por semana; o mínimo é ' + REGRAS.freqMinSemana);
+    }
+
+    var fracos = SIM_CAMPOS.filter(function (c) {
+      if (c.key.indexOf('chu_MeiaSolta') >= 0 && !comAmarela) return false;
+      return notas[c.key] != null && notas[c.key] < 70;
+    }).map(function (c) { return { label: c.label, v: notas[c.key] }; })
+      .sort(function (a, b) { return a.v - b.v; }).slice(0, 5);
+
+    var apto = motivos.length === 0;
+    var sugerida = sugerirCorda(corda, apto, idade, anos, faltas === 0);
+
+    var box = el('simResultado');
+    box.style.display = 'block';
+    box.innerHTML =
+      '<div class="uc-res ' + (apto ? 'uc-apto' : 'uc-nao-apto') + '">' +
+        '<div style="font-size:1.2rem;font-weight:700;margin-bottom:6px">' + (apto ? '✅ Estaria apto' : '❌ Não estaria apto') + '</div>' +
+        '<div>Corda simulada: <b>' + esc(sugerida) + '</b></div>' +
+        '<div class="uc-mini" style="margin-top:6px">Técnica: ' + mediaTec + '% · Toques/jogos: ' + mediaMus + '%</div>' +
+        (motivos.length ? '<div style="margin-top:8px;font-size:.85rem">' + motivos.map(esc).join('<br>') + '</div>' : '') +
+      '</div>' +
+      (dicas.length || fracos.length
+        ? '<div class="uc-item"><b>O que melhorar</b>' +
+            dicas.map(function (d) { return '<div class="uc-mini">• ' + esc(d) + '</div>'; }).join('') +
+            fracos.map(function (f) { return '<div class="uc-mini">• ' + esc(f.label) + ': ' + f.v + '%</div>'; }).join('') +
+          '</div>'
+        : '<div class="uc-mini" style="margin-top:8px">Nada abaixo do esperado nesta simulação.</div>') +
+      '<p class="uc-mini" style="margin-top:8px">Simulação: não é salva e não vale como avaliação oficial.</p>';
+  }
+
+  function renderSimulacao() {
+    var card = el('ucSimulacaoAluno');
+    if (!card) return;
+    var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (!logado) { card.style.display = 'none'; card.setAttribute('data-aluno', ''); return; }
+    card.style.display = '';
+    if (card.getAttribute('data-aluno') === logado.id) return;
+    card.setAttribute('data-aluno', logado.id);
+    card.innerHTML = '<h3><i class="fas fa-chart-line"></i> Simular minha avaliação</h3>' +
+      '<p class="uc-mini">Teste suas notas para ver se estaria apto e o que melhorar.</p>' +
+      htmlSimulacao(logado) +
+      '<button class="btn" type="button" id="simBtn" style="margin-top:8px"><i class="fas fa-play"></i> Simular</button>' +
+      '<button class="btn btn-gold" type="button" id="simCriterios" style="margin-top:8px"><i class="fas fa-list"></i> Ver o que será cobrado de mim</button>' +
+      '<div id="simResultado" style="display:none"></div>';
+    el('simBtn').addEventListener('click', simCalcular);
+    el('simCriterios').addEventListener('click', function () {
+      abrirModal('O que será cobrado de mim', CRITERIOS_HTML, '<button class="btn" type="button" onclick="fecharModal()">Entendi</button>');
+    });
+  }
+
+  function garantirSimulacaoAluno() {
+    var painel = el('cardAlunoPainel');
+    if (!painel) return;
+    if (!el('ucSimulacaoAluno')) {
+      var sm = document.createElement('div');
+      sm.id = 'ucSimulacaoAluno';
+      sm.className = 'card';
+      sm.style.display = 'none';
+      sm.addEventListener('input', function (ev) {
+        var t = ev.target;
+        if (t && t.type === 'range') { var sp = el('v_' + t.getAttribute('data-key')); if (sp) sp.textContent = t.value + '%'; }
+      });
+      painel.insertBefore(sm, painel.firstChild);
+    }
+    renderSimulacao();
+  }
+
+
+  /* ===== ALUNO TESTE (fictício, só para a equipe testar a aba do aluno) ===== */
+  var TESTE_ID = 'ALUNO_TESTE_UC';
+  var ALUNO_TESTE = {
+    id: TESTE_ID, nome: 'Aluno Teste', apelido: 'TESTE', graduacao: 'Amarela e Laranja',
+    idade: 20, anosCapoeira: 3, contato: '', tipoAluno: 'normal', ativo: true, teste: true, senhaHash: ''
+  };
+  function emModoTeste() { return typeof sessaoAlunoId !== 'undefined' && sessaoAlunoId === TESTE_ID; }
+  (function () {
+    var buscarOrig = DB.buscar, salvarOrig = DB.salvar;
+    /* o aluno teste não existe no banco: só o devolvemos para as telas */
+    DB.buscar = function (col, id) {
+      if (id === TESTE_ID && col === 'alunos') return ALUNO_TESTE;
+      return buscarOrig.apply(this, arguments);
+    };
+    /* nada que seja do aluno teste é gravado */
+    DB.salvar = function (col, obj, id) {
+      var doTeste = id === TESTE_ID || (obj && (obj.alunoId === TESTE_ID || obj.id === TESTE_ID));
+      if (doTeste) {
+        toast('Modo teste: nada foi salvo.');
+        return Promise.resolve(id || TESTE_ID);
+      }
+      return salvarOrig.apply(this, arguments);
+    };
+  })();
+
+  window.ucEntrarAlunoTeste = function () {
+    sessaoAlunoId = TESTE_ID;
+    toast('Modo teste ativo: nada será salvo.');
+    try { if (typeof abrirAba === 'function') abrirAba('tab3'); } catch (e) {}
+    try { renderAluno(); } catch (e) {}
+  };
+  window.ucSairAlunoTeste = function () {
+    if (typeof sairAluno === 'function') sairAluno();
+  };
+
+  function garantirBannerTeste() {
+    var painel = el('cardAlunoPainel');
+    if (!painel) return;
+    var b = el('ucBannerTeste');
+    if (!emModoTeste()) { if (b) b.style.display = 'none'; return; }
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'ucBannerTeste';
+      b.className = 'card';
+      b.style.cssText = 'border:2px dashed #ffc107;text-align:center';
+      b.innerHTML = '<b>🧪 MODO TESTE</b>' +
+        '<div class="uc-mini">Aluno fictício criado só para a equipe testar. Nada é salvo e ninguém mais vê isso.</div>' +
+        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucSairAlunoTeste()" style="margin-top:6px">Sair do teste</button>';
+      painel.insertBefore(b, painel.firstChild);
+    }
+    b.style.display = '';
+  }
+
+
+  /* ===== ASSISTENTE COM AÇÕES (confirmação obrigatória; nunca apaga direto) ===== */
+  var acaoPendente = null;
+  function papelAtual() { return (typeof sessaoEquipe !== 'undefined' && sessaoEquipe) ? sessaoEquipe.papel : null; }
+  function botFala(t) { assistenteAdicionarBolha('bot', t); }
+  function usuarioFala(t) { assistenteAdicionarBolha('user', t); }
+  function acharAlunoPorNome(nome) {
+    var k = chave(nome);
+    return listar('alunos').filter(function (a) {
+      return a.ativo !== false && (chave(a.nome) === k || chave(a.apelido || '') === k);
+    })[0] || null;
+  }
+  function propor(acao, descricao) {
+    acaoPendente = acao;
+    botFala(descricao + '\n\nResponda "confirmo" para executar ou "cancelar" para desistir.');
+  }
+  function executarAcao(a) {
+    var pap = papelAtual();
+    if (a.tipo === 'pedir_exclusao') {
+      return Promise.resolve(DB.salvar('solicitacoes', {
+        alunoId: a.aluno.id, alunoNome: a.aluno.nome, alunoApelido: a.aluno.apelido || '',
+        graduacao: a.aluno.graduacao || '', tipo: 'exclusao_cadastro', dataPreferida: '',
+        observacao: 'Pedido feito pelo assistente', status: 'pendente', respostaProfessor: '', criadoEm: agoraISO()
+      })).then(function () { botFala('Pedido de exclusão enviado ao professor. Ele avalia e decide. Nada foi apagado.'); });
+    }
+    if (pap !== 'professor' && pap !== 'adm') { botFala('Essa ação é só para a equipe. Entre pela aba Equipe.'); return Promise.resolve(); }
+    if (a.tipo === 'senha') {
+      window.ucSenhaProvisoria(a.id);
+      botFala('Senha provisória gerada. Anote a senha que apareceu na tela e avise o aluno.');
+      return Promise.resolve();
+    }
+    if (a.tipo === 'revelar') {
+      window.ucConfirmarRevelar(a.docId);
+      botFala('Graduação revelada. Confira a lista na aba Início.');
+      return Promise.resolve();
+    }
+    if (a.tipo === 'batizado') {
+      if (pap !== 'adm') { botFala('Só o ADM pode alterar a data do batizado.'); return Promise.resolve(); }
+      return Promise.resolve(DB.salvar('config', { iso: a.iso }, 'batizado')).then(function () {
+        botFala('Data do batizado atualizada. O cronômetro da aba Início já usa a nova data.');
+      });
+    }
+    return Promise.resolve();
+  }
+
+  function tratarAcao(texto) {
+    var t = normalizar(texto).trim();
+    var pap = papelAtual();
+    var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
+
+    if (acaoPendente) {
+      if (/^(confirmo|confirmar|sim)$/.test(t)) {
+        usuarioFala(texto);
+        var a = acaoPendente; acaoPendente = null;
+        executarAcao(a).catch(function () { botFala('Não consegui executar agora. Tente pela aba correspondente.'); });
+        return true;
+      }
+      if (/^(cancelar|nao|não)$/.test(t)) {
+        usuarioFala(texto); acaoPendente = null;
+        botFala('Ação cancelada. Nada foi alterado.');
+        return true;
+      }
+    }
+
+    if (logado && /(excluir|apagar|remover) (meu |minha )?(cadastro|conta)/.test(t)) {
+      usuarioFala(texto);
+      propor({ tipo: 'pedir_exclusao', aluno: { id: logado.id, nome: logado.nome, apelido: logado.apelido || '', graduacao: logado.graduacao || '' } },
+        'Vou enviar um pedido de exclusão do seu cadastro ao professor. Ele decide, e nada é apagado agora.');
+      return true;
+    }
+
+    if (pap === 'professor' || pap === 'adm') {
+      var m = t.match(/senha provisoria (?:para|do|da|de) (.+)/);
+      if (m) {
+        usuarioFala(texto);
+        var al = acharAlunoPorNome(m[1]);
+        if (!al) botFala('Não encontrei esse aluno. Confira o nome na lista da aba Professor.');
+        else propor({ tipo: 'senha', id: al.id }, 'Vou gerar uma senha provisória para ' + al.nome + '.');
+        return true;
+      }
+      m = t.match(/revelar (a )?graduacao (de |do |da )?(.+)/);
+      if (m) {
+        usuarioFala(texto);
+        var alu = acharAlunoPorNome(m[3]);
+        var doc = alu ? listar('avaliacoesSemestrais').filter(function (d) {
+          return d.alunoId === alu.id && d.status === 'finalizada' && d.aptoFinal && !d.revelado;
+        }).sort(function (x, y) { return String(y.periodo).localeCompare(String(x.periodo)); })[0] : null;
+        if (!alu) botFala('Não encontrei esse aluno.');
+        else if (!doc) botFala(alu.nome + ' não tem avaliação finalizada, apta e ainda não revelada.');
+        else propor({ tipo: 'revelar', docId: doc.id }, 'Vou revelar a graduação de ' + alu.nome + ' (' + doc.cordaFinal + '). Ela passa a aparecer no app dele.');
+        return true;
+      }
+      if (/juntar (cadastros )?duplicad/.test(t)) {
+        usuarioFala(texto);
+        botFala('Para juntar duplicados, abra a aba Professor, seção Gestão de Alunos. Lá você escolhe o cadastro principal e confere os dados antes. Eu não junto sozinho.');
+        return true;
+      }
+    }
+
+    if (pap === 'adm') {
+      var b = t.match(/data do batizado (?:para|pra|em) (\d{1,2})\/(\d{1,2})\/(\d{4})(?: (?:as )?(\d{1,2}):(\d{2}))?/);
+      if (b) {
+        usuarioFala(texto);
+        var hh = pad(parseInt(b[4] || '9', 10)), mm = pad(parseInt(b[5] || '0', 10));
+        var iso = b[3] + '-' + pad(parseInt(b[2], 10)) + '-' + pad(parseInt(b[1], 10)) + 'T' + hh + ':' + mm;
+        propor({ tipo: 'batizado', iso: iso }, 'Vou mudar a data do batizado para ' + b[1] + '/' + b[2] + '/' + b[3] + ' às ' + hh + 'h' + mm + '.');
+        return true;
+      }
+    }
+    return false;
+  }
+
+  var assistentePerguntarBase = window.assistentePerguntar;
+  window.assistentePerguntar = function (texto) {
+    if (!assistenteAberto) {
+      assistenteAberto = true;
+      var painel = $('assistentePainel');
+      if (painel) painel.classList.add('aberto');
+    }
+    if (tratarAcao(texto)) return;
+    return assistentePerguntarBase.apply(this, arguments);
+  };
+
   /* ===== INJEÇÃO (abas são redesenhadas ao abrir, então recolocamos os blocos) ===== */
   function garantirProfessor() {
     var box = el('conteudoProfessor');
@@ -14991,6 +15454,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     try { garantirIndicados(); renderIndicados(); } catch (e) { console.warn('[ucInd]', e); }
     try { garantirAdmBatizado(); } catch (e) { console.warn('[ucAdmBat]', e); }
     try { garantirProfessor(); } catch (e) { console.warn('[ucAval] professor', e); }
+    try { garantirBannerTeste(); } catch (e) { console.warn('[ucTeste]', e); }
+    try { garantirSimulacaoAluno(); } catch (e) { console.warn('[ucSim]', e); }
     try { garantirAluno(); } catch (e) { console.warn('[ucAval] aluno', e); }
   }
   setTimeout(ciclo, 1200);
