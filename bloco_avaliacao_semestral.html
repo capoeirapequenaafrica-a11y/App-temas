@@ -1,0 +1,820 @@
+<!-- ============================================================
+     AVALIAÇÃO SEMESTRAL v3 + GESTÃO DE ALUNOS (professor) + BOLETIM (aluno)
+     ============================================================ -->
+<script id="ucAvaliacaoSemestral">
+(function () {
+  'use strict';
+  if (window.__ucAvalV3) return;
+  window.__ucAvalV3 = true;
+
+  /* ===== REGRAS (ajuste aqui) ===== */
+  var REGRAS = {
+    notaMinimaTecnica: 60,
+    maxFaltas: 2,
+    maxAtrasos: 10,
+    freqMinSemana: 2,
+    idadeMinAzul: 18,
+    anosMinAzul: 5,
+    idadeLimiteAmareloAzul: 17
+  };
+
+  var CORDAS = ['Crua', 'Crua e Amarela', 'Amarela', 'Amarela e Laranja', 'Laranja', 'Laranja e Azul', 'Azul'];
+
+  /* ===== ITENS DA AVALIAÇÃO (cada um com lado E e D) ===== */
+  var CHUTES = [
+    { id: 'Queixada', nome: 'Queixada' },
+    { id: 'Armada', nome: 'Armada' },
+    { id: 'MeiaFrente', nome: 'Meia-lua de frente' },
+    { id: 'MeiaCompasso', nome: 'Meia-lua de compasso' },
+    { id: 'MeiaPresa', nome: 'Meia-lua presa' },
+    { id: 'MeiaSolta', nome: 'Meia-lua solta (a partir de Amarela)' }
+  ];
+  var ESQUIVAS = [
+    { id: 'Frente', nome: 'Esquiva de frente' },
+    { id: 'Lateral', nome: 'Esquiva lateral' },
+    { id: 'Diagonal', nome: 'Esquiva diagonal' }
+  ];
+  var DECIDAS = [
+    { id: 'TrocaNegativa', nome: 'Troca pra negativa e rolê' },
+    { id: 'SobePorTras', nome: 'Sobe por trás' },
+    { id: 'SobePelaLateral', nome: 'Sobe pela lateral' }
+  ];
+  /* Sequências: nomes genéricos — trocar pelos nomes reais da escola */
+  var SEQUENCIAS = [
+    { id: 'Seq1', nome: 'Sequência 1' },
+    { id: 'Seq2', nome: 'Sequência 2' },
+    { id: 'Seq3', nome: 'Sequência 3' },
+    { id: 'Seq4', nome: 'Sequência 4' }
+  ];
+  var TOQUES = ['Angola', 'Benguela', 'Regional'];
+  var JOGOS = ['Angola', 'Benguela', 'Regional'];
+  var INSTRUMENTOS = [
+    { id: 'Berimbau', nome: 'Berimbau (obrigatório a partir de Amarela)' },
+    { id: 'Atabaque', nome: 'Atabaque' },
+    { id: 'Pandeiro', nome: 'Pandeiro' }
+  ];
+  var PARTICIPACAO = [
+    { id: 'reg', nome: 'Aulas regulares' },
+    { id: 'extra', nome: 'Aulas extras' },
+    { id: 'evt', nome: 'Eventos, rodas e batizados' },
+    { id: 'apr', nome: 'Apresentações' },
+    { id: 'grp', nome: 'Assuntos do grupo (reuniões e ações)' }
+  ];
+
+  /* ===== UTILITÁRIOS ===== */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function el(id) { return document.getElementById(id); }
+  function toast(m, t) { if (typeof mostrarToast === 'function') { try { mostrarToast(m, t); } catch (e) {} } }
+  function chave(n) {
+    return String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+  function listar(col) { try { var l = DB.listar(col); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function agoraISO() { return new Date().toISOString(); }
+  function periodoAtual() { var d = new Date(); return d.getFullYear() + '-S' + (d.getMonth() < 6 ? '1' : '2'); }
+  function media(a) { return a.length ? Math.round(a.reduce(function (x, y) { return x + y; }, 0) / a.length) : 0; }
+  function ordenarPorNome(a) {
+    return a.slice().sort(function (x, y) { return String(x.nome || '').localeCompare(String(y.nome || '')); });
+  }
+  function graduacoesDisponiveis() {
+    return (typeof CONFIG !== 'undefined' && CONFIG.graduacoes && CONFIG.graduacoes.length) ? CONFIG.graduacoes : CORDAS;
+  }
+
+  /* Graduação só aparece para o aluno depois do batizado (liberada pelo professor) */
+  window.ucGraduacaoAluno = function (a) {
+    if (!a) return '—';
+    return a.graduacaoLiberada ? (a.graduacao || '—') : 'Será revelada no Batizado';
+  };
+
+  /* ===== ESTILOS ===== */
+  if (!el('ucAvalStyle')) {
+    var st = document.createElement('style');
+    st.id = 'ucAvalStyle';
+    st.textContent =
+      '.uc-barra-box{margin:6px 0 10px}' +
+      '.uc-barra-label{font-size:.78rem;color:var(--text-sub,#9fb3bf);margin-bottom:3px;display:flex;justify-content:space-between;gap:8px}' +
+      '.uc-barra{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:6px;background:#0a1419;outline:none}' +
+      '.uc-barra::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary-green,#00c853);cursor:pointer;border:2px solid #fff}' +
+      '.uc-barra::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--primary-green,#00c853);cursor:pointer;border:2px solid #fff}' +
+      '.uc-barra-valor{font-weight:700;color:var(--primary-green,#00c853);font-size:.8rem}' +
+      '.uc-acc{border:1px solid rgba(255,255,255,.12);border-radius:10px;margin:10px 0;padding:0 10px;background:rgba(255,255,255,.02)}' +
+      '.uc-acc>summary{cursor:pointer;padding:10px 0;font-weight:700;color:var(--primary-green,#00c853);font-size:.9rem;list-style:none}' +
+      '.uc-acc>summary::-webkit-details-marker{display:none}' +
+      '.uc-acc>summary::after{content:"＋";float:right;color:var(--text-sub,#9fb3bf)}' +
+      '.uc-acc[open]>summary::after{content:"－"}' +
+      '.uc-acc-corpo{padding-bottom:10px}' +
+      '.uc-linha{display:flex;gap:8px}' +
+      '.uc-linha>div{flex:1}' +
+      '.uc-res{padding:12px;border-radius:10px;margin-top:14px;text-align:center}' +
+      '.uc-apto{background:rgba(0,200,83,.15);border:1px solid #00c853}' +
+      '.uc-nao-apto{background:rgba(239,83,80,.15);border:1px solid #ef5350}' +
+      '.uc-aviso{font-size:.8rem;color:#ffc107;margin-top:6px}' +
+      '.uc-item{border-bottom:1px solid rgba(255,255,255,.08);padding:8px 0}' +
+      '.uc-mini{font-size:.78rem;color:var(--text-sub,#9fb3bf)}' +
+      '.uc-dup{background:rgba(255,193,7,.12);border:1px solid #ffc107;border-radius:10px;padding:10px;margin:8px 0}';
+    document.head.appendChild(st);
+  }
+
+  /* ===== REGRA DE CORDA (mesma lógica validada) ===== */
+  function sugerirCorda(corda, apto, idade, anos, semFaltas) {
+    var c = String(corda || '').toLowerCase();
+    var temA = c.indexOf('amarela') >= 0, temL = c.indexOf('laranja') >= 0, temZ = c.indexOf('azul') >= 0;
+    if (!temA && !temL && !temZ) return apto ? 'Amarela' : 'Crua e Amarela';
+    if (temA && !temL) return apto ? 'Amarela e Laranja' : 'Crua e Laranja';
+    if (temA && temL && !temZ) return apto ? 'Laranja' : 'Não sobe';
+    if (temL && !temZ) {
+      if (apto) return 'Laranja e Azul';
+      if (idade < REGRAS.idadeLimiteAmareloAzul && semFaltas) return 'Amarela e Azul';
+      return 'Crua e Azul';
+    }
+    if (temL && temZ) return (idade >= REGRAS.idadeMinAzul && anos >= REGRAS.anosMinAzul) ? 'Azul' : 'Não sobe';
+    return 'Manter corda atual';
+  }
+
+  /* ===== FORMULÁRIO ===== */
+  function sl(key, label, valor) {
+    var v = valor == null ? 70 : valor;
+    return '<div class="uc-barra-box"><div class="uc-barra-label"><span>' + esc(label) + '</span>' +
+      '<span class="uc-barra-valor" id="v_' + key + '">' + v + '%</span></div>' +
+      '<input type="range" min="0" max="100" value="' + v + '" class="uc-barra" data-key="' + key + '" data-tipo="nota"></div>';
+  }
+  function num(key, label) {
+    return '<div><label class="campo-label">' + esc(label) + '</label>' +
+      '<input type="number" min="0" value="0" data-key="' + key + '" data-tipo="num"></div>';
+  }
+  function sel(key, label, opcoes, padrao) {
+    return '<label class="campo-label">' + esc(label) + '</label><select data-key="' + key + '" data-tipo="sel" data-default="' + padrao + '">' +
+      opcoes.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === padrao ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') +
+      '</select>';
+  }
+  function acc(titulo, corpo, aberta) {
+    return '<details class="uc-acc"' + (aberta ? ' open' : '') + '><summary>' + esc(titulo) + '</summary><div class="uc-acc-corpo">' + corpo + '</div></details>';
+  }
+  function pares(itens, prefixo, sufixoLabel) {
+    return itens.map(function (m) {
+      return sl(prefixo + m.id + '_E', m.nome + ' — Lado E') + sl(prefixo + m.id + '_D', m.nome + ' — Lado D');
+    }).join('');
+  }
+
+  function htmlFormulario() {
+    var sim = [['sim', 'Sim'], ['parcial', 'Parcial'], ['nao', 'Não']];
+    var instr = INSTRUMENTOS.map(function (i) {
+      return sel('ins_' + i.id, i.nome, [['nao', 'Não sabe'], ['aprendizado', 'Em aprendizado'], ['sim', 'Sim']], 'nao');
+    }).join('');
+    var toques = TOQUES.map(function (t) {
+      return sl('toq_' + t + '_saber', 'Toque ' + t + ' — sabe jogar') +
+        sl('toq_' + t + '_E', 'Toque ' + t + ' — movimentação lado E') +
+        sl('toq_' + t + '_D', 'Toque ' + t + ' — movimentação lado D');
+    }).join('');
+    var jogos = JOGOS.map(function (j) { return sl('jog_' + j, 'Jogo ' + j); }).join('');
+    var part = PARTICIPACAO.map(function (p) {
+      return '<div class="uc-item"><div class="uc-mini" style="font-weight:700;margin-bottom:6px">' + esc(p.nome) + '</div>' +
+        '<div class="uc-linha">' + num('pa_' + p.id + '_conv', 'Convocações') + num('pa_' + p.id + '_pres', 'Presenças') + '</div></div>';
+    }).join('');
+
+    return '' +
+    '<div class="card" id="ucCardAvaliacao">' +
+      '<h3><i class="fas fa-clipboard-check"></i> Avaliação Semestral</h3>' +
+      '<label class="campo-label">Aluno</label><select id="ucAlunoSel"><option value="">-- Selecione --</option></select>' +
+      '<div class="uc-linha">' +
+        '<div><label class="campo-label">Período</label><input type="text" id="ucPeriodo" value="' + periodoAtual() + '"></div>' +
+        '<div><label class="campo-label">Corda atual</label><select id="ucCordaAtual">' +
+          CORDAS.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') + '</select></div>' +
+      '</div>' +
+      '<div class="uc-linha">' +
+        '<div><label class="campo-label">Idade</label><input type="number" id="ucIdade" min="0" max="120"></div>' +
+        '<div><label class="campo-label">Anos de capoeira</label><input type="number" id="ucAnos" min="0" max="80"></div>' +
+      '</div>' +
+      '<div class="uc-mini" id="ucStatus" style="margin:8px 0">Selecione um aluno.</div>' +
+
+      acc('1. Chutes', pares(CHUTES, 'chu_'), true) +
+      acc('2. Esquivas', pares(ESQUIVAS, 'esq_')) +
+      acc('3. Decidas', pares(DECIDAS, 'dec_')) +
+      acc('4. Sequências', pares(SEQUENCIAS, 'seq_')) +
+      acc('5. Toques de berimbau', toques) +
+      acc('6. Jogos', jogos) +
+      acc('7. Instrumentos', instr) +
+      acc('8. Participação', '<label class="campo-label">Participação geral</label><select data-key="part_status" data-tipo="sel" data-default="sim">' +
+        sim.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
+        '</select>' + sl('part_nota', 'Nota de participação') + part) +
+      acc('9. Compromisso', num('comp_faltas', 'Faltas de compromisso') + num('comp_atrasos', 'Atrasos') +
+        num('comp_justificados', 'Atrasos justificados') + num('comp_semanas', 'Semanas no período (para frequência)') +
+        '<label class="campo-label">Observação do professor</label><textarea data-key="obs" data-tipo="txt" placeholder="Observações..."></textarea>') +
+
+      '<div class="uc-linha" style="margin-top:10px">' +
+        '<button class="btn" type="button" id="ucBtnCalc"><i class="fas fa-calculator"></i> Calcular</button>' +
+        '<button class="btn btn-secondary" type="button" id="ucBtnRascunho"><i class="fas fa-save"></i> Salvar rascunho</button>' +
+      '</div>' +
+      '<div class="uc-linha" style="margin-top:6px">' +
+        '<button class="btn btn-secondary" type="button" id="ucBtnNovo"><i class="fas fa-eraser"></i> Limpar</button>' +
+      '</div>' +
+
+      acc('Decisão final do professor', '<label class="campo-label">Apto a receber graduação?</label>' +
+        '<select id="ucAptoFinal"><option value="sim">Sim</option><option value="nao">Não</option></select>' +
+        '<label class="campo-label">Corda a receber (revelada só no Batizado)</label>' +
+        '<select id="ucCordaFinal">' + CORDAS.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') + '</select>' +
+        '<button class="btn" type="button" id="ucBtnFinalizar" style="margin-top:8px"><i class="fas fa-check"></i> Finalizar avaliação</button>', true) +
+
+      '<div id="ucResultado" style="display:none;"></div>' +
+      '<div id="ucListaPeriodo" style="margin-top:12px"></div>' +
+    '</div>';
+  }
+
+  /* ===== LEITURA / PREENCHIMENTO ===== */
+  function coletar() {
+    var d = { notas: {}, nums: {}, textos: {} };
+    document.querySelectorAll('#ucCardAvaliacao [data-key]').forEach(function (e) {
+      var k = e.getAttribute('data-key'), t = e.getAttribute('data-tipo');
+      if (t === 'nota') d.notas[k] = parseInt(e.value, 10) || 0;
+      else if (t === 'num') d.nums[k] = parseInt(e.value, 10) || 0;
+      else d.textos[k] = (e.value || '').trim();
+    });
+    return d;
+  }
+
+  function preencher(doc) {
+    document.querySelectorAll('#ucCardAvaliacao [data-key]').forEach(function (e) {
+      var k = e.getAttribute('data-key'), t = e.getAttribute('data-tipo');
+      if (t === 'nota') {
+        e.value = doc && doc.notas && doc.notas[k] != null ? doc.notas[k] : 70;
+        var s = el('v_' + k); if (s) s.textContent = e.value + '%';
+      } else if (t === 'num') {
+        e.value = doc && doc.nums && doc.nums[k] != null ? doc.nums[k] : 0;
+      } else {
+        e.value = doc && doc.textos && doc.textos[k] != null ? doc.textos[k] : (e.getAttribute('data-default') || '');
+      }
+    });
+    el('ucCordaAtual').value = (doc && doc.cordaAtual) || 'Amarela e Laranja';
+    el('ucIdade').value = doc && doc.idade != null ? doc.idade : '';
+    el('ucAnos').value = doc && doc.anos != null ? doc.anos : '';
+    el('ucAptoFinal').value = doc && doc.aptoFinal === false ? 'nao' : 'sim';
+    el('ucCordaFinal').value = (doc && doc.cordaFinal) || 'Amarela e Laranja';
+  }
+
+  function alunoSelecionado() {
+    var s = el('ucAlunoSel');
+    var op = s && s.options[s.selectedIndex];
+    return op && op._dados ? op._dados : null;
+  }
+
+  function docDoAluno(alunoId, periodo) {
+    return listar('avaliacoesSemestrais').filter(function (d) {
+      return d.alunoId === alunoId && d.periodo === periodo;
+    })[0] || null;
+  }
+
+  /* ===== CÁLCULO ===== */
+  function calcular(d) {
+    var corda = el('ucCordaAtual').value;
+    var comAmarela = /amarela|laranja|azul/i.test(corda);
+    var idade = parseInt(el('ucIdade').value, 10) || 0;
+    var anos = parseInt(el('ucAnos').value, 10) || 0;
+
+    var tec = [], mus = [];
+    Object.keys(d.notas).forEach(function (k) {
+      if (/^chu_MeiaSolta_/.test(k) && !comAmarela) return;
+      if (/^(chu|esq|dec|seq)_/.test(k)) tec.push(d.notas[k]);
+      if (/^(toq|jog)_/.test(k)) mus.push(d.notas[k]);
+    });
+    var mediaTec = media(tec), mediaMus = media(mus);
+
+    var faltas = d.nums.comp_faltas || 0, atrasos = d.nums.comp_atrasos || 0;
+    var semanas = d.nums.comp_semanas || 0;
+    var freq = semanas > 0 ? Math.round((d.nums.pa_reg_pres || 0) / semanas * 10) / 10 : null;
+
+    var motivos = [], avisos = [];
+    if (comAmarela && d.textos.ins_Berimbau !== 'sim') motivos.push('Berimbau obrigatório não dominado');
+    if (faltas > REGRAS.maxFaltas) motivos.push('Excesso de faltas de compromisso (' + faltas + ')');
+    if (atrasos > REGRAS.maxAtrasos) motivos.push('Mais de ' + REGRAS.maxAtrasos + ' atrasos (' + atrasos + ')');
+    if (mediaTec < REGRAS.notaMinimaTecnica) motivos.push('Média técnica baixa (' + mediaTec + '%)');
+
+    if (freq !== null && freq < REGRAS.freqMinSemana) avisos.push('Frequência de ' + freq + ' aula(s) por semana (mínimo ' + REGRAS.freqMinSemana + ').');
+    if (d.textos.part_status === 'nao') avisos.push('Aluno marcado como não participativo.');
+    if (d.textos.part_status === 'parcial') avisos.push('Participação parcial.');
+
+    var apto = motivos.length === 0;
+    return {
+      corda: corda, apto: apto, motivos: motivos, avisos: avisos,
+      mediaTec: mediaTec, mediaMus: mediaMus, freq: freq,
+      sugerida: sugerirCorda(corda, apto, idade, anos, faltas === 0)
+    };
+  }
+
+  function mostrarResultado() {
+    var d = coletar();
+    var r = calcular(d);
+    el('ucAptoFinal').value = r.apto ? 'sim' : 'nao';
+    el('ucCordaFinal').value = r.sugerida && CORDAS.indexOf(r.sugerida) >= 0 ? r.sugerida : el('ucCordaFinal').value;
+    var box = el('ucResultado');
+    box.style.display = 'block';
+    box.innerHTML =
+      '<div class="uc-res ' + (r.apto ? 'uc-apto' : 'uc-nao-apto') + '">' +
+        '<div style="font-size:1.2rem;font-weight:700;margin-bottom:6px">' + (r.apto ? '✅ Critérios atendidos' : '❌ Critérios não atendidos') + '</div>' +
+        '<div>Corda sugerida: <b>' + esc(r.sugerida) + '</b></div>' +
+        '<div style="margin-top:6px;font-size:.82rem">' + (r.motivos.length ? esc(r.motivos.join(' • ')) : 'Nenhum critério eliminatório.') + '</div>' +
+        '<div class="uc-mini" style="margin-top:8px">Técnica: ' + r.mediaTec + '% • Toques/jogos: ' + r.mediaMus + '% • Frequência: ' +
+          (r.freq === null ? 'informe as semanas' : r.freq + '/semana') + '</div>' +
+        (r.avisos.length ? '<div class="uc-aviso">' + r.avisos.map(esc).join('<br>') + '</div>' : '') +
+        '<div class="uc-mini" style="margin-top:8px">A decisão final é do professor (ajuste acima em "Decisão final").</div>' +
+      '</div>';
+  }
+
+  /* ===== SALVAR ===== */
+  function salvar(status) {
+    var aluno = alunoSelecionado();
+    if (!aluno) { toast('Selecione o aluno.', 'erro'); return; }
+    var periodo = el('ucPeriodo').value.trim();
+    if (!periodo) { toast('Informe o período (ex: 2026-S2).', 'erro'); return; }
+    if (!el('ucIdade').value || !el('ucAnos').value) { toast('Preencha idade e anos de capoeira.', 'erro'); return; }
+
+    var d = coletar();
+    var r = calcular(d);
+    var existente = docDoAluno(aluno.id, periodo);
+    var dados = {
+      alunoId: aluno.id, alunoNome: aluno.nome, alunoApelido: aluno.apelido || '',
+      periodo: periodo, cordaAtual: r.corda,
+      idade: parseInt(el('ucIdade').value, 10), anos: parseInt(el('ucAnos').value, 10),
+      notas: d.notas, nums: d.nums, textos: d.textos,
+      mediaTecnica: r.mediaTec, mediaMusical: r.mediaMus, frequenciaSemanal: r.freq,
+      aptoSugerido: r.apto, cordaSugerida: r.sugerida, motivos: r.motivos, avisos: r.avisos,
+      status: status,
+      aptoFinal: status === 'finalizada' ? el('ucAptoFinal').value === 'sim' : null,
+      cordaFinal: status === 'finalizada' ? el('ucCordaFinal').value : null,
+      revelado: existente ? !!existente.revelado : false,
+      salvoPeloAluno: existente ? !!existente.salvoPeloAluno : false,
+      professor: (typeof sessaoEquipe !== 'undefined' && sessaoEquipe && sessaoEquipe.nome) || 'Professor',
+      criadoEm: existente ? (existente.criadoEm || agoraISO()) : agoraISO(),
+      atualizadoEm: agoraISO()
+    };
+
+    Promise.resolve(DB.salvar('avaliacoesSemestrais', dados, existente ? existente.id : undefined))
+      .then(function () {
+        toast(status === 'finalizada' ? 'Avaliação finalizada.' : 'Rascunho salvo.');
+        atualizarStatus();
+        renderListaPeriodo();
+      })
+      .catch(function () { toast('Não foi possível salvar. Verifique a conexão.', 'erro'); });
+  }
+
+  function atualizarStatus() {
+    var aluno = alunoSelecionado();
+    var periodo = el('ucPeriodo').value.trim();
+    var box = el('ucStatus');
+    if (!aluno) { box.textContent = 'Selecione um aluno.'; return; }
+    var doc = docDoAluno(aluno.id, periodo);
+    if (!doc) { box.textContent = 'Sem avaliação salva para ' + aluno.nome + ' neste período.'; return; }
+    box.textContent = (doc.status === 'finalizada' ? 'Finalizada' : 'Rascunho') + ' em ' +
+      new Date(doc.atualizadoEm || doc.criadoEm || Date.now()).toLocaleDateString('pt-BR');
+  }
+
+  function carregarAlunoNoForm() {
+    var aluno = alunoSelecionado();
+    if (!aluno) { preencher(null); atualizarStatus(); return; }
+    if (el('ucIdade') && aluno.idade != null) el('ucIdade').value = aluno.idade;
+    var anos = aluno.anosCapoeira != null ? aluno.anosCapoeira : aluno.anosTreino;
+    if (anos != null) el('ucAnos').value = anos;
+    var corda = aluno.graduacao || aluno.corda;
+    var doc = docDoAluno(aluno.id, el('ucPeriodo').value.trim());
+    preencher(doc);
+    if (!doc && corda && CORDAS.indexOf(corda) >= 0) el('ucCordaAtual').value = corda;
+    if (!doc && aluno.idade != null) el('ucIdade').value = aluno.idade;
+    if (!doc && anos != null) el('ucAnos').value = anos;
+    atualizarStatus();
+    renderListaPeriodo();
+  }
+
+  /* ===== LISTA DO PERÍODO (professor): ajustar e revelar no Batizado ===== */
+  function renderListaPeriodo() {
+    var box = el('ucListaPeriodo');
+    if (!box) return;
+    var periodo = el('ucPeriodo').value.trim();
+    var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.periodo === periodo; });
+    if (!docs.length) { box.innerHTML = '<div class="uc-mini">Nenhuma avaliação neste período ainda.</div>'; return; }
+    box.innerHTML = '<h4 class="uc-mini" style="font-weight:700">Avaliações do período ' + esc(periodo) + '</h4>' +
+      docs.map(function (d) {
+        var sit = d.status === 'finalizada'
+          ? (d.aptoFinal ? 'Apto' : 'Não apto') + (d.revelado ? ' • graduação revelada' : '')
+          : 'Rascunho';
+        return '<div class="uc-item"><b>' + esc(d.alunoNome) + '</b> <span class="uc-mini">' + esc(sit) + '</span>' +
+          '<div class="uc-mini">Técnica ' + d.mediaTecnica + '% • Toques/jogos ' + d.mediaMusical + '%</div>' +
+          '<div class="uc-linha" style="margin-top:6px">' +
+            '<button class="btn btn-secondary btn-mini" type="button" onclick="ucAjustarAval(\'' + d.alunoId + '\')"><i class="fas fa-pen"></i> Ajustar</button>' +
+            (d.status === 'finalizada' && d.aptoFinal && !d.revelado
+              ? '<button class="btn btn-gold btn-mini" type="button" onclick="ucRevelarBatizado(\'' + d.id + '\')"><i class="fas fa-medal"></i> Revelar no Batizado</button>'
+              : '') +
+          '</div></div>';
+      }).join('');
+  }
+
+  window.ucAjustarAval = function (alunoId) {
+    var s = el('ucAlunoSel');
+    for (var i = 0; i < s.options.length; i++) {
+      if (s.options[i]._dados && s.options[i]._dados.id === alunoId) { s.selectedIndex = i; break; }
+    }
+    carregarAlunoNoForm();
+    el('ucCardAvaliacao').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  window.ucRevelarBatizado = function (docId) {
+    var d = listar('avaliacoesSemestrais').filter(function (x) { return x.id === docId; })[0];
+    if (!d || !d.aptoFinal || d.status !== 'finalizada') { toast('Só é possível revelar aluno apto e avaliação finalizada.', 'erro'); return; }
+    abrirModal('Revelar graduação',
+      '<p class="mini">Confirmar que <strong>' + esc(d.alunoNome) + '</strong> receberá a corda <strong>' + esc(d.cordaFinal) +
+      '</strong> no Batizado? O aluno passa a ver a graduação no app.</p>',
+      '<button class="btn" type="button" onclick="ucConfirmarRevelar(\'' + docId + '\')">Confirmar</button>');
+  };
+
+  window.ucConfirmarRevelar = function (docId) {
+    var d = listar('avaliacoesSemestrais').filter(function (x) { return x.id === docId; })[0];
+    if (!d) return;
+    Promise.all([
+      DB.salvar('alunos', { graduacao: d.cordaFinal, graduacaoLiberada: true }, d.alunoId),
+      DB.salvar('avaliacoesSemestrais', { revelado: true, reveladoEm: agoraISO() }, docId)
+    ]).then(function () {
+      fecharModal();
+      toast('Graduação revelada.');
+      renderListaPeriodo();
+    }).catch(function () { toast('Não foi possível revelar.', 'erro'); });
+  };
+
+  /* ===== ABRIR AVALIAÇÃO (professor) ===== */
+  function abrirAvaliacao() {
+    var box = el('conteudoProfessor') || el('tab4') || document.body;
+    var antigo = el('ucCardAvaliacao');
+    if (antigo) antigo.remove();
+    var w = document.createElement('div');
+    w.innerHTML = htmlFormulario();
+    var card = w.firstElementChild;
+    box.insertBefore(card, box.firstChild);
+
+    var s = el('ucAlunoSel');
+    ordenarPorNome(listar('alunos')).forEach(function (a) {
+      var op = document.createElement('option');
+      op.value = a.id;
+      op.textContent = (a.apelido || a.nome) + (a.graduacao ? ' — ' + a.graduacao : '');
+      op._dados = a;
+      s.appendChild(op);
+    });
+
+    card.addEventListener('input', function (ev) {
+      var t = ev.target;
+      if (t && t.type === 'range') { var sp = el('v_' + t.getAttribute('data-key')); if (sp) sp.textContent = t.value + '%'; }
+    });
+    s.addEventListener('change', carregarAlunoNoForm);
+    el('ucPeriodo').addEventListener('change', carregarAlunoNoForm);
+    el('ucBtnCalc').addEventListener('click', mostrarResultado);
+    el('ucBtnRascunho').addEventListener('click', function () { salvar('rascunho'); });
+    el('ucBtnFinalizar').addEventListener('click', function () { salvar('finalizada'); });
+    el('ucBtnNovo').addEventListener('click', function () { preencher(null); atualizarStatus(); });
+    preencher(null);
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ===== GESTÃO DE ALUNOS (professor) ===== */
+  function assinatura(lista) {
+    return JSON.stringify(lista.map(function (a) {
+      return [a.id, a.nome, a.apelido, a.contato, a.graduacao, a.graduacaoLiberada, a.tipoAluno, a.senhaHash ? 1 : 0];
+    }));
+  }
+
+  function renderGestao(forcar) {
+    var card = el('ucGestaoAlunos');
+    if (!card) return;
+    var lista = ordenarPorNome(listar('alunos'));
+    var sig = assinatura(lista);
+    if (!forcar && card.getAttribute('data-sig') === sig) return;
+    card.setAttribute('data-sig', sig);
+
+    var busca = el('ucGestBusca') ? el('ucGestBusca').value : '';
+    var grupos = {};
+    lista.forEach(function (a) { var k = chave(a.nome); (grupos[k] = grupos[k] || []).push(a); });
+    var dups = Object.keys(grupos).filter(function (k) { return grupos[k].length > 1; });
+
+    var html = '<h3><i class="fas fa-users-cog"></i> Gestão de Alunos</h3>' +
+      '<p class="uc-mini">Editar cadastro, graduação atual, senha provisória e excluir cadastros duplicados.</p>';
+
+    if (dups.length) {
+      html += '<div class="uc-dup"><b>⚠️ Possíveis duplicados (mesmo nome):</b>' +
+        '<div class="uc-linha" style="margin:6px 0"><button class="btn btn-danger btn-mini" type="button" onclick="ucMesclarDuplicados()"><i class="fas fa-compress-arrows-alt"></i> Mesclar: manter o cadastro mais completo</button></div>' +
+        dups.map(function (k) {
+          return grupos[k].map(function (a) {
+            return '<div class="uc-item"><span>' + esc(a.nome) + '</span> <span class="uc-mini">' +
+              (a.senhaHash ? 'com senha' : 'sem senha') + ' • ' + esc(a.graduacao || 'sem graduação') + '</span>' +
+              '<div class="uc-linha" style="margin-top:4px"><button class="btn btn-danger btn-mini" type="button" onclick="ucExcluirAluno(\'' + a.id + '\')"><i class="fas fa-trash"></i> Excluir este cadastro</button></div></div>';
+          }).join('');
+        }).join('') + '</div>';
+    }
+
+    html += '<input type="text" id="ucGestBusca" placeholder="Buscar aluno..." value="' + esc(busca) + '" style="margin:8px 0">';
+    html += lista.map(function (a) {
+      return '<div class="uc-item" data-nome="' + esc(chave(a.nome + ' ' + (a.apelido || ''))) + '">' +
+        '<b>' + esc(a.nome) + '</b> <span class="uc-mini">' + esc(a.apelido || '') + '</span>' +
+        '<div class="uc-mini">' + esc(a.graduacao || 'sem graduação') + ''+
+          (a.contato ? ' • ' + esc(a.contato) : '') + '</div>' +
+        '<div class="uc-linha" style="margin-top:6px;flex-wrap:wrap">' +
+          '<button class="btn btn-secondary btn-mini" type="button" onclick="ucEditarAluno(\'' + a.id + '\')"><i class="fas fa-pen"></i> Editar</button>' +
+          '<button class="btn btn-secondary btn-mini" type="button" onclick="ucSenhaProvisoria(\'' + a.id + '\')"><i class="fas fa-key"></i> Senha provisória</button>' +
+          '<button class="btn btn-danger btn-mini" type="button" onclick="ucExcluirAluno(\'' + a.id + '\')"><i class="fas fa-trash"></i></button>' +
+        '</div></div>';
+    }).join('') || '<p class="uc-mini">Nenhum aluno cadastrado.</p>';
+
+    card.innerHTML = html;
+    el('ucGestBusca').addEventListener('input', function () {
+      var t = chave(this.value);
+      card.querySelectorAll('[data-nome]').forEach(function (i) {
+        i.style.display = (!t || i.getAttribute('data-nome').indexOf(t) >= 0) ? 'block' : 'none';
+      });
+    });
+  }
+
+  /* ===== MESCLAR DUPLICADOS: mantém o cadastro com mais detalhes ===== */
+  function gruposDuplicados() {
+    var g = {};
+    listar('alunos').forEach(function (a) { var k = chave(a.nome); (g[k] = g[k] || []).push(a); });
+    return Object.keys(g).filter(function (k) { return g[k].length > 1; }).map(function (k) { return g[k]; });
+  }
+  function preenchido(v) { return v !== undefined && v !== null && v !== '' && v !== false; }
+  function pontuacaoCadastro(a) {
+    return Object.keys(a).filter(function (k) { return k !== 'id' && preenchido(a[k]); }).length;
+  }
+  function escolherMaisCompleto(grupo) {
+    return grupo.slice().sort(function (x, y) {
+      var d = pontuacaoCadastro(y) - pontuacaoCadastro(x);
+      if (d) return d;
+      return String(x.criadoEm || '').localeCompare(String(y.criadoEm || ''));
+    })[0];
+  }
+
+  window.ucMesclarDuplicados = function () {
+    var grupos = gruposDuplicados();
+    if (!grupos.length) { toast('Nenhum duplicado encontrado.'); return; }
+    var lista = grupos.map(function (g) {
+      var k = escolherMaisCompleto(g);
+      return '<li>' + esc(k.nome) + ' — fica o cadastro mais completo (' + g.length + ' cadastros no total)</li>';
+    }).join('');
+    abrirModal('Mesclar duplicados',
+      '<p class="mini">Em cada grupo fica o cadastro com mais informações. Os dados que faltam nele são completados a partir dos outros, e as avaliações dos cadastros removidos passam para o que ficou.</p>' +
+      '<ul class="mini">' + lista + '</ul>',
+      '<button class="btn btn-danger" type="button" onclick="ucConfirmarMesclar()">Confirmar mesclagem</button>');
+  };
+
+  window.ucConfirmarMesclar = function () {
+    var grupos = gruposDuplicados();
+    var p = Promise.resolve();
+    grupos.forEach(function (g) {
+      var keep = escolherMaisCompleto(g);
+      var completar = {};
+      g.forEach(function (a) {
+        if (a.id === keep.id) return;
+        Object.keys(a).forEach(function (k) {
+          if (k !== 'id' && !preenchido(keep[k]) && preenchido(a[k]) && completar[k] === undefined) completar[k] = a[k];
+        });
+      });
+      if (Object.keys(completar).length) {
+        p = p.then(function () { return DB.salvar('alunos', completar, keep.id); });
+      }
+      g.forEach(function (a) {
+        if (a.id === keep.id) return;
+        p = p.then(function () {
+          var avs = listar('avaliacoesSemestrais').filter(function (d) { return d.alunoId === a.id; });
+          return Promise.all(avs.map(function (d) {
+            return DB.salvar('avaliacoesSemestrais', { alunoId: keep.id, alunoNome: keep.nome }, d.id);
+          }));
+        }).then(function () { return DB.excluir('alunos', a.id); });
+      });
+    });
+    p.then(function () {
+      fecharModal();
+      toast('Duplicados mesclados.');
+      renderGestao(true);
+    }).catch(function () { toast('Não foi possível concluir a mesclagem. Tente de novo.', 'erro'); });
+  };
+
+  function nomeEmUso(nome, idIgnorar) {
+    var k = chave(nome);
+    return listar('alunos').some(function (a) { return a.id !== idIgnorar && chave(a.nome) === k; });
+  }
+
+  window.ucEditarAluno = function (id) {
+    var a = listar('alunos').filter(function (x) { return x.id === id; })[0];
+    if (!a) return;
+    var g = graduacoesDisponiveis();
+    abrirModal('Editar aluno',
+      '<label class="campo-label">Nome completo</label><input id="ucEdNome" value="' + esc(a.nome) + '">' +
+      '<label class="campo-label">Apelido</label><input id="ucEdApelido" value="' + esc(a.apelido || '') + '">' +
+      '<label class="campo-label">Contato</label><input id="ucEdContato" value="' + esc(a.contato || '') + '">' +
+      '<label class="campo-label">Graduação atual</label><select id="ucEdGrad">' +
+        g.map(function (c) { return '<option value="' + esc(c) + '"' + (c === a.graduacao ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') +
+      '</select>',
+      '<button class="btn" type="button" onclick="ucSalvarEdicao(\'' + id + '\')">Salvar</button>');
+  };
+
+  window.ucSalvarEdicao = function (id) {
+    var nome = (el('ucEdNome').value || '').trim();
+    if (nome.length < 3) { toast('Nome inválido.', 'erro'); return; }
+    if (nomeEmUso(nome, id)) { toast('Já existe outro cadastro com esse nome.', 'erro'); return; }
+    var dados = {
+      nome: nome,
+      apelido: (el('ucEdApelido').value || '').trim() || nome.split(' ')[0],
+      contato: (el('ucEdContato').value || '').trim(),
+      graduacao: el('ucEdGrad').value
+    };
+    Promise.resolve(DB.salvar('alunos', dados, id)).then(function () {
+      fecharModal();
+      toast('Cadastro atualizado.');
+      renderGestao(true);
+    }).catch(function () { toast('Não foi possível salvar.', 'erro'); });
+  };
+
+  window.ucSenhaProvisoria = function (id) {
+    var a = listar('alunos').filter(function (x) { return x.id === id; })[0];
+    if (!a) return;
+    var nova = gerarSenhaProvisoria();
+    Promise.resolve(DB.salvar('alunos', { senhaHash: hashSenha(nova) }, id)).then(function () {
+      abrirModal('Senha provisória de ' + esc(a.nome),
+        '<p class="mini">Senha: <strong style="color:var(--gold);font-size:1rem">' + esc(nova) + '</strong></p>' +
+        '<p class="mini">Anote e avise o aluno agora.</p>',
+        '<button class="btn" type="button" onclick="fecharModal()">Entendi</button>');
+    }).catch(function () { toast('Não foi possível gerar a senha.', 'erro'); });
+  };
+
+  window.ucExcluirAluno = function (id) {
+    var a = listar('alunos').filter(function (x) { return x.id === id; })[0];
+    if (!a) return;
+    abrirModal('Excluir cadastro',
+      '<p class="mini">Excluir <strong>' + esc(a.nome) + '</strong>? Essa ação não pode ser desfeita.</p>',
+      '<button class="btn btn-danger" type="button" onclick="ucConfirmarExcluir(\'' + id + '\')">Excluir</button>');
+  };
+
+  window.ucConfirmarExcluir = function (id) {
+    Promise.resolve(DB.excluir('alunos', id)).then(function () {
+      fecharModal();
+      toast('Cadastro excluído.');
+      renderGestao(true);
+    }).catch(function () { toast('Não foi possível excluir.', 'erro'); });
+  };
+
+  /* ===== BOLETIM DO ALUNO ===== */
+  function renderBoletim() {
+    var card = el('ucBoletimAluno');
+    if (!card) return;
+    var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (!logado) { card.style.display = 'none'; card.innerHTML = ''; return; }
+    var docs = listar('avaliacoesSemestrais').filter(function (d) {
+      return d.alunoId === logado.id && d.status === 'finalizada';
+    }).sort(function (a, b) { return String(b.periodo).localeCompare(String(a.periodo)); });
+
+    var sig = JSON.stringify(docs.map(function (d) { return [d.id, d.salvoPeloAluno, d.revelado, d.atualizadoEm]; })) + logado.graduacaoLiberada;
+    if (card.getAttribute('data-sig') === sig && card.style.display !== 'none') return;
+    card.setAttribute('data-sig', sig);
+    card.style.display = 'block';
+
+    var html = '<h3><i class="fas fa-file-alt"></i> Minhas Avaliações Semestrais</h3>' +
+      '<p class="uc-mini">Sua graduação e o resultado final são revelados no dia do Batizado. Aqui você pode escolher salvar ou não o boletim no seu painel.</p>';
+
+    if (!docs.length) html += '<p class="uc-mini">Nenhuma avaliação finalizada ainda.</p>';
+    docs.forEach(function (d) {
+      html += '<div class="uc-item"><b>Período ' + esc(d.periodo) + '</b>' +
+        '<div class="uc-mini">Técnica: ' + d.mediaTecnica + '% • Toques/jogos: ' + d.mediaMusical + '%' +
+          (d.frequenciaSemanal != null ? ' • Frequência: ' + d.frequenciaSemanal + '/semana' : '') + '</div>' +
+        (d.revelado ? '<div style="margin-top:4px"><b>🥋 Graduação: ' + esc(d.cordaFinal || '—') + '</b></div>' : '') +
+        (d.textos && d.textos.obs ? '<div class="uc-mini" style="margin-top:4px">Obs.: ' + esc(d.textos.obs) + '</div>' : '') +
+        '<div class="uc-linha" style="margin-top:6px"><button class="btn btn-secondary btn-mini" type="button" onclick="ucToggleBoletim(\'' + d.id + '\')">' +
+          (d.salvoPeloAluno ? '<i class="fas fa-bookmark"></i> Remover do meu painel' : '<i class="far fa-bookmark"></i> Salvar no meu painel') +
+        '</button></div></div>';
+    });
+    card.innerHTML = html;
+  }
+
+  window.ucToggleBoletim = function (id) {
+    var d = listar('avaliacoesSemestrais').filter(function (x) { return x.id === id; })[0];
+    if (!d) return;
+    Promise.resolve(DB.salvar('avaliacoesSemestrais', { salvoPeloAluno: !d.salvoPeloAluno }, id))
+      .then(function () { toast(d.salvoPeloAluno ? 'Removido do seu painel.' : 'Salvo no seu painel.'); renderBoletim(); })
+      .catch(function () { toast('Não foi possível atualizar.', 'erro'); });
+  };
+
+
+  /* ===== CRONÔMETRO ATÉ O BATIZADO (aba Início, para todos) ===== */
+  /* Data padrão; a ADM pode alterar (fica salva em config/batizado) */
+  var BATIZADO_PADRAO = '2027-03-28T09:00';
+  function dataBatizado() {
+    var d = listar('config').filter(function (c) { return c.id === 'batizado'; })[0];
+    var dt = new Date(d && d.iso ? d.iso : BATIZADO_PADRAO);
+    return isNaN(dt.getTime()) ? new Date(BATIZADO_PADRAO) : dt;
+  }
+
+  function quebrarTempo(ms) {
+    var s = Math.floor(ms / 1000);
+    return { d: Math.floor(s / 86400), h: Math.floor(s % 86400 / 3600), m: Math.floor(s % 3600 / 60), s: s % 60 };
+  }
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function atualizarCronometroBatizado() {
+    var t = el('ucCronoValor');
+    if (!t) return;
+    var alvo = dataBatizado();
+    var ms = alvo.getTime() - Date.now();
+    var tit = el('ucCronoTitulo');
+    if (tit) tit.textContent = 'Batizado — ' + alvo.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) + ' às ' + pad(alvo.getHours()) + 'h' + pad(alvo.getMinutes());
+    if (ms <= 0) { t.textContent = 'Batizado realizado!'; return; }
+    var q = quebrarTempo(ms);
+    t.innerHTML = '<span>' + q.d + '</span> dias <span>' + pad(q.h) + '</span>h <span>' + pad(q.m) + '</span>min <span>' + pad(q.s) + '</span>s';
+  }
+
+  function garantirCronometroInicio() {
+    var inicio = el('tab1');
+    if (!inicio || el('ucCronoBatizado')) return;
+    var c = document.createElement('div');
+    c.id = 'ucCronoBatizado';
+    c.className = 'card';
+    c.style.textAlign = 'center';
+    c.innerHTML = '<h3 id="ucCronoTitulo"><i class="fas fa-hourglass-half"></i> Batizado</h3>' +
+      '<div id="ucCronoValor" style="font-size:1.1rem;font-weight:700;color:var(--primary-green,#00c853);margin-top:6px"></div>' +
+      '<style>#ucCronoValor span{font-size:1.6rem;color:var(--gold,#ffc107)}</style>';
+    inicio.insertBefore(c, inicio.firstChild);
+    atualizarCronometroBatizado();
+  }
+
+
+  /* ===== DATA DO BATIZADO (aba ADM edita; todos veem no cronômetro) ===== */
+  function garantirAdmBatizado() {
+    var box = el('conteudoAdm');
+    if (!box || el('ucAdmBatizado')) return;
+    var d = dataBatizado();
+    var dia = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var hora = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    var c = document.createElement('div');
+    c.id = 'ucAdmBatizado';
+    c.className = 'card';
+    c.innerHTML = '<h3><i class="fas fa-hourglass-half"></i> Data do Batizado</h3>' +
+      '<p class="uc-mini">Esta data aparece no cronômetro da aba Início para todos.</p>' +
+      '<div class="uc-linha">' +
+        '<div><label class="campo-label">Dia</label><input type="date" id="ucAdmBatDia" value="' + dia + '"></div>' +
+        '<div><label class="campo-label">Hora</label><input type="time" id="ucAdmBatHora" value="' + hora + '"></div>' +
+      '</div>' +
+      '<button class="btn" type="button" id="ucAdmBatSalvar" style="margin-top:8px"><i class="fas fa-save"></i> Salvar data do Batizado</button>';
+    box.insertBefore(c, box.firstChild);
+    el('ucAdmBatSalvar').addEventListener('click', salvarDataBatizado);
+  }
+
+  function salvarDataBatizado() {
+    var dia = el('ucAdmBatDia').value, hora = el('ucAdmBatHora').value;
+    if (!dia || !hora) { toast('Informe dia e hora.', 'erro'); return; }
+    Promise.resolve(DB.salvar('config', { iso: dia + 'T' + hora }, 'batizado'))
+      .then(function () { toast('Data do Batizado salva.'); atualizarCronometroBatizado(); })
+      .catch(function () { toast('Não foi possível salvar a data.', 'erro'); });
+  }
+
+  /* ===== INJEÇÃO (abas são redesenhadas ao abrir, então recolocamos os blocos) ===== */
+  function garantirProfessor() {
+    var box = el('conteudoProfessor');
+    if (!box) return;
+    if (!el('ucBtnAvalSemestral')) {
+      var b = document.createElement('button');
+      b.id = 'ucBtnAvalSemestral';
+      b.type = 'button';
+      b.className = 'btn btn-gold';
+      b.innerHTML = '<i class="fas fa-clipboard-list"></i> Abrir Avaliação Semestral';
+      b.addEventListener('click', abrirAvaliacao);
+      box.insertBefore(b, box.firstChild);
+    }
+    if (!el('ucGestaoAlunos')) {
+      var g = document.createElement('div');
+      g.id = 'ucGestaoAlunos';
+      g.className = 'card';
+      box.insertBefore(g, box.firstChild.nextSibling);
+    }
+    renderGestao(false);
+  }
+
+  function garantirAluno() {
+    var painel = el('cardAlunoPainel');
+    if (!painel) return;
+    if (!el('ucBoletimAluno')) {
+      var c = document.createElement('div');
+      c.id = 'ucBoletimAluno';
+      c.className = 'card';
+      c.style.display = 'none';
+      painel.insertBefore(c, painel.firstChild);
+    }
+    renderBoletim();
+  }
+
+  function ciclo() {
+    try { garantirCronometroInicio(); } catch (e) { console.warn('[ucCrono]', e); }
+    try { garantirAdmBatizado(); } catch (e) { console.warn('[ucAdmBat]', e); }
+    try { garantirProfessor(); } catch (e) { console.warn('[ucAval] professor', e); }
+    try { garantirAluno(); } catch (e) { console.warn('[ucAval] aluno', e); }
+  }
+  setTimeout(ciclo, 1200);
+  setInterval(ciclo, 3000);
+  setInterval(atualizarCronometroBatizado, 1000);
+
+  console.log('✅ Avaliação Semestral v3 + Gestão de Alunos + Boletim carregados');
+})();
+</script>
