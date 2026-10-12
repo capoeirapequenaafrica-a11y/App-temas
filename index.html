@@ -12188,12 +12188,14 @@ decidirPresenca = function (id, status) {
 <script>
 /* ▼ calendario-treino.js */
 /* ================================================================
-   CALENDARIO-TREINO.JS — Universo Capoeira (v87)
+   CALENDARIO-TREINO.JS — Universo Capoeira (v88)
    Mini calendário 📆 do treino: dias treinados, pendentes, faltas e dias sem registro.
    Aluno: vê os detalhes e pede ajuste. Professor: ajusta o dia (treinou / não treinou / itens do treino).
    Aparece na aba Check-in e no painel do Professor.
+   CORREÇÃO v88: adicionada declaração de TR_CAL_SEL (evita ReferenceError na seleção múltipla).
    ================================================================ */
 var TR_CALS = {};
+var TR_CAL_SEL = {};   // CORREÇÃO: declaração que faltava (seleção múltipla de dias)
 var TR_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 var TR_DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
