@@ -1,0 +1,400 @@
+/* ============================================================
+   JARVIS v89 (Plus) — Universo Capoeira
+   Carregado por index.html via <script src="jarvis-v89.js"></script>
+   Substitui integralmente o antigo assistente.js embutido.
+
+   NOVIDADES vs v87:
+   • Botões de ação nas respostas (abre aba+âncora, ou nova pergunta)
+   • Roteador por pontuação (evita conflito entre regras parecidas)
+   • Sugestões proativas 1x por dia
+   • Base de conhecimento local (fallback sem IA configurada)
+   • Entrada por voz (Web Speech API)
+   • Confirmação de ações em botões em vez de "confirmo/cancelar"
+
+   Compatível: mantém TODAS as funções globais que outros módulos
+   do app esperam (assistentePerguntar, assistenteEnviar,
+   assistenteInterceptarAvaliacaoSemanal, assistenteEhProfessor,
+   assistenteEstadoProf, INDEX_FORMACAO_PROFESSOR, chamarAssistenteIA,
+   montarContextoAluno, historicoAssistenteIA, etc.)
+   ============================================================ */
+
+(function () {
+  'use strict';
+
+  /* ============ ESTADO ============ */
+  var assistenteAberto = false;
+  var assistenteJaCumprimentou = false;
+  var historicoAssistenteIA = [];
+  var __jarvisAcaoPendente = null;
+  var __jarvisDicaHoje = '';
+
+  /* ============ UTIL ============ */
+  function $j(id) { return document.getElementById(id); }
+  function jNorm(s) {
+    return String(s || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  /* ============ ROTEADOR POR PONTUAÇÃO ============ */
+  var jIntencoes = [
+    { id: 'ajuda',           peso: 10, palavras: ['ajuda', 'comandos', 'o que voce faz', 'menu', 'como usar voce'] },
+    { id: 'proximaAula',     peso: 12, palavras: ['proxima aula', 'aula de hoje', 'quando e a aula', 'horario de hoje', 'tem aula'] },
+    { id: 'horarios',        peso: 11, palavras: ['horario', 'horarios', 'dias de treino', 'quando treina', 'grade'] },
+    { id: 'checkin',         peso: 12, palavras: ['meu check in', 'ja fiz check', 'status do check', 'check in hoje', 'presenca hoje'] },
+    { id: 'comoCheckin',     peso: 10, palavras: ['como fazer check', 'check in local', 'como funciona o check', 'fazer check in'] },
+    { id: 'checkinErro',     peso: 13, palavras: ['check in com erro', 'check deu erro', 'nao consigo fazer check', 'check travou'] },
+    { id: 'pedirTreino',     peso: 11, palavras: ['pedir treino', 'treino especifico', 'solicitar treino', 'quero treinar'] },
+    { id: 'desempenho',      peso: 11, palavras: ['desempenho', 'minha analise', 'como estou', 'evolucao', 'indice'] },
+    { id: 'graduacao',       peso: 10, palavras: ['graduacao', 'minha corda', 'meu nivel', 'que corda'] },
+    { id: 'avaliacoes',      peso: 10, palavras: ['avaliacao', 'minha nota', 'minhas notas', 'media', 'boletim', 'meu relatorio'] },
+    { id: 'certificados',    peso: 10, palavras: ['certificado', 'diploma'] },
+    { id: 'avisos',          peso:  9, palavras: ['aviso', 'comunicado', 'recado'] },
+    { id: 'polos',           peso:  9, palavras: ['polo', 'local de treino', 'onde treina', 'endereco'] },
+    { id: 'falarProf',       peso: 10, palavras: ['falar com professor', 'mensagem para professor', 'conversar com professor'] },
+    { id: 'senha',           peso: 13, palavras: ['esqueci a senha', 'nao lembro a senha', 'trocar senha', 'nova senha', 'recuperar senha', 'senha errada', 'nao consigo entrar'] },
+    { id: 'formacao',        peso: 12, palavras: ['formacao', 'aquecimento', 'alongamento', 'mobilidade', 'protocolo de aula', 'dar aula', 'quadril'] },
+    { id: 'simular',         peso: 11, palavras: ['simular avaliacao', 'simular', 'simulacao'] },
+    { id: 'calendario',      peso: 11, palavras: ['calendario', 'meus dias', 'dias que treinei'] },
+    { id: 'perguntaSemana',  peso:  9, palavras: ['pergunta da semana'] },
+    { id: 'feedback',        peso:  9, palavras: ['feedback da aula', 'avaliar a aula'] },
+    { id: 'instagram',       peso:  9, palavras: ['instagram', 'rede social'] },
+    { id: 'mural',           peso:  9, palavras: ['mural', 'bate papo'] },
+    { id: 'professor',       peso: 10, palavras: ['area professor', 'equipe', 'adm', 'login equipe'] },
+    { id: 'cronometro',      peso:  8, palavras: ['cronometro', 'timer', 'tempo da roda'] },
+    { id: 'beneficio',       peso: 11, palavras: ['gympass', 'wellhub', 'beneficio'] },
+    { id: 'batizado',        peso: 10, palavras: ['batizado', 'troca de corda'] }
+  ];
+
+  function jClassificar(texto) {
+    var t = jNorm(texto), melhor = null, score = 0;
+    jIntencoes.forEach(function (int) {
+      var s = 0;
+      int.palavras.forEach(function (p) {
+        var pn = jNorm(p);
+        if (t.indexOf(pn) >= 0) s += pn.split(' ').length * int.peso;
+      });
+      if (s > score) { score = s; melhor = int; }
+    });
+    return score > 0 ? melhor.id : null;
+  }
+
+  /* ============ UI: BOLHAS ============ */
+  function bolha(tipo, texto) {
+    var box = $j('assistenteMsgs');
+    if (!box) return;
+    var d = document.createElement('div');
+    d.className = 'assistente-bolha ' + tipo;
+    d.textContent = texto;
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function bolhaRica(texto, acoes) {
+    var box = $j('assistenteMsgs');
+    if (!box) return;
+    var d = document.createElement('div');
+    d.className = 'assistente-bolha bot';
+    d.style.whiteSpace = 'normal';
+    var p = document.createElement('div');
+    p.style.whiteSpace = 'pre-wrap';
+    p.textContent = texto;
+    d.appendChild(p);
+    if (acoes && acoes.length) {
+      var barra = document.createElement('div');
+      barra.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;';
+      acoes.forEach(function (a) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = a.rotulo;
+        b.style.cssText = 'background:rgba(0,210,255,.15);color:#b3e5fc;border:1px solid rgba(0,210,255,.4);border-radius:14px;padding:5px 10px;font-size:0.72rem;cursor:pointer;';
+        b.onmouseenter = function () { b.style.background = 'rgba(0,210,255,.3)'; };
+        b.onmouseleave = function () { b.style.background = 'rgba(0,210,255,.15)'; };
+        b.onclick = function () {
+          try {
+            if (typeof a.acao === 'function') a.acao();
+            else if (a.aba) {
+              if (typeof window.abrirAba === 'function') window.abrirAba(a.aba);
+              if (a.ancora) setTimeout(function () {
+                var el = $j(a.ancora);
+                if (el) { var c = el.closest('.card'); if (c) c.classList.remove('fechado'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+              }, 180);
+            }
+          } catch (e) { console.warn('[jarvis btn]', e); }
+        };
+        barra.appendChild(b);
+      });
+      d.appendChild(barra);
+    }
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  /* ============ ABRIR / FECHAR ============ */
+  function toggleAssistente() {
+    var antes = assistenteAberto;
+    assistenteAberto = !assistenteAberto;
+    var painel = $j('assistentePainel');
+    if (!painel) return;
+    var dica = $j('dicaAssistentePrimeiroAcesso');
+    if (dica) dica.style.display = 'none';
+    try { localStorage.setItem('uc_assistente_apresentado_v1', '1'); } catch (e) {}
+    painel.classList.toggle('aberto', assistenteAberto);
+    if (assistenteAberto && !assistenteJaCumprimentou) {
+      assistenteJaCumprimentou = true;
+      bolha('bot', boasVindas());
+    }
+    if (assistenteAberto) {
+      setTimeout(function () { var i = $j('assistenteInput'); if (i) i.focus(); }, 200);
+      if (!antes) setTimeout(talvezSugerir, 900);
+    }
+  }
+
+  /* ============ ENVIO ============ */
+  function enviar() {
+    var inp = $j('assistenteInput');
+    if (!inp) return;
+    var t = (inp.value || '').trim();
+    if (!t) return;
+    inp.value = '';
+    perguntar(t);
+  }
+
+  function perguntar(texto) {
+    if (!assistenteAberto) {
+      assistenteAberto = true;
+      var p = $j('assistentePainel');
+      if (p) p.classList.add('aberto');
+      if (!assistenteJaCumprimentou) {
+        assistenteJaCumprimentou = true;
+        bolha('bot', boasVindas());
+      }
+    }
+    bolha('user', texto);
+
+    /* ação pendente em texto */
+    if (__jarvisAcaoPendente) {
+      var t = jNorm(texto);
+      if (/^(confirmo|confirmar|sim|pode|manda)$/.test(t)) {
+        var a = __jarvisAcaoPendente; __jarvisAcaoPendente = null;
+        setTimeout(function () { executarAcao(a); }, 200);
+        return;
+      }
+      if (/^(cancelar|nao|cancela|deixa)$/.test(t)) {
+        __jarvisAcaoPendente = null;
+        setTimeout(function () { bolhaRica('Ação cancelada. Nada foi alterado.', []); }, 200);
+        return;
+      }
+    }
+
+    /* resposta rica */
+    var intent = jClassificar(texto);
+    if (responderRico(texto, intent)) return;
+
+    setTimeout(function () {
+      try { if (typeof window.assistenteInterceptarAvaliacaoSemanal === 'function' && window.assistenteInterceptarAvaliacaoSemanal(texto)) return; } catch (e) {}
+      try { if (typeof window.assistenteInterceptarGerenciarAluno === 'function' && window.assistenteInterceptarGerenciarAluno(texto)) return; } catch (e) {}
+
+      var r = processarLocal(texto);
+      if (r != null && r !== undefined) { bolha('bot', r); return; }
+
+      if (window.CONFIG && window.CONFIG.iaProxyUrl) {
+        var b = document.createElement('div');
+        b.className = 'assistente-bolha bot';
+        b.textContent = 'Jarvis pensando…';
+        var box = $j('assistenteMsgs');
+        if (box) { box.appendChild(b); box.scrollTop = box.scrollHeight; }
+        chamarIA(texto, b);
+        return;
+      }
+      var loc = kbLocal(texto);
+      if (loc) { bolha('bot', loc); return; }
+      bolha('bot', 'Não tenho uma resposta pronta pra isso. Tente:\n• "ajuda"\n• "próxima aula"\n• "meu check-in"\n• "pedir treino"\n• "boletim"\n• "formação"');
+    }, 260);
+  }
+
+  /* ============ RESPOSTAS RICAS COM BOTÕES ============ */
+  function responderRico(texto, intent) {
+    if (!intent) return false;
+    function pergunta(t) { setTimeout(function () { perguntar(t); }, 80); }
+
+    switch (intent) {
+      case 'ajuda':
+        bolhaRica('Sou o Jarvis. Toque em um atalho ou continue digitando.', [
+          { rotulo: '📅 Próxima aula', acao: function () { pergunta('proxima aula'); } },
+          { rotulo: '✅ Meu check-in', acao: function () { pergunta('meu check in'); } },
+          { rotulo: '🎯 Pedir treino', acao: function () { pergunta('pedir treino'); } },
+          { rotulo: '📊 Desempenho', acao: function () { pergunta('desempenho'); } },
+          { rotulo: '📄 Boletim', acao: function () { pergunta('boletim'); } },
+          { rotulo: '📆 Calendário', acao: function () { pergunta('calendario'); } },
+          { rotulo: '🎓 Formação', acao: function () { pergunta('formacao'); } },
+          { rotulo: '🔐 Senha', acao: function () { pergunta('esqueci a senha'); } }
+        ]);
+        return true;
+
+      case 'simular':
+        bolhaRica('Abrindo a simulação de avaliação — só simulação, nada é salvo.', [
+          { rotulo: 'Ir para o painel', aba: 'tab3', ancora: 'ucSimulacaoAluno' }
+        ]);
+        return true;
+
+      case 'pedirTreino':
+        bolhaRica('Vamos montar seu pedido de treino.', [
+          { rotulo: 'Abrir pedido', aba: 'tab3', ancora: 'trCardPedido' },
+          { rotulo: 'Ver meu desempenho antes', acao: function () { pergunta('desempenho'); } }
+        ]);
+        return true;
+
+      case 'senha':
+        var alunoLog = window.alunoLogado ? window.alunoLogado() : null;
+        if (alunoLog) {
+          bolhaRica('Você está logado. Quer trocar a senha agora?', [
+            { rotulo: 'Trocar senha agora', acao: function () { try { window.trocarSenhaAluno && window.trocarSenhaAluno(); } catch (e) {} } },
+            { rotulo: 'Sair e pedir nova senha', acao: function () { try { window.abrirPedidoResetSenha && window.abrirPedidoResetSenha(); } catch (e) {} } }
+          ]);
+        } else {
+          bolhaRica('Vamos pedir uma nova senha ao professor.', [
+            { rotulo: 'Pedir nova senha', acao: function () { try { window.abrirPedidoResetSenha && window.abrirPedidoResetSenha(); } catch (e) {} } },
+            { rotulo: 'Já resolvi, obrigado', acao: function () { bolhaRica('Beleza! 💚', []); } }
+          ]);
+        }
+        return true;
+
+      case 'falarProf':
+        bolhaRica('Abrindo o canal com o professor.', [
+          { rotulo: 'Ir para o painel do Aluno', aba: 'tab3', ancora: 'cardFalarProfessor' }
+        ]);
+        return true;
+
+      case 'formacao':
+        bolhaRica('Index de Formação de Professor — escolha um tema:', [
+          { rotulo: 'Aquecimento', acao: function () { pergunta('aquecimento'); } },
+          { rotulo: 'Alongamento', acao: function () { pergunta('alongamento'); } },
+          { rotulo: 'Mobilidade', acao: function () { pergunta('mobilidade'); } },
+          { rotulo: 'Quadril', acao: function () { pergunta('quadril'); } },
+          { rotulo: 'Protocolo de aula', acao: function () { pergunta('protocolo de aula'); } }
+        ]);
+        return true;
+
+      case 'boletim':
+        bolhaRica('Abrindo seu painel — o boletim fica no topo.', [
+          { rotulo: 'Ir para o painel', aba: 'tab3' }
+        ]);
+        return false;
+
+      case 'checkin':
+        bolhaRica('Verificando seu check-in de hoje…', [
+          { rotulo: 'Ir para Check-in', aba: 'tab2', ancora: 'btnConfirmarCheckinLocal' }
+        ]);
+        return false;
+
+      case 'desempenho':
+        if (!window.alunoLogado || !window.alunoLogado()) {
+          bolhaRica('Faça login para eu ver sua análise.', [{ rotulo: 'Ir para o painel', aba: 'tab3' }]);
+          return true;
+        }
+        return false;
+
+      default:
+        return false;
+    }
+  }
+
+  /* ============ SUGESTÕES PROATIVAS ============ */
+  function sugestoes() {
+    var aluno = window.alunoLogado ? window.alunoLogado() : null;
+    var d = [];
+    if (!aluno) return d;
+
+    var ck = window.obterCheckinDoDia ? window.obterCheckinDoDia(aluno) : null;
+    var aula = window.aulaDeHoje ? window.aulaDeHoje() : null;
+    if (!ck && aula) d.push({ txt: 'Hoje tem aula às ' + aula.horaInicio + '. Bora fazer check-in?', pergunta: 'como fazer check in', botao: 'Como fazer check-in' });
+    else if (ck && ck.status === 'pendente') d.push({ txt: 'Seu check-in hoje está pendente de aprovação.', pergunta: null });
+    else if (ck && ck.status === 'aprovado') d.push({ txt: 'Check-in aprovado hoje ✅ Já deu feedback da aula?', pergunta: 'feedback da aula', botao: 'Dar feedback' });
+
+    try {
+      var prazoEl = document.querySelector('#ucPrazo .uc-prazo-txt');
+      if (prazoEl) {
+        var m = prazoEl.textContent.match(/faltam (\d+) dia/);
+        if (m && parseInt(m[1], 10) <= 15) d.push({ txt: 'Faltam ' + m[1] + ' dias pro prazo da avaliação.', pergunta: 'simular avaliacao', botao: 'Simular avaliação' });
+      }
+    } catch (e) {}
+    return d;
+  }
+
+  function talvezSugerir() {
+    var hoje = new Date().toISOString().slice(0, 10);
+    if (__jarvisDicaHoje === hoje) return;
+    var ds = sugestoes();
+    if (!ds.length) return;
+    var d = ds[0];
+    __jarvisDicaHoje = hoje;
+    try { localStorage.setItem('uc_jarvis_dica_v1', hoje); } catch (e) {}
+    var ac = d.pergunta ? [{ rotulo: d.botao || 'Ver', acao: function () { perguntar(d.pergunta); } }] : [];
+    bolhaRica('💡 ' + d.txt, ac);
+  }
+
+  /* ============ BASE DE CONHECIMENTO LOCAL ============ */
+  function kbLocal(texto) {
+    var t = jNorm(texto);
+    var KB = [
+      { q: /beneficio|wellhub|gympass/, a: 'O check-in Gympass/Wellhub é feito no app do benefício — o professor valida no Portal de Parceiros.' },
+      { q: /batizado|troca de corda/, a: 'A data do batizado tem contagem regressiva na aba Início. Definida pela ADM.' },
+      { q: /uniforme|roupa/, a: 'Nas rodas e apresentações usamos calça e camisa branca. Em treinos, roupa leve de capoeira.' },
+      { q: /corda|progressao/, a: 'Progressão: Crua → Crua e Amarela → Amarela → Amarela e Laranja → Laranja → Laranja e Azul → Azul.' },
+      { q: /mensalidade|pagamento|preco/, a: 'Assuntos financeiros com a equipe. Use "Falar com o professor" na aba Aluno.' },
+      { q: /berimbau|toque|angola|benguela|regional/, a: 'Se a IA estiver configurada pela ADM, responde com profundidade. Enquanto isso, digite "formação".' }
+    ];
+    for (var i = 0; i < KB.length; i++) if (KB[i].q.test(t)) return KB[i].a;
+    return null;
+  }
+
+  /* ============ INDEX FORMAÇÃO ============ */
+  var INDEX_FORMACAO_PROFESSOR = {
+    definicoes: {
+      aquecimento: 'Preparação fisiológica e neuromuscular do corpo para o esforço. Sempre ANTES do treino.',
+      alongamento: 'Técnica para aumentar o comprimento dos tecidos moles. Ideal pós-treino ou sessão dedicada.',
+      flexibilidade: 'Capacidade PASSIVA de alcançar amplitude máxima. Resultado do alongamento.',
+      mobilidade: 'Capacidade ATIVA de mover a articulação com controle, força e estabilidade.'
+    },
+    resumoChave: 'Alongamento = "esticar o músculo". Mobilidade = "mover a articulação com controle e força".',
+    aquecimento: {
+      objetivos: ['Elevar temperatura muscular','Aumentar circulação','Ativar o sistema nervoso','Preparar padrão de movimento','Reduzir risco de lesão'],
+      estrutura: ['1. Geral (2–4 min): caminhada, bike, polichinelos','2. Específico (4–8 min): movimentos que imitam o treino','3. Ativação: séries leves do exercício principal'],
+      evidencia: ['Alongamento estático longo antes do treino reduz força temporariamente.','Alongamento dinâmico de 7–10 min melhora desempenho explosivo.']
+    },
+    alongamento: {
+      tipos: ['Estático: segura 15–60 s','Dinâmico: movimentos controlados','PNF: contrai → relaxa → alonga','Balístico: balanços rápidos (não recomendado)'],
+      recomendacoes: ['Antes do treino: dinâmico','Depois: estático ou PNF','≥ 2–3x por semana','2–3 séries de 30–120 s por grupo'],
+      importante: 'Alongar NÃO é a principal estratégia de prevenção de lesões. Força e controle motor são mais relevantes.'
+    },
+    mobilidade: {
+      oQue: 'Mobilidade = amplitude ativa + estabilidade + controle neuromuscular.',
+      superior: ['Ensina o sistema nervoso a usar nova amplitude','Previne compensações','Melhora qualidade do movimento'],
+      principios: ['Movimentos lentos e controlados (CARs)','Amplitude + controle no final','Respire de forma estável','Prefira mobilidade ativa no aquecimento']
+    },
+    quadril: {
+      importancia: 'O quadril é central na capoeira (ginga, meia-lua, aú, negativa, rolê).',
+      focos: ['Flexão e extensão controladas','Abdução/adução e rotações','CARs em 90/90','Ponte glútea e ativação de glúteo médio'],
+      dicaAula: 'No aquecimento: 2–3 min geral + 4–6 min mobilidade de quadril e coluna + 2 min ativação.'
+    },
+    protocoloAulaCapoeira: [
+      '1. Aquecimento geral 2–4 min',
+      '2. Mobilidade dinâmica 4–6 min',
+      '3. Ginga e fundamentos 3–5 min',
+      '4. Parte principal',
+      '5. Volta à calma: alongamento 5–8 min'
+    ]
+  };
+
+  function formacaoResp(texto) {
+    var t = jNorm(texto);
+    var I = INDEX_FORMACAO_PROFESSOR;
+    var tema = /aquec|along|flexib|mobilid|quadril|cars|pnf|protocolo|formacao|dar aula|aquecer|esticar/.test(t);
+    if (!tema) return null;
+    if (/diferenca|vs|o que e|definicao/.test(t) && /aquec|along|mobil|flexib/.test(t)) {
+      return '📚 Definições:\n\n🔥 Aquecimento: ' + I.definicoes.aquecimento + '\n\n🧘 Alongamento: ' + I.definicoes.alongamento + '\n\n📏 Flexibilidade: ' + I.definicoes.flexibilidade + '\n\n🎯 Mobilidade: ' + I.definicoes.mobilidade + '\n\n💡 ' + I.resumoChave;
+    }
+    if (/aquec/.test(t)) return '🔥 Aquecimento\n\nObjetivos:\n• ' + I.aquecimento.objetivos.join('\n• ') + '\n\nEstrutura:\n' + I.aquecimento.estrutura.join('\n') + '\n\nEvidência:\n• ' + I.aquecimento.evidencia.join('\n• ');
+    if (/along|esticar|pnf|estatico/.test(t)) return '🧘 Alongam
