@@ -1591,13 +1591,13 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
 </div>
 
 <!-- Assistente Virtual -->
-<div id="dicaAssistentePrimeiroAcesso" class="dica-assistente-bolha" style="display:none;" onclick="toggleAssistente()">Precisa de ajuda? 👋</div>
-<button id="assistenteFab" onclick="toggleAssistente()" title="Assistente Capoeira" aria-label="Abrir assistente">
+<div id="dicaAssistentePrimeiroAcesso" class="dica-assistente-bolha" style="display:none;" onclick="toggleAssistente()">Fale com o Jarvis 👋</div>
+<button id="assistenteFab" onclick="toggleAssistente()" title="Jarvis — Assistente Capoeira" aria-label="Abrir Jarvis">
   <i class="fas fa-robot"></i>
 </button>
 <div id="assistentePainel">
   <div class="assistente-header">
-    <h4><i class="fas fa-robot"></i> Assistente Capoeira</h4>
+    <h4><i class="fas fa-robot"></i> Jarvis</h4>
     <button class="btn btn-mini btn-back" style="margin:0; width:auto;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>
   </div>
   <div class="assistente-msgs" id="assistenteMsgs"></div>
@@ -1620,7 +1620,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
     <button class="assistente-atalho" onclick="assistentePerguntar('ajuda')">Ajuda</button>
   </div>
   <div class="assistente-input-row">
-    <input id="assistenteInput" placeholder="Pergunte algo..." onkeypress="if(event.key==='Enter') assistenteEnviar()">
+    <input id="assistenteInput" placeholder="Pergunte ao Jarvis..." onkeypress="if(event.key==='Enter') assistenteEnviar()">
     <button class="btn btn-secondary" onclick="assistenteEnviar()"><i class="fas fa-paper-plane"></i></button>
   </div>
 </div>
@@ -10687,14 +10687,15 @@ function assistenteMensagemBoasVindas() {
   var extraProfessor = assistenteEhProfessor()
     ? '\n\n👨‍🏫 Modo equipe:\n• "avaliação de [nome]" ou "ficha de [nome]" — abre a ficha\n• "formação" / "aquecimento" / "mobilidade" / "protocolo de aula" — Index de Formação de Professor'
     : '';
-  return saudacao + 'Sou o Assistente Capoeira.\n\n' +
+  return saudacao + 'Sou o Jarvis, assistente da academia.\n\n' +
     'Posso ajudar com:\n' +
     '• Próxima aula e horários\n' +
     '• Status do seu check-in\n' +
     '• Como usar o app (check-in, pedidos de treino, certificados)\n' +
     '• Sua graduação, avaliações e presenças\n' +
     '• Avisos do professor\n' +
-    '• Formação de professor (aquecimento, alongamento, mobilidade)' + extraProfessor + '\n\n' +
+    '• Formação de professor (aquecimento, alongamento, mobilidade)\n' +
+    '• Perguntas livres (quando a IA estiver configurada)' + extraProfessor + '\n\n' +
     'Toque em um atalho ou digite sua pergunta.';
 }
 
@@ -10735,7 +10736,17 @@ function assistentePerguntar(texto) {
       assistenteAdicionarBolha('bot', resp);
       return;
     }
-    assistenteAdicionarBolha('bot', 'Não entendi essa pergunta. Tente, por exemplo:\n• "próxima aula"\n• "meu check-in"\n• "horários"\n• "pedir treino"\n• "ajuda"');
+    /* Fallback Jarvis/IA: se o proxy estiver configurado, pergunta à IA; senão, mensagem de ajuda */
+    if (CONFIG.iaProxyUrl) {
+      var bolha = document.createElement('div');
+      bolha.className = 'assistente-bolha bot';
+      bolha.textContent = 'Jarvis pensando…';
+      var box = $('assistenteMsgs');
+      if (box) { box.appendChild(bolha); box.scrollTop = box.scrollHeight; }
+      chamarAssistenteIA(texto, bolha);
+      return;
+    }
+    assistenteAdicionarBolha('bot', 'Não entendi essa pergunta. Tente, por exemplo:\n• "próxima aula"\n• "meu check-in"\n• "horários"\n• "pedir treino"\n• "ajuda"\n\n(Para respostas livres com IA, o ADM configura a URL do Assistente em Configurações.)');
   }, 280);
 }
 
