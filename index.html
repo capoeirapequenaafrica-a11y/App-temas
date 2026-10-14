@@ -586,6 +586,28 @@ footer a { color: var(--accent-blue); }
   margin-left: auto;
   border-bottom-right-radius: 4px;
 }
+.assistente-bolha .jarvis-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.assistente-bolha .jarvis-acoes button {
+  border: 1px solid var(--primary-green);
+  background: rgba(0,230,118,0.12);
+  color: var(--primary-green);
+  border-radius: 16px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.assistente-bolha .jarvis-acoes button.secundario {
+  border-color: var(--accent-blue);
+  background: rgba(0,210,255,0.1);
+  color: var(--accent-blue);
+}
+.assistente-bolha .jarvis-acoes button:active { opacity: 0.85; }
 .assistente-atalhos {
   display: flex;
   flex-wrap: wrap;
@@ -813,15 +835,18 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
 
     <div class="card card-destaque" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-bell"></i> Avisos do Professor</h3>
-      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber um aviso no seu celular quando o professor publicar algo novo (enquanto o app estiver aberto):</p>
+      <p style="font-size:0.72rem; color:var(--text-sub); margin-bottom:8px;">Ative para receber lembretes de aula, check-in e intensidade do treino, além dos avisos do professor (com o app aberto):</p>
       <button class="btn btn-secondary" id="btnAtivarNotificacao" onclick="pedirPermissaoNotificacao()"><i class="fas fa-bell"></i> Ativar Notificações</button>
     </div>
 
     <div class="card" id="cardHorarioFixoInicio" style="border:1px solid var(--primary-green); display:none;">
       <h3><i class="fas fa-calendar-week"></i> Horário Fixo da Semana</h3>
       <div id="listaHorarioFixoInicio"></div>
-      <button class="btn" id="btnConfirmarPresencaHoje" style="margin-top:8px; display:none;" onclick="confirmarPresencaHoje()"><i class="fas fa-hand-point-up"></i> Vou Comparecer Hoje</button>
-      <p id="txtJaConfirmouHoje" style="display:none; font-size:0.75rem; color:var(--primary-green); margin-top:6px;"><i class="fas fa-check-circle"></i> Presença confirmada para hoje!</p>
+      <button class="btn" id="btnConfirmarPresencaHoje" style="margin-top:8px; display:none;" onclick="confirmarPresencaHoje()"><i class="fas fa-hand-point-up"></i> Vou treinar hoje</button>
+      <button class="btn btn-danger btn-mini" id="btnCancelarCompromissoHoje" style="margin-top:6px; display:none;" onclick="cancelarCompromissoHoje()"><i class="fas fa-times"></i> Não vou mais</button>
+      <p id="txtJaConfirmouHoje" style="display:none; font-size:0.75rem; color:var(--primary-green); margin-top:6px;"><i class="fas fa-check-circle"></i> Compromisso registrado: você marcou que vai treinar. Faça o check-in na hora da aula.</p>
+      <p id="txtFaltaCompromissoHoje" style="display:none; font-size:0.75rem; color:var(--danger); margin-top:6px;"><i class="fas fa-exclamation-triangle"></i> Falta de compromisso: marcou que ia e não compareceu.</p>
+      <p class="mini" style="margin-top:6px;">Marcar que vai e <b>não ir</b> conta como <b>falta de compromisso</b> na progressão e na graduação.</p>
     </div>
 
     <div class="card fechado" style="border:1px solid #e6683c;">
@@ -1602,6 +1627,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
   </div>
   <div class="assistente-msgs" id="assistenteMsgs"></div>
   <div class="assistente-atalhos" id="assistenteAtalhos">
+    <button class="assistente-atalho" onclick="assistentePerguntar('como foi a aula')">Como foi a aula</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('próxima aula')">Próxima aula</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('meu check-in')">Meu check-in</button>
     <button class="assistente-atalho" onclick="assistentePerguntar('como fazer check-in')">Como fazer check-in</button>
@@ -1717,17 +1743,61 @@ function ucIrParaBackup() { location.href = ucUrlBackup(); }
 <script>
 /* ▼ core-base.js */
 /* CORE-BASE.JS — Universo Capoeira (v87) · trecho do app dividido sem alterar o código (linhas 1325–1667 do index.html original) */
-/* Remove qualquer Service Worker e cache antigos (de versões anteriores, ex: v86)
-   que possam estar guardando uma cópia velha do app no navegador do usuário. */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(function (registrations) {
-    registrations.forEach(function (reg) { reg.unregister(); });
-  }).catch(function () {});
+/* Service Worker v88: Background Sync (fila offline) + Web Push */
+var UC_SW_REG = null;
+function ucRegistrarServiceWorker() {
+  if (!('serviceWorker' in navigator)) return Promise.resolve(null);
+  var swUrl = 'sw.js';
+  try {
+    if (location.protocol === 'file:') {
+      console.warn('[SW] file:// não registra Service Worker — use HTTPS ou localhost.');
+      return Promise.resolve(null);
+    }
+  } catch (e) {}
+  return navigator.serviceWorker.register(swUrl).then(function (reg) {
+    UC_SW_REG = reg;
+    console.log('[SW] registrado', reg.scope);
+    return reg;
+  }).catch(function (e) {
+    console.warn('[SW] falha ao registrar', e);
+    return null;
+  });
 }
-if (window.caches && caches.keys) {
-  caches.keys().then(function (nomes) {
-    nomes.forEach(function (nome) { caches.delete(nome); });
-  }).catch(function () {});
+function ucSwPost(msg) {
+  try {
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage(msg);
+      return;
+    }
+    if (UC_SW_REG && UC_SW_REG.active) UC_SW_REG.active.postMessage(msg);
+  } catch (e) {}
+}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', function (event) {
+    var d = event.data || {};
+    if (d.type === 'UC_SYNC_FILA') {
+      try {
+        DB.sincronizarFilaOffline().then(function (n) {
+          if (n > 0) {
+            try { mostrarToast(n + ' check-in(s) sincronizado(s).'); } catch (e) {}
+            try { if (typeof renderAbaProfessor === 'function') renderAbaProfessor(); } catch (e) {}
+            try { if (typeof renderCheckin === 'function') renderCheckin(); } catch (e) {}
+          }
+        });
+      } catch (e) {}
+    }
+    if (d.type === 'UC_FILA_SYNC_OK') {
+      try {
+        mostrarToast((d.ok || 0) + ' item(ns) enviados pelo Service Worker.');
+        DB.sincronizarFilaOffline();
+        if (typeof renderAbaProfessor === 'function') renderAbaProfessor();
+        if (typeof renderCheckin === 'function') renderCheckin();
+      } catch (e) {}
+    }
+    if (d.type === 'UC_NOTIF_CLICK' && d.url) {
+      try { if (String(d.url).indexOf('professor') >= 0 && typeof abrirAba === 'function') abrirAba('tab4'); } catch (e) {}
+    }
+  });
 }
 
 /* =====================================================================
@@ -1782,7 +1852,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'pushSubscriptions'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -1797,7 +1867,8 @@ var CONFIG_PADRAO = {
   graduacoes: GRADUACOES_PADRAO.slice(),
   iaProxyUrl: '',
   baseConhecimento: '',
-  versaoPublicada: ''
+  versaoPublicada: '',
+  vapidPublicKey: ''
 };
 
 /* ---------------------------------------------------------------
@@ -2165,8 +2236,12 @@ var DB = {
   },
   _enfileirar: function (col, id, dados) {
     var fila = this._lerFila();
+    /* evita duplicar o mesmo id na fila */
+    fila = fila.filter(function (x) { return !(x.col === col && x.id === id); });
     fila.push({ col: col, id: id, dados: dados, em: Date.now() });
     this._gravarFila(fila);
+    try { if (typeof ucEspelharFilaNoSW === 'function') ucEspelharFilaNoSW(fila); } catch (e) {}
+    try { if (typeof ucPedirBackgroundSync === 'function') ucPedirBackgroundSync(); } catch (e) {}
   },
   sincronizarFilaOffline: function () {
     var self = this;
@@ -2176,18 +2251,50 @@ var DB = {
     if (!fila.length) return Promise.resolve(0);
     var rest = [];
     var ok = 0;
+    var checkinsSync = 0;
     var chain = Promise.resolve();
+    var agoraSync = (typeof agoraISO === 'function') ? agoraISO() : new Date().toISOString();
     fila.forEach(function (item) {
       chain = chain.then(function () {
-        return self.fs.collection(item.col).doc(item.id).set(item.dados, { merge: true })
-          .then(function () { ok++; })
+        var payload = Object.assign({}, item.dados, { id: item.id });
+        if (item.col === 'presencas') {
+          payload.offline = false;
+          payload.foiOffline = !!(item.dados && (item.dados.offline || item.dados.foiOffline));
+          payload.sincronizadoEm = agoraSync;
+          payload.aguardandoSync = false;
+        }
+        return self.fs.collection(item.col).doc(item.id).set(payload, { merge: true })
+          .then(function () {
+            ok++;
+            if (item.col === 'presencas') {
+              checkinsSync++;
+              /* atualiza cache local com marca de sincronizado */
+              var lista = self.cache.presencas || [];
+              for (var i = 0; i < lista.length; i++) {
+                if (lista[i].id === item.id) {
+                  lista[i] = Object.assign({}, lista[i], payload);
+                  break;
+                }
+              }
+            }
+          })
           .catch(function () { rest.push(item); });
       });
     });
     return chain.then(function () {
       self._gravarFila(rest);
+      try { if (typeof ucEspelharFilaNoSW === 'function') ucEspelharFilaNoSW(rest); } catch (e) {}
+      try { self.persistirLocal(); } catch (e) {}
       if (ok > 0) {
-        try { mostrarToast(ok + ' item(ns) sincronizado(s) com a nuvem.'); } catch (e) {}
+        try { self.avisar('presencas'); } catch (e) {}
+        try {
+          if (checkinsSync > 0) {
+            mostrarToast(checkinsSync + ' check-in(s) offline enviado(s) ao professor.');
+            notificar('Check-in sincronizado', checkinsSync + ' presença(s) offline chegaram à nuvem com o horário original.');
+          } else {
+            mostrarToast(ok + ' item(ns) sincronizado(s) com a nuvem.');
+          }
+        } catch (e) {}
       }
       return ok;
     });
@@ -2209,17 +2316,41 @@ var DB = {
       try { this.persistirLocal(); } catch (e) {}
 
       var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+      var dadosFull = Object.assign({ id: idFinal }, dados);
       if (offline) {
-        this._enfileirar(col, idFinal, dados);
+        if (col === 'presencas') {
+          dadosFull.offline = true;
+          dadosFull.foiOffline = true;
+          dadosFull.aguardandoSync = true;
+          /* garante horário real do momento do toque no aparelho */
+          if (!dadosFull.checkinEm) dadosFull.checkinEm = (typeof agoraISO === 'function') ? agoraISO() : new Date().toISOString();
+          if (!dadosFull.hora) dadosFull.hora = (typeof horaLocalHM === 'function') ? horaLocalHM() : '';
+        }
+        /* reflete no cache */
+        if (achouIdx >= 0) lista[achouIdx] = Object.assign({}, lista[achouIdx], dadosFull);
+        else { /* já foi push acima com dados sem flags */ 
+          for (var j = 0; j < lista.length; j++) {
+            if (lista[j].id === idFinal) { lista[j] = Object.assign({}, lista[j], dadosFull); break; }
+          }
+        }
+        this._enfileirar(col, idFinal, dadosFull);
+        try { this.persistirLocal(); this.avisar(col); } catch (e) {}
         return Promise.resolve(idFinal);
       }
 
       var doc = this.fs.collection(col).doc(idFinal);
-      return doc.set(dados, { merge: true }).then(function () { return idFinal; })
+      return doc.set(dadosFull, { merge: true }).then(function () { return idFinal; })
         .catch(function (e) {
           console.warn('[DB] Sem nuvem — salvando offline em ' + col, e);
-          self._enfileirar(col, idFinal, dados);
-          try { mostrarToast('Salvo offline. Será enviado quando houver internet.', 'erro'); } catch (e2) {}
+          if (col === 'presencas') {
+            dadosFull.offline = true;
+            dadosFull.foiOffline = true;
+            dadosFull.aguardandoSync = true;
+            if (!dadosFull.checkinEm) dadosFull.checkinEm = (typeof agoraISO === 'function') ? agoraISO() : new Date().toISOString();
+          }
+          self._enfileirar(col, idFinal, dadosFull);
+          try { self.persistirLocal(); self.avisar(col); } catch (e3) {}
+          try { mostrarToast('Salvo offline. Será enviado quando houver internet.'); } catch (e2) {}
           return idFinal; /* não falha o check-in */
         });
     }
@@ -2858,9 +2989,11 @@ function pedirPermissaoNotificacao() {
   Notification.requestPermission().then(function (perm) {
     if (perm === 'granted') {
       localStorage.setItem(CHAVE_NOTIF, '1');
-      $('btnAtivarNotificacao').innerHTML = '<i class="fas fa-bell"></i> Notificações Ativas';
+      var btn = $('btnAtivarNotificacao');
+      if (btn) btn.innerHTML = '<i class="fas fa-bell"></i> Notificações Ativas';
       mostrarToast('Notificações ativadas!');
-      notificar('Universo Capoeira', 'Você receberá os avisos do professor.');
+      notificar('Universo Capoeira', 'Lembretes ativos: aula, check-in e intensidade do treino.');
+      try { ucInscreverWebPush(); } catch (e) { console.warn('push', e); }
     } else {
       localStorage.removeItem(CHAVE_NOTIF);
       mostrarToast('Permissão de notificação negada.', 'erro');
@@ -2868,12 +3001,225 @@ function pedirPermissaoNotificacao() {
   });
 }
 
+/* ---------- Background Sync + IndexedDB (espelho da fila) ---------- */
+function ucEspelharFilaNoSW(fila) {
+  try { ucSwPost({ type: 'UC_SET_FILA', items: fila || [] }); } catch (e) {}
+}
+function ucEnviarCfgFirebaseAoSW() {
+  try {
+    var cfg = (typeof carregarConfigFirebase === 'function') ? carregarConfigFirebase() : null;
+    if (cfg && cfg.projectId) ucSwPost({ type: 'UC_SET_FIREBASE_CFG', cfg: cfg });
+  } catch (e) {}
+}
+function ucPedirBackgroundSync() {
+  var pedir = function (reg) {
+    if (!reg || !reg.sync) return;
+    reg.sync.register('uc-fila-offline').catch(function () {});
+  };
+  if (UC_SW_REG) pedir(UC_SW_REG);
+  else if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+    navigator.serviceWorker.ready.then(pedir).catch(function () {});
+  }
+}
+
+/* ---------- Web Push (subscription da equipe / aluno) ---------- */
+function ucUrlBase64ToUint8Array(base64String) {
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  var rawData = atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+  for (var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+function ucInscreverWebPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return Promise.resolve(null);
+  }
+  var vapid = (CONFIG && CONFIG.vapidPublicKey) ? String(CONFIG.vapidPublicKey).trim() : '';
+  if (!vapid) {
+    console.info('[push] Configure vapidPublicKey em ADM/config para ativar Web Push remoto.');
+    return Promise.resolve(null);
+  }
+  return navigator.serviceWorker.ready.then(function (reg) {
+    return reg.pushManager.getSubscription().then(function (existente) {
+      if (existente) return existente;
+      return reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: ucUrlBase64ToUint8Array(vapid)
+      });
+    });
+  }).then(function (sub) {
+    if (!sub) return null;
+    var json = sub.toJSON();
+    var quem = (typeof sessaoEquipe !== 'undefined' && sessaoEquipe)
+      ? { papel: sessaoEquipe.papel || 'equipe', nome: sessaoEquipe.nome || '', idRef: sessaoEquipe.id || '' }
+      : (typeof alunoLogado === 'function' && alunoLogado())
+        ? { papel: 'aluno', nome: alunoLogado().nome, idRef: alunoLogado().id }
+        : { papel: 'visitante', nome: '', idRef: '' };
+    var idDoc = 'sub_' + btoa(json.endpoint || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 40);
+    return DB.salvar('pushSubscriptions', {
+      endpoint: json.endpoint,
+      keys: json.keys || {},
+      papel: quem.papel,
+      nome: quem.nome,
+      idRef: quem.idRef,
+      userAgent: (navigator.userAgent || '').slice(0, 180),
+      criadoEm: agoraISO(),
+      atualizadoEm: agoraISO()
+    }, idDoc).then(function () {
+      console.log('[push] subscription salva');
+      return sub;
+    });
+  }).catch(function (e) {
+    console.warn('[push] inscrição falhou', e);
+    return null;
+  });
+}
+
 function notificacaoAtiva() { return localStorage.getItem(CHAVE_NOTIF) === '1'; }
 
 function notificar(titulo, corpo) {
   if (!notificacaoAtiva() || !('Notification' in window) || Notification.permission !== 'granted') return;
-  try { new Notification(titulo, { body: corpo, icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg' }); }
-  catch (e) { console.warn('Falha ao notificar', e); }
+  try {
+    new Notification(titulo, {
+      body: corpo,
+      icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg',
+      tag: 'uc-' + String(titulo || '').slice(0, 40),
+      renotify: false
+    });
+  } catch (e) {
+    try { new Notification(titulo, { body: corpo }); } catch (e2) { console.warn('Falha ao notificar', e2); }
+  }
+}
+
+/* ---------- Lembretes automáticos (check-in, aula, intensidade) ---------- */
+function ucLembreteJaEnviado(chave) {
+  try { return localStorage.getItem(chave) === '1'; } catch (e) { return false; }
+}
+function ucMarcarLembrete(chave) {
+  try { localStorage.setItem(chave, '1'); } catch (e) {}
+}
+
+function ucTemCheckinHoje(aluno) {
+  if (!aluno || typeof obterCheckinDoDia !== 'function') return null;
+  return obterCheckinDoDia(aluno);
+}
+
+function ucPendenteIntensidade(aluno) {
+  if (!aluno) return false;
+  var ck = ucTemCheckinHoje(aluno);
+  if (!ck || ck.status !== 'aprovado') return false;
+  return !DB.listar('feedbacksAula').some(function (f) {
+    return f.alunoId === aluno.id && f.data === dataLocalISO();
+  });
+}
+
+/**
+ * Motor de lembretes — roda a cada minuto com o app aberto.
+ * Tipos:
+ *  - aula_30min: 30 min antes do início
+ *  - aula_inicio: na hora da aula (janela de check-in aberta)
+ *  - checkin_falta: 20 min após o início sem check-in
+ *  - intensidade: após check-in aprovado, ou 15 min após o fim da aula
+ */
+function processarLembretesNotificacao() {
+  try { processarFaltasCompromisso(); } catch (e) {}
+  var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+  if (!aluno) return;
+
+  /* Avaliações novas — independente de haver aula hoje */
+  try { jarvisProcessarAvaliacoesPendentes(aluno); } catch (e) {}
+
+  if (typeof aulaDeHoje !== 'function') return;
+  var aula = aulaDeHoje();
+  if (!aula) return;
+
+  var agora = agoraEmMinutos();
+  var inicio = minutosDoHM(aula.horaInicio);
+  var fim = minutosDoHM(aula.horaFim);
+  if (inicio === null) return;
+  if (fim === null) fim = inicio + 60;
+
+  var hoje = dataLocalISO();
+  var polo = '';
+  try {
+    var p = aula.poloId ? DB.buscar('polos', aula.poloId) : null;
+    polo = p ? (' — ' + p.nome) : '';
+  } catch (e) {}
+
+  var ck = ucTemCheckinHoje(aluno);
+  var fezCheckin = !!(ck);
+  var aprovado = !!(ck && ck.status === 'aprovado');
+  var notifOk = notificacaoAtiva();
+
+  /* 1) 30 minutos antes */
+  if (agora >= inicio - 30 && agora < inicio - 25) {
+    var k30 = 'uc_lemb_aula30_' + hoje + '_' + aluno.id;
+    if (!ucLembreteJaEnviado(k30)) {
+      ucMarcarLembrete(k30);
+      if (notifOk) {
+        notificar('Aula em 30 minutos 🥋', 'Treino às ' + (aula.horaInicio || '') + polo + '. Não esqueça o check-in.');
+      }
+      try { jarvisAvisarCheckinObrigatorio('em30', aula, polo); } catch (e) {}
+    }
+  }
+
+  /* 2) Janela de check-in / horário da aula */
+  var j = typeof janelaCheckin === 'function' ? janelaCheckin(aula) : null;
+  if (j && agora >= j.abre && agora <= inicio + 10 && !fezCheckin) {
+    var kIni = 'uc_lemb_checkin_ini_' + hoje + '_' + aluno.id;
+    if (!ucLembreteJaEnviado(kIni)) {
+      ucMarcarLembrete(kIni);
+      if (notifOk) {
+        notificar('Hora do check-in!', 'Aula às ' + (aula.horaInicio || '') + polo + '. Confirme a presença.');
+      }
+      try { jarvisAvisarCheckinObrigatorio('hora', aula, polo); } catch (e) {}
+    }
+  }
+
+  /* 3) 20 min após o início sem check-in — obrigatório */
+  if (agora >= inicio + 20 && agora < fim && !fezCheckin) {
+    var kFalta = 'uc_lemb_checkin_falta_' + hoje + '_' + aluno.id;
+    if (!ucLembreteJaEnviado(kFalta)) {
+      ucMarcarLembrete(kFalta);
+      if (notifOk) {
+        notificar('Check-in obrigatório', 'A aula já começou. Faça o check-in agora se estiver no treino.');
+      }
+      try { jarvisAvisarCheckinObrigatorio('falta', aula, polo); } catch (e) {}
+    }
+  }
+
+  /* 4) Intensidade da aula */
+  if (aprovado && ucPendenteIntensidade(aluno)) {
+    var liberarIntensidade = agora >= fim + 5 || agora >= inicio + 40;
+    if (liberarIntensidade) {
+      var kInt = 'uc_lemb_intensidade_' + hoje + '_' + aluno.id;
+      if (!ucLembreteJaEnviado(kInt)) {
+        ucMarcarLembrete(kInt);
+        if (notifOk) {
+          notificar('Como foi a aula de hoje?', 'Conte a intensidade no Jarvis (toque e responda).');
+        }
+        try { jarvisPerguntarSobreAula(true); } catch (e) {}
+      }
+    }
+  }
+}
+
+var _ucLembretesTimer = null;
+function iniciarLembretesNotificacao() {
+  if (_ucLembretesTimer) return;
+  /* primeira checagem em 8s (dá tempo do Firebase carregar) */
+  setTimeout(function () { try { processarLembretesNotificacao(); } catch (e) {} }, 8000);
+  _ucLembretesTimer = setInterval(function () {
+    try { processarLembretesNotificacao(); } catch (e) {}
+  }, 60000);
+  /* ao voltar para o app */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      try { processarLembretesNotificacao(); } catch (e) {}
+    }
+  });
 }
 
 </script>
@@ -6833,20 +7179,33 @@ function renderHorarioFixoInicio() {
   });
   box.innerHTML = html;
 
-  /* botão "vou comparecer hoje" */
+  /* compromisso: "vou treinar" / "não vou mais" / falta de compromisso */
+  try { processarFaltasCompromisso(); } catch (e) {}
   var aulaHoje = aulaDeHoje();
   var btn = $('btnConfirmarPresencaHoje');
+  var btnCancel = $('btnCancelarCompromissoHoje');
   var txt = $('txtJaConfirmouHoje');
-  var aluno = alunoLogado() || nomeCheckinAtual();
-  var jaConfirmou = false;
-  if (aluno) {
-    jaConfirmou = DB.listar('presencas').some(function (p) {
-      return p.data === dataLocalISO() && p.tipo === 'antecipada' && normalizar(p.alunoNome) === normalizar(aluno);
-    });
+  var txtFalta = $('txtFaltaCompromissoHoje');
+  var alunoObj = alunoLogado();
+  var nomeRef = alunoObj ? alunoObj.nome : nomeCheckinAtual();
+  var comp = nomeRef ? obterCompromissoDoDia(alunoObj || nomeRef) : null;
+  if (btn) btn.style.display = 'none';
+  if (btnCancel) btnCancel.style.display = 'none';
+  if (txt) txt.style.display = 'none';
+  if (txtFalta) txtFalta.style.display = 'none';
+  if (aulaHoje && nomeRef) {
+    if (comp && comp.status === 'falta_compromisso') {
+      if (txtFalta) txtFalta.style.display = 'block';
+    } else if (comp && (comp.status === 'pendente' || comp.status === 'compromisso')) {
+      if (txt) txt.style.display = 'block';
+      if (btnCancel) btnCancel.style.display = 'flex';
+    } else if (!comp || comp.status === 'cancelado') {
+      var ckOk = obterCheckinDoDia(alunoObj || nomeRef);
+      if (!ckOk || ckOk.tipo === 'antecipada') {
+        if (btn) btn.style.display = 'flex';
+      }
+    }
   }
-  if (aulaHoje && !jaConfirmou) { btn.style.display = 'flex'; txt.style.display = 'none'; }
-  else if (jaConfirmou) { btn.style.display = 'none'; txt.style.display = 'block'; }
-  else { btn.style.display = 'none'; txt.style.display = 'none'; }
 }
 
 function aulaDeHoje() {
@@ -6861,35 +7220,142 @@ function nomeCheckinAtual() {
   return campo ? (campo.value || '').trim() : '';
 }
 
+/** Compromisso do dia: tipo antecipada/compromisso (vou treinar) */
+function obterCompromissoDoDia(nomeOuAluno, dataISO) {
+  dataISO = dataISO || dataLocalISO();
+  var aluno = null, nomeNorm = '';
+  if (typeof nomeOuAluno === 'object' && nomeOuAluno) {
+    aluno = nomeOuAluno;
+    nomeNorm = normalizar(aluno.nome);
+  } else {
+    nomeNorm = normalizar(nomeOuAluno);
+    aluno = encontrarAlunoPorNome(nomeOuAluno);
+  }
+  if (!nomeNorm && !aluno) return null;
+  var lista = DB.listar('presencas');
+  for (var i = 0; i < lista.length; i++) {
+    var p = lista[i];
+    if (p.data !== dataISO) continue;
+    if (p.tipo !== 'antecipada' && p.tipo !== 'compromisso') continue;
+    if (aluno && p.alunoId && p.alunoId === aluno.id) return p;
+    if (nomeNorm && normalizar(p.alunoNome) === nomeNorm) return p;
+  }
+  return null;
+}
+
 function confirmarPresencaHoje() {
   var aula = aulaDeHoje();
-  var nome = alunoLogado() ? alunoLogado().nome : nomeCheckinAtual();
+  var logado = alunoLogado();
+  var nome = logado ? logado.nome : nomeCheckinAtual();
   if (!nome) { mostrarToast('Faça login ou preencha seu nome no Check-in.', 'erro'); return; }
   if (!aula) { mostrarToast('Nenhuma aula cadastrada para hoje.', 'erro'); return; }
-  var aluno = alunoLogado() || encontrarAlunoPorNome(nome);
-  if (jaFezCheckinHoje(aluno || nome)) {
-    mostrarToast('Você já registrou presença para hoje. Só é permitido um check-in por aula.', 'erro');
+  var aluno = logado || encontrarAlunoPorNome(nome);
+  var ck = obterCheckinDoDia(aluno || nome);
+  if (ck && ck.status === 'aprovado') {
+    mostrarToast('Você já tem presença aprovada hoje.', 'erro');
     renderHorarioFixoInicio();
     return;
   }
-  DB.salvar('presencas', {
+  if (ck && ck.tipo !== 'antecipada' && ck.tipo !== 'compromisso' && ck.status === 'pendente') {
+    mostrarToast('Você já tem check-in pendente de aprovação hoje.', 'erro');
+    renderHorarioFixoInicio();
+    return;
+  }
+  var existente = obterCompromissoDoDia(aluno || nome);
+  if (existente && existente.status !== 'cancelado' && existente.status !== 'falta_compromisso') {
+    mostrarToast('Você já marcou que vai treinar hoje.', 'erro');
+    renderHorarioFixoInicio();
+    return;
+  }
+  var dados = {
     alunoId: aluno ? aluno.id : '',
     alunoNome: aluno ? aluno.nome : nome,
     alunoApelido: aluno ? (aluno.apelido || '') : '',
     poloId: aula.poloId || '',
     poloNome: (DB.buscar('polos', aula.poloId) || {}).nome || '',
-    horarioId: aula.id,
+    horarioId: aula.id || '',
     data: dataLocalISO(),
     hora: horaLocalHM(),
-    tipo: 'antecipada',
+    tipo: 'compromisso',
     status: 'pendente',
+    compromisso: true,
     atrasoMin: 0,
     justificativa: '',
     criadoEm: agoraISO()
-  }).then(function () {
-    mostrarToast('Presença de hoje registrada. Bom treino!');
+  };
+  var prom = existente
+    ? DB.salvar('presencas', dados, existente.id)
+    : DB.salvar('presencas', dados);
+  prom.then(function () {
+    mostrarToast('Compromisso registrado: você vai treinar hoje. Não esqueça o check-in na hora!');
+    notificar('Compromisso de treino', 'Você marcou que vai treinar hoje. Se não for, cancele ou contará como falta de compromisso.');
+    registroLog('aluno', 'Compromisso de treino: ' + (aluno ? aluno.nome : nome));
     renderHorarioFixoInicio();
     renderCheckin();
+    try { renderAluno(); } catch (e) {}
+  });
+}
+
+function cancelarCompromissoHoje() {
+  var logado = alunoLogado();
+  var nome = logado ? logado.nome : nomeCheckinAtual();
+  if (!nome) { mostrarToast('Faça login para cancelar o compromisso.', 'erro'); return; }
+  var aluno = logado || encontrarAlunoPorNome(nome);
+  var comp = obterCompromissoDoDia(aluno || nome);
+  if (!comp) { mostrarToast('Não há compromisso ativo para hoje.', 'erro'); return; }
+  if (comp.status === 'aprovado') {
+    mostrarToast('Presença já aprovada — não é possível cancelar.', 'erro');
+    return;
+  }
+  DB.salvar('presencas', {
+    status: 'cancelado',
+    compromissoCanceladoEm: agoraISO(),
+    observacaoProfessor: (comp.observacaoProfessor || '') + ' [Aluno cancelou o compromisso]'
+  }, comp.id).then(function () {
+    mostrarToast('Compromisso cancelado. Tudo certo.');
+    registroLog('aluno', 'Cancelou compromisso de treino: ' + (aluno ? aluno.nome : nome));
+    renderHorarioFixoInicio();
+    renderCheckin();
+    try { renderAluno(); } catch (e) {}
+  });
+}
+
+/**
+ * Após o fim da aula: quem marcou "vou treinar" e não fez check-in real
+ * vira falta de compromisso (conta na progressão / graduação).
+ */
+function processarFaltasCompromisso() {
+  var aula = aulaDeHoje();
+  if (!aula) return;
+  var fim = minutosDoHM(aula.horaFim);
+  if (fim === null) {
+    var ini = minutosDoHM(aula.horaInicio);
+    fim = ini !== null ? ini + 90 : null;
+  }
+  if (fim === null) return;
+  /* 15 min após o fim da aula */
+  if (agoraEmMinutos() < fim + 15) return;
+
+  var hoje = dataLocalISO();
+  DB.listar('presencas').forEach(function (p) {
+    if (p.data !== hoje) return;
+    if (p.tipo !== 'antecipada' && p.tipo !== 'compromisso') return;
+    if (p.status !== 'pendente' && p.status !== 'compromisso') return;
+    /* se já tem check-in local/aprovado no mesmo dia, não marca falta */
+    var temPresencaReal = DB.listar('presencas').some(function (q) {
+      if (q.id === p.id || q.data !== hoje) return false;
+      if (q.tipo === 'antecipada' || q.tipo === 'compromisso') return false;
+      if (q.status === 'cancelado' || q.status === 'falta_compromisso') return false;
+      var mesmo = (p.alunoId && q.alunoId && p.alunoId === q.alunoId) ||
+        (normalizar(p.alunoNome) === normalizar(q.alunoNome));
+      return mesmo && (q.status === 'aprovado' || q.status === 'pendente');
+    });
+    if (temPresencaReal) return;
+    DB.salvar('presencas', {
+      status: 'falta_compromisso',
+      faltaCompromissoEm: agoraISO(),
+      observacaoProfessor: (p.observacaoProfessor || '') + ' Falta de compromisso: marcou que ia treinar e não compareceu.'
+    }, p.id);
   });
 }
 
@@ -7109,6 +7575,7 @@ function analisarDesempenhoAtletico(aluno) {
   var aprovadas = presencas.filter(function (p) { return p.status === 'aprovado'; });
   var pendentes = presencas.filter(function (p) { return p.status === 'pendente'; });
   var rejeitadas = presencas.filter(function (p) { return p.status === 'rejeitado'; });
+  var faltasCompromisso = presencas.filter(function (p) { return p.status === 'falta_compromisso'; });
   var comAtraso = aprovadas.filter(function (p) { return (p.atrasoMin || 0) > 0; });
   var atrasoMedio = comAtraso.length
     ? Math.round(comAtraso.reduce(function (s, p) { return s + (p.atrasoMin || 0); }, 0) / comAtraso.length)
@@ -7187,8 +7654,51 @@ function analisarDesempenhoAtletico(aluno) {
     recomendacoes.push('Foque em treinos de ' + pontoFraco.nome.toLowerCase() + ' — use "Pedir Treino Específico" na aba Aluno.');
   }
   if (comAtraso.length >= 2) recomendacoes.push('Trabalhe a pontualidade: atrasos frequentes afetam o compromisso e a graduação.');
+  if (faltasCompromisso.length >= 1) recomendacoes.push('Você tem ' + faltasCompromisso.length + ' falta(s) de compromisso (marcou que ia e não foi). Cancele a tempo se não puder treinar.');
   if (mediaGeral !== null && mediaGeral >= 8) recomendacoes.push('Ótimo nível técnico — participe de rodas e apresentações para consolidar.');
   if (!avals.length) recomendacoes.push('Aguarde a primeira avaliação do professor para um diagnóstico mais preciso.');
+  /* Intensidade das aulas (feedback do aluno) */
+  var feedbacks = DB.listar('feedbacksAula').filter(function (f) {
+    return f.alunoId === aluno.id || normalizar(f.alunoNome || '') === normalizar(aluno.nome);
+  }).slice().sort(function (a, b) {
+    return String(a.data || a.criadoEm || '').localeCompare(String(b.data || b.criadoEm || ''));
+  });
+  function nivelNumIntensidade(id) {
+    var lista = (typeof INTENSIDADE_AULA !== 'undefined' && INTENSIDADE_AULA) ? INTENSIDADE_AULA : [];
+    for (var i = 0; i < lista.length; i++) if (lista[i].id === id) return i + 1;
+    var leg = { gostei: 3, dificil: 6, repetir: 5 };
+    return leg[id] || 0;
+  }
+  var intensidades = feedbacks.map(function (f) {
+    var id = f.intensidade || f.rating;
+    return {
+      data: f.data || '',
+      id: id,
+      label: f.intensidadeLabel || (typeof labelIntensidadeAula === 'function' ? labelIntensidadeAula(id) : id),
+      nivel: nivelNumIntensidade(id),
+      texto: f.texto || ''
+    };
+  }).filter(function (x) { return x.nivel > 0; });
+  var mediaIntensidade = null;
+  var tendenciaIntensidade = null;
+  if (intensidades.length) {
+    var somaI = intensidades.reduce(function (s, x) { return s + x.nivel; }, 0);
+    mediaIntensidade = Math.round((somaI / intensidades.length) * 10) / 10;
+    if (intensidades.length >= 2) {
+      var ultI = intensidades[intensidades.length - 1].nivel;
+      var penI = intensidades[intensidades.length - 2].nivel;
+      if (ultI > penI + 0.5) tendenciaIntensidade = 'subindo';
+      else if (ultI < penI - 0.5) tendenciaIntensidade = 'descendo';
+      else tendenciaIntensidade = 'estavel';
+    }
+  }
+  if (intensidades.length >= 3 && mediaIntensidade >= 7) {
+    recomendacoes.push('Suas aulas têm estado bem intensas — cuide da recuperação e da mobilidade entre treinos.');
+  }
+  if (intensidades.length >= 3 && mediaIntensidade <= 3) {
+    recomendacoes.push('Intensidade média baixa nos treinos — converse com o professor se quiser progressões mais desafiadoras.');
+  }
+
   if (!recomendacoes.length) recomendacoes.push('Mantenha a constância nos treinos e peça feedback ao professor após as rodas.');
 
   return {
@@ -7197,6 +7707,7 @@ function analisarDesempenhoAtletico(aluno) {
     aprovadas: aprovadas.length,
     pendentes: pendentes.length,
     rejeitadas: rejeitadas.length,
+    faltasCompromisso: faltasCompromisso.length,
     aprovadas30: aprovadas30,
     comAtraso: comAtraso.length,
     atrasoMedio: atrasoMedio,
@@ -7206,7 +7717,11 @@ function analisarDesempenhoAtletico(aluno) {
     pontoFraco: pontoFraco,
     tendencia: tendencia,
     totalAvals: avals.length,
-    recomendacoes: recomendacoes
+    recomendacoes: recomendacoes,
+    intensidades: intensidades,
+    mediaIntensidade: mediaIntensidade,
+    tendenciaIntensidade: tendenciaIntensidade,
+    totalIntensidades: intensidades.length
   };
 }
 
@@ -7263,7 +7778,31 @@ function htmlAnaliseDesempenho(aluno) {
     '<div class="lista-item"><span class="mini">Atrasos em aulas aprovadas</span><br><b>' + a.comAtraso + '</b>' +
     (a.atrasoMedio ? ' <span class="mini">(média ' + a.atrasoMedio + ' min)</span>' : '') + '</div>' +
     '<div class="lista-item"><span class="mini">Check-ins rejeitados</span><br><b>' + a.rejeitadas + '</b></div>' +
-  '</div>';
+  '</div>' +
+  '<div class="lista-item" style="margin-top:6px;"><span class="mini">Faltas de compromisso (marcou que ia e não foi)</span><br><b style="color:' + (a.faltasCompromisso > 0 ? 'var(--danger)' : 'var(--primary-green)') + ';">' + (a.faltasCompromisso || 0) + '</b></div>';
+
+  /* Progressão de intensidade das aulas */
+  if (a.totalIntensidades) {
+    var tendI = { subindo: '📈 Intensidade subindo', descendo: '📉 Intensidade caindo', estavel: '➡️ Intensidade estável' };
+    html += '<h3 style="margin-top:10px; font-size:0.82rem;"><i class="fas fa-bolt"></i> Intensidade das aulas</h3>' +
+      '<div class="grade-2">' +
+        '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + a.mediaIntensidade + '/8</div><div class="mini">média</div></div>' +
+        '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + a.totalIntensidades + '</div><div class="mini">registros</div></div>' +
+      '</div>' +
+      (a.tendenciaIntensidade ? '<p class="mini" style="margin-top:4px;">' + (tendI[a.tendenciaIntensidade] || '') + '</p>' : '');
+    /* mini gráfico de barras das últimas 8 */
+    var ultimas = a.intensidades.slice(-8);
+    html += '<div style="display:flex;align-items:flex-end;gap:4px;height:52px;margin-top:8px;padding:4px 0;">';
+    ultimas.forEach(function (it) {
+      var h = Math.max(8, Math.round((it.nivel / 8) * 48));
+      var cor = it.nivel >= 7 ? 'var(--danger)' : (it.nivel >= 5 ? 'var(--gold)' : 'var(--primary-green)');
+      html += '<div title="' + esc(it.label) + ' · ' + dataBR(it.data) + '" style="flex:1;height:' + h + 'px;background:' + cor + ';border-radius:4px 4px 0 0;min-width:8px;"></div>';
+    });
+    html += '</div>';
+    html += '<p class="mini" style="margin-top:2px;">Últimas ' + ultimas.length + ' aulas (1 = Muito Leve · 8 = Exaustão Máxima)</p>';
+  } else {
+    html += '<p class="sem-dados" style="margin-top:8px;"><i class="fas fa-bolt"></i> Ainda sem registros de intensidade de aula. Após o check-in, conte como foi o treino.</p>';
+  }
 
   html += '<h3 style="margin-top:10px; font-size:0.82rem;"><i class="fas fa-lightbulb"></i> Recomendações</h3>';
   a.recomendacoes.forEach(function (r) {
@@ -7272,6 +7811,75 @@ function htmlAnaliseDesempenho(aluno) {
   html += '</div>';
   return html;
 }
+
+function htmlHistoricoIntensidadeAluno(aluno) {
+  if (!aluno) return '';
+  var lista = DB.listar('feedbacksAula').filter(function (f) {
+    return f.alunoId === aluno.id || normalizar(f.alunoNome || '') === normalizar(aluno.nome);
+  }).slice().sort(function (a, b) {
+    return String(b.data || b.criadoEm || '').localeCompare(String(a.data || a.criadoEm || ''));
+  });
+  var html = '<h3 style="margin-top:14px;"><i class="fas fa-bolt"></i> Histórico de Intensidade</h3>';
+  if (!lista.length) {
+    return html + '<p class="sem-dados">Nenhuma intensidade registrada ainda. Após cada aula aprovada, responda no Jarvis ou no card “Como foi a aula?”.</p>';
+  }
+  lista.slice(0, 20).forEach(function (f) {
+    var lab = f.intensidadeLabel || (typeof labelIntensidadeAula === 'function' ? labelIntensidadeAula(f.intensidade || f.rating) : (f.rating || '-'));
+    var id = f.intensidade || f.rating;
+    var nivel = 0;
+    if (typeof INTENSIDADE_AULA !== 'undefined') {
+      for (var i = 0; i < INTENSIDADE_AULA.length; i++) if (INTENSIDADE_AULA[i].id === id) { nivel = i + 1; break; }
+    }
+    var pct = nivel ? Math.round((nivel / 8) * 100) : 40;
+    var cor = nivel >= 7 ? 'var(--danger)' : (nivel >= 5 ? 'var(--gold)' : 'var(--primary-green)');
+    html += '<div class="lista-item">' +
+      '<div class="linha"><span><b>' + dataBR(f.data) + '</b></span>' +
+      '<span class="pill pill-info">' + esc(lab) + (nivel ? ' · ' + nivel + '/8' : '') + '</span></div>' +
+      '<div style="height:6px;background:#0a1419;border-radius:4px;overflow:hidden;margin-top:6px;border:1px solid var(--card-border);">' +
+      '<div style="height:100%;width:' + pct + '%;background:' + cor + ';"></div></div>' +
+      (f.texto ? '<div class="mini" style="margin-top:4px;">' + esc(f.texto) + '</div>' : '') +
+      (f.origem === 'jarvis' ? '<span class="mini">via Jarvis</span>' : '') +
+      '</div>';
+  });
+  return html;
+}
+
+function htmlHistoricoCompromissoAluno(aluno) {
+  if (!aluno) return '';
+  var lista = DB.listar('presencas').filter(function (p) {
+    var mesmo = (p.alunoId && p.alunoId === aluno.id) || normalizar(p.alunoNome || '') === normalizar(aluno.nome);
+    if (!mesmo) return false;
+    return p.tipo === 'compromisso' || p.tipo === 'antecipada' || p.status === 'falta_compromisso' || p.compromisso || p.compromissoCumprido;
+  }).slice().sort(function (a, b) {
+    return String(b.data || b.criadoEm || '').localeCompare(String(a.data || a.criadoEm || ''));
+  });
+  var html = '<h3 style="margin-top:14px;"><i class="fas fa-handshake"></i> Compromissos de treino</h3>';
+  html += '<p class="mini" style="margin-bottom:6px;">Marcar que vai treinar e não ir vira <b>falta de compromisso</b>. Cancele a tempo se não puder.</p>';
+  if (!lista.length) {
+    return html + '<p class="sem-dados">Nenhum compromisso registrado. No Início, use “Vou treinar hoje”.</p>';
+  }
+  var nFalta = lista.filter(function (p) { return p.status === 'falta_compromisso'; }).length;
+  var nOk = lista.filter(function (p) { return p.status === 'aprovado' || p.compromissoCumprido || p.tipo === 'local'; }).length;
+  var nCancel = lista.filter(function (p) { return p.status === 'cancelado'; }).length;
+  html += '<div class="grade-3" style="margin-bottom:8px;">' +
+    '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + nOk + '</div><div class="mini">cumpridos</div></div>' +
+    '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + nFalta + '</div><div class="mini">faltas</div></div>' +
+    '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + nCancel + '</div><div class="mini">cancelados</div></div>' +
+  '</div>';
+  lista.slice(0, 15).forEach(function (p) {
+    var rotulo = '';
+    if (p.status === 'falta_compromisso') rotulo = 'Falta de compromisso';
+    else if (p.status === 'cancelado') rotulo = 'Cancelado a tempo';
+    else if (p.status === 'aprovado' || p.compromissoCumprido || (p.tipo === 'local' && p.status === 'pendente')) rotulo = 'Cumprido (check-in feito)';
+    else if (p.status === 'pendente') rotulo = 'Aguardando aula / check-in';
+    else rotulo = p.status || '-';
+    html += '<div class="lista-item"><div class="linha"><span><b>' + dataBR(p.data) + '</b></span>' +
+      (typeof pillStatus === 'function' ? pillStatus(p.status) : '') + '</div>' +
+      '<span class="mini">' + esc(rotulo) + (p.poloNome ? ' · ' + esc(p.poloNome) : '') + '</span></div>';
+  });
+  return html;
+}
+
 
 function renderRankingCompleto() {
   var card = $('cardRankingCompletoInicio');
@@ -7836,8 +8444,10 @@ function renderCheckin() {
   if (boxGympass) boxGympass.innerHTML = htmlCardGympassAluno(logado);
   renderHorarioAulaHoje();
   renderSelectPolos();
-  renderMinhasPresencasCheckin();
+    renderMinhasPresencasCheckin();
   avaliarAtrasoHoje();
+  try { renderBannerFilaOfflineCheckin(); } catch (e) {}
+
   atualizarEstadoBotaoCheckin();
   atualizarIconeFormadorUI();
 }
@@ -7930,6 +8540,31 @@ function avaliarAtrasoHoje() {
   }
 }
 
+function renderBannerFilaOfflineCheckin() {
+  var box = $('boxJaCheckinHoje');
+  if (!box) return;
+  var offlineAgora = (typeof navigator !== 'undefined' && navigator.onLine === false);
+  var fila = [];
+  try { fila = (DB._lerFila && DB._lerFila()) || []; } catch (e) {}
+  var nCheck = fila.filter(function (i) { return i.col === 'presencas'; }).length;
+  var aguardando = DB.listar('presencas').filter(function (p) {
+    return p.aguardandoSync || (p.offline && p.status === 'pendente');
+  }).length;
+  var n = Math.max(nCheck, aguardando);
+  if (!offlineAgora && n === 0) return;
+  var msgs = [];
+  if (offlineAgora) {
+    msgs.push('<b>Sem internet</b> — pode fazer check-in. O horário do aparelho fica salvo e sobe para o professor quando a rede voltar.');
+  }
+  if (n > 0) msgs.push(n + ' check-in(s) aguardando envio à nuvem.');
+  if (msgs.length) {
+    box.style.display = 'block';
+    box.style.borderColor = 'var(--gold)';
+    box.style.background = 'rgba(255,193,7,0.12)';
+    box.innerHTML = '<i class="fas fa-wifi"></i> ' + msgs.join(' ');
+  }
+}
+
 function renderMinhasPresencasCheckin() {
   var card = $('cardMinhasPresencasCheckin');
   var nome = alunoLogado() ? alunoLogado().nome : nomeCheckinAtual();
@@ -7960,9 +8595,13 @@ function renderMinhasPresencasCheckin() {
   if (pendentes.length) {
     html += '<p class="mini" style="color:var(--gold); margin:8px 0 4px;"><i class="fas fa-hourglass-half"></i> Aguardando aprovação (' + pendentes.length + ')</p>';
     pendentes.forEach(function (p) {
+      var off = (p.foiOffline || p.offline || p.aguardandoSync);
       html += '<div class="lista-item">' +
-        '<div class="linha"><span>' + dataBR(p.data) + ' ' + esc(p.hora || '') + '</span>' + pillStatus(p.status) + '</div>' +
-        '<span class="mini">' + esc(p.poloNome || p.tipo || '') + '</span></div>';
+        '<div class="linha"><span>' + dataBR(p.data) + ' <b>' + esc(p.hora || '') + '</b></span>' + pillStatus(p.status) + '</div>' +
+        '<span class="mini">' + esc(p.poloNome || p.tipo || '') +
+        (off ? ' · <span style="color:var(--gold);">offline — sobe com a internet</span>' : '') +
+        (p.sincronizadoEm ? ' · sync ' + dataHoraBR(p.sincronizadoEm) : '') +
+        '</span></div>';
     });
   }
   if (outras.length) {
@@ -7977,6 +8616,8 @@ function renderMinhasPresencasCheckin() {
 
 function pillStatus(status) {
   if (status === 'aprovado') return '<span class="pill pill-ok">APROVADO</span>';
+  if (status === 'falta_compromisso') return '<span class="pill pill-no">FALTA COMPROMISSO</span>';
+  if (status === 'cancelado') return '<span class="pill">CANCELADO</span>';
   if (status === 'rejeitado') return '<span class="pill pill-no">REJEITADO</span>';
   return '<span class="pill pill-pend">PENDENTE</span>';
 }
@@ -8000,11 +8641,31 @@ function alunoCheckinLocalFixoSimples() {
 
   var aluno = encontrarAlunoPorNome(nome);
   var jaExiste = obterCheckinDoDia(aluno || nome);
+  var compromissoExistente = obterCompromissoDoDia(aluno || nome);
+  /* compromisso "vou treinar" ainda pendente: vira check-in real (mesmo registro) */
+  var idAtualizar = null;
   if (jaExiste) {
-    var statusTxt = jaExiste.status === 'aprovado' ? 'aprovado' : (jaExiste.status === 'pendente' ? 'pendente de aprovação' : jaExiste.status);
-    mostrarToast('Você já fez check-in hoje (' + statusTxt + '). Só é permitido um por aula.', 'erro');
-    renderCheckin();
-    return;
+    if (jaExiste.status === 'aprovado') {
+      mostrarToast('Você já tem presença aprovada hoje. Só é permitido um por aula.', 'erro');
+      renderCheckin();
+      return;
+    }
+    if ((jaExiste.tipo === 'antecipada' || jaExiste.tipo === 'compromisso') &&
+        (jaExiste.status === 'pendente' || jaExiste.status === 'compromisso')) {
+      idAtualizar = jaExiste.id;
+    } else if (jaExiste.status === 'pendente') {
+      mostrarToast('Você já fez check-in hoje (pendente de aprovação). Só é permitido um por aula.', 'erro');
+      renderCheckin();
+      return;
+    } else if (jaExiste.status === 'falta_compromisso') {
+      idAtualizar = jaExiste.id;
+    } else {
+      mostrarToast('Você já registrou presença hoje (' + jaExiste.status + ').', 'erro');
+      renderCheckin();
+      return;
+    }
+  } else if (compromissoExistente && (compromissoExistente.status === 'pendente' || compromissoExistente.status === 'compromisso' || compromissoExistente.status === 'falta_compromisso')) {
+    idAtualizar = compromissoExistente.id;
   }
 
   var aula = aulaDeHoje();
@@ -8019,8 +8680,9 @@ function alunoCheckinLocalFixoSimples() {
 
   var horaAgora = horaLocalHM();
   var dataAgora = dataLocalISO();
+  var momentoISO = agoraISO();
   var offlineAgora = (typeof navigator !== 'undefined' && navigator.onLine === false);
-  DB.salvar('presencas', {
+  var payloadCheckin = {
     alunoId: aluno ? aluno.id : '',
     alunoNome: aluno ? aluno.nome : nome,
     alunoApelido: aluno ? (aluno.apelido || '') : '',
@@ -8029,27 +8691,36 @@ function alunoCheckinLocalFixoSimples() {
     horarioId: aula ? aula.id : '',
     data: dataAgora,
     hora: horaAgora,
+    checkinEm: momentoISO,
     tipo: 'local',
     status: 'pendente',
+    compromissoCumprido: !!idAtualizar,
     atrasoMin: atrasado ? atrasoMin : 0,
     justificativa: just,
     offline: offlineAgora,
-    criadoEm: agoraISO()
-  }).then(function () {
+    foiOffline: offlineAgora,
+    aguardandoSync: offlineAgora,
+    criadoEm: momentoISO
+  };
+  var promessaCheckin = idAtualizar
+    ? DB.salvar('presencas', payloadCheckin, idAtualizar)
+    : DB.salvar('presencas', payloadCheckin);
+  promessaCheckin.then(function () {
     if (btn) { btn.classList.remove('carregando'); btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Confirmar Presença Local'; }
     $('justificativaAtrasoInput').value = '';
     mostrarToast(offlineAgora ? 'Check-in salvo offline! Sincroniza quando houver internet.' : 'Check-in enviado com sucesso!');
     abrirModal('Check-in registrado',
       '<div style="text-align:center; padding:6px 0;">' +
         '<div style="font-size:2rem; color:var(--primary-green); margin-bottom:8px;"><i class="fas fa-check-circle"></i></div>' +
-        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>' + (offlineAgora ? 'Presença salva neste aparelho!' : 'Presença enviada!') + '</strong></p>' +
+        '<p style="font-size:0.9rem; margin-bottom:6px;"><strong>' + (offlineAgora ? 'Presença salva offline neste aparelho!' : 'Presença enviada!') + '</strong></p>' +
         '<p class="mini">Aluno: <b>' + esc(aluno ? aluno.nome : nome) + '</b></p>' +
-        '<p class="mini">Data: <b>' + dataBR(dataAgora) + '</b> às <b>' + esc(horaAgora) + '</b></p>' +
+        '<p class="mini">Horário do check-in: <b>' + dataBR(dataAgora) + '</b> às <b>' + esc(horaAgora) + '</b></p>' +
+        '<p class="mini">Esse horário é o do seu aparelho e será o que o professor verá.</p>' +
         '<p class="mini">Local: <b>' + esc(polo ? polo.nome : '-') + '</b></p>' +
         (offlineAgora
-          ? '<p class="mini" style="margin-top:8px; color:var(--gold);"><b>OFFLINE</b> — quando a internet voltar, o check-in sobe automaticamente para o professor.</p>'
-          : '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — aguarde a aprovação do professor.</p>') +
-        '<p class="mini" style="margin-top:6px;">Você pode acompanhar em “Meus Check-ins Recentes” e na aba Aluno.</p>' +
+          ? '<p class="mini" style="margin-top:8px; color:var(--gold);"><b>SEM INTERNET</b> — o check-in fica guardado e sobe sozinho quando a rede voltar. O professor receberá com este horário.</p>'
+          : '<p class="mini" style="margin-top:8px; color:var(--gold);">Status: <b>PENDENTE</b> — o professor confirma na aba Equipe.</p>') +
+        '<p class="mini" style="margin-top:6px;">Acompanhe em “Meus Check-ins Recentes”.</p>' +
       '</div>');
     renderMinhasPresencasCheckin();
     renderCheckin();
@@ -8219,13 +8890,25 @@ function renderAluno() {
     /* ===== PRESENÇAS ===== */
     '<h3 style="margin-top:14px;"><i class="fas fa-history"></i> Minhas Presenças</h3>' +
     (presencas.length
-      ? presencas.slice(0, 8).map(function (p) {
+      ? presencas.slice(0, 12).map(function (p) {
+          var fb = DB.listar('feedbacksAula').filter(function (f) {
+            return f.alunoId === logado.id && f.data === p.data;
+          })[0];
+          var intensTxt = fb
+            ? (' · ⚡ ' + (fb.intensidadeLabel || (typeof labelIntensidadeAula === 'function' ? labelIntensidadeAula(fb.intensidade || fb.rating) : fb.rating)))
+            : '';
           return '<div class="lista-item"><div class="linha"><span>' + dataBR(p.data) + ' ' + esc(p.hora || '') + '</span>' + pillStatus(p.status) + '</div>' +
-            '<span class="mini">' + esc(p.poloNome || p.tipo || '') + (p.atrasoMin ? ' • atraso ' + p.atrasoMin + ' min' : '') + '</span>' +
+            '<span class="mini">' + esc(p.poloNome || p.tipo || '') + (p.atrasoMin ? ' • atraso ' + p.atrasoMin + ' min' : '') + intensTxt + '</span>' +
             (p.justificativa ? '<div class="mini">Justificativa: ' + esc(p.justificativa) + '</div>' : '') +
-            (p.observacaoProfessor ? '<div class="mini" style="color:var(--gold);">Prof.: ' + esc(p.observacaoProfessor) + '</div>' : '') + '</div>';
+            (p.observacaoProfessor ? '<div class="mini" style="color:var(--gold);">Prof.: ' + esc(p.observacaoProfessor) + '</div>' : '') +
+            (fb && fb.texto ? '<div class="mini" style="color:var(--accent-blue);">Como foi: ' + esc(fb.texto) + '</div>' : '') +
+            '</div>';
         }).join('')
       : '<p class="sem-dados">Nenhuma presença registrada.</p>') +
+
+    /* ===== HISTÓRICO DE INTENSIDADE / PROGRESSÃO ===== */
+    htmlHistoricoIntensidadeAluno(logado) +
+    htmlHistoricoCompromissoAluno(logado) +
 
     /* ===== AVALIAÇÕES ===== */
     '<h3 style="margin-top:14px;"><i class="fas fa-star-half-alt"></i> Minhas Avaliações Semanais</h3>' +
@@ -8441,6 +9124,7 @@ function enviarSolicitacaoTreino(btn) {
 function renderAbaProfessor() {
   var box = $('conteudoProfessor');
   if (!exigirEquipe(['professor', 'adm', 'dev'], box, 'professor')) return;   /* v87: cada aba usa ids próprios no login (antes repetia os da aba Dev) */
+  try { if (notificacaoAtiva()) ucInscreverWebPush(); } catch (e) {}
 
   var pendentes = DB.listar('presencas').filter(function (p) { return p.status === 'pendente'; })
     .sort(function (a, b) { return String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); });
@@ -8491,16 +9175,28 @@ function renderAbaProfessor() {
 
   /* --- check-ins pendentes --- */
   html += '<div class="card"><h3><i class="fas fa-clipboard-check"></i> Check-ins Pendentes <span class="badge-count">' + pendentes.length + '</span></h3>';
+  html += '<p class="mini" style="margin-bottom:6px;">Confirme a presença. O horário é o do aparelho do aluno (mesmo se foi offline e sincronizou depois).</p>';
   if (!pendentes.length) { html += '<p class="sem-dados">Nenhum check-in aguardando aprovação.</p>'; }
   pendentes.forEach(function (p) {
-    html += '<div class="lista-item">' +
-      '<div class="linha"><b>' + esc(p.alunoNome) + '</b><span class="mini">' + dataBR(p.data) + ' ' + esc(p.hora || '') + '</span></div>' +
-      '<span class="mini">' + esc(p.tipo === 'gympass' ? 'Gympass/Wellhub' : (p.poloNome || p.tipo)) +
+    var horaReal = p.hora || '';
+    var momento = p.checkinEm || p.criadoEm || '';
+    var off = !!(p.foiOffline || p.offline || p.aguardandoSync);
+    var offlineBadge = off ? '<span class="pill" style="background:#5d4037;color:#ffe0b2;">OFFLINE</span> ' : '';
+    var syncInfo = p.sincronizadoEm
+      ? '<div class="mini" style="color:var(--accent-blue);">Sincronizado: ' + dataHoraBR(p.sincronizadoEm) + '</div>'
+      : '';
+    html += '<div class="lista-item"' + (off ? ' style="border-color:var(--gold);"' : '') + '>' +
+      '<div class="linha"><b>' + esc(p.alunoNome) + (p.alunoApelido ? ' (' + esc(p.alunoApelido) + ')' : '') + '</b>' +
+      '<span class="mini">' + offlineBadge + dataBR(p.data) + (horaReal ? ' · <b>' + esc(horaReal) + '</b>' : '') + '</span></div>' +
+      '<div class="mini">Horário do check-in: <b>' + esc(horaReal || '-') + '</b>' +
+      (momento ? ' · registro ' + dataHoraBR(momento) : '') + '</div>' +
+      '<span class="mini">' + esc(p.tipo === 'gympass' ? 'Gympass/Wellhub' : (p.poloNome || p.tipo || 'local')) +
       (p.atrasoMin ? ' • <span style="color:var(--danger);">atraso ' + p.atrasoMin + ' min</span>' : '') + '</span>' +
       (p.justificativa ? '<div class="mini">Justificativa: ' + esc(p.justificativa) + '</div>' : '') +
+      syncInfo +
       '<input id="obsPresenca_' + p.id + '" placeholder="Observação do professor (opcional)" style="margin-top:6px;">' +
       '<div class="flex-btn" style="margin-top:4px;">' +
-        '<button class="btn btn-mini" onclick="decidirPresenca(\'' + p.id + '\',\'aprovado\')"><i class="fas fa-check"></i> Aprovar</button>' +
+        '<button class="btn btn-mini" onclick="decidirPresenca(\'' + p.id + '\',\'aprovado\')"><i class="fas fa-check"></i> Confirmar presença</button>' +
         '<button class="btn btn-danger btn-mini" onclick="decidirPresenca(\'' + p.id + '\',\'rejeitado\')"><i class="fas fa-xmark"></i> Rejeitar</button>' +
       '</div></div>';
   });
@@ -8531,44 +9227,7 @@ function renderAbaProfessor() {
     '<button class="btn" onclick="cadastrarAlunoPeloProfessor(this)"><i class="fas fa-user-plus"></i> Cadastrar Aluno</button>' +
     '<p class="mini" style="margin-top:6px;">Uma senha provisória é gerada automaticamente — o aluno pode trocar depois em "Esqueci minha senha".</p></div>' +
 
-  /* --- lançamento manual de presença (caso o check-in do aluno dê erro) --- */
-  '<div class="card" style="border:1px solid var(--gold);"><h3><i class="fas fa-user-check"></i> Lançar/Corrigir Presença Manualmente</h3>' +
-    '<p class="mini" style="margin-bottom:6px;">Use isso se o check-in do aluno não aparecer aqui por algum erro — você registra a presença na hora.</p>' +
-    '<label class="campo-label">Aluno</label><select id="manualPresencaAluno">' +
-    '<option value="">Selecione...</option>' +
-    alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</option>'; }).join('') +
-    '</select>' +
-    '<label class="campo-label">Data</label><input type="date" id="manualPresencaData" value="' + dataLocalISO() + '">' +
-    '<label class="campo-label">Polo (opcional)</label><select id="manualPresencaPolo"><option value="">— Não informado —</option>' +
-    polos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + '</option>'; }).join('') + '</select>' +
-    '<label class="campo-label">Observação (opcional)</label><input id="manualPresencaObs" placeholder="Ex: check-in deu erro, lançado manualmente">' +
-    '<button class="btn btn-gold" onclick="lancarPresencaManual()"><i class="fas fa-check-circle"></i> Registrar Presença Aprovada</button></div>';
-
-  /* --- check-in manual pelo professor (ajuda em caso de erro) --- */
-  html += '<div class="card" style="border:1px solid var(--gold);">' +
-    '<h3 style="color:var(--gold);"><i class="fas fa-user-plus"></i> Registrar Check-in Manual</h3>' +
-    '<p class="mini" style="margin-bottom:8px;">Use quando o aluno teve problema no app, esqueceu o celular ou houve erro no check-in.</p>' +
-    '<label class="campo-label">Aluno</label>' +
-    '<select id="profCheckinAluno">' +
-      (alunos.length
-        ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</option>'; }).join('')
-        : '<option value="">Nenhum aluno cadastrado</option>') +
-    '</select>' +
-    '<label class="campo-label">Polo / local</label>' +
-    '<select id="profCheckinPolo">' +
-      (polos.length
-        ? polos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + '</option>'; }).join('')
-        : '<option value="">Cadastre um polo primeiro</option>') +
-    '</select>' +
-    '<label class="campo-label">Status</label>' +
-    '<select id="profCheckinStatus">' +
-      '<option value="aprovado">Aprovado (já confirma presença)</option>' +
-      '<option value="pendente">Pendente (vai para lista de aprovação)</option>' +
-    '</select>' +
-    '<label class="campo-label">Observação (opcional)</label>' +
-    '<input id="profCheckinObs" placeholder="Ex: aluno sem celular / correção de erro">' +
-    '<button class="btn btn-gold" onclick="professorRegistrarCheckinManual()"><i class="fas fa-plus"></i> Registrar check-in do aluno</button>' +
-  '</div>';
+  /* --- presença manual unificada no Calendário do aluno (trCardCal) --- */
 
   /* --- pedidos de treino específico (NOVO) --- */
   /* --- painel de avaliação de conhecimentos (IA) --- */
@@ -8723,15 +9382,7 @@ function renderAbaProfessor() {
     '<button class="btn btn-secondary" onclick="gerarSugestaoIABimestre()"><i class="fas fa-robot"></i> Sugestao da IA</button></div>';
   try { setTimeout(function () { if (typeof renderFormBimMovimentos === 'function') renderFormBimMovimentos(); }, 100); } catch (e) {}
 
-  /* --- calendario: correcao manual --- */
-  html += '<div class="card"><h3><i class="fas fa-calendar-check"></i> Calendario · corrigir presenca</h3>' +
-    '<p class="mini">Ajuste se o aluno treinou e nao registrou, ou para falta/atraso.</p>' +
-    '<label class="campo-label">Aluno</label><select id="corrAluno">' +
-    (alunos.length ? alunos.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + '</option>'; }).join('') : '<option value="">—</option>') +
-    '</select>' +
-    '<label class="campo-label">Data</label><input type="date" id="corrData">' +
-    '<label class="campo-label">Status</label><select id="corrStatus"><option value="presente">Presente</option><option value="atraso">Atraso</option><option value="falta">Falta</option><option value="justificado">Justificado</option></select>' +
-    '<button class="btn" onclick="corrigirPresencaManual()"><i class="fas fa-save"></i> Salvar correcao</button></div>';
+  /* --- correção de presença unificada no Calendário do aluno --- */
 
   /* --- certificados --- */
   html += '<div class="card"><h3><i class="fas fa-award"></i> Emitir Certificado</h3>' +
@@ -9275,8 +9926,8 @@ function decidirPresenca(id, status) {
     registroLog('professor', 'Check-in de ' + p.alunoNome + ' → ' + status);
     if (status === 'aprovado') {
       var carga = calcularCargaHorariaAluno({ id: p.alunoId, nome: p.alunoNome });
-      mostrarToast('Check-in aprovado! Carga de ' + p.alunoNome + ': ' + carga.texto + ' (' + carga.aulas + ' aulas)');
-      notificar('Check-in aprovado!', 'Sua presença de ' + dataBR(p.data) + ' foi confirmada. Carga horária acumulada: ' + carga.texto + '.');
+      mostrarToast('Presença confirmada · ' + (p.hora || '') + ' · ' + p.alunoNome + ' · carga ' + carga.texto);
+      notificar('Check-in aprovado!', 'Presença de ' + dataBR(p.data) + ' confirmada. Carga: ' + carga.texto + '. Depois conte como foi a intensidade da aula.');
     } else {
       mostrarToast('Check-in de ' + p.alunoNome + ' rejeitado.');
       notificar('Check-in não aprovado', 'Seu check-in de ' + dataBR(p.data) + ' foi rejeitado.' + (obs ? ' Motivo: ' + obs : ''));
@@ -9350,7 +10001,7 @@ function salvarCheckinManualProfessor(aluno, poloId, status, obs, substituirId) 
     if (status === 'aprovado') {
       var carga = calcularCargaHorariaAluno(aluno);
       mostrarToast('Check-in de ' + aluno.nome + ' aprovado. Carga: ' + carga.texto);
-      notificar('Check-in confirmado', 'Presença registrada. Carga horária acumulada: ' + carga.texto + '.');
+      notificar('Check-in confirmado', 'Presença registrada. Carga: ' + carga.texto + '. Depois conte como foi a intensidade da aula.');
     } else {
       mostrarToast('Check-in de ' + aluno.nome + ' registrado (' + status + ').');
     }
@@ -9720,6 +10371,8 @@ function renderAbaAdm() {
     '<label class="campo-label">Instagram (com @)</label><input id="cfgInstagram" value="' + esc(CONFIG.instagram) + '">' +
     '<label class="campo-label">URL do Assistente IA (Cloudflare Worker)</label><input id="cfgIaProxyUrl" value="' + esc(CONFIG.iaProxyUrl || '') + '" placeholder="https://seu-worker.workers.dev">' +
     '<label class="campo-label">Base de conhecimento para a IA (história, currículo, termos da sua academia)</label><textarea id="cfgBaseConhecimento" rows="4" placeholder="Cole aqui o que a IA deve saber.">' + esc(CONFIG.baseConhecimento || '') + '</textarea>' +
+    '<label class="campo-label">Web Push — chave pública VAPID</label><input id="cfgVapidPublicKey" value="' + esc(CONFIG.vapidPublicKey || '') + '" placeholder="Cole a chave pública (npx web-push generate-vapid-keys)">' +
+    '<p class="mini">Usada para notificar a equipe no celular (check-in offline, etc.). Chave privada só no Firebase Functions.</p>' +
     '<h3 style="margin-top:12px; font-size:0.82rem;"><i class="fas fa-image"></i> Logotipos da academia</h3>' +
     '<p class="mini" style="margin-bottom:8px;">Envie do armazenamento do aparelho (galeria/arquivos). Os logos aparecem no cabeçalho e nos certificados.</p>' +
     '<div class="grade-2">' +
@@ -9965,6 +10618,7 @@ function salvarConfiguracaoAdm() {
     instagram: ($('cfgInstagram').value || '').trim(),
     iaProxyUrl: ($('cfgIaProxyUrl').value || '').trim(),
     baseConhecimento: ($('cfgBaseConhecimento').value || '').trim(),
+    vapidPublicKey: ($('cfgVapidPublicKey') && $('cfgVapidPublicKey').value || '').trim(),
     logo1: logo1,
     logo2: logo2,
     fotoInicio: urlSegura(($('cfgFotoInicio') && $('cfgFotoInicio').value || '').trim()),
@@ -10507,6 +11161,462 @@ function confirmarLimparCache() {
    --------------------------------------------------------------- */
 var assistenteAberto = false;
 var assistenteJaCumprimentou = false;
+var jarvisAguardandoIntensidade = false;
+var jarvisUltimaPerguntaAula = '';
+
+function alunoPendenteFeedbackAula() {
+  var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+  if (!aluno) return false;
+  if (typeof obterCheckinDoDia !== 'function') return false;
+  var ck = obterCheckinDoDia(aluno);
+  if (!ck || ck.status !== 'aprovado') return false;
+  var ja = DB.listar('feedbacksAula').some(function (f) {
+    return f.alunoId === aluno.id && f.data === dataLocalISO();
+  });
+  return !ja;
+}
+
+function jarvisTextoOpcoesIntensidade() {
+  var lista = (typeof INTENSIDADE_AULA !== 'undefined' && INTENSIDADE_AULA) ? INTENSIDADE_AULA : [
+    { id: 'muito_leve', label: 'Muito Leve' },
+    { id: 'leve', label: 'Leve' },
+    { id: 'moderada', label: 'Moderada' },
+    { id: 'pouco_intensa', label: 'Pouco Intensa' },
+    { id: 'intensa', label: 'Intensa' },
+    { id: 'muito_intensa', label: 'Muito Intensa' },
+    { id: 'muito_muito_intensa', label: 'Muito, Muito Intensa' },
+    { id: 'exaustao_maxima', label: 'Exaustão Máxima' }
+  ];
+  return lista.map(function (op, i) {
+    return (i + 1) + '. ' + op.label;
+  }).join('\n');
+}
+
+function assistenteAbrirPainel() {
+  if (!assistenteAberto) {
+    assistenteAberto = true;
+    var painel = $('assistentePainel');
+    if (painel) painel.classList.add('aberto');
+    var dica = $('dicaAssistentePrimeiroAcesso');
+    if (dica) dica.style.display = 'none';
+  }
+}
+
+/** Bolha do Jarvis com botões de ação (check-in, intensidade, avaliação) */
+function assistenteAdicionarBolhaAcoes(texto, acoes) {
+  assistenteAbrirPainel();
+  var box = $('assistenteMsgs');
+  if (!box) return;
+  var div = document.createElement('div');
+  div.className = 'assistente-bolha bot';
+  var p = document.createElement('div');
+  p.textContent = texto;
+  div.appendChild(p);
+  if (acoes && acoes.length) {
+    var row = document.createElement('div');
+    row.className = 'jarvis-acoes';
+    acoes.forEach(function (a) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = a.label;
+      if (a.secundario) b.className = 'secundario';
+      b.onclick = function (ev) {
+        try { ev.stopPropagation(); } catch (e) {}
+        try { a.onClick(); } catch (err) { console.warn(err); }
+      };
+      row.appendChild(b);
+    });
+    div.appendChild(row);
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function jarvisAvaliacoesNaoVistas(aluno) {
+  if (!aluno) return [];
+  return DB.listar('avaliacoes').filter(function (a) {
+    var mesmo = (a.alunoId && a.alunoId === aluno.id) || normalizar(a.alunoNome || '') === normalizar(aluno.nome);
+    if (!mesmo) return false;
+    return !a.vistaAluno;
+  }).sort(function (a, b) {
+    return String(b.data || b.criadoEm || '').localeCompare(String(a.data || a.criadoEm || ''));
+  });
+}
+
+function jarvisProcessarAvaliacoesPendentes(aluno) {
+  var lista = jarvisAvaliacoesNaoVistas(aluno);
+  if (!lista.length) return;
+  var hoje = dataLocalISO();
+  var k = 'uc_lemb_aval_' + hoje + '_' + aluno.id + '_' + lista[0].id;
+  if (ucLembreteJaEnviado(k)) return;
+  ucMarcarLembrete(k);
+  if (notificacaoAtiva()) {
+    notificar('Nova avaliação disponível', 'O professor registrou uma avaliação. Abra o Jarvis para ver.');
+  }
+  jarvisAvisarAvaliacao(lista[0]);
+}
+
+function jarvisAvisarAvaliacao(av) {
+  if (!av) return;
+  var media = null;
+  try {
+    var nums = [av.tecnica, av.disciplina, av.ritmo, av.musicalidade, av.compromisso].filter(function (n) {
+      return n != null && !isNaN(n);
+    });
+    if (nums.length) {
+      media = Math.round((nums.reduce(function (s, n) { return s + Number(n); }, 0) / nums.length) * 10) / 10;
+    }
+  } catch (e) {}
+  var texto = '📋 Você tem uma avaliação nova' +
+    (av.semana ? ' (semana ' + av.semana + ')' : (av.data ? ' de ' + dataBR(av.data) : '')) + '.\n\n' +
+    (media != null ? 'Média: ' + media + '\n' : '') +
+    (av.desenvolvimento ? 'Desenvolvimento: ' + String(av.desenvolvimento).slice(0, 160) + '\n' : '') +
+    '\nToque para ver o detalhe ou comentar.';
+  assistenteAdicionarBolhaAcoes(texto, [
+    {
+      label: '📄 Ver avaliação',
+      onClick: function () {
+        try {
+          DB.salvar('avaliacoes', { vistaAluno: true, vistaAlunoEm: agoraISO() }, av.id);
+        } catch (e) {}
+        assistenteAdicionarBolha('bot', jarvisTextoAvaliacaoDetalhe(av));
+        try {
+          if (typeof abrirAba === 'function') abrirAba('tab3');
+          if (typeof renderAluno === 'function') renderAluno();
+        } catch (e) {}
+      }
+    },
+    {
+      label: '💬 Comentar',
+      secundario: true,
+      onClick: function () {
+        try {
+          DB.salvar('avaliacoes', { vistaAluno: true, vistaAlunoEm: agoraISO() }, av.id);
+        } catch (e) {}
+        try {
+          if (typeof abrirAba === 'function') abrirAba('tab3');
+          if (typeof renderAluno === 'function') renderAluno();
+        } catch (e) {}
+        assistenteAdicionarBolha('bot', 'Abri a aba Aluno. Role até a avaliação e envie seu comentário no campo “Comentar esta avaliação”.');
+      }
+    }
+  ]);
+}
+
+function jarvisTextoAvaliacaoDetalhe(av) {
+  if (!av) return 'Avaliação não encontrada.';
+  return '📋 Avaliação' + (av.semana ? ' · ' + av.semana : '') + '\n\n' +
+    'Técnica: ' + (av.tecnica != null ? av.tecnica : '-') + '\n' +
+    'Disciplina: ' + (av.disciplina != null ? av.disciplina : '-') + '\n' +
+    'Ritmo: ' + (av.ritmo != null ? av.ritmo : '-') + '\n' +
+    'Musicalidade: ' + (av.musicalidade != null ? av.musicalidade : '-') + '\n' +
+    'Compromisso: ' + (av.compromisso != null ? av.compromisso : '-') + '\n' +
+    (av.desenvolvimento ? '\nDesenvolvimento:\n' + av.desenvolvimento + '\n' : '') +
+    (av.observacao ? '\nObs. do professor:\n' + av.observacao : '');
+}
+
+/**
+ * Check-in obrigatório no Jarvis — com botão para fazer na hora.
+ * tipo: em30 | hora | falta
+ */
+function jarvisAvisarCheckinObrigatorio(tipo, aula, polo) {
+  var aluno = alunoLogado();
+  if (!aluno) return;
+  if (ucTemCheckinHoje(aluno)) return;
+
+  var titulo = '📍 Check-in obrigatório';
+  var msg = '';
+  if (tipo === 'em30') {
+    titulo = '🥋 Aula em 30 minutos';
+    msg = 'Treino às ' + (aula.horaInicio || '') + (polo || '') + '.\n\nQuando chegar, faça o check-in por aqui mesmo.';
+  } else if (tipo === 'hora') {
+    titulo = '📍 Hora do check-in';
+    msg = 'A aula de hoje é às ' + (aula.horaInicio || '') + (polo || '') + '.\n\nConfirme sua presença agora — é obrigatório.';
+  } else {
+    titulo = '⚠️ Você ainda não fez check-in';
+    msg = 'A aula já começou (' + (aula.horaInicio || '') + ')' + (polo || '') + '.\n\nSe você está no treino, faça o check-in agora pelo Jarvis.';
+  }
+
+  assistenteAdicionarBolhaAcoes(titulo + '\n\n' + msg, [
+    {
+      label: '✅ Fazer check-in agora',
+      onClick: function () { jarvisFazerCheckinRapido(); }
+    },
+    {
+      label: '📂 Abrir aba Check-in',
+      secundario: true,
+      onClick: function () {
+        try {
+          if (typeof abrirAba === 'function') abrirAba('tab2');
+          if (typeof renderCheckin === 'function') renderCheckin();
+        } catch (e) {}
+        assistenteAdicionarBolha('bot', 'Abri a aba Check-in. Escolha o polo e toque em Confirmar Presença Local.');
+      }
+    }
+  ]);
+}
+
+function jarvisFazerCheckinRapido() {
+  var aluno = alunoLogado();
+  if (!aluno) {
+    assistenteAdicionarBolha('bot', 'Faça login na aba Aluno para eu registrar o check-in.');
+    return;
+  }
+  if (ucTemCheckinHoje(aluno) && obterCheckinDoDia(aluno) && obterCheckinDoDia(aluno).status === 'aprovado') {
+    assistenteAdicionarBolha('bot', 'Você já tem presença aprovada hoje. Bom treino!');
+    return;
+  }
+  var aula = typeof aulaDeHoje === 'function' ? aulaDeHoje() : null;
+  if (!aula) {
+    assistenteAdicionarBolha('bot', 'Não há aula cadastrada para hoje. Peça ao professor para conferir os horários.');
+    return;
+  }
+  if (typeof dentroJanelaCheckin === 'function' && !dentroJanelaCheckin(aula)) {
+    var j = typeof janelaCheckin === 'function' ? janelaCheckin(aula) : null;
+    assistenteAdicionarBolha('bot',
+      'Fora da janela de check-in' +
+      (j ? ' (liberado entre ' + minutosParaHM(j.abre) + ' e ' + minutosParaHM(j.fecha) + ')' : '') +
+      '.\n\nSe estiver no treino, peça ao professor o lançamento no calendário.');
+    return;
+  }
+  var poloId = aula.poloId || '';
+  var polos = DB.listar('polos');
+  if (!poloId && polos.length === 1) poloId = polos[0].id;
+  if (!poloId) {
+    /* pede escolha de polo via botões */
+    var acoes = polos.slice(0, 6).map(function (p) {
+      return {
+        label: p.nome || 'Polo',
+        onClick: function () { jarvisFazerCheckinComPolo(p.id); }
+      };
+    });
+    if (!acoes.length) {
+      assistenteAdicionarBolha('bot', 'Nenhum polo cadastrado. Peça ao professor para cadastrar o local.');
+      return;
+    }
+    assistenteAdicionarBolhaAcoes('Qual polo você está treinando agora?', acoes);
+    return;
+  }
+  jarvisFazerCheckinComPolo(poloId);
+}
+
+function jarvisFazerCheckinComPolo(poloId) {
+  var aluno = alunoLogado();
+  if (!aluno) return;
+  var aula = aulaDeHoje();
+  var polo = DB.buscar('polos', poloId);
+  var atrasoMin = 0;
+  if (aula && minutosDoHM(aula.horaInicio) !== null) {
+    atrasoMin = Math.max(0, agoraEmMinutos() - minutosDoHM(aula.horaInicio));
+  }
+  var offlineAgora = (typeof navigator !== 'undefined' && navigator.onLine === false);
+  var momentoISO = agoraISO();
+  var horaAgora = horaLocalHM();
+  var dataAgora = dataLocalISO();
+
+  var existente = obterCheckinDoDia(aluno);
+  var compromisso = typeof obterCompromissoDoDia === 'function' ? obterCompromissoDoDia(aluno) : null;
+  var idAtualizar = null;
+  if (existente && (existente.tipo === 'antecipada' || existente.tipo === 'compromisso' || existente.status === 'falta_compromisso')) {
+    idAtualizar = existente.id;
+  } else if (existente && existente.status === 'pendente') {
+    assistenteAdicionarBolha('bot', 'Você já tem check-in pendente de aprovação hoje.');
+    return;
+  } else if (existente && existente.status === 'aprovado') {
+    assistenteAdicionarBolha('bot', 'Presença já aprovada hoje.');
+    return;
+  } else if (compromisso && (compromisso.status === 'pendente' || compromisso.status === 'compromisso')) {
+    idAtualizar = compromisso.id;
+  }
+
+  var payload = {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    poloId: poloId,
+    poloNome: polo ? polo.nome : '',
+    horarioId: aula ? aula.id : '',
+    data: dataAgora,
+    hora: horaAgora,
+    checkinEm: momentoISO,
+    tipo: 'local',
+    status: 'pendente',
+    viaJarvis: true,
+    atrasoMin: atrasoMin > 0 ? atrasoMin : 0,
+    justificativa: atrasoMin > 15 ? 'Check-in pelo Jarvis' : '',
+    offline: offlineAgora,
+    foiOffline: offlineAgora,
+    aguardandoSync: offlineAgora,
+    compromissoCumprido: !!idAtualizar,
+    criadoEm: momentoISO
+  };
+
+  var prom = idAtualizar ? DB.salvar('presencas', payload, idAtualizar) : DB.salvar('presencas', payload);
+  prom.then(function () {
+    assistenteAdicionarBolha('bot',
+      '✅ Check-in registrado às ' + horaAgora +
+      (polo ? ' · ' + polo.nome : '') +
+      (offlineAgora ? '\n\n📱 Sem internet: ficou salvo no aparelho e sobe quando a rede voltar.' : '\n\nStatus: pendente — o professor confirma.') +
+      '\n\nBom treino!');
+    try { if (typeof renderCheckin === 'function') renderCheckin(); } catch (e) {}
+    try { if (typeof renderHorarioFixoInicio === 'function') renderHorarioFixoInicio(); } catch (e) {}
+    if (atrasoMin > 15) {
+      assistenteAdicionarBolha('bot', 'Você chegou com cerca de ' + atrasoMin + ' min de atraso. Se precisar justificar, use a aba Check-in.');
+    }
+  }).catch(function () {
+    assistenteAdicionarBolha('bot', 'Não consegui salvar o check-in. Tente pela aba Check-in ou peça ao professor.');
+  });
+}
+
+function jarvisPerguntarSobreAula(forcar) {
+  if (!alunoPendenteFeedbackAula()) {
+    jarvisAguardandoIntensidade = false;
+    return false;
+  }
+  var hoje = dataLocalISO();
+  if (!forcar && jarvisUltimaPerguntaAula === hoje) return false;
+  jarvisUltimaPerguntaAula = hoje;
+  jarvisAguardandoIntensidade = true;
+
+  var lista = (typeof INTENSIDADE_AULA !== 'undefined' && INTENSIDADE_AULA) ? INTENSIDADE_AULA : [];
+  var acoes = lista.map(function (op, i) {
+    return {
+      label: (i + 1) + ' · ' + op.label,
+      onClick: function () {
+        jarvisAguardandoIntensidade = false;
+        if (typeof enviarFeedbackAula === 'function') {
+          enviarFeedbackAula(op.id, null);
+        }
+        assistenteAdicionarBolha('bot', 'Registrado: ' + op.label + '. Obrigado! O professor vê no resumo da turma.');
+      }
+    };
+  });
+  assistenteAdicionarBolhaAcoes(
+    '⚡ Como foi a aula de hoje?\n\nToque na intensidade ou digite o número (1–8):',
+    acoes
+  );
+  return true;
+}
+
+function jarvisResolverIntensidadeDoTexto(texto) {
+  var t = normalizar(texto || '');
+  var lista = (typeof INTENSIDADE_AULA !== 'undefined' && INTENSIDADE_AULA) ? INTENSIDADE_AULA : [];
+  if (!lista.length) {
+    lista = [
+      { id: 'muito_leve', label: 'Muito Leve' },
+      { id: 'leve', label: 'Leve' },
+      { id: 'moderada', label: 'Moderada' },
+      { id: 'pouco_intensa', label: 'Pouco Intensa' },
+      { id: 'intensa', label: 'Intensa' },
+      { id: 'muito_intensa', label: 'Muito Intensa' },
+      { id: 'muito_muito_intensa', label: 'Muito, Muito Intensa' },
+      { id: 'exaustao_maxima', label: 'Exaustão Máxima' }
+    ];
+  }
+  /* número 1–8 no início */
+  var mNum = t.match(/^([1-8])(?:\b|[.\s]|$)/);
+  if (mNum) {
+    var idx = parseInt(mNum[1], 10) - 1;
+    if (lista[idx]) return { id: lista[idx].id, comentario: texto.replace(/^\s*[1-8][.\):\-]?\s*/i, '').trim() };
+  }
+  /* match pelo label (mais longo primeiro) */
+  var ordenados = lista.slice().sort(function (a, b) { return b.label.length - a.label.length; });
+  for (var i = 0; i < ordenados.length; i++) {
+    var lab = normalizar(ordenados[i].label);
+    if (lab && t.indexOf(lab) >= 0) {
+      return { id: ordenados[i].id, comentario: texto.replace(new RegExp(ordenados[i].label, 'ig'), '').trim() };
+    }
+  }
+  /* atalhos comuns */
+  if (/exaust/.test(t)) return { id: 'exaustao_maxima', comentario: '' };
+  if (/muito.?muito.?intens/.test(t)) return { id: 'muito_muito_intensa', comentario: '' };
+  if (/muito.?intens/.test(t)) return { id: 'muito_intensa', comentario: '' };
+  if (/pouco.?intens/.test(t)) return { id: 'pouco_intensa', comentario: '' };
+  if (/\bintens/.test(t)) return { id: 'intensa', comentario: '' };
+  if (/moderad/.test(t)) return { id: 'moderada', comentario: '' };
+  if (/muito.?leve/.test(t)) return { id: 'muito_leve', comentario: '' };
+  if (/\bleve\b/.test(t)) return { id: 'leve', comentario: '' };
+  return null;
+}
+
+function jarvisSalvarIntensidade(rating, comentario) {
+  var aluno = alunoLogado();
+  if (!aluno) return Promise.reject('login');
+  var ck = obterCheckinDoDia(aluno);
+  if (!ck || ck.status !== 'aprovado') return Promise.reject('checkin');
+  var ja = DB.listar('feedbacksAula').some(function (f) {
+    return f.alunoId === aluno.id && f.data === dataLocalISO();
+  });
+  if (ja) return Promise.reject('ja');
+  return DB.salvar('feedbacksAula', {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    alunoApelido: aluno.apelido || '',
+    data: dataLocalISO(),
+    presencaId: ck.id || '',
+    rating: rating,
+    intensidade: rating,
+    intensidadeLabel: (typeof labelIntensidadeAula === 'function' ? labelIntensidadeAula(rating) : rating),
+    texto: (comentario || '').slice(0, 400),
+    vistoProfessor: false,
+    criadoEm: agoraISO(),
+    origem: 'jarvis'
+  }).then(function () {
+    jarvisAguardandoIntensidade = false;
+    try { localStorage.removeItem('uc_lembrete_feedback_' + dataLocalISO() + '_' + aluno.id); } catch (e) {}
+    registroLog('aluno', 'Feedback intensidade (Jarvis): ' + rating + ' por ' + aluno.nome);
+    try { renderAluno(); } catch (e) {}
+    try { atualizarBadgesInteracao(); } catch (e) {}
+  });
+}
+
+function jarvisInterceptarIntensidade(texto) {
+  var t = normalizar(texto || '');
+  /* pergunta explícita */
+  if (/como foi (a )?aula|intensidade (da )?aula|feedback (da )?aula|avaliar (a )?aula/.test(t)) {
+    if (!alunoLogado()) {
+      assistenteAdicionarBolha('bot', 'Faça login na aba Aluno para eu registrar como foi a aula.');
+      return true;
+    }
+    if (!alunoPendenteFeedbackAula()) {
+      var reg = DB.listar('feedbacksAula').filter(function (f) {
+        return f.alunoId === alunoLogado().id && f.data === dataLocalISO();
+      })[0];
+      assistenteAdicionarBolha('bot', reg
+        ? ('Você já registrou a intensidade de hoje: ' + (reg.intensidadeLabel || reg.rating) + '. Obrigado! 💚')
+        : 'Só dá para avaliar depois do check-in de hoje ser aprovado.');
+      return true;
+    }
+    jarvisPerguntarSobreAula(true);
+    return true;
+  }
+  /* resposta enquanto aguarda, ou resposta clara de intensidade */
+  var resolvido = jarvisResolverIntensidadeDoTexto(texto);
+  if (resolvido && (jarvisAguardandoIntensidade || alunoPendenteFeedbackAula())) {
+    if (!alunoPendenteFeedbackAula()) {
+      jarvisAguardandoIntensidade = false;
+      assistenteAdicionarBolha('bot', 'Você já enviou o feedback de hoje. Obrigado!');
+      return true;
+    }
+    assistenteAdicionarBolha('bot', 'Registrando…');
+    jarvisSalvarIntensidade(resolvido.id, resolvido.comentario).then(function () {
+      var lab = (typeof labelIntensidadeAula === 'function' ? labelIntensidadeAula(resolvido.id) : resolvido.id);
+      assistenteAdicionarBolha('bot', '✅ Anotado: intensidade ' + lab + '.\nO professor vê no painel. Axé! 💚');
+    }).catch(function (err) {
+      if (err === 'ja') assistenteAdicionarBolha('bot', 'Você já enviou o feedback de hoje.');
+      else if (err === 'checkin') assistenteAdicionarBolha('bot', 'Só após o check-in aprovado de hoje.');
+      else assistenteAdicionarBolha('bot', 'Não consegui salvar agora. Tente de novo ou use o card na aba Aluno.');
+    });
+    return true;
+  }
+  if (jarvisAguardandoIntensidade) {
+    assistenteAdicionarBolha('bot',
+      'Não reconheci a intensidade. Responda com o número (1 a 8) ou o nome, por exemplo:\n' +
+      jarvisTextoOpcoesIntensidade());
+    return true;
+  }
+  return false;
+}
 
 function toggleAssistente() {
   assistenteAberto = !assistenteAberto;
@@ -10522,11 +11632,46 @@ function toggleAssistente() {
   }
   if (assistenteAberto) {
     setTimeout(function () {
+      try { jarvisAoAbrir(); } catch (e) {}
+    }, 350);
+    setTimeout(function () {
       var inp = $('assistenteInput');
       if (inp) inp.focus();
     }, 200);
   }
 }
+
+/** Ao abrir o Jarvis: check-in pendente, avaliação nova, intensidade */
+function jarvisAoAbrir() {
+  var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+  if (!aluno) return;
+  try {
+    var pendAval = jarvisAvaliacoesNaoVistas(aluno);
+    if (pendAval.length) jarvisAvisarAvaliacao(pendAval[0]);
+  } catch (e) {}
+  try {
+    var aula = typeof aulaDeHoje === 'function' ? aulaDeHoje() : null;
+    if (aula && !ucTemCheckinHoje(aluno)) {
+      var agora = agoraEmMinutos();
+      var inicio = minutosDoHM(aula.horaInicio);
+      var fim = minutosDoHM(aula.horaFim);
+      if (fim === null && inicio !== null) fim = inicio + 90;
+      var j = typeof janelaCheckin === 'function' ? janelaCheckin(aula) : null;
+      var naJanela = j && agora >= j.abre && agora <= (j.fecha || fim);
+      var depoisInicio = inicio !== null && agora >= inicio;
+      if (naJanela || depoisInicio) {
+        var polo = '';
+        try {
+          var p = aula.poloId ? DB.buscar('polos', aula.poloId) : null;
+          polo = p ? (' — ' + p.nome) : '';
+        } catch (e2) {}
+        jarvisAvisarCheckinObrigatorio(depoisInicio && inicio !== null && agora >= inicio + 20 ? 'falta' : 'hora', aula, polo);
+      }
+    }
+  } catch (e) {}
+  try { jarvisPerguntarSobreAula(false); } catch (e) {}
+}
+
 
 /* ================================================================
    INDEX DE CONHECIMENTO — Formação de Professor
@@ -10687,15 +11832,37 @@ function assistenteMensagemBoasVindas() {
   var extraProfessor = assistenteEhProfessor()
     ? '\n\n👨‍🏫 Modo equipe:\n• "avaliação de [nome]" ou "ficha de [nome]" — abre a ficha\n• "formação" / "aquecimento" / "mobilidade" / "protocolo de aula" — Index de Formação de Professor'
     : '';
+  var extraAula = '';
+  try {
+    if (alunoPendenteFeedbackAula()) {
+      extraAula = '\n\n⚡ Você treinou hoje e ainda não contou como foi a aula — posso registrar a intensidade aqui.';
+    }
+  } catch (e) {}
+  try {
+    var aluno = alunoLogado();
+    if (aluno && typeof jarvisAvaliacoesNaoVistas === 'function' && jarvisAvaliacoesNaoVistas(aluno).length) {
+      extraAula += '\n\n📋 Há avaliação nova do professor — toque em Ver avaliação quando eu avisar.';
+    }
+  } catch (e) {}
+  try {
+    var aluno2 = alunoLogado();
+    var aulaH = typeof aulaDeHoje === 'function' ? aulaDeHoje() : null;
+    if (aluno2 && aulaH && typeof ucTemCheckinHoje === 'function' && !ucTemCheckinHoje(aluno2)) {
+      extraAula += '\n\n📍 Se estiver no treino, posso fazer o check-in por aqui (botão "Fazer check-in agora").';
+    }
+  } catch (e) {}
   return saudacao + 'Sou o Jarvis, assistente da academia.\n\n' +
     'Posso ajudar com:\n' +
+    '• Check-in obrigatório (direto por aqui)\n' +
+    '• Como foi a aula (intensidade)\n' +
+    '• Suas avaliações do professor\n' +
     '• Próxima aula e horários\n' +
     '• Status do seu check-in\n' +
     '• Como usar o app (check-in, pedidos de treino, certificados)\n' +
     '• Sua graduação, avaliações e presenças\n' +
     '• Avisos do professor\n' +
     '• Formação de professor (aquecimento, alongamento, mobilidade)\n' +
-    '• Perguntas livres (quando a IA estiver configurada)' + extraProfessor + '\n\n' +
+    '• Perguntas livres (quando a IA estiver configurada)' + extraProfessor + extraAula + '\n\n' +
     'Toque em um atalho ou digite sua pergunta.';
 }
 
@@ -10728,6 +11895,7 @@ function assistentePerguntar(texto) {
     }
   }
   assistenteAdicionarBolha('user', texto);
+  if (jarvisInterceptarIntensidade(texto)) return;
   if (assistenteInterceptarAvaliacaoSemanal(texto)) return;
   if (assistenteInterceptarGerenciarAluno(texto)) return;
   setTimeout(function () {
@@ -10770,7 +11938,7 @@ function assistenteProcessar(texto) {
       '7. Avisos do professor\n' +
       '8. Polos / locais de treino\n' +
       '9. Falar com o professor (mensagem privada)\n' +
-      '10. Feedback da aula e pergunta da semana\n' +
+      '10. Como foi a aula (intensidade) e pergunta da semana\n' +
       '11. Formação de professor (aquecimento, alongamento, mobilidade, quadril, protocolo de aula)\n\n' +
       'Exemplos: "qual a próxima aula?", "formação", "aquecimento", "mobilidade de quadril"';
   }
@@ -10845,10 +12013,11 @@ function assistenteProcessar(texto) {
       '🏆 Índice: ' + an.score + '/100 — ' + an.nivel + '\n' +
       '✅ Aulas confirmadas: ' + an.aprovadas + ' (últimos 30 dias: ' + an.aprovadas30 + ')\n' +
       (an.mediaGeral !== null ? '📊 Média das avaliações: ' + an.mediaGeral.toFixed(1) + '\n' : '') +
+      (an.mediaIntensidade != null ? '⚡ Intensidade média das aulas: ' + an.mediaIntensidade + '/8 (' + an.totalIntensidades + ' registros)\n' : '') +
       (an.pontoForte && an.pontoForte.media !== null ? '⭐ Ponto forte: ' + an.pontoForte.nome + ' (' + an.pontoForte.media.toFixed(1) + ')\n' : '') +
       (an.pontoFraco && an.pontoFraco.media !== null ? '🎯 Priorizar: ' + an.pontoFraco.nome + ' (' + an.pontoFraco.media.toFixed(1) + ')\n' : '') +
       '\nRecomendações:\n• ' + an.recomendacoes.join('\n• ') +
-      '\n\nVeja o detalhe completo na aba Aluno.';
+      '\n\nVeja o detalhe e o histórico de intensidade na aba Aluno.';
   }
 
   if (/graduacao|corda|nivel|minha corda/.test(t)) {
@@ -10889,7 +12058,7 @@ function assistenteProcessar(texto) {
   }
 
   if (/feedback.*(aula|treino)|avaliar a aula/.test(t)) {
-    return 'Após o check-in aprovado de hoje, no painel do Aluno aparece o card "Feedback da Aula".';
+    return 'Após o check-in aprovado de hoje, no painel do Aluno aparece o card "Como foi a aula?" com a escala de intensidade (Muito Leve até Exaustão Máxima).';
   }
 
   if (/instagram|rede social/.test(t)) {
@@ -11580,6 +12749,25 @@ function marcarAvaliacaoVista(avalId) {
 }
 
 /* ---------- 3. Feedback pós-aula ---------- */
+/* Escala de intensidade da aula (percepção do aluno) */
+var INTENSIDADE_AULA = [
+  { id: 'muito_leve', label: 'Muito Leve' },
+  { id: 'leve', label: 'Leve' },
+  { id: 'moderada', label: 'Moderada' },
+  { id: 'pouco_intensa', label: 'Pouco Intensa' },
+  { id: 'intensa', label: 'Intensa' },
+  { id: 'muito_intensa', label: 'Muito Intensa' },
+  { id: 'muito_muito_intensa', label: 'Muito, Muito Intensa' },
+  { id: 'exaustao_maxima', label: 'Exaustão Máxima' }
+];
+function labelIntensidadeAula(id) {
+  for (var i = 0; i < INTENSIDADE_AULA.length; i++) {
+    if (INTENSIDADE_AULA[i].id === id) return INTENSIDADE_AULA[i].label;
+  }
+  var leg = { gostei: '👍 Gostei', dificil: '💪 Foi difícil', repetir: '🔁 Quero repetir' };
+  return leg[id] || id || '-';
+}
+
 function enviarFeedbackAula(rating, btn) {
   var aluno = alunoLogado();
   if (!aluno) { mostrarToast('Faça login para enviar feedback.', 'erro'); return; }
@@ -11591,7 +12779,12 @@ function enviarFeedbackAula(rating, btn) {
   var ja = DB.listar('feedbacksAula').some(function (f) {
     return f.alunoId === aluno.id && f.data === dataLocalISO();
   });
-  if (ja) { mostrarToast('Você já enviou feedback de hoje.', 'erro'); return; }
+  if (ja) { mostrarToast('Você já enviou o feedback de hoje.', 'erro'); return; }
+  if (!rating) {
+    var sel = document.querySelector('input[name="feedbackIntensidade"]:checked');
+    rating = sel ? sel.value : '';
+  }
+  if (!rating) { mostrarToast('Selecione como foi a intensidade da aula.', 'erro'); return; }
   var texto = ($('feedbackAulaTexto') && $('feedbackAulaTexto').value || '').trim();
   if (btn) { btn.classList.add('carregando'); }
   DB.salvar('feedbacksAula', {
@@ -11601,16 +12794,40 @@ function enviarFeedbackAula(rating, btn) {
     data: dataLocalISO(),
     presencaId: ck.id || '',
     rating: rating,
+    intensidade: rating,
+    intensidadeLabel: labelIntensidadeAula(rating),
     texto: texto.slice(0, 400),
     vistoProfessor: false,
     criadoEm: agoraISO()
   }).then(function () {
     if (btn) { btn.classList.remove('carregando'); }
-    mostrarToast('Obrigado pelo feedback! 💚');
-    registroLog('aluno', 'Feedback pós-aula: ' + rating + ' por ' + aluno.nome);
+    try { localStorage.removeItem('uc_lembrete_feedback_' + dataLocalISO() + '_' + aluno.id); } catch (e) {}
+    mostrarToast('Obrigado! Intensidade registrada: ' + labelIntensidadeAula(rating) + ' 💚');
+    registroLog('aluno', 'Feedback intensidade: ' + rating + ' por ' + aluno.nome);
     renderAluno();
     atualizarBadgesInteracao();
   });
+}
+
+/* Notificação local: pede ao aluno para contar a intensidade da aula */
+function lembrarFeedbackIntensidadeAula() {
+  var aluno = alunoLogado();
+  if (!aluno) return;
+  var ck = obterCheckinDoDia(aluno);
+  if (!ck || ck.status !== 'aprovado') return;
+  var ja = DB.listar('feedbacksAula').some(function (f) {
+    return f.alunoId === aluno.id && f.data === dataLocalISO();
+  });
+  if (ja) return;
+  var chave = 'uc_lembrete_feedback_' + dataLocalISO() + '_' + aluno.id;
+  var jaAvisou = false;
+  try { jaAvisou = localStorage.getItem(chave) === '1'; } catch (e) {}
+  if (jaAvisou) return;
+  try { localStorage.setItem(chave, '1'); } catch (e) {}
+  notificar(
+    'Como foi a aula de hoje?',
+    'Abra Aluno e escolha a intensidade: de Muito Leve até Exaustão Máxima.'
+  );
 }
 
 function marcarFeedbacksVistos() {
@@ -11790,24 +13007,33 @@ function htmlCardMensagensAluno(aluno) {
 
 function htmlCardFeedbackAula(aluno) {
   var ck = obterCheckinDoDia(aluno);
-  var ja = DB.listar('feedbacksAula').some(function (f) { return f.alunoId === aluno.id && f.data === dataLocalISO(); });
+  var jaReg = DB.listar('feedbacksAula').filter(function (f) { return f.alunoId === aluno.id && f.data === dataLocalISO(); })[0];
   if (!ck || ck.status !== 'aprovado') {
-    return '<div class="card"><h3><i class="fas fa-heart"></i> Feedback da Aula</h3>' +
-      '<p class="sem-dados">Disponível após check-in aprovado de hoje.</p></div>';
+    return '<div class="card"><h3><i class="fas fa-bolt"></i> Como foi a aula?</h3>' +
+      '<p class="sem-dados">Disponível após o check-in de hoje ser aprovado.</p></div>';
   }
-  if (ja) {
-    return '<div class="card"><h3><i class="fas fa-heart"></i> Feedback da Aula</h3>' +
-      '<p class="mini" style="color:var(--primary-green);"><i class="fas fa-check-circle"></i> Feedback de hoje já enviado. Obrigado!</p></div>';
+  if (jaReg) {
+    return '<div class="card"><h3><i class="fas fa-bolt"></i> Como foi a aula?</h3>' +
+      '<p class="mini" style="color:var(--primary-green);"><i class="fas fa-check-circle"></i> Intensidade de hoje: <b>' +
+      esc(jaReg.intensidadeLabel || labelIntensidadeAula(jaReg.rating)) + '</b>. Obrigado!</p>' +
+      (jaReg.texto ? '<p class="mini">' + esc(jaReg.texto) + '</p>' : '') +
+      '</div>';
   }
-  return '<div class="card card-interacao"><h3 style="color:var(--accent-blue);"><i class="fas fa-heart"></i> Feedback da Aula de Hoje</h3>' +
-    '<p class="mini" style="margin-bottom:6px;">Como foi o treino? O professor vê o resumo.</p>' +
-    '<div class="feedback-btns">' +
-      '<button class="btn btn-mini" onclick="enviarFeedbackAula(\'gostei\',this)"><i class="fas fa-thumbs-up"></i> Gostei</button>' +
-      '<button class="btn btn-gold btn-mini" onclick="enviarFeedbackAula(\'dificil\',this)"><i class="fas fa-dumbbell"></i> Foi difícil</button>' +
-      '<button class="btn btn-secondary btn-mini" onclick="enviarFeedbackAula(\'repetir\',this)"><i class="fas fa-redo"></i> Quero repetir</button>' +
-    '</div>' +
+  setTimeout(lembrarFeedbackIntensidadeAula, 600);
+  var opcoes = INTENSIDADE_AULA.map(function (op) {
+    return '<label class="lista-item" style="display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;margin:4px 0;padding:10px 12px;">' +
+      '<span style="font-size:0.82rem;">' + esc(op.label) + '</span>' +
+      '<input type="radio" name="feedbackIntensidade" value="' + op.id + '" style="width:18px;height:18px;accent-color:var(--primary-green);">' +
+      '</label>';
+  }).join('');
+  return '<div class="card card-interacao card-destaque brilho-azul" style="border:1px solid var(--accent-blue);">' +
+    '<h3 style="color:var(--accent-blue);"><i class="fas fa-bolt"></i> Como foi a aula de hoje?</h3>' +
+    '<p class="mini" style="margin-bottom:8px;">Selecione a intensidade que você sentiu. O professor vê o resumo.</p>' +
+    '<div id="listaIntensidadeAula" style="max-height:280px;overflow-y:auto;">' + opcoes + '</div>' +
     '<label class="campo-label">Comentário (opcional)</label>' +
-    '<textarea id="feedbackAulaTexto" placeholder="Ex: quero treinar mais ginga..."></textarea></div>';
+    '<textarea id="feedbackAulaTexto" placeholder="Ex: quero treinar mais ginga, a roda foi pesada..."></textarea>' +
+    '<button class="btn" type="button" onclick="enviarFeedbackAula(null,this)" style="margin-top:8px;"><i class="fas fa-check"></i> Enviar</button>' +
+    '</div>';
 }
 
 function htmlCardPerguntaSemanaAluno(aluno) {
@@ -11906,13 +13132,13 @@ function htmlPainelInteracaoProfessor() {
   /* Feedbacks pós-aula */
   var feedbacks = DB.listar('feedbacksAula').slice().sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); }).slice(0, 20);
   var naoVistos = feedbacks.filter(function (f) { return !f.vistoProfessor; }).length;
-  html += '<div class="card"><h3><i class="fas fa-heart"></i> Feedbacks Pós-Aula <span class="badge-count">' + naoVistos + '</span></h3>';
+  html += '<div class="card"><h3><i class="fas fa-bolt"></i> Intensidade da Aula <span class="badge-count">' + naoVistos + '</span></h3>';
   if (!feedbacks.length) html += '<p class="sem-dados">Nenhum feedback ainda.</p>';
   else {
-    var labels = { gostei: '👍 Gostei', dificil: '💪 Foi difícil', repetir: '🔁 Quero repetir' };
     feedbacks.forEach(function (f) {
+      var lab = f.intensidadeLabel || labelIntensidadeAula(f.rating);
       html += '<div class="lista-item"><div class="linha"><b>' + esc(f.alunoNome) + '</b><span class="mini">' + dataBR(f.data) + '</span></div>' +
-        '<span class="pill pill-info">' + esc(labels[f.rating] || f.rating) + '</span>' +
+        '<span class="pill pill-info">' + esc(lab) + '</span>' +
         (f.texto ? '<div class="mini" style="margin-top:3px;">' + esc(f.texto) + '</div>' : '') + '</div>';
     });
     if (naoVistos) html += '<button class="btn btn-secondary btn-mini" onclick="marcarFeedbacksVistos();mostrarToast(\'Marcados como vistos\');renderAbaProfessor();"><i class="fas fa-eye"></i> Marcar todos como vistos</button>';
@@ -12451,15 +13677,56 @@ function trCalPedirAjuste(alunoId, iso) {
 
 function trCalProf(alunoId, iso, acao, obsForcada) {
   var a = DB.buscar('alunos', alunoId); if (!a || !trEquipeLogada()) return Promise.resolve();
-  var obs = (obsForcada != null && obsForcada !== '') ? String(obsForcada) : ((($('trCalObs') || {}).value || '').trim());
+  var meta = window._trCalRapidoMeta || {};
+  window._trCalRapidoMeta = null;
+  var obs = (obsForcada != null && obsForcada !== '') ? String(obsForcada)
+    : (meta.obs || (($('trCalObs') || {}).value || '').trim());
+  var poloId = meta.poloId || '';
+  var poloNome = '';
+  if (poloId) {
+    var polo = DB.buscar('polos', poloId);
+    poloNome = polo ? polo.nome : '';
+  }
   var p = trPresencaDoDia(a, iso), quem = (sessaoEquipe && sessaoEquipe.nome) || 'Professor';
-  var fim = function (msg) { fecharModal(); mostrarToast(msg); registroLog('professor', msg + ' (' + a.nome + ', ' + iso + ')'); trCalRenderTodos(); if (typeof renderAbaProfessor === 'function') renderAbaProfessor(); };
+  var fim = function (msg) {
+    try { fecharModal(); } catch (e) {}
+    mostrarToast(msg);
+    registroLog('professor', msg + ' (' + a.nome + ', ' + iso + ')');
+    trCalRenderTodos();
+    if (typeof renderAbaProfessor === 'function') renderAbaProfessor();
+  };
   if (acao === 'treinou') {
-    var it = trItensDoDia(iso, a.id, null), patch = { status: 'aprovado', observacaoProfessor: obs || 'Ajustado pelo professor no calendário.', avaliadoPor: quem, avaliadoEm: agoraISO(), treinoItens: it.itens, horasAula: trHoras(it.total) };
+    var it = trItensDoDia(iso, a.id, null);
+    var patch = {
+      status: 'aprovado',
+      tipo: (p && p.tipo === 'local') ? p.tipo : 'manual',
+      observacaoProfessor: obs || 'Ajustado pelo professor no calendário.',
+      avaliadoPor: quem,
+      avaliadoEm: agoraISO(),
+      treinoItens: it.itens,
+      horasAula: trHoras(it.total)
+    };
+    if (poloId) { patch.poloId = poloId; patch.poloNome = poloNome; }
     if (p) DB.salvar('presencas', patch, p.id).then(function () { fim('Dia marcado como treinado'); });
-    else DB.salvar('presencas', Object.assign({ alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', data: iso, hora: '', tipo: 'manual', poloId: '', poloNome: '', criadoEm: agoraISO() }, patch)).then(function () { fim('Treino lançado'); });
-  } else if (acao === 'naotreinou' && p) {
-    DB.salvar('presencas', { status: 'rejeitado', observacaoProfessor: obs || 'Ajustado pelo professor no calendário.', avaliadoPor: quem, avaliadoEm: agoraISO() }, p.id).then(function () { fim('Dia marcado como não treinado'); });
+    else DB.salvar('presencas', Object.assign({
+      alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '',
+      data: iso, hora: horaLocalHM(), tipo: 'manual',
+      poloId: poloId || '', poloNome: poloNome || '',
+      criadoEm: agoraISO()
+    }, patch)).then(function () { fim('Treino lançado no calendário'); });
+  } else if (acao === 'naotreinou') {
+    var patchN = {
+      status: 'rejeitado',
+      observacaoProfessor: obs || 'Marcado como não treinou no calendário.',
+      avaliadoPor: quem,
+      avaliadoEm: agoraISO()
+    };
+    if (p) DB.salvar('presencas', patchN, p.id).then(function () { fim('Dia marcado como não treinado'); });
+    else DB.salvar('presencas', Object.assign({
+      alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '',
+      data: iso, hora: '', tipo: 'manual', poloId: '', poloNome: '',
+      criadoEm: agoraISO()
+    }, patchN)).then(function () { fim('Falta registrada no calendário'); });
   }
 }
 
@@ -13078,9 +14345,64 @@ function trAjusteResolver(id, aprova) {
 function trHtmlCalProf() {
   var alunos = DB.listar('alunos').slice().sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); });
   var sel = (TR_CALS.calProf && TR_CALS.calProf.alunoId) || (alunos[0] && alunos[0].id) || '';
-  return '<h3><i class="fas fa-calendar-alt"></i> Calendário do aluno 📆</h3><p class="mini">Veja os dias treinados e ajuste: marcar treino, tirar treino ou editar os itens.</p>' +
-    '<select id="trCalProfSel" onchange="trCalMontar(\'calProf\',this.value,\'equipe\')">' + alunos.map(function (a) { return '<option value="' + a.id + '"' + (a.id === sel ? ' selected' : '') + '>' + esc(a.nome) + '</option>'; }).join('') + '</select><div id="calProf"></div>';
+  var polos = DB.listar('polos');
+  return '<h3><i class="fas fa-calendar-alt"></i> Calendário · presença e treino</h3>' +
+    '<p class="mini" style="margin-bottom:8px;"><b>Único lugar</b> para marcar se o aluno treinou, faltou, lançar presença manual (erro de check-in) e editar a carga do dia. Toque em um dia ou use seleção múltipla.</p>' +
+    '<label class="campo-label">Aluno</label>' +
+    '<select id="trCalProfSel" onchange="trCalMontar(\'calProf\',this.value,\'equipe\')">' +
+      alunos.map(function (a) {
+        return '<option value="' + a.id + '"' + (a.id === sel ? ' selected' : '') + '>' + esc(a.nome) + (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</option>';
+      }).join('') +
+    '</select>' +
+    '<div class="flex-btn" style="margin:8px 0;">' +
+      '<button type="button" class="btn btn-secondary btn-mini" onclick="trCalToggleMulti(\'calProf\')"><i class="fas fa-check-double"></i> Seleção múltipla</button>' +
+      '<button type="button" class="btn btn-gold btn-mini" onclick="trCalAbrirLancamentoRapido()"><i class="fas fa-bolt"></i> Lançamento rápido (hoje)</button>' +
+    '</div>' +
+    '<div id="calProf"></div>' +
+    '<div id="trCalLancamentoRapido" style="display:none;margin-top:10px;padding-top:8px;border-top:1px solid var(--card-border);">' +
+      '<p class="mini" style="margin-bottom:6px;">Atalho para hoje — mesmo efeito de tocar no dia no calendário.</p>' +
+      '<label class="campo-label">Polo (opcional)</label>' +
+      '<select id="trCalRapidoPolo"><option value="">— Não informado —</option>' +
+        polos.map(function (p) { return '<option value="' + p.id + '">' + esc(p.nome) + '</option>'; }).join('') +
+      '</select>' +
+      '<label class="campo-label">Observação</label>' +
+      '<input id="trCalRapidoObs" placeholder="Ex: sem celular / correção de erro">' +
+      '<div class="flex-btn" style="margin-top:6px;">' +
+        '<button type="button" class="btn btn-mini" onclick="trCalRapidoAcao(\'treinou\')"><i class="fas fa-check"></i> Treinou hoje</button>' +
+        '<button type="button" class="btn btn-danger btn-mini" onclick="trCalRapidoAcao(\'naotreinou\')"><i class="fas fa-xmark"></i> Não treinou</button>' +
+        '<button type="button" class="btn btn-back btn-mini" onclick="$(\'trCalLancamentoRapido\').style.display=\'none\'">Fechar</button>' +
+      '</div>' +
+    '</div>';
 }
+
+function trCalToggleMulti(containerId) {
+  var st = TR_CALS[containerId];
+  if (!st) {
+    TR_CALS[containerId] = st = { ano: new Date().getFullYear(), mes: new Date().getMonth() };
+  }
+  st.multi = !st.multi;
+  if (!st.multi) trCalLimparSel(containerId);
+  else trCalRender(containerId);
+  mostrarToast(st.multi ? 'Seleção múltipla ligada: toque nos dias e use os botões em lote.' : 'Seleção múltipla desligada.');
+}
+
+function trCalAbrirLancamentoRapido() {
+  var box = $('trCalLancamentoRapido');
+  if (!box) return;
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+function trCalRapidoAcao(acao) {
+  var sel = $('trCalProfSel');
+  var alunoId = sel ? sel.value : '';
+  if (!alunoId) { mostrarToast('Escolha o aluno.', 'erro'); return; }
+  var iso = dataLocalISO();
+  var obs = (($('trCalRapidoObs') && $('trCalRapidoObs').value) || '').trim();
+  var poloId = ($('trCalRapidoPolo') && $('trCalRapidoPolo').value) || '';
+  window._trCalRapidoMeta = { obs: obs, poloId: poloId };
+  trCalProf(alunoId, iso, acao);
+}
+
 
 /* ---------- boletim e certificado ---------- */
 function trHtmlBoletimProf() {
@@ -13238,7 +14560,7 @@ function trProfInjetar() {
     htmlPedidosResetSenhaProf() +
     '<div class="card tr-card fechado" id="trCardPlano">' + trPlanoHtmlInterno() + '</div>' +
     '<div class="card tr-card fechado" id="trCardPedidos">' + trHtmlPedidos() + '</div>' +
-    '<div class="card tr-card fechado" id="trCardCal">' + trHtmlCalProf() + '</div>' +
+    '<div class="card tr-card" id="trCardCal" style="border:1px solid var(--primary-green);">' + trHtmlCalProf() + '</div>' +
     '<div class="card tr-card fechado" id="trCardBol">' + trHtmlBoletimProf() + '</div>' +
     '<div class="card tr-card fechado" id="trCardTestes">' + trHtmlTestes() + '</div>' + trHtmlAdvertencias().replace('class="card tr-card"', 'class="card tr-card fechado"');
   box.appendChild(div);
@@ -13363,10 +14685,31 @@ function iniciarApp() {
   /* revalida o atraso a cada minuto */
   setInterval(avaliarAtrasoHoje, 60000);
 
+  /* lembretes de aula / check-in / intensidade */
+  try { iniciarLembretesNotificacao(); } catch (e) { console.warn('lembretes', e); }
+
+  /* Service Worker + Background Sync + espelho da fila */
+  try {
+    ucRegistrarServiceWorker().then(function (reg) {
+      try { ucEnviarCfgFirebaseAoSW(); } catch (e) {}
+      try {
+        var fila = DB._lerFila ? DB._lerFila() : [];
+        ucEspelharFilaNoSW(fila);
+        if (fila.length) ucPedirBackgroundSync();
+      } catch (e) {}
+      if (notificacaoAtiva()) {
+        try { ucInscreverWebPush(); } catch (e) {}
+      }
+    });
+  } catch (e) { console.warn('SW init', e); }
+
   window.addEventListener('online', function () {
     atualizarStatusFirebase();
     try { DB.sincronizarFilaOffline(); } catch (e) {}
+    try { ucPedirBackgroundSync(); } catch (e) {}
+    try { ucEnviarCfgFirebaseAoSW(); } catch (e) {}
     try { renderAbaDev(); } catch (e) {}
+    try { if (typeof renderCheckin === 'function') renderCheckin(); } catch (e) {}
   });
   window.addEventListener('offline', function () { atualizarStatusFirebase(); });
   /* tenta sincronizar fila ao abrir e a cada 45s se online */
@@ -15183,7 +16526,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     return {
       base: base,
       presencas: pres.filter(function (p) { return p.status === 'aprovado'; }).length,
-      faltas: pres.filter(function (p) { return p.status === 'falta'; }).length,
+      faltas: pres.filter(function (p) { return p.status === 'falta' || p.status === 'falta_compromisso'; }).length,
       atrasos: pres.filter(function (p) { return (p.atrasoMin || 0) > 0; }).length,
       semanas: Math.ceil(dias / 7)
     };
@@ -15233,7 +16576,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
         '<option value="nao"' + (textos.ins_Berimbau === 'nao' || !textos.ins_Berimbau ? ' selected' : '') + '>Não sei</option>' +
         '<option value="aprendizado"' + (textos.ins_Berimbau === 'aprendizado' ? ' selected' : '') + '>Em aprendizado</option>' +
         '<option value="sim"' + (textos.ins_Berimbau === 'sim' ? ' selected' : '') + '>Sim</option></select>' +
-        '<div class="uc-linha"><div><label class="campo-label">Faltas</label><input type="number" id="simFaltas" min="0" value="' + Math.max(nums.comp_faltas || 0, acum.faltas) + '"></div>' +
+        '<div class="uc-linha"><div><label class="campo-label">Faltas de compromisso</label><input type="number" id="simFaltas" min="0" value="' + Math.max(nums.comp_faltas || 0, acum.faltas) + '"></div>' +
         '<div><label class="campo-label">Atrasos</label><input type="number" id="simAtrasos" min="0" value="' + Math.max(nums.comp_atrasos || 0, acum.atrasos) + '"></div></div>' +
         '<div class="uc-linha"><div><label class="campo-label">Semanas no período</label><input type="number" id="simSemanas" min="0" value="' + Math.max(nums.comp_semanas || 0, acum.semanas) + '"></div>' +
         '<div><label class="campo-label">Aulas regulares presentes</label><input type="number" id="simPresencas" min="0" value="' + Math.max(nums.pa_reg_pres || 0, acum.presencas) + '"></div></div>');
@@ -15333,7 +16676,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
         '<div class="uc-mini">Técnica: ' + doc.mediaTecnica + '% · Toques/jogos: ' + doc.mediaMusical + '%' +
         (doc.frequenciaSemanal != null ? ' · Frequência: ' + doc.frequenciaSemanal + '/semana' : '') + '</div>' +
         (doc.textos && doc.textos.obs ? '<div class="uc-mini">Obs.: ' + esc(doc.textos.obs) + '</div>' : '') +
-        '<div class="uc-mini">Tudo que está guardado no app: ' + acum.presencas + ' presença(s), ' + acum.faltas + ' falta(s) e ' + acum.atrasos + ' atraso(s). Na simulação entra o maior valor entre o app e o boletim, para não contar duas vezes.</div>' +
+        '<div class="uc-mini">Tudo que está guardado no app: ' + acum.presencas + ' presença(s), ' + acum.faltas + ' falta(s) de compromisso e ' + acum.atrasos + ' atraso(s). Falta de compromisso = marcou que ia treinar e não foi. Na simulação entra o maior valor entre o app e o boletim.</div>' +
         '<div class="uc-mini">O resultado oficial e a graduação são revelados no batizado.</div></div>'
       : '<div class="uc-mini">Você ainda não tem avaliação finalizada. No app há ' + acum.presencas + ' presença(s), ' + acum.faltas + ' falta(s) e ' + acum.atrasos + ' atraso(s).</div>';
     card.innerHTML = '<h3><i class="fas fa-chart-line"></i> Simular minha avaliação</h3>' +
