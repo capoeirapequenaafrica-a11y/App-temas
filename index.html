@@ -3187,6 +3187,26 @@ function nomeJogadorArcade() {
   return n;
 }
 
+function processarPontosSpace() {
+  var fila = [];
+  try { fila = JSON.parse(localStorage.getItem('uc_space_pendente') || '[]') || []; } catch (e) { fila = []; }
+  if (!fila.length) return;
+  var nomeAtual = '';
+  try { nomeAtual = (typeof nomeJogadorArcade === 'function' ? nomeJogadorArcade() : '') || ''; } catch (e) {}
+  var restantes = [];
+  fila.forEach(function (p) {
+    var nome = ((p && p.nome) || nomeAtual || '').trim();
+    if (!nome) { restantes.push(p); return; }
+    registrarPontosJogo(nome, p.pontos, 'space').then(function () {
+      try { mostrarToast('+' + p.pontos + ' pts · Space Impact'); } catch (e) {}
+    });
+  });
+  try { localStorage.setItem('uc_space_pendente', JSON.stringify(restantes)); } catch (e) {}
+}
+window.addEventListener('focus', processarPontosSpace);
+document.addEventListener('visibilitychange', function () { if (!document.hidden) processarPontosSpace(); });
+setTimeout(processarPontosSpace, 1500);
+
 function registrarPontosJogo(nome, pontos, jogo) {
   var aluno = alunoLogado() || encontrarAlunoPorNome(nome);
   return DB.salvar('pontosJogos', {
