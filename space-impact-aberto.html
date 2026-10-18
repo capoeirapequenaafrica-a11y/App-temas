@@ -202,6 +202,18 @@ const stPl=pickR(pl),stp=stPl.pos.clone().add(rv(stPl.r*1.8+150));makeStation(st
 queue=buildQueue(pl,C,stp,gp);mi=0;startMission()}
 
 // ---------- missões ----------
+function pesoTxt(){
+  if(!P||!P.g||!P.sp)return '';
+  let best=null,bd=500;
+  for(const b of bodies){if(b.sun||b.gas||!b.info)continue;const d=b.pos.distanceTo(P.g.position)-b.r;if(d<bd){bd=d;best=b}}
+  const massa=P.sp.m*2000+P.carga*250+P.fuel*40;
+  const atm=best&&bd<300?1-0.3*(1-bd/300):1;
+  const emp=P.sp.m*2400*(P.mtL||0)*atm;
+  let t=' · EMPUXO '+Math.round(emp).toLocaleString('pt-BR')+' lbf';
+  if(best){const g=best.info.gravidade,peso=massa*g;
+    t+=' · PESO '+Math.round(peso).toLocaleString('pt-BR')+' lbf ('+g+' g) · TWR '+(emp/peso).toFixed(2)+(bd<300?' · ATM '+Math.round(atm*100)+'%':'');}
+  return t;
+}
 function say(t){$('msg').textContent=t;$('msg').style.opacity=1;note_t=3.2}
 function makeField(c){const mat=new THREE.MeshStandardMaterial({color:0x6b5f55,roughness:.95,metalness:.1,flatShading:true});for(let i=0;i<26;i++){const r=5+R()*11,m=new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),mat);m.scale.set(.8+R()*.5,.8+R()*.5,.8+R()*.5);m.position.copy(c).add(rv(R()*260));scene.add(m);mobj.push(m);asts.push({m,r:r*1.05,hp:Math.ceil(r/4),w:rv(.4)})}}
 function breakAst(a){scene.remove(a.m);asts.splice(asts.indexOf(a),1);boom(a.m.position.clone(),5,V());for(let i=0;i<2+(R()*2|0);i++)spawnPickup(a.m.position.clone().add(rv(6)),3)}
@@ -292,7 +304,7 @@ hx.strokeStyle='rgba(92,242,192,.6)';hx.beginPath();hx.arc(HW/2,HH*.42,10,0,7);h
 const b=enemies.find(e=>e.boss);if(b){hx.fillStyle='#1c2a3b';hx.fillRect(HW/2-110,HH-26,220,7);hx.fillStyle='#ff4d4d';hx.fillRect(HW/2-110,HH-26,220*cl(b.hp/b.mhp,0,1),7)}
 let h='';if(mis){if(mis.t=='travel'){const d=Math.max(0,P.g.position.distanceTo(mis.b.pos)-mis.b.r),pg=cl(1-d/mis.d0,0,1);h=`${mis.deliver?'ENTREGA':'VIAGEM'}: ${mis.b.name}<div id="bar"><i style="width:${pg*100}%"></i></div>${(d*9|0).toLocaleString('pt-BR')} km · ETA ${P.v.length()>5?(d/P.v.length()|0):'—'}s`}
 else if(mis.t=='clear')h=`ELIMINAR HOSTIS: ${mis.k}/${mis.n}`;else if(mis.t=='caca')h=`CAÇA EM ${mis.b.name}: ${mis.k}/${mis.n}`;else if(mis.t=='mine')h=`MINERAR: ${mis.k}/${mis.n} cristais`;else if(mis.t=='scan')h=`ESCANEANDO: ${(mis.k/mis.n*100)|0}%`;else if(mis.t=='land')h=`POUSAR EM ${mis.b.name}: ${mis.k}/${mis.n} amostras`;else if(mis.t=='recover')h=`RECOLHER: ${mis.k}/${mis.n} caixas`;else if(mis.t=='rescue')h=`RESGATAR: ${mis.k}/${mis.n} sobreviventes`;else h='DESTRUIR A NAVE-MÃE'}
-$('mis').innerHTML=h+`<br>AMEAÇA ${thr} · VEL ${P.v.length()|0} · ${W[wepKey].name}${P.cargo?' · ENTREGAR':''}${P.landMode&&P.landTgt?' · ALT '+(Math.max(0,P.g.position.distanceTo(P.landTgt.pos)-P.landTgt.r)|0)+' · DESC '+(-P.v.dot(P.g.position.clone().sub(P.landTgt.pos).normalize())|0):''} · 💰${cred} · 📦${P.carga}/${P.cap} · ⛽${P.fuel|0}%`}
+$('mis').innerHTML=h+`<br>AMEAÇA ${thr} · VEL ${P.v.length()|0} · ${W[wepKey].name}${P.cargo?' · ENTREGAR':''}${P.landMode&&P.landTgt?' · ALT '+(Math.max(0,P.g.position.distanceTo(P.landTgt.pos)-P.landTgt.r)|0)+' · DESC '+(-P.v.dot(P.g.position.clone().sub(P.landTgt.pos).normalize())|0):''} · 💰${cred} · 📦${P.carga*250}/${P.cap*250} lb · ⛽${Math.round(P.fuel*40)}/4000 lb${pesoTxt()}`}
 
 // ---------- controles ----------
 const K=inp.keys;addEventListener('keydown',e=>{K[e.code]=1;if(e.code=='Space')e.preventDefault();if(e.code=='KeyR')cycleW();if(e.code=='KeyT')toggleAim();if(e.code=='KeyF')doDodge();if(e.code=='KeyG')doFlip()});addEventListener('keyup',e=>K[e.code]=0);
@@ -387,7 +399,7 @@ function step(dt){
 const AP=(state=='play')?autoPilot():null;if(P)P.battle=!!AP;
 const kx=(K.KeyD||K.ArrowRight?1:0)-(K.KeyA||K.ArrowLeft?1:0),ky=(K.KeyS||K.ArrowDown?1:0)-(K.KeyW||K.ArrowUp?1:0),ix=cl(AP?AP.ix:inp.x+kx,-1,1),iy=cl(AP?AP.iy:inp.y+ky,-1,1),roll=(K.KeyE?1:0)-(K.KeyQ?1:0),boost=inp.boost||K.ShiftLeft||K.ShiftRight,fire=state=='play'&&!!(inp.fire||K.Space);
 const g=P.g,sp=P.sp,f=fwdOf(g),m=sp.m*(P.cargo?1.4:1);
-if(state=='play'){T+=dt;P.inv=Math.max(0,P.inv-dt);P.dcd-=dt;P.fcd-=dt;const bk=inp.brake||K.KeyC||(P.landMode&&landBrake());var sn=0,dodging=P.dodge>0;if(dodging){const tt=Math.min(1,(.7-P.dodge)/.7);sn=Math.sin(Math.PI*tt);P.dodge-=dt}const sx=(P.sx=(P.sx||0)+(ix-(P.sx||0))*(1-Math.exp(-dt*7))),sy=(P.sy=(P.sy||0)+(iy-(P.sy||0))*(1-Math.exp(-dt*7)));const wd={x:-sy*sp.turn,y:-sx*sp.turn,z:roll*2-(dodging?P.dsgn*Math.PI*Math.PI*sn*.8/.7:0)};const cmd={x:cl((wd.x-P.w.x)*5,-1,1),y:cl((wd.y-P.w.y)*5,-1,1),z:cl((wd.z-P.w.z)*5,-1,1),lat:sn*P.dsgn,retro:bk?1:0,main:(bk||P.landed)?0:1};var RR=rcsUpdate(dt,cmd);P.w.addScaledVector(RR.tq,RCS_ALPHA*dt);P.v.addScaledVector(V(RR.fb.x*LAT_A,0,RR.fb.z*RET_A).applyQuaternion(g.quaternion),dt);const bt=-sx*.45,nb=(P.bank||0)+(bt-(P.bank||0))*(1-Math.exp(-dt*4));g.rotateX(P.w.x*dt);g.rotateY(P.w.y*dt);g.rotateZ(P.w.z*dt);g.rotateZ(nb-(P.bank||0));P.bank=nb;if(P.flip>0){P.flip-=dt;g.rotateX(Math.PI/.7*dt)}
+if(state=='play'){T+=dt;P.inv=Math.max(0,P.inv-dt);P.dcd-=dt;P.fcd-=dt;const bk=inp.brake||K.KeyC||(P.landMode&&landBrake());var sn=0,dodging=P.dodge>0;if(dodging){const tt=Math.min(1,(.7-P.dodge)/.7);sn=Math.sin(Math.PI*tt);P.dodge-=dt}const sx=(P.sx=(P.sx||0)+(ix-(P.sx||0))*(1-Math.exp(-dt*7))),sy=(P.sy=(P.sy||0)+(iy-(P.sy||0))*(1-Math.exp(-dt*7)));const wd={x:-sy*sp.turn,y:-sx*sp.turn,z:roll*2-(dodging?P.dsgn*Math.PI*Math.PI*sn*.8/.7:0)};const cmd={x:cl((wd.x-P.w.x)*5,-1,1),y:cl((wd.y-P.w.y)*5,-1,1),z:cl((wd.z-P.w.z)*5,-1,1),lat:sn*P.dsgn,retro:bk?1:0,main:(bk||P.landed)?0:1};var RR=rcsUpdate(dt,cmd);P.mtL=RR.mt*(boost?3.4:1);P.w.addScaledVector(RR.tq,RCS_ALPHA*dt);P.v.addScaledVector(V(RR.fb.x*LAT_A,0,RR.fb.z*RET_A).applyQuaternion(g.quaternion),dt);const bt=-sx*.45,nb=(P.bank||0)+(bt-(P.bank||0))*(1-Math.exp(-dt*4));g.rotateX(P.w.x*dt);g.rotateY(P.w.y*dt);g.rotateZ(P.w.z*dt);g.rotateZ(nb-(P.bank||0));P.bank=nb;if(P.flip>0){P.flip-=dt;g.rotateX(Math.PI/.7*dt)}
 const brake=inp.brake||K.KeyC,C=.5,Tt=((RR&&RR.mt)||0)*(P.fuel>0?1:0)*C*(boost?240:70);P.v.addScaledVector(f,Tt/m*dt).addScaledVector(P.v,-(brake?1.6:C)/m*dt);
 const lat=P.v.clone().addScaledVector(f,-P.v.dot(f));P.v.addScaledVector(lat,-(1-Math.exp(-dt*1.1)));g.position.addScaledVector(P.v,dt);
 for(const b of bodies){const dv=g.position.clone().sub(b.pos),d=dv.length();if(b.sun){if(d<b.r*1.6)hurt(dt*(b.r*1.6-d)/b.r*60)}else if(d<b.r+5){const n=dv.normalize(),vn=P.v.dot(n);if(P.landed&&P.landed.b===b){g.position.copy(b.pos).addScaledVector(n,b.r+5);P.v.set(0,0,0);continue}if(P.landMode&&P.landTgt===b&&vn<0){const vr=-vn,hs=P.v.clone().addScaledVector(n,-vn).length();if(vr<=12&&hs<=15){P.landed={b,n:n.clone()};P.landMode=0;P.landTgt=null;P.v.set(0,0,0);say('POUSO SUAVE · '+(b.info?b.info.resumo:''));boom(g.position.clone(),6,V());g.position.copy(b.pos).addScaledVector(n,b.r+5);continue}hurt((vr-12)*3);say('IMPACTO!')}g.position.copy(b.pos).addScaledVector(n,b.r+5);if(vn<0){P.v.addScaledVector(n,-1.3*vn);hurt(Math.max(0,-vn-18)*.45)}}}
