@@ -49,6 +49,10 @@ button:focus-visible{outline:3px solid #fff}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+window.addEventListener('error',function(e){var d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;background:#3a0a0a;color:#ffd0d0;font:12px monospace;padding:8px;white-space:pre-wrap;word-break:break-word';d.textContent='ERRO: '+e.message+' (linha '+e.lineno+')';document.body.appendChild(d)});
+window.addEventListener('unhandledrejection',function(e){var d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;background:#3a0a0a;color:#ffd0d0;font:12px monospace;padding:8px;white-space:pre-wrap';d.textContent='ERRO: '+(e.reason&&e.reason.message||e.reason);document.body.appendChild(d)});
+</script>
+<script>
 /* Gerador de planetas e ecossistemas baseado em ecologia real.
    - Biomas: classificação de Whittaker (temperatura média e precipitação anual).
    - Espécies: exemplos reais de plantas e animais de cada bioma.
