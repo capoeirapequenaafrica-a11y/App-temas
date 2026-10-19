@@ -15026,6 +15026,58 @@ function msIniciar() {
 }
 </script>
 
+<style>
+#pm3d{display:none;position:fixed;inset:0;z-index:99999;background:#050505;color:#fff;font-family:system-ui,sans-serif;touch-action:none;overflow:hidden;user-select:none;-webkit-user-select:none}
+#pm3d #pmCv{position:absolute;inset:0}
+#pm3d #pmCv canvas{display:block;width:100%;height:100%}
+#pm3d .pmb{background:rgba(20,20,26,.82);color:#fff;border:2px solid #ffffff44;border-radius:10px;padding:6px 9px;font:700 12px system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
+#pm3d .pmb:active{background:#ffd60055}
+#pm3d .pmpad{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,54px);gap:4px;z-index:4}
+#pm3d .pmpad button{width:54px;height:54px;border-radius:14px;border:2px solid #ffffff55;background:rgba(255,214,0,.22);color:#fff;font-size:22px;touch-action:none}
+#pm3d .pmpad.g button{background:rgba(192,77,255,.26);border-color:#c04dffaa}
+#pm3d .pmpad button:active{background:rgba(255,255,255,.4)}
+#pm3d #pmLobby{display:none;position:absolute;inset:0;z-index:8;background:rgba(0,0,0,.82);align-items:center;justify-content:center}
+</style>
+<div id="pm3d">
+  <div id="pmCv"></div>
+  <div id="pmFl" style="position:absolute;inset:0;background:#f00;opacity:0;pointer-events:none;z-index:2"></div>
+  <div id="pmArr" style="position:absolute;inset:0;pointer-events:none;display:none;z-index:2"></div>
+  <div id="pmH" style="position:absolute;top:calc(8px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font:700 15px system-ui,sans-serif;text-shadow:0 0 6px #000,0 0 6px #000;pointer-events:none;z-index:3;padding:0 64px"></div>
+  <button type="button" class="pmb" onclick="fecharPacHorror3D()" style="position:absolute;top:calc(8px + env(safe-area-inset-top,0px));right:8px;z-index:6;font-size:15px">✕</button>
+  <canvas id="pmMap" width="126" height="126" style="position:absolute;top:calc(46px + env(safe-area-inset-top,0px));left:8px;width:120px;height:120px;background:rgba(0,0,0,.55);border:1px solid #ffffff33;border-radius:8px;z-index:3;pointer-events:none"></canvas>
+  <div id="pmMsg" style="position:absolute;top:40%;left:0;right:0;text-align:center;font:900 26px system-ui,sans-serif;color:#ff5252;text-shadow:0 0 10px #000,0 0 10px #000;pointer-events:none;z-index:3"></div>
+  <div style="position:absolute;top:calc(46px + env(safe-area-inset-top,0px));right:8px;display:flex;flex-direction:column;gap:5px;z-index:5;align-items:stretch">
+    <button type="button" class="pmb" id="pmN1">SOLO</button>
+    <button type="button" class="pmb" id="pmN2">2 JOG.</button>
+    <button type="button" class="pmb" id="pmN3">3 JOG.</button>
+    <button type="button" class="pmb" id="pmD1">Médio</button>
+    <button type="button" class="pmb" id="pmD2">Difícil</button>
+    <button type="button" class="pmb" id="pmD3">Impossível</button>
+    <button type="button" class="pmb" id="pmOnline">🌐 Online</button>
+    <button type="button" class="pmb" id="pmFP" style="display:none">1ª pessoa</button>
+  </div>
+  <div class="pmpad" style="left:10px">
+    <span></span><button type="button" id="pmU">▲</button><span></span>
+    <button type="button" id="pmLf">◀</button><span></span><button type="button" id="pmRt">▶</button>
+    <span></span><button type="button" id="pmDn">▼</button><span></span>
+  </div>
+  <div class="pmpad g" style="right:10px">
+    <span></span><button type="button" id="pmGU">▲</button><span></span>
+    <button type="button" id="pmGLf">◀</button><span></span><button type="button" id="pmGRt">▶</button>
+    <span></span><button type="button" id="pmGDn">▼</button><span></span>
+  </div>
+  <div id="pmLobby">
+    <div style="background:#14141c;border:2px solid #4fc3f7;border-radius:16px;padding:18px;width:min(320px,88vw);text-align:center;display:flex;flex-direction:column;gap:10px">
+      <b style="font-size:16px">🌐 Pac Horror online</b>
+      <div id="pmLobbyStatus" style="font-size:12px;opacity:.85;min-height:16px"></div>
+      <button type="button" class="pmb" id="pmCriarSala" style="padding:10px">Criar sala (Pac-Man)</button>
+      <input id="pmCodigoInput" maxlength="6" placeholder="código da sala" autocapitalize="characters" autocomplete="off" style="padding:10px;border-radius:10px;border:1px solid #4fc3f7;background:#000;color:#fff;text-align:center;font:700 16px monospace;text-transform:uppercase">
+      <button type="button" class="pmb" id="pmEntrarSala" style="padding:10px">Entrar como fantasma</button>
+      <button type="button" class="pmb" id="pmFecharLobby" style="padding:8px">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* PAC-MAN HORROR 3D: labirinto procedural que muda, 1-3 jogadores, fantasmas com Minimax + poda alfa-beta (Médio d2 / Difícil d4 / Impossível d6) */
 var PM = { ok: false, on: false };
