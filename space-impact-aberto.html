@@ -51,7 +51,7 @@ button:focus-visible{outline:3px solid #fff}
 <button id="esair" style="display:none;position:fixed;right:8px;top:96px;z-index:30;background:#0b121c;color:#ff8a8a;border:2px solid #ff8a8a;padding:6px 9px;font:inherit;font-size:12px">⏹ SAIR DA ESCOLA</button>
 <div id="over" class="screen hide"><h1>NAVE PERDIDA</h1><p>Pontuação final: <span id="fs">0</span></p><button class="btn" id="again">TENTAR DE NOVO</button><button class="btn" id="arsenalBtn" style="margin-top:8px;background:#0b121c;color:var(--ac);border:2px solid var(--ac)">ARSENAL</button></div>
 
-<script>try{if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js"))}catch(e){}</script>
+<script>try{if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}catch(e){}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 window.addEventListener('error',function(e){var d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;top:0;z-index:99999;background:#3a0a0a;color:#ffd0d0;font:12px monospace;padding:8px;white-space:pre-wrap;word-break:break-word';d.textContent='ERRO: '+e.message+' (linha '+e.lineno+')';document.body.appendChild(d)});
@@ -248,7 +248,7 @@ for(let i=0;i<24;i++)bx(2.2,.06,.7,-12+i*1.05+(i%2)*.0,-2.97,-12,i%2?hz:M(0x1111
 for(const rr of[9,10.5]){const t=new THREE.Mesh(new THREE.TorusGeometry(rr,.1,6,64).rotateX(Math.PI/2),M(0x113344,0,1,0x2ad4ff));t.position.y=-2.95;h.add(t)}
 for(const sx of[-1,1]){bx(1.6,22,1.6,sx*17,8,-14,rb);bx(8,.8,1,sx*13,12,-14,rb);bx(.5,.5,6,sx*17,5,-11,hz)}
 const l1=new THREE.PointLight(0xfff0e0,1.4,95);l1.position.set(0,16,0);const l2=new THREE.PointLight(0x4ac8ff,.9,70);l2.position.set(-22,6,12);h.add(l1,l2);h.visible=false;scene.add(h);return h})();
-{const _r=renderer.render.bind(renderer);renderer.render=(a,b)=>{hangar.visible=state=='menu';_r(a,b)}}
+{const _r=renderer.render.bind(renderer);renderer.render=(a,b)=>{try{hangar.visible=state=='menu'}catch(e){hangar.visible=false}try{for(const q of bodies){const u=q.at&&q.at.material.uniforms;if(u&&u.k){const d=cam.position.distanceTo(q.pos);u.k.value=.16+.84*Math.min(1,Math.max(0,(d-q.r)/(q.r*.12)))}}}catch(e){}_r(a,b)}}
 
 // ---------- texturas e brilhos ----------
 function tex(s,fn){const c=document.createElement('canvas');c.width=c.height=s;fn(c.getContext('2d'),s);return new THREE.CanvasTexture(c)}
@@ -395,9 +395,9 @@ function relevo(geo,r,inf){
 function atmMat(info,h){
   const c=info&&info.biomas&&info.biomas[0]?info.biomas[0].cor:[120,170,255];
   const col=new THREE.Color(c[0]/255*.8+.2,c[1]/255*.8+.2,c[2]/255*.8+.35);
-  return new THREE.ShaderMaterial({uniforms:{c:{value:col}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.BackSide,
+  return new THREE.ShaderMaterial({uniforms:{c:{value:col},k:{value:1}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.BackSide,
     vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.0);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
-    fragmentShader:'uniform vec3 c;varying vec3 vN;varying vec3 vV;void main(){float i=pow(clamp(0.62-dot(vN,vV),0.0,1.0),3.0);gl_FragColor=vec4(c*i*1.6,i);}'});
+    fragmentShader:'uniform vec3 c;uniform float k;varying vec3 vN;varying vec3 vV;void main(){float i=pow(clamp(0.62-dot(vN,vV),0.0,1.0),3.0);gl_FragColor=vec4(c*i*1.6*k,i);}'});
 }
 const ERAS=[{max:3,nome:'Piratas',pool:[0,0,1]},{max:6,nome:'Mercenários',pool:[0,1,1,2]},{max:9,nome:'Guerra de frotas',pool:[1,2,2]},{max:1e9,nome:'Guerra intergaláctica',pool:[2,2,2]}];
 const eraAtual=()=>ERAS.find(e=>sector<=e.max);
@@ -439,7 +439,7 @@ D.slice(0,3+(R()*3|0)).forEach((d,i)=>{const k=K[(R()*6)|0],inf=GeradorPlanetas.
 const m=add(new THREE.Mesh(relevo(new THREE.SphereGeometry(r,48,32),r,inf),new THREE.MeshStandardMaterial({map:(inf.tipo==='gas'?planetTex('gas',h):null),color:(inf.tipo==='gas'?0xffffff:corPlaceholder(inf.tipo)),roughness:1,metalness:0})));m.position.copy(pos);m.userData.tilt=new THREE.Quaternion().setFromAxisAngle(V(0,0,1),inf.inclinacao*Math.PI/180);m.userData.rate=.4*(24/inf.diaHoras)*inf.sentido;m.userData.spin=0;m.quaternion.copy(m.userData.tilt);
 const at=add(new THREE.Mesh(new THREE.SphereGeometry(r*1.12,40,28),k[0]=='gas'?new THREE.MeshBasicMaterial({color:new THREE.Color(`hsl(${h},70%,60%)`),transparent:true,opacity:.14,blending:THREE.AdditiveBlending,side:THREE.BackSide,depthWrite:false}):atmMat(inf,h)));at.position.copy(pos);if(k[0]=='rocky'||k[0]=='ice'){const cm=add(new THREE.Mesh(new THREE.SphereGeometry(r*1.012,40,28),new THREE.MeshStandardMaterial({map:cloudT,transparent:true,opacity:.75,depthWrite:false,roughness:1})));cm.position.copy(pos);clouds.push(cm)}
 if(k[0]=='gas'||R()<.35){const rg=add(new THREE.Mesh(new THREE.RingGeometry(r*1.5,r*2.4,64),new THREE.MeshBasicMaterial({color:new THREE.Color(`hsl(${h+20},40%,65%)`),transparent:true,opacity:.45,side:THREE.DoubleSide,depthWrite:false})));rg.rotation.x=Math.PI/2+.25;rg.position.copy(pos)}
-bodies.push({pos,r,mesh:m,name:name+'-'+PN[i],gas:k[0]=='gas',info:inf})});const pl=bodies.slice(1);
+bodies.push({pos,r,mesh:m,at,name:name+'-'+PN[i],gas:k[0]=='gas',info:inf})});const pl=bodies.slice(1);
 estacoes=[];const TIPOS_EST=[['comando',0xffd166],['abastecimento',0x5cf2c0],['reparo',0xff7a7a]];
 const nEst=3+(R()*3|0);
 for(let e=0;e<nEst;e++){
