@@ -677,5 +677,14 @@ let last=performance.now();
 newPlayer();genSystem();place();P.g.position.set(0,0,0);info();for(let i=0;i<9;i++){const n=glow(new THREE.Color().setHSL(R(),.7,.5),26000+R()*20000);n.material.opacity=.13;n.position.copy(rv(1).normalize().multiplyScalar(52000));sky.add(n)}
 (function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000);last=t;step(dt);renderer.render(scene,cam);drawHUD()})(last);
 </script>
+<script>
+setTimeout(function(){var d=document.createElement('div');d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#001a12;color:#9ff;font:11px monospace;padding:6px;white-space:pre-wrap';
+var t=[];try{t.push('THREE='+(typeof THREE))}catch(e){t.push('THREE=erro')}
+try{t.push('GERADOR='+(typeof GeradorPlanetas))}catch(e){t.push('GERADOR=erro')}
+try{t.push('renderer='+(typeof renderer))}catch(e){t.push('renderer=erro')}
+try{t.push('estado='+state+' setor='+sector)}catch(e){t.push('estado=erro')}
+try{var gl=document.createElement('canvas').getContext('webgl');t.push('WebGL='+(gl?'ok':'NAO'))}catch(e){t.push('WebGL=erro')}
+d.textContent='DIAGNÓSTICO: '+t.join(' | ');document.body.appendChild(d)},2000);
+</script>
 </body>
 </html>
