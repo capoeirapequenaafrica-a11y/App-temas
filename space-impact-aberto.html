@@ -165,6 +165,32 @@ function buildStation(acc){
   const tip=new THREE.Mesh(new THREE.SphereGeometry(1.8,8,6),lightM);tip.position.set(0,27,0);g.add(tip);
   return g;
 }
+function corPlaceholder(t){return {rocky:0xb08a6a,ocean:0x2a5d9a,forest:0x3d7a3d,ice:0xdfe8f0,lava:0x6a3328,gas:0xc8a070}[t]||0x888888}
+function gerarSolo(b){
+  const inf=GeradorPlanetas.gerar((Math.random()*1e9)|0,null);
+  inf.gravidade=b.info.gravidade;
+  const tex=GeradorPlanetas.textura(inf,512);
+  if(b.mesh.material.map)b.mesh.material.map.dispose();
+  b.mesh.material.map=tex;b.mesh.material.color.set(0xffffff);b.mesh.material.needsUpdate=true;
+  b.info=inf;
+}
+function liberaSolo(b){
+  if(!b||!b.mesh||!b.info||b.info.tipo==='gas')return;
+  const m=b.mesh.material;
+  if(m.map){m.map.dispose();m.map=null}
+  m.color.set(corPlaceholder(b.info.tipo));m.needsUpdate=true;
+}
+function relevo(geo,r,inf){
+  if(!inf||inf.tipo==='gas')return geo;
+  const pos=geo.attributes.position,v=new THREE.Vector3(),sd=(inf.seed%997)*.01;
+  for(let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos,i).normalize();
+    const n=.5+.25*Math.sin(v.x*3.1+sd)+.25*Math.cos(v.y*2.7+v.z*1.9+sd*3);
+    const h=r*.012*Math.max(0,Math.min(1,n));
+    pos.setXYZ(i,v.x*(r+h),v.y*(r+h),v.z*(r+h));
+  }
+  pos.needsUpdate=true;geo.computeVertexNormals();return geo;
+}
 function atmMat(info,h){
   const c=info&&info.biomas&&info.biomas[0]?info.biomas[0].cor:[120,170,255];
   const col=new THREE.Color(c[0]/255*.8+.2,c[1]/255*.8+.2,c[2]/255*.8+.35);
@@ -209,7 +235,7 @@ const g1=glow(0xffc060,13000),g2=glow(0xffffff,5200);g1.position.copy(sunPos);g2
 bodies.push({pos:sunPos.clone(),r:1800,sun:1,name:'Sol'});
 const K=[['rocky',28],['gas',35],['ice',200],['lava',8],['gas',20],['rocky',100]],D=[2400,5600,9500,12000,14000];
 D.slice(0,3+(R()*3|0)).forEach((d,i)=>{const k=K[(R()*6)|0],inf=GeradorPlanetas.gerar((R()*1e9)|0,k[0]),a=-Math.PI/2+(R()-.5)*(i?6:1.2),r=380+R()*420,h=k[1]+R()*20,pos=V(Math.cos(a)*d,(R()-.5)*300,Math.sin(a)*d);
-const m=add(new THREE.Mesh(new THREE.SphereGeometry(r,48,32),new THREE.MeshStandardMaterial({map:(inf.tipo==='gas'?planetTex('gas',h):GeradorPlanetas.textura(inf,512)),roughness:1,metalness:0})));m.position.copy(pos);m.userData.tilt=new THREE.Quaternion().setFromAxisAngle(V(0,0,1),inf.inclinacao*Math.PI/180);m.userData.rate=.4*(24/inf.diaHoras)*inf.sentido;m.userData.spin=0;m.quaternion.copy(m.userData.tilt);
+const m=add(new THREE.Mesh(relevo(new THREE.SphereGeometry(r,48,32),r,inf),new THREE.MeshStandardMaterial({map:(inf.tipo==='gas'?planetTex('gas',h):null),color:(inf.tipo==='gas'?0xffffff:corPlaceholder(inf.tipo)),roughness:1,metalness:0})));m.position.copy(pos);m.userData.tilt=new THREE.Quaternion().setFromAxisAngle(V(0,0,1),inf.inclinacao*Math.PI/180);m.userData.rate=.4*(24/inf.diaHoras)*inf.sentido;m.userData.spin=0;m.quaternion.copy(m.userData.tilt);
 const at=add(new THREE.Mesh(new THREE.SphereGeometry(r*1.12,40,28),k[0]=='gas'?new THREE.MeshBasicMaterial({color:new THREE.Color(`hsl(${h},70%,60%)`),transparent:true,opacity:.14,blending:THREE.AdditiveBlending,side:THREE.BackSide,depthWrite:false}):atmMat(inf,h)));at.position.copy(pos);if(k[0]=='rocky'||k[0]=='ice'){const cm=add(new THREE.Mesh(new THREE.SphereGeometry(r*1.012,40,28),new THREE.MeshStandardMaterial({map:cloudT,transparent:true,opacity:.75,depthWrite:false,roughness:1})));cm.position.copy(pos);clouds.push(cm)}
 if(k[0]=='gas'||R()<.35){const rg=add(new THREE.Mesh(new THREE.RingGeometry(r*1.5,r*2.4,64),new THREE.MeshBasicMaterial({color:new THREE.Color(`hsl(${h+20},40%,65%)`),transparent:true,opacity:.45,side:THREE.DoubleSide,depthWrite:false})));rg.rotation.x=Math.PI/2+.25;rg.position.copy(pos)}
 bodies.push({pos,r,mesh:m,name:name+'-'+PN[i],gas:k[0]=='gas',info:inf})});const pl=bodies.slice(1);
@@ -373,7 +399,7 @@ function spawnEscort(){
   if(cred<30){say('SEM CRÉDITOS: 30');return}
   if(allies.length>=4){say('ESCOLTA CHEIA');return}
   cred-=30;
-  for(let i=0;i<2;i++){const g=buildShip(SPECS[ET[1].k],PAL[palKey],.6);g.position.copy(P.g.position).add(rv(40));scene.add(g);allies.push({g,t:40,cd:0})}
+  for(let i=0;i<2;i++){const sc=.45+R()*.5,g=buildShip(SPECS[ET[1].k],PAL[palKey],sc),off=rv(1).normalize().multiplyScalar(30+R()*20);g.position.copy(P.g.position).add(off);scene.add(g);allies.push({g,t:40,cd:0,off:off.clone(),sc})}
   say('ESCOLTA LANÇADA');
 }
 function updAllies(dt){
@@ -390,8 +416,7 @@ function updAllies(dt){
       a.cd-=dt;
       if(a.cd<=0&&a.g.quaternion.angleTo(qT)<.25){a.cd=.45;shoot(a.g,V(),pos.clone(),true,1,480)}
     }else{
-      const home=P.g.position.clone().add(rv(1).multiplyScalar(30)),dv=home.clone().sub(pos);
-      if(dv.length()>20)pos.addScaledVector(dv.normalize(),Math.min(dv.length(),dt*60));
+      const home=P.g.position.clone().add(a.off.clone().applyQuaternion(P.g.quaternion));pos.lerp(home,1-Math.exp(-dt*3));
     }
   }
 }
@@ -403,7 +428,7 @@ function landBrake(){
   const n=dv.normalize(),vr=P.v.dot(n),vmax=Math.min(40,3+.25*alt);
   return -vr>vmax;
 }
-function takeoff(){if(!P||!P.landed)return;P.tkN=P.landed.n.clone();P.landed=null;P.landMode=0;P.landTgt=null;P.takeoffT=3;if(P.fuel<=0)say('SEM COMBUSTÍVEL')}
+function takeoff(){if(!P||!P.landed)return;liberaSolo(P.landed.b);P.tkN=P.landed.n.clone();P.landed=null;P.landMode=0;P.landTgt=null;P.takeoffT=3;if(P.fuel<=0)say('SEM COMBUSTÍVEL')}
 function landToggle(){
   if(!P||P.landed)return;
   if(P.landMode){P.landMode=0;P.landTgt=null;say('DESCIDA CANCELADA');return}
@@ -427,7 +452,7 @@ const g=P.g,sp=P.sp,f=fwdOf(g),m=sp.m*(P.cargo?1.4:1);
 if(state=='play'){T+=dt;P.inv=Math.max(0,P.inv-dt);P.dcd-=dt;P.fcd-=dt;const bk=inp.brake||K.KeyC||(P.landMode&&landBrake());var sn=0,dodging=P.dodge>0;if(dodging){const tt=Math.min(1,(.7-P.dodge)/.7);sn=Math.sin(Math.PI*tt);P.dodge-=dt}const sx=(P.sx=(P.sx||0)+(ix-(P.sx||0))*(1-Math.exp(-dt*7))),sy=(P.sy=(P.sy||0)+(iy-(P.sy||0))*(1-Math.exp(-dt*7)));const wd={x:-sy*sp.turn,y:-sx*sp.turn,z:roll*2-(dodging?P.dsgn*Math.PI*Math.PI*sn*.8/.7:0)};const cmd={x:cl((wd.x-P.w.x)*5,-1,1),y:cl((wd.y-P.w.y)*5,-1,1),z:cl((wd.z-P.w.z)*5,-1,1),lat:sn*P.dsgn,retro:bk?1:0,main:(bk||P.landed)?0:1};var RR=rcsUpdate(dt,cmd);P.mtL=RR.mt*(boost?3.4:1);P.w.addScaledVector(RR.tq,RCS_ALPHA*dt);P.v.addScaledVector(V(RR.fb.x*LAT_A,0,RR.fb.z*RET_A).applyQuaternion(g.quaternion),dt);const bt=-sx*.45,nb=(P.bank||0)+(bt-(P.bank||0))*(1-Math.exp(-dt*4));g.rotateX(P.w.x*dt);g.rotateY(P.w.y*dt);g.rotateZ(P.w.z*dt);g.rotateZ(nb-(P.bank||0));P.bank=nb;if(P.flip>0){P.flip-=dt;g.rotateX(Math.PI/.7*dt)}
 const brake=inp.brake||K.KeyC,C=.5,Tt=((RR&&RR.mt)||0)*(P.fuel>0?1:0)*C*(boost?240:70);P.v.addScaledVector(f,Tt/m*dt).addScaledVector(P.v,-(brake?1.6:C)/m*dt);
 const lat=P.v.clone().addScaledVector(f,-P.v.dot(f));P.v.addScaledVector(lat,-(1-Math.exp(-dt*1.1)));g.position.addScaledVector(P.v,dt);
-for(const b of bodies){const dv=g.position.clone().sub(b.pos),d=dv.length();if(b.sun){if(d<b.r*1.6)hurt(dt*(b.r*1.6-d)/b.r*60)}else if(d<b.r+5){const n=dv.normalize(),vn=P.v.dot(n);if(P.landed&&P.landed.b===b){g.position.copy(b.pos).addScaledVector(n,b.r+5);P.v.set(0,0,0);continue}if(P.landMode&&P.landTgt===b&&vn<0){const vr=-vn,hs=P.v.clone().addScaledVector(n,-vn).length();if(vr<=12&&hs<=15){P.landed={b,n:n.clone()};P.landMode=0;P.landTgt=null;P.v.set(0,0,0);say('POUSO SUAVE · '+(b.info?GeradorPlanetas.ecossistemaEm(b.info,n.x,n.y,n.z).texto:''));boom(g.position.clone(),6,V());g.position.copy(b.pos).addScaledVector(n,b.r+5);continue}hurt((vr-12)*3);say('IMPACTO!')}g.position.copy(b.pos).addScaledVector(n,b.r+5);if(vn<0){P.v.addScaledVector(n,-1.3*vn);hurt(Math.max(0,-vn-18)*.45)}}}
+for(const b of bodies){const dv=g.position.clone().sub(b.pos),d=dv.length();if(b.sun){if(d<b.r*1.6)hurt(dt*(b.r*1.6-d)/b.r*60)}else if(d<b.r*1.012+5){const n=dv.normalize(),vn=P.v.dot(n);if(P.landed&&P.landed.b===b){g.position.copy(b.pos).addScaledVector(n,b.r*1.012+5);P.v.set(0,0,0);continue}if(P.landMode&&P.landTgt===b&&vn<0){const vr=-vn,hs=P.v.clone().addScaledVector(n,-vn).length();if(vr<=12&&hs<=15){P.landed={b,n:n.clone()};P.landMode=0;P.landTgt=null;P.v.set(0,0,0);gerarSolo(b);say('POUSO SUAVE · '+(b.info?GeradorPlanetas.ecossistemaEm(b.info,n.x,n.y,n.z).texto:''));boom(g.position.clone(),6,V());g.position.copy(b.pos).addScaledVector(n,b.r*1.012+5);continue}hurt((vr-12)*3);say('IMPACTO!')}g.position.copy(b.pos).addScaledVector(n,b.r*1.012+5);if(vn<0){P.v.addScaledVector(n,-1.3*vn);hurt(Math.max(0,-vn-18)*.45)}}}
 for(const a of asts){a.m.rotation.x+=a.w.x*dt;a.m.rotation.y+=a.w.y*dt;const dv=g.position.clone().sub(a.m.position),d=dv.length();if(d<a.r+6){const n=dv.normalize(),vn=P.v.dot(n);g.position.copy(a.m.position).addScaledVector(n,a.r+6);if(vn<0){P.v.addScaledVector(n,-1.4*vn);hurt(Math.max(0,-vn-15)*.35)}}}
 lock=aimOn?findLock(g,f):null;P.cd-=dt;if(fire&&P.cd<=0){const w=W[wepKey];P.cd=w.cd;const rt=V(1,0,0).applyQuaternion(g.quaternion),bs=w.home?[0]:P.wl>2?[-1.4,0,1.4]:P.wl>1?[-1.4,1.4]:[0];for(const o of bs)for(let i=0;i<w.n;i++){const mp=g.position.clone().addScaledVector(rt,o).addScaledVector(f,5+(sp.custom?3:0));shoot(g,P.v,mp,1,w.dmg,w.spd,w,lock&&!w.home?aimDir(lock,mp,w.spd):null)}}
 P.rt+=dt;if(P.rt>4)P.sh=Math.min(100,P.sh+20*dt);
@@ -451,12 +476,13 @@ if(P.landed&&state=='play'){const L=P.landed,n=L.n,t0=V(0,0,-1).applyQuaternion(
   const fw=t0.sub(n.clone().multiplyScalar(t0.dot(n))).normalize(),sd=rt.sub(n.clone().multiplyScalar(rt.dot(n))).normalize();
   const gv=(L.b.info&&L.b.info.gravidade)||1,sp=22/gv;
   const mv=fw.multiplyScalar(-iy*sp).add(sd.multiplyScalar(ix*sp));
-  if(mv.length()>.01){n.addScaledVector(mv,dt/(L.b.r+5));n.normalize()}}
-if(P.landed){g.position.copy(P.landed.b.pos).addScaledVector(P.landed.n,P.landed.b.r+5);P.v.set(0,0,0);P.oreT=(P.oreT||0)-dt;if(P.oreT<=0){P.oreT=2.5;spawnPickup(g.position.clone().add(rv(40)),3)}}
+  if(mv.length()>.01){n.addScaledVector(mv,dt/(L.b.r*1.012+5));n.normalize()}}
+if(P.landed){g.position.copy(P.landed.b.pos).addScaledVector(P.landed.n,P.landed.b.r*1.012+5);P.v.set(0,0,0);P.oreT=(P.oreT||0)-dt;if(P.oreT<=0){P.oreT=2.5;spawnPickup(g.position.clone().add(rv(40)),3)}}
 for(const b of bodies)if(b.mesh&&b.mesh.userData.tilt){const u=b.mesh.userData;u.spin+=dt*u.rate;b.mesh.quaternion.copy(u.tilt).multiply(new THREE.Quaternion().setFromAxisAngle(V(0,1,0),u.spin))}
 if(state=='play'){updAllies(dt);if(P.relaunchT>0){P.relaunchT-=dt;if(P.relaunchT<=0){P.relaunchT=0;if(mis&&mis.t=='caca')launchDrone()}}
 if(P.g&&P.g.userData.gear){const tb=P.landed?P.landed.b:P.landTgt;let al=1e9;if(tb)al=P.g.position.distanceTo(tb.pos)-tb.r;const on=!!P.landed||(P.landMode&&al<90);for(const m of P.g.userData.gear)m.visible=on}
 if(P.landMode&&P.landTgt&&!P.landed){const dv=P.g.position.clone().sub(P.landTgt.pos),al=dv.length()-P.landTgt.r;if(al<220)alignUp(P.g,dv.normalize(),(1-Math.exp(-dt*1.5))*(1-al/220))}
+if(P.landMode&&P.landTgt&&!P.landed){const dv=P.landTgt.pos.clone().sub(P.g.position);P.v.addScaledVector(dv.normalize(),12*(P.landTgt.info?P.landTgt.info.gravidade:1)*dt)}
 if(P.landed)alignUp(P.g,P.landed.n,1-Math.exp(-dt*6));
 if(!P.landed&&!P.battle)P.fuel=Math.max(0,P.fuel-((RR&&RR.mt)||0)*(boost?3:1)*dt*1.5);if(P.landMode&&!P.battle&&RR)P.fuel=Math.max(0,P.fuel-Math.max(0,RR.fb.z)*dt*2.5);if(P.takeoffT>0){P.takeoffT-=dt;if(P.fuel>0){P.fuel=Math.max(0,P.fuel-dt*10);P.v.addScaledVector(P.tkN,30*dt)}}for(const x of estacoes){const d=g.position.distanceTo(x.pos);if(d>200){x.ativo=false;continue}if(x.ativo||d>=160)continue;x.ativo=true;const c=20+sector*5;
   if(x.tipo=='comando'&&P.carga>0&&!P.landed){cred+=P.carga*30*sector;P.carga=0;say('CARGA VENDIDA · +'+(30*sector)+' por unidade')}
