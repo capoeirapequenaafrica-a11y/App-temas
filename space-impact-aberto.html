@@ -48,6 +48,7 @@ button:focus-visible{outline:3px solid #fff}
 <div id="over" class="screen hide"><h1>NAVE PERDIDA</h1><p>Pontuação final: <span id="fs">0</span></p><button class="btn" id="again">TENTAR DE NOVO</button><button class="btn" id="arsenalBtn" style="margin-top:8px;background:#0b121c;color:var(--ac);border:2px solid var(--ac)">ARSENAL</button></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="gerador-planetas.js"></script>
 <script>
 const $=id=>document.getElementById(id),R=Math.random,cl=(v,a,b)=>Math.max(a,Math.min(b,v)),V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z),UP=V(0,1,0);
@@ -85,6 +86,15 @@ const HP={classic:100,heavy:150,interceptor:70,falcon:120,striker:85,cruiser:200
 PAL.cinza={c:'#b4b8bb',d:'#6c7378',e:'#6ab4ff'};
 SPECS.falcon={m:1.3,turn:1.5,custom:1,wing:[[0,0],[4,-2.2]],wy:0,eng:[[-2.4,0,-3.7],[-1.2,0,-3.9],[0,0,-4],[1.2,0,-3.9],[2.4,0,-3.7]],er:.45,info:'Exploradora clássica: disco robusto, cabine lateral e cinco motores.'};
 SPECS.striker={m:.9,turn:2,fus:[[-3.5,.6,.5,0],[-1.5,.9,.6,0],[1.5,.7,.5,-.05],[4.5,.35,.3,-.1],[6.5,.04,.04,-.12]],can:[[.3,.3,.28,.45],[1.4,.38,.3,.5],[2.6,.05,.05,.3]],wing:[[.6,-1.8],[2.8,-3.4],[4.8,-3],[4.8,-2.2],[.8,1.4]],wt:.12,wy:-.05,fin:[[-2.6,.45],[-3.4,1.8],[-2.7,1.8],[-.8,.5]],fx:1.5,ft:.09,eng:[[.8,0,-3.7],[-.8,0,-3.7]],er:.38,info:'Caça estelar: asas em delta, ágil e equilibrado.'};
+SPECS.capital={m:12,turn:.5,capital:1,wy:4.5,wing:[[0,0],[11,-34]],eng:[[11,4.5,-34],[-11,4.5,-34],[0,-1.5,-24]],er:1.25,info:'Nave-mãe classe Enterprise: ~260 m.'};
+SPECS.interceptor.size=.7;SPECS.interceptor.cz=1;SPECS.striker.size=.85;SPECS.striker.cz=1;SPECS.classic.size=1;SPECS.classic.cz=1;SPECS.falcon.size=1;SPECS.falcon.cz=1;SPECS.heavy.size=1.3;SPECS.heavy.cz=1.3;SPECS.cruiser.size=1.4;SPECS.cruiser.cz=1.9;SPECS.hauler.size=1.6;SPECS.hauler.cz=2.4;
+SPECS.striker.glb='arc';SPECS.striker.engG=[[1.2,0,-2.4,.5],[-1.2,0,-2.4,.5]];
+SPECS.interceptor.glb='wasp';SPECS.interceptor.engG=[[0,-.55,-2.1,.5],[.4,.1,-1.9,.25],[-.4,.1,-1.9,.25]];
+SPECS.heavy.glb='solace';SPECS.heavy.engG=[[1.9,-.95,-4.7,.5],[-1.9,-.95,-4.7,.5]];
+const FE=[[0,0,-30,1.5],[3.1,.3,-30,.8],[-3.1,.3,-30,.8],[5.7,.5,-30,.8],[-5.7,.5,-30,.8],[9,.9,-30,1],[-9,.9,-30,1]];
+SPECS.capital.glb='foray';SPECS.capital.gs=1;SPECS.capital.engG=FE;
+SPECS.hauler.glb='foray';SPECS.hauler.gs=.2115;SPECS.hauler.engG=FE.map(e=>e.map(v=>v*.2115));
+loadGLBs();
 const W={laser:{name:'Laser',cd:.12,dmg:1,spd:480,n:1,sp:0,life:2.4,size:1,info:'Laser: tiro rápido e preciso.'},
 plasma:{name:'Plasma',cd:.45,dmg:4,spd:380,n:1,sp:0,life:2.6,size:2.4,mat:new THREE.MeshBasicMaterial({color:0x5aa8ff}),info:'Plasma: lento e devastador.'},
 scatter:{name:'Rajada',cd:.55,dmg:1,spd:420,n:5,sp:.1,life:.9,size:1.2,mat:new THREE.MeshBasicMaterial({color:0xffe27a}),info:'Rajada: leque curto, ótima de perto.'},
@@ -96,9 +106,30 @@ for(let i=0;i<S.length-1;i++)for(let k=0;k<seg;k++){const a=i*seg+k,b=i*seg+(k+1
 const n=pos.length/3;pos.push(0,S[0][3],-S[0][0],0,S[S.length-1][3],-S[S.length-1][0]);uv.push(0,0,0,0);const L=(S.length-1)*seg;for(let k=0;k<seg;k++){idx.push(n,k,(k+1)%seg);idx.push(n+1,L+(k+1)%seg,L+k)}
 const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.computeVertexNormals();return g}
 const ext=(pts,t)=>new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(p=>new THREE.Vector2(p[0],p[1]))),{depth:t,bevelEnabled:true,bevelThickness:.04,bevelSize:.04,bevelSegments:1});
-function buildShip(sp,pal,sc){const g=new THREE.Group(),M=(c,m,r)=>new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r,side:THREE.DoubleSide}),hull=M(pal.c,.78,.32),acc=M(pal.d,.6,.4),glass=M(0x5fc8ff,.9,.05),dark=M(0x181d26,.85,.4);hull.map=acc.map=panelT;const hullN=hull.clone(),accN=acc.clone();hullN.map=accN.map=null;
+// ---------- modelos .glb (engenharia reversa: yaw/escala/centro medidos de cada arquivo; frente = -Z) ----------
+const GLBP={};
+const GLBDEF={arc:{f:'modelos/arc170.glb',yaw:0,s:.008138407915,c:[0,37.109728,-2.780846]},wasp:{f:'modelos/wasp.glb',yaw:180,s:.010410639738,c:[0,23.876033,37.853110]},solace:{f:'modelos/solace.glb',yaw:0,s:1.357587,c:[0,-.107025,-2.277900]},foray:{f:'modelos/foray.glb',yaw:221,s:.095123278,c:[12.192180,.850805,9.824809]}};
+function prepGLB(k,gl){const D=GLBDEF[k],holder=new THREE.Group(),wrap=new THREE.Group(),norm=new THREE.Group();holder.rotation.y=D.yaw*Math.PI/180;holder.add(gl.scene);wrap.add(holder);wrap.scale.setScalar(D.s);wrap.position.set(-D.c[0]*D.s,-D.c[1]*D.s,-D.c[2]*D.s);norm.add(wrap);
+gl.scene.traverse(o=>{if(!o.isMesh)return;for(const m of(Array.isArray(o.material)?o.material:[o.material])){m.side=THREE.DoubleSide;if(m.map)m.map.anisotropy=4;else if(k=='solace'&&m.color){m.color.multiplyScalar(6);m.roughness=.5;m.metalness=.25;if(m.emissive&&m.emissive.getHex())m.emissive.multiplyScalar(1.6)}
+if(k=='foray'){m.roughness=.6;m.metalness=.2}if(m.transparent)m.depthWrite=false}});return norm}
+function loadGLBs(){if(!THREE.GLTFLoader){console.warn('GLTFLoader indisponível: naves procedurais');return}const L=new THREE.GLTFLoader();
+for(const k in GLBDEF)L.load(GLBDEF[k].f,gl=>{try{GLBP[k]=prepGLB(k,gl)}catch(e){console.warn('GLB erro',k,e);return}
+try{if(state=='menu'&&P&&P.sp.glb==k){newPlayer();place();P.g.position.set(0,0,0)}}catch(e){}},undefined,e=>console.warn('GLB falhou',k,e))}
+function buildShip(sp,pal,sc){const GM=sp.glb&&GLBP[sp.glb],ENG=GM&&sp.engG?sp.engG:sp.eng,g=new THREE.Group(),M=(c,m,r)=>new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r,side:THREE.DoubleSide}),hull=M(pal.c,.78,.32),acc=M(pal.d,.6,.4),glass=M(0x5fc8ff,.9,.05),dark=M(0x181d26,.85,.4);hull.map=acc.map=panelT;const hullN=hull.clone(),accN=acc.clone();hullN.map=accN.map=null;
 glass.emissive=new THREE.Color(0x0a2a44);const add=(geo,m,x=0,flip=0)=>{const o=new THREE.Mesh(geo,m);o.position.x=x;if(flip)o.scale.x=-1;g.add(o);return o};
-if(sp.custom){add(sU(new THREE.LatheGeometry([[0,.5],[2.5,.62],[3.9,.35],[4.3,0],[3.9,-.35],[2.5,-.6],[0,-.5]].map(p=>new THREE.Vector2(p[0],p[1])),40),24,5),hull);
+if(GM){const o=GM.clone(true);if(sp.gs)o.scale.multiplyScalar(sp.gs);g.add(o)}else if(sp.capital){const mk=(geo,m,x,y,z)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);g.add(o);return o},bm=new THREE.MeshBasicMaterial({color:0xff3a2a}),wm=new THREE.MeshBasicMaterial({color:0xffe9a8});
+mk(sU(new THREE.LatheGeometry([[0,1.1],[8,1.7],[15,1],[17,0],[15,-.9],[8,-1.5],[0,-1.2]].map(p=>new THREE.Vector2(p[0],p[1])),48),24,4),hull,0,3.5,-14);
+mk(new THREE.CylinderGeometry(3.4,4.2,1.5,24),acc,0,5.2,-14);mk(new THREE.CylinderGeometry(1.2,1.6,.8,16),hullN,0,6.2,-14);
+mk(new THREE.BoxGeometry(3,3.2,10),acc,0,1.8,-3);
+mk(new THREE.CylinderGeometry(3,3.4,32,20).rotateX(Math.PI/2),hull,0,-1.5,8);
+mk(new THREE.SphereGeometry(3.4,16,10),hull,0,-1.5,-8).scale.z=1.1;
+mk(new THREE.CylinderGeometry(1.4,1.4,.4,16).rotateX(Math.PI/2),glass,0,-1.5,25);
+for(const sd of[1,-1]){mk(new THREE.CylinderGeometry(1.5,1.5,30,16).rotateX(Math.PI/2),hullN,sd*11,4.5,19);
+mk(new THREE.SphereGeometry(1.5,14,10),bm,sd*11,4.5,4);
+const py=mk(new THREE.BoxGeometry(11,.7,2.4),acc,sd*5.5,2,9);py.rotation.z=sd*-.3;
+for(let k=0;k<14;k++)mk(new THREE.BoxGeometry(.5,.16,.5),wm,sd*Math.cos(k/14*6.28)*16,3.5+.2,-14+Math.sin(k/14*6.28)*16*.99).visible=k%2==0}
+for(let k=0;k<26;k++){const a=k/26*6.28;mk(new THREE.BoxGeometry(.4,.1,.4),wm,Math.cos(a)*15,4.1,-14+Math.sin(a)*15)}
+}else if(sp.custom){add(sU(new THREE.LatheGeometry([[0,.5],[2.5,.62],[3.9,.35],[4.3,0],[3.9,-.35],[2.5,-.6],[0,-.5]].map(p=>new THREE.Vector2(p[0],p[1])),40),24,5),hull);
 const md=ext([[.5,-3],[1.9,-3],[2.1,-7.6],[1,-7.6]],.7);md.rotateX(Math.PI/2);md.translate(0,.35,0);add(md,hull);add(md,hull,0,1);
 const ck=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,3.6,12).rotateX(Math.PI/2),hullN);ck.position.set(3.6,.1,-2.8);g.add(ck);
 const gs=new THREE.Mesh(new THREE.SphereGeometry(.55,12,10),glass);gs.scale.set(1,.8,1.3);gs.position.set(3.6,.12,-4.7);g.add(gs);
@@ -107,14 +138,14 @@ const dm=new THREE.Mesh(new THREE.CylinderGeometry(.8,1,.3,16),accN);dm.position
 const bb=new THREE.Mesh(new THREE.BoxGeometry(6,.8,.9),dark);bb.position.set(0,0,3.8);g.add(bb)}else{add(loft(sp.fus),hull);add(loft(sp.can),glass);
 const wg=ext(sp.wing.map(p=>[p[0],-p[1]]),sp.wt);wg.rotateX(Math.PI/2);wg.translate(0,sp.wy+sp.wt/2,0);add(wg,hull);add(wg,hull,0,1);
 const fg=ext(sp.fin,sp.ft);fg.rotateY(Math.PI/2);fg.translate(-sp.ft/2,0,0);if(sp.fx){add(fg,acc,sp.fx);add(fg,acc,-sp.fx,1)}else add(fg,acc);}
-for(let i=0;i<8;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(.25+R()*.3,.1,.5+R()*.5),dark);b.position.set((R()-.5)*.7,.6+R()*.12,(R()-.5)*5);g.add(b)}
+if(!GM)for(let i=0;i<8;i++){const b=new THREE.Mesh(new THREE.BoxGeometry(.25+R()*.3,.1,.5+R()*.5),dark);b.position.set((R()-.5)*.7,.6+R()*.12,(R()-.5)*5);g.add(b)}
 g.userData.fl=[];const eM=new THREE.MeshBasicMaterial({color:pal.e});
-for(const e of sp.eng){const n=new THREE.Mesh(new THREE.CylinderGeometry(sp.er*.85,sp.er,.8,14,1,true),dark);n.rotation.x=Math.PI/2;n.position.set(e[0],e[1],-e[2]+.2);g.add(n);
-const d=new THREE.Mesh(new THREE.CircleGeometry(sp.er*.8,14),eM);d.position.set(e[0],e[1],-e[2]+.35);g.add(d);
-const f=new THREE.Mesh(new THREE.ConeGeometry(sp.er*.5,1,12,1,true),new THREE.MeshBasicMaterial({color:pal.e,transparent:true,opacity:.28,blending:THREE.AdditiveBlending,depthWrite:false}));f.rotation.x=Math.PI/2;f.position.set(e[0],e[1],-e[2]+.8);g.add(f);
-const gl=glow(pal.e,sp.er*3);gl.material.opacity=.5;gl.position.set(e[0],e[1],-e[2]+.5);g.add(gl);g.userData.fl.push({f,gl,z:-e[2]})}
-const nl=(x,c)=>{const s=glow(c,1.4);s.position.set(x,sp.wy,-sp.wing[1][1]+.3);g.add(s);return s};g.userData.nav=[nl(sp.wing[1][0],0xff3030),nl(-sp.wing[1][0],0x30ff60)];
-{const F=sp.fus||[[-2,.9,.7,0],[0,1,.8,0],[2,.8,.6,0]],r0=F[1][1],M=(c,m,r)=>new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r});
+for(const e of ENG){const er=e[3]||sp.er,n=new THREE.Mesh(new THREE.CylinderGeometry(er*.85,er,.8,14,1,true),dark);n.rotation.x=Math.PI/2;n.position.set(e[0],e[1],-e[2]+.2);GM||g.add(n);
+const d=new THREE.Mesh(new THREE.CircleGeometry(er*.8,14),eM);d.position.set(e[0],e[1],-e[2]+.35);GM||g.add(d);
+const f=new THREE.Mesh(new THREE.ConeGeometry(er*.5,1,12,1,true),new THREE.MeshBasicMaterial({color:pal.e,transparent:true,opacity:.28,blending:THREE.AdditiveBlending,depthWrite:false}));f.rotation.x=Math.PI/2;f.position.set(e[0],e[1],-e[2]+.8);g.add(f);
+const gl=glow(pal.e,er*3);gl.material.opacity=.5;gl.position.set(e[0],e[1],-e[2]+.5);g.add(gl);g.userData.fl.push({f,gl,z:-e[2]})}
+const nl=(x,c)=>{const s=glow(c,1.4);s.position.set(x,sp.wy,-sp.wing[1][1]+.3);g.add(s);return s};g.userData.gear=[];g.userData.nav=GM?[]:[nl(sp.wing[1][0],0xff3030),nl(-sp.wing[1][0],0x30ff60)];
+if(!sp.capital&&!GM){const F=sp.fus||[[-2,.9,.7,0],[0,1,.8,0],[2,.8,.6,0]],r0=F[1][1],M=(c,m,r)=>new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r});
 const put=(geo,m,x,y,z,rx=0)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.rotation.x=rx;g.add(o);return o};
 const lightM=new THREE.MeshBasicMaterial({color:0xfff2c0}),redM=new THREE.MeshBasicMaterial({color:0xff3030});
 for(const f of F){const x=f[0],r=f[1];put(new THREE.BoxGeometry(.04,.04,r*1.5),dark,x,r*.97,0);
@@ -259,7 +290,7 @@ function rcsUpdate(dt,cmd){
   }
   return{tq,fb,mt};
 }
-function newPlayer(){if(P)scene.remove(P.g);const sp=SPECS[shipKey];P={g:buildShip(sp,PAL[palKey],1),sp,v:V(),w:V(),hull:HP[shipKey],max:HP[shipKey],sh:100,rt:0,cd:0,wl:1,dead:0,cargo:0,inv:0,dcd:0,fcd:0,dodge:0,flip:0,dsgn:1,carga:0,cap:sp.cap||10,fuel:100,landMode:0,landTgt:null};P.rc=buildRCS(P.g);scene.add(P.g)}
+function newPlayer(){if(P)scene.remove(P.g);const sp=SPECS[shipKey];P={g:buildShip(sp,PAL[palKey],sp.size||1),sp,v:V(),w:V(),hull:HP[shipKey],max:HP[shipKey],sh:100,rt:0,cd:0,wl:1,dead:0,cargo:0,inv:0,dcd:0,fcd:0,dodge:0,flip:0,dsgn:1,carga:0,cap:sp.cap||10,fuel:100,landMode:0,landTgt:null};P.rc=buildRCS(P.g);scene.add(P.g)}
 function hurt(d){if(!P||P.dead||state!='play'||P.inv>0)return;P.rt=0;const a=Math.min(P.sh,d);P.sh-=a;d-=a;P.hull-=d;shake+=2+d*.2;if(P.hull<=0&&P.drone){const b=P.base;recallDrone();if(b)b.relaunchT=3;say('CAÇA DESTRUÍDO · NOVO EM 3 S');return}if(P.hull<=0){P.dead=1;P.g.visible=false;boom(P.g.position,26,P.v);state='dead';setTimeout(()=>{$('fs').textContent=score;$('over').classList.remove('hide');try{if(score>0){const f=JSON.parse(localStorage.getItem('uc_space_pendente')||'[]');f.push({id:Date.now()+'',nome:(localStorage.getItem('uc_nome_jogador_arcade')||'').trim(),pontos:Math.max(5,Math.min(800,Math.round(score/10))),setor:sector});localStorage.setItem('uc_space_pendente',JSON.stringify(f));}}catch(e){}},1600)}}
 function findLock(g,f){let b=null,bd=.78;for(const e of enemies){const dv=e.g.position.clone().sub(g.position);if(dv.length()>1100)continue;const c=dv.normalize().dot(f);if(c>bd){bd=c;b=e}}return b}
 function aimDir(e,p,s){const t=e.g.position.distanceTo(p)/s;return e.g.position.clone().addScaledVector(e.v.clone().sub(P.v),t).sub(p).normalize()}
@@ -271,17 +302,17 @@ function shoot(o,v,pos,own,dmg,spd,w,dir){const m=new THREE.Mesh(BG,own?(w&&w.ma
 const BG=new THREE.CylinderGeometry(.14,.14,7,6).rotateX(Math.PI/2),BM1=new THREE.MeshBasicMaterial({color:0x7dffd9}),BM2=new THREE.MeshBasicMaterial({color:0xff6a3a});
 
 // ---------- inimigos ----------
-const ET=[{k:'interceptor',pal:'caca',sc:.9,hp:2,spd:34,tr:.95,fire:3.4,m:.7},{k:'classic',pal:'caca',sc:1,hp:5,spd:29,tr:.75,fire:2.8,m:1},{k:'heavy',pal:'pesado',sc:1.2,hp:14,spd:22,tr:.55,fire:2.2,m:2.2}];
-function spawnE(kind,pos,boss){const t=ET[kind],sc=boss||t.sc,g=buildShip(SPECS[t.k],PAL[t.pal],sc);g.position.copy(pos||P.g.position.clone().add(rv(1).multiplyScalar(500+R()*200)));
+const ET=[{k:'interceptor',pal:'caca',sc:.6,hp:2,spd:34,tr:.95,fire:3.4,m:.7},{k:'classic',pal:'caca',sc:.85,hp:5,spd:29,tr:.75,fire:2.8,m:1},{k:'heavy',pal:'pesado',sc:1.8,hp:14,spd:22,tr:.55,fire:2.2,m:2.2}];
+function spawnE(kind,pos,boss){const t=ET[kind],sc=boss?1:t.sc,g=buildShip(boss?SPECS.capital:Object.assign({},SPECS[t.k],{glb:null}),PAL[t.pal],sc);g.position.copy(pos||P.g.position.clone().add(rv(1).multiplyScalar(500+R()*200)));
 mM.lookAt(g.position,P.g.position,UP);g.quaternion.setFromRotationMatrix(mM);scene.add(g);
-const e={g,t,v:fwdOf(g).multiplyScalar(t.spd),hp:boss?60+30*sector:t.hp+(sector>2?1:0),mhp:0,rad:6*sc,boss:!!boss,cd:1+R()*t.fire,brk:0,tgt:V()};e.mhp=e.hp;enemies.push(e)}
+const e={g,t,v:fwdOf(g).multiplyScalar(t.spd),hp:boss?60+30*sector:t.hp+(sector>2?1:0),mhp:0,rad:boss?32:Math.max(4.5,6*sc),boss:!!boss,cd:1+R()*t.fire,brk:0,tgt:V()};e.mhp=e.hp;enemies.push(e)}
 function updE(e,dt){const g=e.g,t=e.t,pos=g.position,tp=P.g.position,d=pos.distanceTo(tp),f=fwdOf(g);if(!e.tchk){e.tchk=1;if(P.carga>0&&R()<.35)e.thief=1}if(e.thief&&d<70&&P.carga>0){e.stealT=(e.stealT||0)-dt;if(e.stealT<=0){e.stealT=1.5;P.carga=Math.max(0,P.carga-2);say('CARGA ROUBADA!')}}
 if(e.brk>0){e.brk-=dt;e.tgt.copy(pos).addScaledVector(f,300).add(e.rnd)}else{e.tgt.copy(tp).addScaledVector(P.v,Math.min(1.5,d/200));if(d<70&&f.dot(tp.clone().sub(pos).normalize())>.3&&!e.boss){e.brk=2;e.rnd=rv(250)}}
 mM.lookAt(pos,e.tgt,UP);qT.setFromRotationMatrix(mM);g.quaternion.rotateTowards(qT,t.tr*dt/Math.sqrt(e.boss?3:1));
 const sp=t.spd*(e.boss?.7:1);e.v.lerp(fwdOf(g).multiplyScalar(sp),1-Math.exp(-dt*.9/t.m));pos.addScaledVector(e.v,dt);
 for(const fl of g.userData.fl)fl.f.scale.y=.7+Math.sin(T*30)*.1;
 e.cd-=dt;if(e.cd<=0&&d<520&&f.dot(tp.clone().sub(pos).normalize())>(e.boss?.5:.96)){e.cd=t.fire*(e.boss?.9:1)+R()*.6;
-const n=e.boss?5:1;for(let i=0;i<n;i++){const o=g.clone(false);o.quaternion.copy(g.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler((R()-.5)*.06,(i-(n-1)/2)*.16,0)));shoot(o,e.v,pos.clone().addScaledVector(f,6*(e.boss?3:1)),0,5,125)}}
+const n=e.boss?5:1;for(let i=0;i<n;i++){const o=g.clone(false);o.quaternion.copy(g.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler((R()-.5)*.06,(i-(n-1)/2)*.16,0)));shoot(o,e.v,pos.clone().addScaledVector(f,e.boss?e.rad*.9:Math.max(4,6*(t.sc||1))),0,5,125)}}
 for(const b of bodies)if(!b.sun&&pos.distanceTo(b.pos)<b.r+20){pos.addScaledVector(pos.clone().sub(b.pos).normalize(),10);e.v.multiplyScalar(.5)}
 if(d>3200&&!e.boss&&!(mis&&mis.t=='clear')){killE(e,1)}}
 function killE(e,silent){scene.remove(e.g);enemies.splice(enemies.indexOf(e),1);if(silent)return;score+=e.boss?3000:e.t.hp*60;cred+=e.boss?300:e.t.hp*12;boom(e.g.position,e.rad*(e.boss?2:1.4),e.v);blast(e.g.position,e.rad*7,e);
@@ -348,7 +379,7 @@ function spawnEscort(){
   if(cred<30){say('SEM CRÉDITOS: 30');return}
   if(allies.length>=4){say('ESCOLTA CHEIA');return}
   cred-=30;
-  for(let i=0;i<2;i++){const g=buildShip(SPECS[ET[1].k],PAL[palKey],.6);g.position.copy(P.g.position).add(rv(40));scene.add(g);allies.push({g,t:40,cd:0})}
+  for(let i=0;i<2;i++){const g=buildShip(SPECS[ET[1].k],PAL[palKey],.55);g.position.copy(P.g.position).add(rv(40));scene.add(g);allies.push({g,t:40,cd:0})}
   say('ESCOLTA LANÇADA');
 }
 function updAllies(dt){
@@ -404,7 +435,7 @@ const brake=inp.brake||K.KeyC,C=.5,Tt=((RR&&RR.mt)||0)*(P.fuel>0?1:0)*C*(boost?2
 const lat=P.v.clone().addScaledVector(f,-P.v.dot(f));P.v.addScaledVector(lat,-(1-Math.exp(-dt*1.1)));g.position.addScaledVector(P.v,dt);
 for(const b of bodies){const dv=g.position.clone().sub(b.pos),d=dv.length();if(b.sun){if(d<b.r*1.6)hurt(dt*(b.r*1.6-d)/b.r*60)}else if(d<b.r+5){const n=dv.normalize(),vn=P.v.dot(n);if(P.landed&&P.landed.b===b){g.position.copy(b.pos).addScaledVector(n,b.r+5);P.v.set(0,0,0);continue}if(P.landMode&&P.landTgt===b&&vn<0){const vr=-vn,hs=P.v.clone().addScaledVector(n,-vn).length();if(vr<=12&&hs<=15){P.landed={b,n:n.clone()};P.landMode=0;P.landTgt=null;P.v.set(0,0,0);say('POUSO SUAVE · '+(b.info?b.info.resumo:''));boom(g.position.clone(),6,V());g.position.copy(b.pos).addScaledVector(n,b.r+5);continue}hurt((vr-12)*3);say('IMPACTO!')}g.position.copy(b.pos).addScaledVector(n,b.r+5);if(vn<0){P.v.addScaledVector(n,-1.3*vn);hurt(Math.max(0,-vn-18)*.45)}}}
 for(const a of asts){a.m.rotation.x+=a.w.x*dt;a.m.rotation.y+=a.w.y*dt;const dv=g.position.clone().sub(a.m.position),d=dv.length();if(d<a.r+6){const n=dv.normalize(),vn=P.v.dot(n);g.position.copy(a.m.position).addScaledVector(n,a.r+6);if(vn<0){P.v.addScaledVector(n,-1.4*vn);hurt(Math.max(0,-vn-15)*.35)}}}
-lock=aimOn?findLock(g,f):null;P.cd-=dt;if(fire&&P.cd<=0){const w=W[wepKey];P.cd=w.cd;const rt=V(1,0,0).applyQuaternion(g.quaternion),bs=w.home?[0]:P.wl>2?[-1.4,0,1.4]:P.wl>1?[-1.4,1.4]:[0];for(const o of bs)for(let i=0;i<w.n;i++){const mp=g.position.clone().addScaledVector(rt,o).addScaledVector(f,5+(sp.custom?3:0));shoot(g,P.v,mp,1,w.dmg,w.spd,w,lock&&!w.home?aimDir(lock,mp,w.spd):null)}}
+lock=aimOn?findLock(g,f):null;P.cd-=dt;if(fire&&P.cd<=0){const w=W[wepKey];P.cd=w.cd;const rt=V(1,0,0).applyQuaternion(g.quaternion),bs=(w.home?[0]:P.wl>2?[-1.4,0,1.4]:P.wl>1?[-1.4,1.4]:[0]).map(x=>x*(P.sp.cz||1));for(const o of bs)for(let i=0;i<w.n;i++){const mp=g.position.clone().addScaledVector(rt,o).addScaledVector(f,(5+(sp.custom?3:0))*(P.sp.cz||1));shoot(g,P.v,mp,1,w.dmg,w.spd,w,lock&&!w.home?aimDir(lock,mp,w.spd):null)}}
 P.rt+=dt;if(P.rt>4)P.sh=Math.min(100,P.sh+20*dt);
 const ex=g.userData.fl;for(const e of ex){e.f.scale.y=(boost?1.8:.7)+R()*.15;e.f.position.z=e.z+.5+e.f.scale.y*.5;e.gl.scale.setScalar(2.4*(boost?1.5:1)+R()*.3);R()<.3&&emit(g.localToWorld(V(e.f.position.x,e.f.position.y,e.f.position.z+1)),f.clone().multiplyScalar(-25).add(P.v),.6,.35,.12,.3)}
 // ameaça e spawn
@@ -442,8 +473,8 @@ P.g.userData.nav.forEach((s,i)=>s.visible=((T*1.5+i*.5)%1)<.15);
 updP(dt);
 // câmera
 shake*=Math.exp(-dt*6);
-if(state=='menu'){g.rotation.y+=dt*.5;cam.position.set(11,3.5,15);cam.up.copy(UP);cam.lookAt(0,-5,0);cam.fov=55}
-else{const off=V(0,4.8,17).applyQuaternion(g.quaternion).add(g.position);cam.position.lerp(off,1-Math.exp(-dt*14));cam.up.copy(UP.clone().applyQuaternion(g.quaternion));
+if(state=='menu'){g.rotation.y+=dt*.5;{const cz=(SPECS[shipKey].cz||1);cam.position.set(11*cz,3.5*cz,15*cz);cam.up.copy(UP);cam.lookAt(0,-5*cz,0)};cam.fov=55}
+else{const cz=(P.sp.cz||1),off=V(0,4.8*cz,17*cz).applyQuaternion(g.quaternion).add(g.position);cam.position.lerp(off,1-Math.exp(-dt*14));cam.up.copy(UP.clone().applyQuaternion(g.quaternion));
 {const tg=g.position.clone().add(V(0,1.2,-30).applyQuaternion(g.quaternion));if(!P.camLook)P.camLook=tg.clone();P.camLook.lerp(tg,1-Math.exp(-dt*9));cam.lookAt(P.camLook);}cam.position.add(rv(Math.min(2,shake*.12)));cam.fov+=((state=='play'&&boost?80:65)-cam.fov)*Math.min(1,dt*4)}
 cam.updateProjectionMatrix();sky.position.copy(cam.position);
 const dp=dust.geometry.attributes.position,gp=g.position;for(let i=0;i<900;i+=3){for(let k=0;k<3;k++){const c=[gp.x,gp.y,gp.z][k];dp.array[i+k]=c+((dp.array[i+k]-c+150)%300+300)%300-150}}dp.needsUpdate=true}
