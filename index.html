@@ -1,19 +1,41 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#00e676">
+<meta name="theme-color" content="#00e676" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#00c853" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark light">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Universo Capoeira">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="description" content="App completo da academia Capoeira na Pequena África - check-in, avaliações, mural, pedidos de treino e mais">
+<meta name="application-name" content="Universo Capoeira">
+<meta name="description" content="App da academia Capoeira na Pequena África — check-in, avaliações, mural, pedidos de treino, jogos e área da equipe.">
+<meta name="keywords" content="capoeira, check-in, academia, Pequena África, avaliação, treino, batizado, berimbau">
+<meta name="author" content="Capoeira na Pequena África">
+<meta name="robots" content="noindex, nofollow">
+<meta name="format-detection" content="telephone=no, email=no, address=no">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<!-- Open Graph / compartilhamento -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Universo Capoeira">
+<meta property="og:description" content="Check-in, avaliações, mural e treinos da academia Capoeira na Pequena África.">
+<meta property="og:site_name" content="Universo Capoeira">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Universo Capoeira">
+<meta name="twitter:description" content="App da academia Capoeira na Pequena África — check-in, avaliações e treinos.">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg">
 <title>Universo Capoeira</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 <style>
 * {
   margin: 0;
@@ -733,6 +755,12 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):
 @media (orientation:landscape) and (max-height:500px){ .uc-hero{ min-height:125px; } .uc-bottom{ padding-top:5px; padding-bottom:5px; } }
 
 </style>
+<script>
+/* compatibilidade com navegadores/WebViews antigos */
+if (!String.prototype.padStart) String.prototype.padStart = function (n, f) { var s = String(this); f = f === undefined ? ' ' : String(f); while (s.length < n) s = f + s; return s.length > n && f.length ? s.slice(s.length - Math.max(n, 0)) : s; };
+if (!String.prototype.padEnd) String.prototype.padEnd = function (n, f) { var s = String(this); f = f === undefined ? ' ' : String(f); while (s.length < n) s += f; return s; };
+if (typeof Promise !== 'undefined' && !Promise.prototype.finally) Promise.prototype.finally = function (fn) { var P = this.constructor; return this.then(function (v) { return P.resolve(fn()).then(function () { return v; }); }, function (e) { return P.resolve(fn()).then(function () { throw e; }); }); };
+</script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
@@ -1814,11 +1842,22 @@ function toggleCardColapsavel(card) {
   estadoCardsColapsados[chave] = fechado;
 }
 
+/* filhos diretos que casam com um seletor simples — substitui ':scope > x', que WebViews antigos não entendem */
+function filhosDiretos(el, sel) {
+  var r = [], fs = el && el.children ? el.children : [];
+  for (var i = 0; i < fs.length; i++) {
+    var c = fs[i], m = c.matches || c.webkitMatchesSelector || c.msMatchesSelector;
+    if (m && m.call(c, sel)) r.push(c);
+  }
+  return r;
+}
+window.filhosDiretos = filhosDiretos;
+
 function tornarCardsColapsaveis(container, padraoFechado) {
   if (!container) return;
-  var cards = container.querySelectorAll(':scope > .card');
+  var cards = filhosDiretos(container, '.card');
   cards.forEach(function (card) {
-    var titulo = card.querySelector(':scope > h3');
+    var titulo = filhosDiretos(card, 'h3')[0];
     if (!titulo || card.dataset.colapsavelPronto) return;
     card.dataset.colapsavelPronto = '1';
 
@@ -2535,7 +2574,10 @@ function abrirAba(id, btn) {
     if (container) container.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
     pai.classList.add('active');
   }
-  renderizarAba(id);
+  try { renderizarAba(id); } catch (errAba) {
+    try { console.error('[abrirAba] falha ao montar ' + id, errAba); } catch (e0) {}
+    try { mostrarToast('Não consegui montar esta aba (' + String(errAba && errAba.message || errAba).slice(0, 80) + '). Atualize a página e tente de novo.', 'erro'); } catch (e1) {}
+  }
 }
 
 function toggleMenuEquipe() {
@@ -2866,7 +2908,7 @@ function notificar(titulo, corpo) {
   /* TODAS as notificações são prioridade: ficam na tela até o toque, vibram e tocam som do sistema */
   if (!notificacaoAtiva() || !('Notification' in window) || Notification.permission !== 'granted') return;
   var op = {
-    body: corpo, icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/svgs/solid/child-reaching.svg',
+    body: corpo,
     requireInteraction: true, renotify: true, silent: false, vibrate: [250, 120, 250, 120, 400],
     tag: 'uc-' + Date.now(), timestamp: Date.now(), data: { prioridade: 'alta' }
   };
@@ -2877,6 +2919,122 @@ function notificar(titulo, corpo) {
       navigator.serviceWorker.getRegistration().then(function (reg) { if (reg && reg.showNotification) reg.showNotification(titulo, op).catch(fallback); else fallback(); }).catch(fallback);
     } else fallback();
   } catch (e1) { fallback(); }
+}
+
+/* ================================================================
+   NOTIFICAÇÕES À EQUIPE — aluno faz algo → professor/ADM é avisado
+   (restaura o fluxo: check-in, pedidos, mensagens, feedback, formação…)
+   ================================================================ */
+function equipeLogadaAtiva() {
+  return typeof sessaoEquipe !== 'undefined' && !!sessaoEquipe &&
+    ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0;
+}
+
+function notificarEquipe(titulo, corpo) {
+  try {
+    if (equipeLogadaAtiva()) {
+      try { mostrarToast(titulo + ' — ' + corpo); } catch (e0) {}
+      try { if (typeof atualizarBadgesInteracao === 'function') atualizarBadgesInteracao(); } catch (e1) {}
+      if (typeof abaAtual !== 'undefined' && abaAtual === 'tab4') {
+        try { if (typeof renderAbaProfessor === 'function') renderAbaProfessor(); } catch (e2) {}
+      }
+    }
+  } catch (e3) {}
+  try {
+    if (notificacaoAtiva()) {
+      notificar(titulo, corpo);
+    } else if ('Notification' in window && Notification.permission === 'granted') {
+      var op = {
+        body: corpo,
+        requireInteraction: true, renotify: true, silent: false,
+        vibrate: [250, 120, 250, 120, 400],
+        tag: 'uc-equipe-' + Date.now(), timestamp: Date.now()
+      };
+      try { if (navigator.vibrate) navigator.vibrate(op.vibrate); } catch (ev) {}
+      try { new Notification(titulo, op); } catch (en) { console.warn(en); }
+    }
+  } catch (e4) {}
+}
+
+var UC_MONITOR_EQUIPE = {
+  vistos: {},
+  pronto: false,
+  regras: {
+    presencas: function (p) {
+      if (!p || p.status !== 'pendente') return null;
+      if (p.tipo === 'manual' || p.avaliadoPor) return null;
+      var nome = p.alunoApelido || p.alunoNome || 'Aluno';
+      var extra = p.atrasoMin > 0 ? ' · atraso' : '';
+      var polo = p.poloNome ? ' @ ' + p.poloNome : '';
+      return { titulo: 'Novo check-in', corpo: nome + polo + extra };
+    },
+    solicitacoes: function (s) {
+      if (!s || s.status !== 'pendente') return null;
+      var nome = s.alunoApelido || s.alunoNome || 'Aluno';
+      return { titulo: 'Novo pedido de treino', corpo: nome + ': ' + (s.tipo || 'treino') };
+    },
+    mensagensPrivadas: function (m) {
+      if (!m || m.de !== 'aluno' || m.lidaPeloProfessor) return null;
+      var nome = m.alunoApelido || m.alunoNome || 'Aluno';
+      return { titulo: 'Mensagem do aluno', corpo: nome + ': ' + String(m.texto || '').slice(0, 80) };
+    },
+    feedbacksAula: function (f) {
+      if (!f || f.vistoProfessor) return null;
+      var nome = f.alunoApelido || f.alunoNome || 'Aluno';
+      return { titulo: 'Feedback de aula', corpo: nome + ' — nota ' + (f.rating != null ? f.rating : '—') };
+    },
+    formacaoInfantil: function (f) {
+      if (!f || f.status !== 'pendente') return null;
+      return { titulo: 'Formação infantil', corpo: (f.apelido || f.nome || 'Aluno') + ' quer se formar' };
+    },
+    respostasPergunta: function (r) {
+      if (!r || r.vistoProfessor) return null;
+      var nome = r.alunoApelido || r.alunoNome || 'Aluno';
+      return { titulo: 'Resposta na pergunta da semana', corpo: nome + ': ' + String(r.texto || '').slice(0, 60) };
+    },
+    alunos: function (a) {
+      if (!a || a.ativo === false || a.teste) return null;
+      if (!a.criadoEm) return null;
+      var t = Date.parse(a.criadoEm);
+      if (!t || Date.now() - t > 120000) return null;
+      return { titulo: 'Novo aluno cadastrado', corpo: (a.apelido || a.nome || 'Aluno') + (a.graduacao ? ' — ' + a.graduacao : '') };
+    }
+  }
+};
+
+function ucMarcarVisto(col, id) {
+  if (!UC_MONITOR_EQUIPE.vistos[col]) UC_MONITOR_EQUIPE.vistos[col] = {};
+  UC_MONITOR_EQUIPE.vistos[col][id] = 1;
+}
+
+function ucJaVisto(col, id) {
+  return !!(UC_MONITOR_EQUIPE.vistos[col] && UC_MONITOR_EQUIPE.vistos[col][id]);
+}
+
+function processarMonitorEquipe(col, lista) {
+  var regra = UC_MONITOR_EQUIPE.regras[col];
+  if (!regra || !lista) return;
+  if (!UC_MONITOR_EQUIPE.pronto) {
+    lista.forEach(function (item) { if (item && item.id) ucMarcarVisto(col, item.id); });
+    return;
+  }
+  lista.forEach(function (item) {
+    if (!item || !item.id || ucJaVisto(col, item.id)) return;
+    ucMarcarVisto(col, item.id);
+    var msg = null;
+    try { msg = regra(item); } catch (e) { msg = null; }
+    if (msg && msg.titulo) notificarEquipe(msg.titulo, msg.corpo || '');
+  });
+}
+
+function iniciarMonitorEquipe() {
+  var cols = Object.keys(UC_MONITOR_EQUIPE.regras);
+  cols.forEach(function (col) {
+    try {
+      DB.escutar(col, function (lista) { processarMonitorEquipe(col, lista || []); });
+    } catch (e) { console.warn('[monitor-equipe]', col, e); }
+  });
+  setTimeout(function () { UC_MONITOR_EQUIPE.pronto = true; }, 1800);
 }
 
 </script>
@@ -13407,7 +13565,10 @@ function iniciarApp() {
   DB.escutar('*', function () {
     /* re-renderiza a aba visível quando qualquer coleção muda */
     renderizarAba(abaAtual);
+    try { if (typeof atualizarBadgesInteracao === 'function') atualizarBadgesInteracao(); } catch (e) {}
   });
+  /* aluno age → professor/equipe recebe alerta (check-in, pedido, mensagem…) */
+  try { iniciarMonitorEquipe(); } catch (eMon) { console.warn('[monitor-equipe] init', eMon); }
 
   /* restaura sessões leves */
   try {
@@ -17218,7 +17379,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var pais = [];
     document.querySelectorAll('.card').forEach(function (c) {
       if (c.closest('#modalOverlay') || c.closest('#arcadeOverlay')) return;
-      var h = c.querySelector(':scope > h3');
+      var h = filhosDiretos(c, 'h3')[0];
       if (h && (h.classList.contains('titulo-colapsavel') || h.hasAttribute('onclick'))) c.dataset.colapsavelPronto = '1'; /* já têm o próprio gatilho */
       var p = c.parentNode; if (p && pais.indexOf(p) < 0) pais.push(p);
     });
@@ -17235,7 +17396,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   function injetarCertLote() {
     var sel = q('certAluno'); if (!sel || q('ucCertMulti')) return;
     var card = sel.closest('.card'); if (!card) return;
-    var corpo = card.querySelector(':scope > .card-corpo-colapsavel') || card;
+    var corpo = filhosDiretos(card, '.card-corpo-colapsavel')[0] || card;
     var d = document.createElement('div'); d.id = 'ucCertMulti'; d.style.cssText = 'margin-top:12px;padding-top:10px;border-top:1px dashed var(--card-border)';
     d.innerHTML = '<button type="button" class="btn btn-secondary" data-uc2="cert-toggle"><i class="fas fa-users"></i> Gerar para vários alunos</button>' +
       '<div id="ucCertMultiBox" style="display:none;margin-top:8px">' +

@@ -1,28 +1,14 @@
 {
- "name": "Space Impact Retro",
- "short_name": "Space Impact",
- "start_url": "./space-impact-aberto.html",
- "display": "fullscreen",
- "orientation": "any",
- "background_color": "#02050a",
- "theme_color": "#02050a",
- "icons": [
-  {
-   "src": "icon-192.png",
-   "sizes": "192x192",
-   "type": "image/png",
-   "purpose": "any"
-  },
-  {
-   "src": "icon-512.png",
-   "sizes": "512x512",
-   "type": "image/png",
-   "purpose": "any"
-  },
-  {
-   "src": "icon.svg",
-   "sizes": "any",
-   "type": "image/svg+xml"
-  }
- ]
+  "name": "Universo Capoeira",
+  "short_name": "Capoeira",
+  "description": "App da academia Capoeira na Pequena África — check-in, avaliações, mural, pedidos de treino e área da equipe.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050b0e",
+  "theme_color": "#00e676",
+  "categories": ["sports", "education", "lifestyle"]
 }
