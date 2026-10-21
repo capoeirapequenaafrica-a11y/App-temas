@@ -1802,7 +1802,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -1858,7 +1858,8 @@ function tornarCardsColapsaveis(container, padraoFechado) {
   var cards = filhosDiretos(container, '.card');
   cards.forEach(function (card) {
     var titulo = filhosDiretos(card, 'h3')[0];
-    if (!titulo || card.dataset.colapsavelPronto) return;
+    /* título já retrátil (ou com gatilho próprio) não mexe; se o conteúdo foi redesenhado e o título é novo, prepara de novo */
+    if (!titulo || titulo.classList.contains('titulo-colapsavel') || titulo.hasAttribute('onclick')) return;
     card.dataset.colapsavelPronto = '1';
 
     var corpo = document.createElement('div');
@@ -2931,6 +2932,7 @@ function equipeLogadaAtiva() {
 }
 
 function notificarEquipe(titulo, corpo) {
+  if (!equipeLogadaAtiva()) return; /* aluno nunca recebe aviso da equipe (nem de outros alunos) */
   try {
     if (equipeLogadaAtiva()) {
       try { mostrarToast(titulo + ' — ' + corpo); } catch (e0) {}
@@ -2986,6 +2988,22 @@ var UC_MONITOR_EQUIPE = {
     formacaoInfantil: function (f) {
       if (!f || f.status !== 'pendente') return null;
       return { titulo: 'Formação infantil', corpo: (f.apelido || f.nome || 'Aluno') + ' quer se formar' };
+    },
+    agendamentos: function (a) {
+      if (!a || a.status !== 'agendado') return null;
+      return { titulo: 'Treino agendado', corpo: (a.alunoNome || 'Aluno') + ' — ' + (a.data || '') + (a.hora ? ' às ' + a.hora : '') };
+    },
+    pedidosResetSenha: function (r) {
+      if (!r || (r.status && r.status !== 'pendente')) return null;
+      return { titulo: 'Pedido de senha nova', corpo: (r.alunoNome || r.nome || 'Aluno') + ' precisa de senha provisória' };
+    },
+    notasAvaliacoesSemanais: function (n) {
+      if (!n) return null;
+      return { titulo: 'Avaliação semanal feita', corpo: (n.alunoApelido || n.alunoNome || 'Aluno') + (n.acertos != null ? ' — ' + n.acertos + ' acerto(s)' : '') };
+    },
+    mural: function (m) {
+      if (!m || !m.autorId) return null;
+      return { titulo: 'Novo no mural', corpo: (m.autor || 'Aluno') + ': ' + String(m.texto || '').slice(0, 60) };
     },
     respostasPergunta: function (r) {
       if (!r || r.vistoProfessor) return null;
@@ -17375,18 +17393,49 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
      1) TUDO RETRÁTIL
      --------------------------------------------------------------- */
   var tmRet = null;
+  function jogando() {
+    try { if (typeof arcade !== 'undefined' && arcade.rodando) return true; } catch (e) {}
+    try { if (typeof PM !== 'undefined' && PM.on) return true; } catch (e) {}
+    try { if (typeof SIM3D !== 'undefined' && SIM3D.on) return true; } catch (e) {}
+    return false;
+  }
   function retratilTudo() {
+    tmRet = null;
+    if (document.hidden || jogando()) return; /* nunca roda enquanto joga ou com a tela apagada */
     var pais = [];
-    document.querySelectorAll('.card').forEach(function (c) {
-      if (c.closest('#modalOverlay') || c.closest('#arcadeOverlay')) return;
+    document.querySelectorAll('.tab-content .card').forEach(function (c) {
       var h = filhosDiretos(c, 'h3')[0];
-      if (h && (h.classList.contains('titulo-colapsavel') || h.hasAttribute('onclick'))) c.dataset.colapsavelPronto = '1'; /* já têm o próprio gatilho */
+      if (!h || h.classList.contains('titulo-colapsavel') || h.hasAttribute('onclick')) return;
       var p = c.parentNode; if (p && pais.indexOf(p) < 0) pais.push(p);
     });
     pais.forEach(function (p) { try { tornarCardsColapsaveis(p, false); } catch (e) {} });
   }
-  function agendarRetratil() { clearTimeout(tmRet); tmRet = setTimeout(retratilTudo, 180); }
-  try { new MutationObserver(agendarRetratil).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+  function agendarRetratil() {
+    if (tmRet) return;
+    tmRet = setTimeout(function () { if (window.requestIdleCallback) requestIdleCallback(retratilTudo, { timeout: 400 }); else retratilTudo(); }, 150);
+  }
+  function temCardNovo(ms) {
+    for (var i = 0; i < ms.length; i++) {
+      var add = ms[i].addedNodes;
+      for (var j = 0; j < add.length; j++) {
+        var n = add[j]; if (n.nodeType !== 1) continue;
+        if (n.tagName === 'H3' || (n.classList && n.classList.contains('card')) || (n.querySelector && n.querySelector('h3, .card'))) return true;
+      }
+    }
+    return false;
+  }
+  try {
+    var obsRet = new MutationObserver(function (ms) { if (temCardNovo(ms)) agendarRetratil(); });
+    document.querySelectorAll('.tab-content').forEach(function (t) { obsRet.observe(t, { childList: true, subtree: true }); }); /* só as abas, nunca as telas dos jogos */
+  } catch (e) {}
+  /* rede de segurança: se tocar num título que ainda não ficou retrátil (card acabou de ser redesenhado), prepara na hora e alterna */
+  document.addEventListener('click', function (e) {
+    var h = e.target && e.target.closest ? e.target.closest('.card > h3') : null; if (!h) return;
+    if (h.classList.contains('titulo-colapsavel') || h.hasAttribute('onclick')) return;
+    var card = h.parentNode; if (!card || card.closest('#modalOverlay') || card.closest('#arcadeOverlay')) return;
+    if (e.target.closest('button, a, input, select, textarea, label')) return;
+    try { tornarCardsColapsaveis(card.parentNode, false); toggleCardColapsavel(card); e.stopPropagation(); } catch (err) {}
+  }, true);
   setTimeout(retratilTudo, 800);
 
   /* ---------------------------------------------------------------
@@ -17404,13 +17453,17 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       '<input id="ucCertBusca" placeholder="Buscar aluno..." oninput="ucCertFiltrar()" style="margin:6px 0">' +
       '<div class="flex-btn" style="gap:6px;margin-bottom:6px"><button type="button" class="btn btn-secondary btn-mini" data-uc2="cert-todos">Marcar todos</button><button type="button" class="btn btn-secondary btn-mini" data-uc2="cert-nenhum">Limpar</button></div>' +
       '<div id="ucCertLista" style="max-height:240px;overflow:auto;border:1px solid var(--card-border);border-radius:8px;padding:4px 6px">' +
-      alunosOrdenados().map(function (a) {
-        var aulas = 0; try { aulas = calcularCargaHorariaAluno(a).aulas; } catch (e) {}
-        return '<label class="ucCertLinha" data-nome="' + T(normalizar(a.nome + ' ' + (a.apelido || ''))) + '" style="display:flex;gap:8px;align-items:center;padding:6px 2px;font-size:.78rem"><input type="checkbox" class="ucCertChk" value="' + a.id + '" style="width:auto;margin:0"><span>' + T(a.nome) + (a.apelido ? ' (' + T(a.apelido) + ')' : '') + '</span><span class="mini" style="margin-left:auto">' + aulas + ' aula(s)</span></label>';
-      }).join('') + '</div>' +
+      '</div>' +
       '<label class="mini" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="ucCertZero" style="width:auto;margin:0"> Emitir também para quem tem 0 aulas aprovadas</label>' +
       '<button type="button" class="btn btn-gold" style="margin-top:8px" data-uc2="cert-emitir"><i class="fas fa-award"></i> Emitir para <span id="ucCertQtd">0</span> selecionado(s)</button></div>';
     corpo.appendChild(d);
+  }
+  function montarListaCert() {
+    var box = q('ucCertLista'); if (!box || box.getAttribute('data-ok') === '1') return;
+    box.setAttribute('data-ok', '1');
+    box.innerHTML = alunosOrdenados().map(function (a) {
+      return '<label class="ucCertLinha" data-nome="' + T(normalizar(a.nome + ' ' + (a.apelido || ''))) + '" style="display:flex;gap:8px;align-items:center;padding:6px 2px;font-size:.78rem"><input type="checkbox" class="ucCertChk" value="' + a.id + '" style="width:auto;margin:0"><span>' + T(a.nome) + (a.apelido ? ' (' + T(a.apelido) + ')' : '') + '</span></label>';
+    }).join('');
   }
   window.ucCertFiltrar = function () {
     var t = normalizar((q('ucCertBusca') || {}).value || '');
@@ -17544,6 +17597,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     S = null; salvarEstado(); desenhar();
   }
   function tick() {
+    if (document.hidden) return;
     try {
       var a = atual();
       if (S && (!a || a.id !== S.id)) fimSessao();
@@ -17568,7 +17622,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       el = document.createElement('div'); el.id = 'ucMissaoBar'; el.style.cssText = 'color:var(--gold);font-size:.64rem;font-weight:700;margin-top:2px';
       ref.parentNode.appendChild(el);
     }
-    if (S && G(S.id)) { var m = J(S.id).m; el.textContent = '🎯 ' + textoMissao(G(S.id), m) + ' · ' + pct(m) + '%'; } else el.textContent = '';
+    var tx = ''; if (S && G(S.id)) { var m = J(S.id).m; tx = '🎯 ' + textoMissao(G(S.id), m) + ' · ' + pct(m) + '%'; } if (el.textContent !== tx) el.textContent = tx;
   }
 
   /* --- cartão na aba Jogos --- */
@@ -17600,7 +17654,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var el = e.target.closest ? e.target.closest('[data-uc2]') : null; if (!el) return;
     var act = el.getAttribute('data-uc2'), id = el.getAttribute('data-id');
     try {
-      if (act === 'cert-toggle') { var b = q('ucCertMultiBox'); if (b) b.style.display = b.style.display === 'none' ? 'block' : 'none'; }
+      if (act === 'cert-toggle') { var b = q('ucCertMultiBox'); if (b) { montarListaCert(); b.style.display = b.style.display === 'none' ? 'block' : 'none'; } }
       else if (act === 'cert-todos') { document.querySelectorAll('#ucCertLista .ucCertLinha').forEach(function (l) { if (l.style.display !== 'none') l.querySelector('input').checked = true; }); certQtd(); }
       else if (act === 'cert-nenhum') { document.querySelectorAll('#ucCertLista .ucCertChk').forEach(function (c) { c.checked = false; }); certQtd(); }
       else if (act === 'cert-emitir') emitirLote();
