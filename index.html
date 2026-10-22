@@ -1177,9 +1177,6 @@ if (typeof Promise !== 'undefined' && !Promise.prototype.finally) Promise.protot
     <div id="conteudoDev"></div>
   </div>
 
-  <footer>
-    <span id="footerInfo">Universo Capoeira</span> &middot; <span style="color:#00e676;font-weight:700;">A equipe é mais importante que o indivíduo</span> &middot; Capoeira na Pequena África
-  </footer>
 
   <nav class="uc-bottom" aria-label="Atalhos">
     <button type="button" data-uc="tab1" class="active" onclick="abrirAba('tab1')"><i class="fas fa-house"></i>Início</button>
@@ -2864,6 +2861,7 @@ function autenticarEquipe(papelRequerido) {
   }
   sessaoEquipe = { id: achado.id, nome: achado.nome, papel: achado.papel };
   registroLog('equipe', 'Login equipe: ' + achado.nome + ' (' + achado.papel + ')');
+  setTimeout(function () { try { ucAvisarPendencias(); } catch (e) {} }, 2500);
   mostrarToast('Bem-vindo(a), ' + esc(achado.nome) + '!');
   renderizarAba(abaAtual);
 }
@@ -3020,6 +3018,64 @@ var UC_MONITOR_EQUIPE = {
   }
 };
 
+/* ================================================================
+   ATIVIDADE DO ALUNO → PROFESSOR
+   Toda gravação feita pelo aluno vira um aviso à equipe.
+   Coleções que já têm aviso próprio (regras acima) não são duplicadas.
+   ================================================================ */
+var UC_ATIVIDADE_COL = 'atividadeAluno';
+
+UC_MONITOR_EQUIPE.regras.atividadeAluno = function (a) {
+  if (!a || a.lidaPeloProfessor) return null;
+  var nome = a.alunoApelido || a.alunoNome || 'Aluno';
+  return { titulo: 'Aluno: ' + nome, corpo: a.acao || 'fez uma ação no app' };
+};
+
+function ucAtividadeRotulo(col, obj) {
+  if (col === 'alunos') {
+    if (obj && obj.senhaHash) return 'trocou a senha';
+    if (obj && ('instagram' in obj || 'gympassLink' in obj)) return 'atualizou o perfil (Instagram/Wellhub)';
+    return 'atualizou o perfil';
+  }
+  var nomes = {
+    confirmacoes_presenca: 'confirmou presença na aula',
+    progressoJogos: 'registrou progresso em jogo',
+    desafiosJogos: 'registrou desafio em jogo',
+    avaliacoes: 'enviou dado de avaliação',
+    presencas: 'atualizou um check-in',
+    solicitacoes: 'atualizou um pedido de treino',
+    mensagensPrivadas: 'enviou mensagem privada',
+    feedbacksAula: 'enviou feedback de aula'
+  };
+  return nomes[col] || ('fez uma ação (' + col + ')');
+}
+
+function ucRegistrarAtividadeAluno(col, obj, id) {
+  if (!sessaoAlunoId || sessaoEquipe) return;          /* só ações do aluno logado */
+  if (col === UC_ATIVIDADE_COL || col === 'logs') return;
+  if (col === 'alunos' && !id) return;                 /* cadastro: já coberto por "Novo aluno" */
+  var cobertas = Object.keys(UC_MONITOR_EQUIPE.regras).filter(function (k) {
+    return k !== 'alunos' && k !== UC_ATIVIDADE_COL;
+  });
+  if (cobertas.indexOf(col) >= 0) return;              /* já gera aviso próprio */
+  var a = alunoLogado();
+  if (!a) return;
+  DB.salvar(UC_ATIVIDADE_COL, {
+    alunoId: a.id, alunoNome: a.nome || '', alunoApelido: a.apelido || '',
+    acao: ucAtividadeRotulo(col, obj), colecao: col,
+    criadoEm: agoraISO(), lidaPeloProfessor: false
+  });
+}
+
+(function () {
+  var salvarOriginal = DB.salvar;
+  DB.salvar = function (col, obj, id) {
+    var r = salvarOriginal.apply(this, arguments);
+    try { ucRegistrarAtividadeAluno(col, obj, id); } catch (e) { console.warn('[atividade]', e); }
+    return r;
+  };
+})();
+
 function ucMarcarVisto(col, id) {
   if (!UC_MONITOR_EQUIPE.vistos[col]) UC_MONITOR_EQUIPE.vistos[col] = {};
   UC_MONITOR_EQUIPE.vistos[col][id] = 1;
@@ -3045,6 +3101,43 @@ function processarMonitorEquipe(col, lista) {
   });
 }
 
+/* ================================================================
+   PENDÊNCIAS DA EQUIPE — resumo ao abrir o app + lembrete periódico
+   Pendente que chegou com o app fechado não gera aviso individual
+   (o monitor só avisa itens novos); este resumo cobre essa lacuna.
+   ================================================================ */
+var UC_PENDENCIAS_COLS = {
+  presencas: 'check-in(s)',
+  solicitacoes: 'pedido(s) de treino',
+  formacaoInfantil: 'formação(ões) infantil(is)',
+  pedidosResetSenha: 'pedido(s) de senha',
+  mensagensPrivadas: 'mensagem(ns)',
+  feedbacksAula: 'feedback(s) de aula',
+  respostasPergunta: 'resposta(s) da pergunta da semana'
+};
+var UC_LEMBRETE_MIN = 30;
+
+function ucContarPendencias() {
+  var total = 0, partes = [];
+  Object.keys(UC_PENDENCIAS_COLS).forEach(function (col) {
+    var regra = UC_MONITOR_EQUIPE.regras[col];
+    if (!regra) return;
+    var n = 0;
+    DB.listar(col).forEach(function (item) {
+      try { if (item && regra(item)) n++; } catch (e) {}
+    });
+    if (n) { total += n; partes.push(n + ' ' + UC_PENDENCIAS_COLS[col]); }
+  });
+  return { total: total, partes: partes };
+}
+
+function ucAvisarPendencias() {
+  if (!equipeLogadaAtiva()) return;
+  var r = ucContarPendencias();
+  if (!r.total) return;
+  notificarEquipe('Pendências: ' + r.total, r.partes.join(' · '));
+}
+
 function iniciarMonitorEquipe() {
   var cols = Object.keys(UC_MONITOR_EQUIPE.regras);
   cols.forEach(function (col) {
@@ -3053,6 +3146,8 @@ function iniciarMonitorEquipe() {
     } catch (e) { console.warn('[monitor-equipe]', col, e); }
   });
   setTimeout(function () { UC_MONITOR_EQUIPE.pronto = true; }, 1800);
+  setTimeout(ucAvisarPendencias, 4000);
+  setInterval(ucAvisarPendencias, UC_LEMBRETE_MIN * 60 * 1000);
 }
 
 </script>
@@ -8330,7 +8425,7 @@ function htmlCardGympassAluno(logado) {
     '<h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-in Gympass / Wellhub</h3>' +
     '<p class="mini" style="margin-bottom:8px;">Seu check-in é feito direto no app Wellhub — o professor valida no Portal de Parceiros.</p>' +
     (link
-      ? '<a class="btn btn-gympass" href="' + esc(link) + '" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; text-decoration:none;"><i class="fas fa-external-link-alt"></i>&nbsp; Abrir meu Wellhub</a>'
+      ? '<a class="btn btn-gympass" href="' + esc(urlSegura(link)) + '" target="_blank" rel="noopener" style="display:flex; align-items:center; justify-content:center; text-decoration:none;"><i class="fas fa-external-link-alt"></i>&nbsp; Abrir meu Wellhub</a>'
       : '<p class="mini">Você ainda não salvou seu link do Wellhub. Adicione em <b>Meu Perfil</b>, mais abaixo.</p>') +
     '</div>';
 }
@@ -8873,7 +8968,7 @@ function renderAbaProfessor() {
     html += '<div class="lista-item"><div class="linha"><b>' + esc(p.nome) + '</b>' +
       '<button class="btn btn-danger btn-mini" onclick="excluirPolo(\'' + p.id + '\')"><i class="fas fa-trash"></i></button></div>' +
       '<span class="mini">' + esc(p.endereco || 'sem endereço') + '</span>' +
-      (p.gmaps ? ' <a class="mini" href="' + esc(p.gmaps) + '" target="_blank" rel="noopener">Maps</a>' : '') + '</div>';
+      (p.gmaps && urlSegura(p.gmaps) ? ' <a class="mini" href="' + esc(urlSegura(p.gmaps)) + '" target="_blank" rel="noopener">Maps</a>' : '') + '</div>';
   });
   html += '<label class="campo-label">Nome do polo</label><input id="poloNome" placeholder="Ex: Sede - Pedra do Sal">' +
     '<label class="campo-label">Endereço</label><input id="poloEndereco" placeholder="Rua, número, bairro">' +
