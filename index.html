@@ -2783,6 +2783,7 @@ function cadastrarAlunoNuvem(btn) {
   DB.salvar('alunos', novo).then(function (novoId) {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-check"></i> Concluir Cadastro'; }
     sessaoAlunoId = novoId;
+    if (typeof window.ucAposCadastroAluno === 'function') { try { window.ucAposCadastroAluno(novoId); } catch (e) {} }
     ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadSenha', 'autoCadSenha2'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     registroLog('cadastro', 'Novo aluno cadastrado: ' + nome);
     toggleAutoCadastroAluno(false);
@@ -16557,6 +16558,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       marcar(nome.length >= 3 ? nome : '', a, 'nome');
       marcar(tel.length >= 8 ? tel : '', a, 'contato');
       marcar(primeiro && apel ? primeiro + '|' + apel : '', a, 'primeiro+apelido');
+      var telApel = String(a.contato || '').replace(/\D/g, '');
+      marcar(apel && telApel.length >= 8 ? apel + '|' + telApel : '', a, 'apelido+contato');
     });
     Object.keys(marcas).forEach(function (k) {
       var ids = marcas[k];
@@ -16576,6 +16579,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (igual(function (a) { return chave(a.nome); })) m.push('mesmo nome');
     if (igual(function (a) { return String(a.contato || '').replace(/\D/g, '').length >= 8 ? String(a.contato).replace(/\D/g, '') : ''; })) m.push('mesmo contato');
     if (igual(function (a) { var p = chave(a.nome).split(' ')[0]; return p && chave(a.apelido || '') ? p + '|' + chave(a.apelido) : ''; })) m.push('mesmo primeiro nome e apelido');
+    if (igual(function (a) { var c = String(a.contato || '').replace(/\D/g, ''); return c.length >= 8 && chave(a.apelido || '') ? chave(a.apelido) + '|' + c : ''; })) m.push('mesmo apelido e contato');
+    if (igual(function (a) { return chave(a.apelido || ''); })) m.push('mesmo apelido (confira se é a mesma pessoa)');
     return m.length ? m : ['parecido'];
   }
 
@@ -16616,6 +16621,85 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     return html;
   }
 
+  /* Grupos de alunos com o mesmo apelido (para conferir; nada é juntado sozinho) */
+  function gruposMesmoApelido() {
+    var porApelido = {};
+    alunosAtivos().forEach(function (a) {
+      var k = chave(a.apelido || '');
+      if (!k) return;
+      (porApelido[k] = porApelido[k] || []).push(a);
+    });
+    return Object.keys(porApelido).map(function (k) { return porApelido[k]; }).filter(function (g) { return g.length > 1; });
+  }
+
+  /* Pendências da gestão: duplicados por nome/contato (principais) + mesmo apelido (para conferir) */
+  function gruposPendentesGestao() {
+    var principais = gruposDuplicados();
+    var porApelido = gruposMesmoApelido().filter(function (ga) {
+      return !principais.some(function (gp) {
+        return gp.length === ga.length && ga.every(function (a) {
+          return gp.some(function (b) { return b.id === a.id; });
+        });
+      });
+    });
+    return { principais: principais, porApelido: porApelido, todos: principais.concat(porApelido) };
+  }
+
+  /* Badge vermelho no botão de Equipe para o professor ver que há duplicados */
+  function atualizarBadgeDuplicados() {
+    var btn = el('btnToggleEquipe') || document.querySelector('.tabs button[onclick*="tab4"]');
+    var antigo = el('ucBadgeDup');
+    if (antigo) antigo.remove();
+    if (!btn) return;
+    var n = gruposPendentesGestao().todos.length;
+    if (!n) return;
+    var b = document.createElement('span');
+    b.id = 'ucBadgeDup';
+    b.className = 'badge-notif';
+    b.textContent = n;
+    btn.appendChild(b);
+  }
+
+  /* Avisa o(s) aluno(s) de um possível duplicado e o professor. Cada grupo é avisado uma vez só. */
+  function avisarDuplicadosPendentes(grupos) {
+    if (!grupos || !grupos.length) return;
+    var doc = DB.buscar('config', 'duplicados_avisados');
+    var registro = Object.assign({}, (doc && doc.chaves) || {});
+    var mudou = false;
+    grupos.forEach(function (g) {
+      var chaveGrupo = g.map(function (a) { return a.id; }).sort().join('|');
+      if (registro[chaveGrupo]) return;
+      registro[chaveGrupo] = true;
+      mudou = true;
+      var nomes = g.map(function (a) { return a.nome + (a.apelido ? ' (' + a.apelido + ')' : ''); }).join(', ');
+      g.forEach(function (a) {
+        DB.salvar('mensagensPrivadas', {
+          alunoId: a.id,
+          alunoNome: a.nome,
+          alunoApelido: a.apelido || '',
+          texto: 'Encontramos mais de um cadastro com os seus dados (' + nomes + '). O professor vai juntar tudo num cadastro só, sem apagar nada. Você não precisa fazer nada agora. Se algum desses cadastros não for seu, avise o professor.',
+          tipo: 'duplicado',
+          de: 'professor',
+          professorNome: 'Gestão de Alunos (aviso automático)',
+          lidaPeloAluno: false,
+          lidaPeloProfessor: true,
+          criadoEm: agoraISO()
+        }).catch(function () {});
+      });
+      if (typeof notificar === 'function') notificar('Possível cadastro duplicado', nomes + ' — ' + motivosGrupo(g).join(' · '));
+      toast('Possível duplicado: ' + nomes, 'erro');
+    });
+    if (mudou) DB.salvar('config', { chaves: registro }, 'duplicados_avisados').catch(function () {});
+  }
+
+  /* Chamado logo após um aluno se cadastrar: se ele cair num grupo de possível duplicado, avisa. */
+  window.ucAposCadastroAluno = function (id) {
+    var grupos = gruposDuplicados().filter(function (g) {
+      return g.some(function (a) { return a.id === id; });
+    });
+    if (grupos.length) avisarDuplicadosPendentes(grupos);
+  };
+
   function renderGestao(forcar) {
     var card = el('ucGestaoAlunos');
     if (!card) return;
@@ -16625,16 +16709,19 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     card.setAttribute('data-sig', sig);
 
     var busca = el('ucGestBusca') ? el('ucGestBusca').value : '';
-    var grupos = gruposDuplicados();
-    window.__ucGrupos = grupos;
+    var pend = gruposPendentesGestao();
+    var grupos = pend.principais;
+    window.__ucGrupos = pend.todos;
+    avisarDuplicadosPendentes(grupos);
 
     var html = '<h3><i class="fas fa-users-cog"></i> Gestão de Alunos</h3>' +
       '<p class="uc-mini">Editar cadastro, graduação atual, senha provisória e juntar cadastros duplicados.</p>' +
       '<button class="btn btn-gold btn-mini" type="button" onclick="ucEntrarAlunoTeste()"><i class="fas fa-flask"></i> Testar a aba do aluno (aluno fictício)</button>';
 
-    if (grupos.length) {
-      html += '<div class="uc-dup"><b>⚠️ ' + grupos.length + ' possível(is) duplicado(s)</b></div>' +
-        grupos.map(htmlGrupoDuplicado).join('');
+    if (pend.todos.length) {
+      html += '<div class="uc-dup"><b>⚠️ ' + grupos.length + ' possível(is) duplicado(s) por nome ou contato' +
+        (pend.porApelido.length ? ' · ' + pend.porApelido.length + ' grupo(s) com o mesmo apelido para conferir' : '') +
+        '</b></div>' + pend.todos.map(htmlGrupoDuplicado).join('');
     } else {
       html += '<p class="uc-mini" style="margin-top:8px">Nenhum possível duplicado.</p>';
     }
@@ -17503,6 +17590,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (!equipeOk) {
       var gAnt = el('ucGestaoAlunos'); if (gAnt) gAnt.remove();
       var bAnt = el('ucBtnAvalSemestral'); if (bAnt) bAnt.remove();
+      var badgeAnt = el('ucBadgeDup'); if (badgeAnt) badgeAnt.remove();
       return;
     }
     if (!el('ucBtnAvalSemestral')) {
@@ -17523,7 +17611,77 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var btnAval = el('ucBtnAvalSemestral');
     if (btnAval) btnAval.style.display = cicloAvaliacao() ? '' : 'none';
     renderGestao(false);
+    atualizarBadgeDuplicados();
   }
+
+  /* ===== CADASTRO DO ALUNO: lembrete mensal e atualização ===== */
+  function mesAtualCadastro() { return agoraISO().slice(0, 7); }
+
+  /* Uma vez por mês, o aluno recebe o lembrete para conferir o cadastro (ao abrir o app no mês) */
+  window.ucVerificarLembreteCadastro = function (aluno) {
+    if (!aluno || aluno.ativo === false) return;
+    var mes = mesAtualCadastro();
+    if (aluno.ultimoLembreteCadastro === mes || window.__lembreteCadastroMes === mes + ':' + aluno.id) return;
+    window.__lembreteCadastroMes = mes + ':' + aluno.id;
+    DB.salvar('mensagensPrivadas', {
+      alunoId: aluno.id,
+      alunoNome: aluno.nome,
+      alunoApelido: aluno.apelido || '',
+      texto: 'Olá, ' + (aluno.apelido || aluno.nome) + '! Este é o lembrete mensal para conferir seu cadastro (nome, apelido e contato). Toque em "Atualizar meu cadastro" no seu painel.',
+      tipo: 'lembrete_cadastro',
+      de: 'professor',
+      professorNome: 'Gestão de Alunos (aviso automático)',
+      lidaPeloAluno: false,
+      lidaPeloProfessor: true,
+      criadoEm: agoraISO()
+    }).catch(function () {});
+    DB.salvar('alunos', { ultimoLembreteCadastro: mes }, aluno.id).catch(function () {});
+    if (typeof notificar === 'function') notificar('Atualize seu cadastro', 'Confira seu nome, apelido e contato.');
+  };
+
+  window.ucAbrirAtualizarCadastro = function () {
+    var a = alunoLogado();
+    if (!a) { toast('Faça login para atualizar o cadastro.', 'erro'); return; }
+    abrirModal('Atualizar meu cadastro',
+      '<p class="mini">A graduação só pode ser alterada pela equipe.</p>' +
+      '<label class="campo-label">Nome completo</label><input id="ucAtNome" value="' + esc(a.nome) + '">' +
+      '<label class="campo-label">Apelido</label><input id="ucAtApelido" value="' + esc(a.apelido || '') + '">' +
+      '<label class="campo-label">Contato (WhatsApp)</label><input id="ucAtContato" value="' + esc(a.contato || '') + '">',
+      '<button class="btn" type="button" onclick="ucSalvarAtualizarCadastro()">Salvar</button>');
+  };
+
+  window.ucSalvarAtualizarCadastro = function () {
+    var a = alunoLogado();
+    if (!a) return;
+    var nome = (el('ucAtNome').value || '').trim();
+    if (nome.length < 3) { toast('Informe o nome completo.', 'erro'); return; }
+    var apelido = (el('ucAtApelido').value || '').trim() || nome.split(' ')[0];
+    var contato = (el('ucAtContato').value || '').trim();
+    var mes = mesAtualCadastro();
+    /* Cadastros de outra pessoa com o mesmo nome: recebem os mesmos apelido e contato */
+    var irmaos = listar('alunos').filter(function (x) {
+      return x.id !== a.id && x.ativo !== false && chave(x.nome) === chave(nome);
+    });
+    DB.salvar('alunos', {
+      nome: nome,
+      apelido: apelido,
+      contato: contato,
+      ultimoLembreteCadastro: mes,
+      atualizadoEm: agoraISO()
+    }, a.id).then(function () {
+      return Promise.all(irmaos.map(function (x) {
+        return DB.salvar('alunos', { apelido: apelido, contato: contato, atualizadoEm: agoraISO() }, x.id);
+      }));
+    }).then(function () {
+      fecharModal();
+      toast(irmaos.length ? 'Cadastro atualizado (e ' + irmaos.length + ' com o mesmo nome).' : 'Cadastro atualizado.');
+      if (irmaos.length) {
+        renderGestao(true);
+        if (typeof notificar === 'function') notificar('Possível duplicado', nome + ' — confira em Gestão de Alunos.');
+      }
+      if (typeof renderAluno === 'function') { try { renderAluno(); } catch (e) {} }
+    }).catch(function () { toast('Não foi possível atualizar o cadastro.', 'erro'); });
+  };
 
   function garantirAluno() {
     var painel = el('cardAlunoPainel');
@@ -17535,6 +17693,15 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       c.style.display = 'none';
       painel.insertBefore(c, painel.firstChild);
     }
+    if (!el('ucAtualizarCadastroAluno')) {
+      var d = document.createElement('div');
+      d.id = 'ucAtualizarCadastroAluno';
+      d.className = 'card';
+      d.innerHTML = '<button class="btn btn-secondary" type="button" onclick="ucAbrirAtualizarCadastro()"><i class="fas fa-user-edit"></i> Atualizar meu cadastro</button>';
+      painel.insertBefore(d, painel.firstChild);
+    }
+    var alunoAtual = alunoLogado();
+    if (alunoAtual) window.ucVerificarLembreteCadastro(alunoAtual);
     renderBoletim();
   }
 
