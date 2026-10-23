@@ -1736,7 +1736,7 @@ function ucIrParaBackup() { location.href = ucUrlBackup(); }
 /* CORE-BASE.JS — Universo Capoeira (v87) · trecho do app dividido sem alterar o código (linhas 1325–1667 do index.html original) */
 /* Remove qualquer Service Worker e cache antigos (de versões anteriores, ex: v86)
    que possam estar guardando uma cópia velha do app no navegador do usuário. */
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
   navigator.serviceWorker.getRegistrations().then(function (registrations) {
     registrations.forEach(function (reg) { reg.unregister(); });
   }).catch(function () {});
@@ -1799,7 +1799,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -2395,8 +2395,10 @@ function carregarConfigFirebase() {
 }
 
 function salvarConfigFirebase(cfg) {
-  if (cfg) localStorage.setItem(CHAVE_CONFIG_LOCAL, JSON.stringify(cfg));
-  else localStorage.removeItem(CHAVE_CONFIG_LOCAL);
+  try {
+    if (cfg) localStorage.setItem(CHAVE_CONFIG_LOCAL, JSON.stringify(cfg));
+    else localStorage.removeItem(CHAVE_CONFIG_LOCAL);
+  } catch (e) { console.warn('[config] armazenamento indisponível', e); }
 }
 
 function atualizarStatusFirebase() {
@@ -2755,7 +2757,7 @@ function cadastrarAlunoNuvem(btn) {
     return;
   }
 
-  var duplicado = DB.listar('alunos').some(function (a) { return a.ativo !== false && normalizar(a.nome).replace(/\s+/g, ' ').trim() === normalizar(nome).replace(/\s+/g, ' ').trim(); });
+  var duplicado = window.ucNomeJaExiste ? window.ucNomeJaExiste(nome) : DB.listar('alunos').some(function (a) { return a.ativo !== false && normalizar(a.nome).replace(/\s+/g, ' ').trim() === normalizar(nome).replace(/\s+/g, ' ').trim(); });
   if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
 
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Salvando...'; }
@@ -2891,18 +2893,18 @@ function pedirPermissaoNotificacao() {
   }
   Notification.requestPermission().then(function (perm) {
     if (perm === 'granted') {
-      localStorage.setItem(CHAVE_NOTIF, '1');
+      try { localStorage.setItem(CHAVE_NOTIF, '1'); } catch (e) {}
       $('btnAtivarNotificacao').innerHTML = '<i class="fas fa-bell"></i> Notificações Ativas';
       mostrarToast('Notificações ativadas!');
       notificar('Universo Capoeira', 'Você receberá os avisos do professor.');
     } else {
-      localStorage.removeItem(CHAVE_NOTIF);
+      try { localStorage.removeItem(CHAVE_NOTIF); } catch (e) {}
       mostrarToast('Permissão de notificação negada.', 'erro');
     }
   });
 }
 
-function notificacaoAtiva() { return localStorage.getItem(CHAVE_NOTIF) === '1'; }
+function notificacaoAtiva() { try { return localStorage.getItem(CHAVE_NOTIF) === '1'; } catch (e) { return false; } }
 
 function notificar(titulo, corpo) {
   /* TODAS as notificações são prioridade: ficam na tela até o toque, vibram e tocam som do sistema */
@@ -3046,7 +3048,8 @@ function ucAtividadeRotulo(col, obj) {
     presencas: 'atualizou um check-in',
     solicitacoes: 'atualizou um pedido de treino',
     mensagensPrivadas: 'enviou mensagem privada',
-    feedbacksAula: 'enviou feedback de aula'
+    feedbacksAula: 'enviou feedback de aula',
+    desafiosSemanais: 'atualizou os desafios semanais (compromisso)'
   };
   return nomes[col] || ('fez uma ação (' + col + ')');
 }
@@ -7399,9 +7402,10 @@ function renderRanking() {
   var contagem = {};
   DB.listar('presencas').forEach(function (p) {
     if (p.status !== 'aprovado') return;
-    var k = normalizar(p.alunoNome);
+    var rs = window.ucResolverAluno ? window.ucResolverAluno(p.alunoId, p.alunoNome) : null;
+    var k = rs ? 'id:' + rs.id : normalizar(p.alunoNome);
     if (!k) return;
-    if (!contagem[k]) contagem[k] = { id: p.alunoId || '', nome: p.alunoNome, apelido: p.alunoApelido || '', total: 0 };
+    if (!contagem[k]) contagem[k] = { id: rs ? rs.id : (p.alunoId || ''), nome: rs ? rs.nome : p.alunoNome, apelido: rs ? (rs.apelido || '') : (p.alunoApelido || ''), total: 0 };
     contagem[k].total++;
   });
   var lista = Object.keys(contagem).map(function (k) { return contagem[k]; })
@@ -7714,9 +7718,10 @@ function renderRankingCompleto() {
   if (!avals.length) { card.style.display = 'none'; return; }
   var porAluno = {};
   avals.forEach(function (av) {
-    var k = av.alunoId || normalizar(av.alunoNome);
+    var rs = window.ucResolverAluno ? window.ucResolverAluno(av.alunoId, av.alunoNome) : null;
+    var k = rs ? 'id:' + rs.id : (av.alunoId || normalizar(av.alunoNome));
     if (!k) return;
-    if (!porAluno[k] || String(av.data || '') > String(porAluno[k].data || '')) porAluno[k] = av;
+    if (!porAluno[k] || String(av.data || '') > String(porAluno[k].data || '')) porAluno[k] = rs ? Object.assign({}, av, { alunoId: rs.id, alunoNome: rs.nome }) : av;
   });
   var lista = Object.keys(porAluno).map(function (k) { return porAluno[k]; })
     .map(function (av) { return { av: av, media: mediaAvaliacao(av) }; })
@@ -8959,7 +8964,7 @@ function renderAbaProfessor() {
   html += '</div>';
 
   /* --- cadastro de aluno pelo professor --- */
-  html += '<div class="card" style="border:1px solid var(--primary-green);"><h3><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</h3>' +
+  html += '<div class="card" style="display:none;"><h3><i class="fas fa-user-plus"></i> Cadastrar Novo Aluno</h3>' +
     '<p class="mini" style="margin-bottom:6px;">Use isso pra cadastrar alunos que não têm celular/app, ou que preferem que você faça por eles.</p>' +
     '<label class="campo-label">Nome completo</label><input id="profCadNome" placeholder="Nome completo">' +
     '<label class="campo-label">Apelido na capoeira</label><input id="profCadApelido" placeholder="Opcional">' +
@@ -9492,7 +9497,7 @@ function cadastrarAlunoPeloProfessor(btn) {
   if (tipoAluno !== 'gympass') tipoAluno = 'normal';
 
   if (nome.length < 3) { mostrarToast('Informe o nome completo do aluno.', 'erro'); return; }
-  var duplicado = DB.listar('alunos').some(function (a) { return a.ativo !== false && normalizar(a.nome).replace(/\s+/g, ' ').trim() === normalizar(nome).replace(/\s+/g, ' ').trim(); });
+  var duplicado = window.ucNomeJaExiste ? window.ucNomeJaExiste(nome) : DB.listar('alunos').some(function (a) { return a.ativo !== false && normalizar(a.nome).replace(/\s+/g, ' ').trim() === normalizar(nome).replace(/\s+/g, ' ').trim(); });
   if (duplicado) { mostrarToast('Já existe um aluno com esse nome.', 'erro'); return; }
 
   if (window.__cadastroEmCurso) return;
@@ -9985,6 +9990,8 @@ function salvarAvaliacao() {
     ritmo: ritmo,
     musicalidade: musicalidade,
     compromisso: compromisso,
+    desafiosFeitos: (typeof dsResumo === 'function' ? dsResumo(aluno.id, semana).feitos : 0),
+    desafiosTotal: (typeof dsResumo === 'function' ? dsResumo(aluno.id, semana).total : 0),
     desenvolvimento: ($('avalDesenvolvimento') || {}).value ? $('avalDesenvolvimento').value.trim() : '',
     observacao: ($('avalObservacao').value || '').trim(),
     data: dataLocalISO(),
@@ -10082,7 +10089,7 @@ function renderAbaAdm() {
   var box = $('conteudoAdm');
   if (!exigirEquipe(['adm', 'dev'], box, 'adm')) return;
 
-  var alunos = DB.listar('alunos').slice().sort(function (a, b) { return normalizar(a.nome).localeCompare(normalizar(b.nome)); });
+  var alunos = DB.listar('alunos').filter(function (a) { return a.ativo !== false; }).sort(function (a, b) { return normalizar(a.nome).localeCompare(normalizar(b.nome)); });
   var presencas = DB.listar('presencas');
   var html = '';
 
@@ -10106,9 +10113,7 @@ function renderAbaAdm() {
     '</div></div>';
 
   /* --- alunos --- */
-  html += '<div class="card"><h3><i class="fas fa-users"></i> Alunos Cadastrados</h3>' +
-    '<label class="campo-label">Filtrar por nome</label><input id="admBuscaAluno" placeholder="Digite para filtrar..." oninput="filtrarAlunosAdm()">' +
-    '<div id="listaAlunosAdm">' + htmlListaAlunosAdm(alunos) + '</div></div>';
+  html += (window.ccHtmlCard ? window.ccHtmlCard() : '');
 
   /* --- aparência e parâmetros --- */
   html += '<div class="card"><h3><i class="fas fa-paint-brush"></i> Aparência, Logotipos e Parâmetros</h3>' +
@@ -12681,6 +12686,8 @@ decidirPresenca = function (id, status) {
    ================================================================ */
 var TR_CALS = {};
 var TR_CAL_SEL = {};   // CORREÇÃO: declaração que faltava (seleção múltipla de dias)
+var TR_SEM_OFFSET = 0;   // CORREÇÃO: semana exibida no painel do aluno (0 = atual)
+var TR_PED_SEL = {};    // CORREÇÃO: seleção de pedidos de aula do aluno
 var TR_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 var TR_DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -16661,7 +16668,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var antigo = el('ucBadgeDup');
     if (antigo) antigo.remove();
     if (!btn) return;
-    var n = gruposPendentesGestao().todos.length;
+    var n = (typeof window.ccContarDup === 'function') ? window.ccContarDup() : gruposPendentesGestao().todos.length;
     if (!n) return;
     var b = document.createElement('span');
     b.id = 'ucBadgeDup';
@@ -17562,7 +17569,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       }
       if (/juntar (cadastros )?duplicad/.test(t)) {
         usuarioFala(texto);
-        botFala('Para juntar duplicados, abra a aba Professor, seção Gestão de Alunos. Lá você escolhe o cadastro principal e confere os dados antes. Eu não junto sozinho.');
+        botFala('Para juntar duplicados, abra a aba Professor (ou ADM) e toque em Central de Cadastros, depois em Duplicados. Lá você compara os cadastros lado a lado, escolhe o principal e o dado que vale. Eu não junto sozinho.');
         return true;
       }
     }
@@ -17612,15 +17619,10 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       b.addEventListener('click', abrirAvaliacao);
       box.insertBefore(b, box.firstChild);
     }
-    if (!el('ucGestaoAlunos')) {
-      var g = document.createElement('div');
-      g.id = 'ucGestaoAlunos';
-      g.className = 'card';
-      box.insertBefore(g, box.firstChild.nextSibling);
-    }
+    var gVelha = el('ucGestaoAlunos'); if (gVelha) gVelha.remove();
     var btnAval = el('ucBtnAvalSemestral');
     if (btnAval) btnAval.style.display = cicloAvaliacao() ? '' : 'none';
-    renderGestao(false);
+    if (typeof window.ccInjetar === 'function') window.ccInjetar();
     atualizarBadgeDuplicados();
   }
 
@@ -18045,10 +18047,1208 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 </script>
 
 <script>
+/* ================================================================
+   DESAFIOS SEMANAIS (exercícios em casa) → entram no COMPROMISSO
+   - 3 desafios fixos + 2 que rotacionam toda semana
+   - aluno marca o que fez; professor vê na avaliação semanal
+   - a % concluída gera a sugestão da nota de Compromisso (0–10)
+   ================================================================ */
+var DS_FIXOS = [
+  { id: 'agach', nome: 'Agachamentos', meta: '50 repetições', icone: 'fa-walking', dica: 'Pode dividir em 2 ou 3 séries ao longo do dia.' },
+  { id: 'flex',  nome: 'Flexões de braço', meta: '5 a 10 repetições', icone: 'fa-dumbbell', dica: 'Com joelho no chão vale. O mínimo é 5.' },
+  { id: 'abdo',  nome: 'Abdominais', meta: '30 repetições', icone: 'fa-child', dica: 'Sem puxar o pescoço; pode fazer em séries.' }
+];
+var DS_EXTRAS = [
+  { id: 'prancha',  nome: 'Prancha', meta: '3 x 30 segundos', icone: 'fa-stopwatch', dica: 'Corpo reto, abdômen firme.' },
+  { id: 'polich',   nome: 'Polichinelo', meta: '50 repetições', icone: 'fa-running', dica: 'Aquece e melhora o fôlego.' },
+  { id: 'afundo',   nome: 'Afundo', meta: '10 por perna', icone: 'fa-shoe-prints', dica: 'Joelho da frente não passa da ponta do pé.' },
+  { id: 'ponte',    nome: 'Elevação de quadril (ponte)', meta: '20 repetições', icone: 'fa-grip-lines', dica: 'Deitado, sobe o quadril e aperta o glúteo.' },
+  { id: 'ginga',    nome: 'Ginga contínua', meta: '5 minutos', icone: 'fa-music', dica: 'Mantenha a base baixa e o ritmo.' },
+  { id: 'cocor',    nome: 'Cocorinha + esquiva', meta: '20 repetições', icone: 'fa-compress-arrows-alt', dica: 'Desce controlando, olhando pra frente.' },
+  { id: 'escal',    nome: 'Escalador (mountain climber)', meta: '30 repetições', icone: 'fa-mountain', dica: 'Cada joelho conta como 1.' },
+  { id: 'alonga',   nome: 'Alongamento completo', meta: '5 minutos', icone: 'fa-spa', dica: 'Pernas, costas e ombros, sem forçar.' },
+  { id: 'lombar',   nome: 'Superman (lombar)', meta: '15 repetições', icone: 'fa-male', dica: 'Deitado de barriga pra baixo, sobe braços e pernas.' },
+  { id: 'saltos',   nome: 'Saltos no lugar', meta: '30 repetições', icone: 'fa-arrow-up', dica: 'Aterrisse leve, joelhos macios.' }
+];
+
+function dsNumSemana(sem) {
+  var m = /^(\d{4})-W(\d{1,2})$/.exec(sem || '');
+  return m ? (parseInt(m[1], 10) * 53 + parseInt(m[2], 10)) : 0;
+}
+function dsItensDaSemana(sem) {
+  var n = dsNumSemana(sem), qtd = DS_EXTRAS.length;
+  var e1 = DS_EXTRAS[(n * 2) % qtd], e2 = DS_EXTRAS[(n * 2 + 1) % qtd];
+  return DS_FIXOS.concat([e1, e2]);
+}
+function dsId(alunoId, sem) { return 'ds_' + alunoId + '_' + sem; }
+function dsRegistro(alunoId, sem) { return DB.buscar('desafiosSemanais', dsId(alunoId, sem)); }
+function dsResumo(alunoId, sem) {
+  var itens = dsItensDaSemana(sem), reg = dsRegistro(alunoId, sem), feitos = 0;
+  var lista = itens.map(function (it) {
+    var f = !!(reg && reg.itens && reg.itens[it.id] && reg.itens[it.id].feito);
+    if (f) feitos++;
+    return { item: it, feito: f, em: f ? reg.itens[it.id].em : '' };
+  });
+  var total = itens.length, pct = total ? Math.round(feitos * 100 / total) : 0;
+  /* nota de compromisso sugerida: 0–10 em passos de 0,5 */
+  var nota = Math.round((pct / 10) * 2) / 2;
+  return { semana: sem, lista: lista, feitos: feitos, total: total, pct: pct, nota: nota };
+}
+function dsSemanaAnterior(sem) {
+  var m = /^(\d{4})-W(\d{1,2})$/.exec(sem || ''); if (!m) return sem;
+  var a = parseInt(m[1], 10), w = parseInt(m[2], 10) - 1;
+  if (w < 1) { a--; w = 52; }
+  return a + '-W' + String(w).padStart(2, '0');
+}
+
+function dsMarcar(itemId) {
+  var a = alunoLogado();
+  if (!a) { mostrarToast('Entre na sua conta de aluno.', 'erro'); return; }
+  var sem = semanaISOAtual(), reg = dsRegistro(a.id, sem);
+  var itens = {};
+  if (reg && reg.itens) Object.keys(reg.itens).forEach(function (k) { itens[k] = reg.itens[k]; });
+  var atual = !!(itens[itemId] && itens[itemId].feito);
+  itens[itemId] = { feito: !atual, em: !atual ? agoraISO() : '' };
+  var ids = dsItensDaSemana(sem).map(function (i) { return i.id; });
+  var feitos = ids.filter(function (k) { return itens[k] && itens[k].feito; }).length;
+  var nomeItem = (dsItensDaSemana(sem).filter(function (i) { return i.id === itemId; })[0] || {}).nome || itemId;
+  DB.salvar('desafiosSemanais', {
+    alunoId: a.id, alunoNome: a.nome || '', alunoApelido: a.apelido || '',
+    semana: sem, itens: itens, feitos: feitos, total: ids.length,
+    pct: Math.round(feitos * 100 / ids.length), atualizadoEm: agoraISO()
+  }, dsId(a.id, sem));
+  try { registroLog('aluno', (a.apelido || a.nome) + (atual ? ' desmarcou' : ' fez') + ' o desafio: ' + nomeItem); } catch (e) {}
+  mostrarToast(atual ? 'Desafio desmarcado.' : (feitos === ids.length ? 'Parabéns! Todos os desafios da semana concluídos! 🔥' : 'Desafio concluído: ' + nomeItem));
+  dsRenderAluno();
+}
+
+function dsHtmlAluno(a) {
+  var sem = semanaISOAtual(), r = dsResumo(a.id, sem), ant = dsResumo(a.id, dsSemanaAnterior(sem));
+  var h = '<h3 class="titulo-colapsavel" onclick="alternarCard(this)"><i class="fas fa-fire"></i> Desafios da semana <i class="fas fa-chevron-down seta-colapsavel"></i></h3>' +
+    '<div class="card-corpo-colapsavel">' +
+    '<p class="mini" style="margin-bottom:6px;">Exercícios para fazer em casa. Eles entram na sua avaliação de <b>Compromisso</b>. A semana fecha no domingo.</p>' +
+    '<div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px;"><b>' + r.feitos + ' de ' + r.total + ' concluídos</b><span>' + r.pct + '%</span></div>' +
+    '<div style="height:10px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:' + r.pct + '%;background:linear-gradient(90deg,#ffc107,#ff8f00);transition:width .4s;"></div></div>';
+  r.lista.forEach(function (x) {
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:8px;margin-bottom:6px;border-radius:10px;border:1px solid ' + (x.feito ? 'rgba(76,175,80,.6)' : 'var(--card-border)') + ';background:' + (x.feito ? 'rgba(76,175,80,.12)' : 'transparent') + ';">' +
+      '<i class="fas ' + x.item.icone + '" style="width:22px;text-align:center;color:var(--gold);"></i>' +
+      '<div style="flex:1;min-width:0;"><b style="font-size:.85rem;">' + esc(x.item.nome) + '</b>' +
+      '<div class="mini" style="margin:0;">' + esc(x.item.meta) + ' · ' + esc(x.item.dica) + '</div></div>' +
+      '<button type="button" class="btn ' + (x.feito ? 'btn-secondary' : 'btn-gold') + ' btn-mini" style="width:auto;min-width:78px;margin:0;" onclick="dsMarcar(\'' + x.item.id + '\')">' +
+      (x.feito ? '<i class="fas fa-check"></i> Feito' : 'Marcar') + '</button></div>';
+  });
+  h += '<p class="mini" style="margin-top:6px;">Compromisso estimado pelos desafios: <b>' + r.nota.toFixed(1).replace('.', ',') + '/10</b>' +
+    (ant.feitos ? ' · semana passada: ' + ant.feitos + '/' + ant.total : '') + '</p></div>';
+  return h;
+}
+
+function dsRenderAluno() {
+  var logado = alunoLogado(), painel = $('cardAlunoPainel');
+  var velho = $('dsCardAluno');
+  if (!logado || !painel) { if (velho) velho.remove(); return; }
+  var aberto = !(velho && velho.classList.contains('fechado')) ;
+  if (velho) velho.remove();
+  var card = document.createElement('div');
+  card.id = 'dsCardAluno'; card.className = 'card' + (aberto ? '' : ' fechado');
+  card.style.border = '1px solid var(--gold)';
+  card.innerHTML = dsHtmlAluno(logado);
+  var bloco = $('trAlunoBloco');
+  if (bloco && bloco.parentNode === painel) painel.insertBefore(card, bloco.nextSibling);
+  else painel.insertBefore(card, painel.firstChild);
+}
+
+(function () {
+  var base = renderAluno;
+  renderAluno = function () {
+    var r = base.apply(this, arguments);
+    try { dsRenderAluno(); } catch (e) { console.warn('[desafios]', e); }
+    return r;
+  };
+  /* reflete mudanças vindas da nuvem */
+  var avisarOrig = DB.avisar;
+  if (typeof avisarOrig === 'function') {
+    DB.avisar = function (col) {
+      var r = avisarOrig.apply(this, arguments);
+      if (col === 'desafiosSemanais') { try { dsRenderAluno(); dsInjetarProf(); } catch (e) {} }
+      return r;
+    };
+  }
+})();
+
+/* ---------- lado do professor: dentro da Avaliação Semanal ---------- */
+function dsInjetarProf() {
+  var sel = $('avalAluno'), ref = $('boxDesenvolvimentoAluno');
+  if (!sel || !ref) return;
+  var box = $('dsBoxProf');
+  if (!box) {
+    box = document.createElement('div'); box.id = 'dsBoxProf'; box.style.cssText = 'margin:8px 0;padding:8px;border:1px dashed var(--gold);border-radius:10px;';
+    ref.parentNode.insertBefore(box, ref.nextSibling);
+  }
+  var alunoId = sel.value, sem = ($('avalSemana') || {}).value || semanaISOAtual();
+  if (!alunoId) { box.innerHTML = ''; return; }
+  var r = dsResumo(alunoId, sem);
+  var h = '<b style="color:var(--gold);font-size:.85rem;"><i class="fas fa-fire"></i> Desafios da semana (Compromisso)</b>' +
+    '<div class="mini" style="margin:4px 0;">' + r.feitos + ' de ' + r.total + ' concluídos · ' + r.pct + '% · nota sugerida <b>' + r.nota.toFixed(1).replace('.', ',') + '</b></div>';
+  r.lista.forEach(function (x) {
+    h += '<div class="mini" style="margin:1px 0;">' + (x.feito ? '✅' : '⬜') + ' ' + esc(x.item.nome) + ' — ' + esc(x.item.meta) + '</div>';
+  });
+  h += '<button type="button" class="btn btn-secondary btn-mini" style="margin-top:6px;width:auto;" onclick="dsUsarSugestao()"><i class="fas fa-magic"></i> Usar sugestão no Compromisso</button>';
+  box.innerHTML = h;
+}
+function dsUsarSugestao() {
+  var sel = $('avalAluno'); if (!sel || !sel.value) return;
+  var r = dsResumo(sel.value, ($('avalSemana') || {}).value || semanaISOAtual());
+  if ($('avalCompromisso')) $('avalCompromisso').value = r.nota;
+  mostrarToast('Compromisso ajustado para ' + r.nota.toFixed(1).replace('.', ',') + ' pelos desafios.');
+}
+
+(function () {
+  var base = carregarDesenvolvimentoAluno;
+  carregarDesenvolvimentoAluno = function () {
+    var r = base.apply(this, arguments);
+    try {
+      dsInjetarProf();
+      /* sem avaliação lançada nesta semana: já sugere o Compromisso pelos desafios */
+      var sel = $('avalAluno');
+      if (sel && sel.value) {
+        var sem = ($('avalSemana') || {}).value || semanaISOAtual();
+        var jaTem = avaliacoesDoAluno(sel.value).some(function (a) { return a.semana === sem; });
+        var reg = dsRegistro(sel.value, sem);
+        if (!jaTem && reg && $('avalCompromisso')) $('avalCompromisso').value = dsResumo(sel.value, sem).nota;
+      }
+    } catch (e) { console.warn('[desafios prof]', e); }
+    return r;
+  };
+})();
+</script>
+
+<script>
 function abrirSpaceImpact() {
   var w = window.open('space-impact-aberto.html', '_blank');
   if (!w) location.href = 'space-impact-aberto.html';
 }
+</script>
+<script id="ccCadastros">
+/* =====================================================================
+   CENTRAL DE CADASTROS (Professor + ADM)
+   - criar cadastro e editar em detalhe
+   - achar duplicados (nome igual, nome dentro de outro, erro de digitação,
+     mesmo contato, mesmo apelido), comparar lado a lado e juntar
+   - a junção religa TODOS os históricos (presenças, avaliações, certificados,
+     mensagens, feedbacks...) e corrige o nome em todos eles
+   - nada é apagado na junção: os outros cadastros ficam arquivados e
+     existe "Desfazer última junção"
+   ===================================================================== */
+(function () {
+  'use strict';
+
+  /* ---------- utilitários ---------- */
+  function $(id) { return document.getElementById(id); }
+  function esc(v) {
+    return String(v === undefined || v === null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function norm(s) {
+    return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  var STOP = { de: 1, da: 1, do: 1, dos: 1, das: 1, e: 1 };
+  function tokens(n) { return norm(n).split(' ').filter(function (t) { return t && !STOP[t]; }); }
+  function nomeKey(n) { return tokens(n).join(' '); }
+  function fone(c) { var d = String(c || '').replace(/\D/g, ''); return d.length >= 8 ? d.slice(-9) : ''; }
+  function lev(a, b) {
+    if (a === b) return 0;
+    if (Math.abs(a.length - b.length) > 3) return 9;
+    var prev = [], i, j;
+    for (j = 0; j <= b.length; j++) prev[j] = j;
+    for (i = 1; i <= a.length; i++) {
+      var cur = [i];
+      for (j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1));
+      }
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+  function toast(m, t) { if (typeof mostrarToast === 'function') { try { mostrarToast(m, t); } catch (e) {} } }
+  function listar(c) { var l; try { l = DB.listar(c); } catch (e) { l = []; } return Array.isArray(l) ? l : []; }
+  function agora() { return new Date().toISOString(); }
+  function preenchido(v) { return v !== undefined && v !== null && v !== '' && v !== false; }
+  function dataBR(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : (iso ? String(iso) : '—');
+  }
+  function graduacoes() {
+    try { if (typeof CONFIG !== 'undefined' && CONFIG.graduacoes && CONFIG.graduacoes.length) return CONFIG.graduacoes; } catch (e) {}
+    try { return GRADUACOES_PADRAO; } catch (e2) { return []; }
+  }
+  function log(m) { try { registroLog('professor', m); } catch (e) {} }
+
+  /* ---------- alunos ---------- */
+  function todos() { return listar('alunos'); }
+  function ativos() {
+    return todos().filter(function (a) { return a.ativo !== false && !a.teste && String(a.nome || '').trim(); });
+  }
+  function arquivados() { return todos().filter(function (a) { return a.ativo === false && !a.teste; }); }
+  function porId(id) { for (var l = todos(), i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
+  function poloNome(id) { var p = id ? listar('polos').filter(function (x) { return x.id === id; })[0] : null; return p ? p.nome : ''; }
+
+  /* resolve (alunoId, nome) -> cadastro ativo "de verdade" (segue junções antigas) */
+  var IDX = null;
+  function indice() {
+    if (IDX) return IDX;
+    var pid = {}, pnome = {};
+    todos().forEach(function (a) { pid[a.id] = a; });
+    todos().forEach(function (a) {
+      if (a.ativo !== false && !a.teste) { var k = nomeKey(a.nome); if (k && !pnome[k]) pnome[k] = a; }
+    });
+    IDX = { pid: pid, pnome: pnome };
+    return IDX;
+  }
+  window.ucResolverAluno = function (id, nome) {
+    var I = indice(), a = id ? I.pid[id] : null, n = 0;
+    while (a && a.mescladoEm && n < 6) { var nx = I.pid[a.mescladoEm]; if (!nx) break; a = nx; n++; }
+    if (a && !a.mescladoEm && a.ativo !== false) return a;
+    var k = nomeKey(nome);
+    if (k && I.pnome[k]) return I.pnome[k];
+    return a || null;
+  };
+  window.ucNomeJaExiste = function (nome) {
+    var k = nomeKey(nome);
+    return !!k && ativos().some(function (a) { return nomeKey(a.nome) === k; });
+  };
+  if (typeof DB !== 'undefined' && DB && typeof DB.avisar === 'function' && !DB.__ccW) {
+    var avisarOrig = DB.avisar;
+    DB.avisar = function (col) { if (col === 'alunos') IDX = null; return avisarOrig.apply(this, arguments); };
+    DB.__ccW = true;
+  }
+
+  /* ---------- vínculos (todas as coleções com alunoId/alunoNome) ---------- */
+  var COLS_FORA = { alunos: 1, config: 1, logs: 1, equipe: 1 };
+  function colsVinculo() {
+    var l = []; try { l = COLECOES.slice(); } catch (e) {}
+    return l.filter(function (c) { return !COLS_FORA[c]; });
+  }
+  function vinculosDe(id) {
+    var out = { presencas: 0, aprovadas: 0, avaliacoes: 0, certificados: 0, outros: 0, total: 0, ultima: '' };
+    colsVinculo().forEach(function (c) {
+      listar(c).forEach(function (d) {
+        if (d.alunoId !== id) return;
+        out.total++;
+        if (c === 'presencas') { out.presencas++; if (d.status === 'aprovado') out.aprovadas++; if (String(d.data || '') > out.ultima) out.ultima = String(d.data || ''); }
+        else if (c === 'avaliacoes' || c === 'avaliacoesSemestrais' || c === 'avaliacoesBimestrais') out.avaliacoes++;
+        else if (c === 'certificados') out.certificados++;
+        else out.outros++;
+      });
+    });
+    return out;
+  }
+  function aplicarLotes(lista, onProg) {
+    var i = 0, feitos = 0;
+    return new Promise(function (resolve, reject) {
+      function passo() {
+        if (i >= lista.length) { resolve(feitos); return; }
+        var lote = lista.slice(i, i + 20); i += 20;
+        Promise.all(lote.map(function (o) { return Promise.resolve(DB.salvar(o.c, o.patch, o.id)); }))
+          .then(function () { feitos += lote.length; if (onProg) onProg(feitos, lista.length); setTimeout(passo, 0); })
+          .catch(reject);
+      }
+      passo();
+    });
+  }
+
+  /* monta a lista de ajustes: leva tudo que é de dupIds (e nomes soltos) para keep */
+  function planoRelink(keep, dupIds, nomesExtras) {
+    var plano = [], chavesNome = {};
+    dupIds.forEach(function (id) { var a = porId(id); if (a) chavesNome[nomeKey(a.nome)] = 1; });
+    (nomesExtras || []).forEach(function (n) { var k = nomeKey(n); if (k) chavesNome[k] = 1; });
+    var I = indice();
+    colsVinculo().forEach(function (c) {
+      listar(c).forEach(function (d) {
+        var temId = preenchido(d.alunoId) && !!I.pid[d.alunoId];
+        var casa = false;
+        if (dupIds.indexOf(d.alunoId) >= 0) casa = true;
+        else if (!temId && d.alunoNome && chavesNome[nomeKey(d.alunoNome)]) casa = true;
+        else if (d.alunoId === keep) casa = true;
+        if (c === 'pontosJogos' && !casa && d.nome && chavesNome[nomeKey(d.nome)]) {
+          plano.push({ c: c, id: d.id, patch: { nome: '' }, antes: { nome: d.nome }, soNome: true, doc: d });
+          return;
+        }
+        if (!casa) return;
+        var patch = {}, antes = {};
+        if (d.alunoId !== keep) { patch.alunoId = keep; antes.alunoId = d.alunoId || ''; }
+        plano.push({ c: c, id: d.id, patch: patch, antes: antes, doc: d });
+      });
+    });
+    return plano;
+  }
+
+  /* ---------- duplicados ---------- */
+  function ignorados() {
+    var d = listar('config').filter(function (c) { return c.id === 'duplicados_ignorados'; })[0];
+    return (d && d.pares) || {};
+  }
+  function parKey(a, b) { return [a, b].sort().join('|'); }
+  function compararPar(a, b) {
+    var m = [], f = 0;
+    var ka = nomeKey(a.nome), kb = nomeKey(b.nome);
+    if (ka && ka === kb) { m.push('mesmo nome'); f = 3; }
+    var fa = fone(a.contato), fb = fone(b.contato);
+    if (fa && fa === fb) { m.push('mesmo contato'); f = 3; }
+    var ta = tokens(a.nome), tb = tokens(b.nome);
+    if (ka !== kb && ta.length >= 2 && tb.length >= 2) {
+      var curto = ta.length <= tb.length ? ta : tb, longo = curto === ta ? tb : ta;
+      if (curto.every(function (t) { return longo.indexOf(t) >= 0; })) { m.push('um nome está dentro do outro'); f = Math.max(f, 2); }
+      else if (ka.length >= 6 && kb.length >= 6 && lev(ka, kb) <= 2) { m.push('nomes quase iguais (digitação?)'); f = Math.max(f, 2); }
+    }
+    var pa = norm(a.apelido), pb = norm(b.apelido);
+    if (pa && pa === pb) {
+      if (ta[0] && ta[0] === tb[0]) { m.push('mesmo apelido e primeiro nome'); f = Math.max(f, 2); }
+      else { m.push('mesmo apelido'); f = Math.max(f, 1); }
+    }
+    return { forca: f, motivos: m };
+  }
+  function agrupar(pares, lista) {
+    var pai = {};
+    function ach(x) { while (pai[x] !== x) { pai[x] = pai[pai[x]]; x = pai[x]; } return x; }
+    lista.forEach(function (a) { pai[a.id] = a.id; });
+    pares.forEach(function (p) { pai[ach(p.a.id)] = ach(p.b.id); });
+    var g = {};
+    lista.forEach(function (a) { var r = ach(a.id); (g[r] = g[r] || { alunos: [], motivos: {}, forca: 0 }).alunos.push(a); });
+    pares.forEach(function (p) {
+      var o = g[ach(p.a.id)];
+      p.r.motivos.forEach(function (m) { o.motivos[m] = 1; });
+      o.forca = Math.max(o.forca, p.r.forca);
+    });
+    return Object.keys(g).map(function (k) { return g[k]; }).filter(function (x) { return x.alunos.length > 1; })
+      .map(function (x) { x.motivos = Object.keys(x.motivos); return x; });
+  }
+  function acharDuplicados() {
+    var L = ativos(), ign = ignorados(), fortes = [], fracos = [];
+    for (var i = 0; i < L.length; i++) {
+      for (var j = i + 1; j < L.length; j++) {
+        if (ign[parKey(L[i].id, L[j].id)]) continue;
+        var r = compararPar(L[i], L[j]);
+        if (r.forca >= 2) fortes.push({ a: L[i], b: L[j], r: r });
+        else if (r.forca === 1) fracos.push({ a: L[i], b: L[j], r: r });
+      }
+    }
+    var gF = agrupar(fortes, L), gW = agrupar(fracos, L).filter(function (g) {
+      return !gF.some(function (f) { return g.alunos.every(function (a) { return f.alunos.some(function (b) { return b.id === a.id; }); }); });
+    });
+    return { fortes: gF, fracos: gW };
+  }
+  function similaresA(nome, contato, ignorarId) {
+    var fake = { nome: nome, contato: contato, apelido: '' }, out = [];
+    ativos().forEach(function (a) {
+      if (a.id === ignorarId) return;
+      var r = compararPar(fake, a);
+      if (r.forca >= 2) out.push({ a: a, motivos: r.motivos });
+    });
+    return out;
+  }
+
+  /* ---------- vínculos desatualizados / nomes soltos ---------- */
+  function varrerVinculos() {
+    var reparos = [], soltos = {};
+    colsVinculo().forEach(function (c) {
+      listar(c).forEach(function (d) {
+        if (!preenchido(d.alunoId) && !preenchido(d.alunoNome)) return;
+        var r = window.ucResolverAluno(d.alunoId, d.alunoNome);
+        if (r && r.ativo === false && !r.mescladoEm) return;
+        if (r && r.ativo !== false) {
+          var patch = {}, antes = {};
+          if (d.alunoId !== r.id) { patch.alunoId = r.id; antes.alunoId = d.alunoId || ''; }
+          if ('alunoNome' in d && d.alunoNome !== r.nome) { patch.alunoNome = r.nome; antes.alunoNome = d.alunoNome || ''; }
+          if (Object.keys(patch).length) reparos.push({ c: c, id: d.id, patch: patch, antes: antes });
+        } else if (preenchido(d.alunoNome)) {
+          var k = nomeKey(d.alunoNome);
+          if (!k) return;
+          (soltos[k] = soltos[k] || { nome: d.alunoNome, docs: [] }).docs.push({ c: c, id: d.id, d: d });
+        }
+      });
+    });
+    return { reparos: reparos, soltos: Object.keys(soltos).map(function (k) { return soltos[k]; }) };
+  }
+
+  /* ---------- campos ---------- */
+  var CAMPOS = [
+    { k: 'nome', t: 'Nome completo' }, { k: 'apelido', t: 'Apelido' }, { k: 'contato', t: 'Contato (WhatsApp)' },
+    { k: 'email', t: 'E-mail' }, { k: 'nascimento', t: 'Nascimento' }, { k: 'responsavel', t: 'Responsável' },
+    { k: 'responsavelContato', t: 'Contato do responsável' }, { k: 'bairro', t: 'Bairro / cidade' },
+    { k: 'graduacao', t: 'Graduação' }, { k: 'graduacaoLiberada', t: 'Graduação liberada ao aluno' },
+    { k: 'tipoAluno', t: 'Como treina' }, { k: 'categoria', t: 'Categoria' }, { k: 'gympassLink', t: 'Link Gympass' },
+    { k: 'poloId', t: 'Polo / turma' }, { k: 'inicioCapoeira', t: 'Início na capoeira' },
+    { k: 'obs', t: 'Observações do professor' }, { k: 'senhaHash', t: 'Senha' }, { k: 'foto', t: 'Foto' }
+  ];
+  var INTERNOS = { id: 1, ativo: 1, mescladoEm: 1, mescladoEmData: 1, arquivadoEm: 1, arquivadoMotivo: 1, criadoEm: 1 };
+  function valTxt(c, a) {
+    var v = a[c.k];
+    if (!preenchido(v)) return '—';
+    if (c.k === 'senhaHash') return 'definida';
+    if (c.k === 'foto') return '<img src="' + esc(v) + '" alt="" class="cc-foto-mini">';
+    if (c.k === 'graduacaoLiberada') return 'sim';
+    if (c.k === 'tipoAluno') return v === 'gympass' ? 'Gympass / Wellhub' : 'Aluno normal';
+    if (c.k === 'categoria') return v === 'infantil' ? 'Infantil' : 'Adulto';
+    if (c.k === 'poloId') return esc(poloNome(v) || v);
+    if (c.k === 'nascimento' || c.k === 'inicioCapoeira') return esc(dataBR(v));
+    return esc(v);
+  }
+
+  /* ---------- estilos ---------- */
+  function estilos() {
+    if ($('ccStyle')) return;
+    var st = document.createElement('style');
+    st.id = 'ccStyle';
+    st.textContent =
+      '.cc-painel{position:fixed;inset:0;z-index:3000;background:#06151e;color:var(--text-main,#d8edf0);overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;padding-bottom:90px}' +
+      '.cc-painel.aberto{display:block}' +
+      '.cc-topo{position:sticky;top:0;z-index:5;background:#081b25;border-bottom:1px solid var(--card-border,#28505a);padding:calc(10px + env(safe-area-inset-top,0px)) 12px 8px}' +
+      '.cc-topo h2{font-size:1rem;margin:0;display:flex;align-items:center;gap:8px}' +
+      '.cc-x{margin-left:auto;background:#17323f;border:1px solid var(--card-border,#28505a);color:inherit;border-radius:10px;padding:6px 12px;font-size:.85rem}' +
+      '.cc-abas{display:flex;gap:6px;margin-top:8px}' +
+      '.cc-abas button{flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--card-border,#28505a);background:#102a36;color:inherit;font-size:.74rem;font-weight:700}' +
+      '.cc-abas button.on{background:var(--primary-green,#20c77a);color:#04210f;border-color:transparent}' +
+      '.cc-corpo{padding:10px 12px}' +
+      '.cc-mini{font-size:.72rem;color:var(--text-sub,#8caab1)}' +
+      '.cc-card{background:#102a36;border:1px solid var(--card-border,#28505a);border-radius:14px;padding:10px;margin:8px 0}' +
+      '.cc-linha{display:flex;align-items:center;gap:8px}' +
+      '.cc-info{flex:1;min-width:0;cursor:pointer}' +
+      '.cc-info b{color:var(--primary-green,#20c77a);font-size:.88rem;word-break:break-word}' +
+      '.cc-pill{display:inline-block;font-size:.62rem;padding:2px 7px;border-radius:99px;background:#17323f;border:1px solid var(--card-border,#28505a);margin:2px 3px 0 0}' +
+      '.cc-pill.av{background:#3b2f08;border-color:var(--gold,#f4c95d);color:var(--gold,#f4c95d)}' +
+      '.cc-pill.rd{background:#3a1217;border-color:#ff8796;color:#ff8796}' +
+      '.cc-btn{border:0;border-radius:10px;padding:9px 12px;font-weight:700;font-size:.8rem;background:var(--primary-green,#20c77a);color:#04210f}' +
+      '.cc-btn.sec{background:#17323f;color:inherit;border:1px solid var(--card-border,#28505a)}' +
+      '.cc-btn.ouro{background:var(--gold,#f4c95d);color:#2a2100}' +
+      '.cc-btn.perigo{background:#ff8796;color:#2a0b10}' +
+      '.cc-btn.mini{padding:6px 10px;font-size:.72rem}' +
+      '.cc-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}' +
+      '.cc-painel input[type=text],.cc-painel input[type=tel],.cc-painel input[type=email],.cc-painel input[type=date],.cc-painel input[type=search],.cc-painel select,.cc-painel textarea{width:100%;box-sizing:border-box;background:#081b25;color:inherit;border:1px solid var(--card-border,#28505a);border-radius:10px;padding:10px;font-size:.88rem;margin:3px 0 8px}' +
+      '.cc-painel textarea{min-height:70px}' +
+      '.cc-lab{display:block;font-size:.72rem;color:var(--text-sub,#8caab1);margin-top:4px}' +
+      '.cc-sel-bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#081b25;border-top:1px solid var(--card-border,#28505a);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center}' +
+      '.cc-aviso{background:#3b2f08;border:1px solid var(--gold,#f4c95d);border-radius:12px;padding:9px;font-size:.78rem;margin:6px 0}' +
+      '.cc-ok{background:#0d3322;border:1px solid var(--primary-green,#20c77a);border-radius:12px;padding:9px;font-size:.78rem;margin:6px 0}' +
+      '.cc-tab-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--card-border,#28505a)}' +
+      '.cc-tab{border-collapse:collapse;width:100%}' +
+      '.cc-tab th,.cc-tab td{border-bottom:1px solid var(--card-border,#28505a);padding:7px 8px;font-size:.76rem;vertical-align:top;min-width:150px;text-align:left}' +
+      '.cc-tab th:first-child,.cc-tab td:first-child{position:sticky;left:0;background:#081b25;min-width:92px;max-width:92px;z-index:2;color:var(--text-sub,#8caab1)}' +
+      '.cc-tab tr.igual td{opacity:.75}' +
+      '.cc-tab label{display:flex;gap:6px;align-items:flex-start;cursor:pointer;word-break:break-word}' +
+      '.cc-tab input[type=radio],.cc-tab input[type=checkbox],.cc-chk input{width:18px;height:18px;flex:none;margin:0}' +
+      '.cc-foto-mini{width:44px;height:44px;border-radius:50%;object-fit:cover}' +
+      '.cc-foto-grande{width:84px;height:84px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-green,#20c77a);background:#081b25}' +
+      '.cc-dlg-fundo{position:fixed;inset:0;z-index:3500;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:16px}' +
+      '.cc-dlg-fundo.aberto{display:flex}' +
+      '.cc-dlg{background:#102a36;border:1px solid var(--card-border,#28505a);border-radius:16px;padding:14px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto}' +
+      '.cc-dlg h3{margin:0 0 8px;font-size:.95rem}' +
+      '.cc-grade{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}' +
+      '.cc-sep{font-weight:700;color:var(--gold,#f4c95d);margin:12px 0 4px;font-size:.78rem}';
+    document.head.appendChild(st);
+  }
+
+  /* ---------- estado e painel ---------- */
+  var S = { view: 'lista', busca: '', sel: {}, fichaId: null, fichaFoto: undefined, cmp: null, pilha: [], sig: '' };
+
+  function garantirPainel() {
+    estilos();
+    if ($('ccPainel')) return;
+    var p = document.createElement('div');
+    p.id = 'ccPainel';
+    p.className = 'cc-painel';
+    p.innerHTML = '<div class="cc-topo"><div class="cc-linha"><h2 id="ccTitulo"></h2><button type="button" class="cc-x" onclick="ccFechar()">✕ Fechar</button></div><div id="ccAbas"></div></div><div class="cc-corpo" id="ccCorpo"></div><div id="ccBarra"></div>';
+    document.body.appendChild(p);
+    var d = document.createElement('div');
+    d.id = 'ccDlgFundo';
+    d.className = 'cc-dlg-fundo';
+    d.innerHTML = '<div class="cc-dlg" id="ccDlg"></div>';
+    document.body.appendChild(d);
+    p.addEventListener('change', aoMudar);
+  }
+  function dlg(titulo, corpo, botoes) {
+    garantirPainel();
+    $('ccDlg').innerHTML = '<h3>' + titulo + '</h3>' + corpo +
+      '<div class="cc-btns">' + (botoes || '') + '<button type="button" class="cc-btn sec" onclick="ccDlgFechar()">Fechar</button></div>';
+    $('ccDlgFundo').classList.add('aberto');
+  }
+  window.ccDlgFechar = function () { var f = $('ccDlgFundo'); if (f) f.classList.remove('aberto'); };
+
+  window.ccAbrir = function (view, id) {
+    garantirPainel();
+    IDX = null;
+    $('ccPainel').classList.add('aberto');
+    document.documentElement.style.overflow = 'hidden';
+    S.pilha = [];
+    if (view === 'novo') { S.view = 'ficha'; S.fichaId = null; S.fichaFoto = undefined; }
+    else if (view === 'ficha') { S.view = 'ficha'; S.fichaId = id; S.fichaFoto = undefined; }
+    else { S.view = view || 'lista'; }
+    desenhar();
+    $('ccPainel').scrollTop = 0;
+  };
+  window.ccFechar = function () {
+    var p = $('ccPainel');
+    if (p) p.classList.remove('aberto');
+    document.documentElement.style.overflow = '';
+    ccDlgFechar();
+    contadores();
+  };
+  function ir(view, extra) {
+    S.pilha.push({ view: S.view, fichaId: S.fichaId });
+    S.view = view;
+    if (extra) Object.keys(extra).forEach(function (k) { S[k] = extra[k]; });
+    desenhar();
+    $('ccPainel').scrollTop = 0;
+  }
+  window.ccVoltar = function () {
+    var a = S.pilha.pop();
+    if (a) { S.view = a.view; S.fichaId = a.fichaId; } else { S.view = 'lista'; }
+    desenhar();
+  };
+
+  function desenhar() {
+    IDX = null;
+    var corpo = $('ccCorpo'), abas = $('ccAbas'), tit = $('ccTitulo'), barra = $('ccBarra');
+    if (!corpo) return;
+    var nAtivos = ativos().length, nArq = arquivados().length, dup = acharDuplicados();
+    var abaAtiva = S.view === 'ficha' ? 'lista' : (S.view === 'cmp' ? 'dup' : S.view);
+    var tituloMap = { lista: 'Cadastros', dup: 'Duplicados', arq: 'Arquivados', ficha: S.fichaId ? 'Ficha do aluno' : 'Novo cadastro', cmp: 'Comparar e juntar' };
+    tit.innerHTML = '<i class="fas fa-address-book"></i> ' + esc(tituloMap[S.view] || 'Cadastros');
+    if (S.view === 'ficha' || S.view === 'cmp') {
+      abas.innerHTML = '<div class="cc-abas"><button type="button" onclick="ccVoltar()">← Voltar</button></div>';
+    } else {
+      abas.innerHTML = '<div class="cc-abas">' +
+        '<button type="button" class="' + (abaAtiva === 'lista' ? 'on' : '') + '" onclick="ccAbrir(\'lista\')">Cadastros (' + nAtivos + ')</button>' +
+        '<button type="button" class="' + (abaAtiva === 'dup' ? 'on' : '') + '" onclick="ccAbrir(\'dup\')">⚠ Duplicados (' + dup.fortes.length + ')</button>' +
+        '<button type="button" class="' + (abaAtiva === 'arq' ? 'on' : '') + '" onclick="ccAbrir(\'arq\')">Arquivados (' + nArq + ')</button></div>';
+    }
+    barra.innerHTML = '';
+    if (S.view === 'lista') vLista(corpo, barra, dup);
+    else if (S.view === 'dup') vDup(corpo, dup);
+    else if (S.view === 'arq') vArq(corpo);
+    else if (S.view === 'ficha') vFicha(corpo);
+    else if (S.view === 'cmp') vCmp(corpo);
+  }
+
+  /* ---------- aba: cadastros ---------- */
+  function badgesAluno(a, mapaDup) {
+    var b = '';
+    if (mapaDup[a.id]) b += '<span class="cc-pill av">⚠ possível duplicado</span>';
+    if (a.tipoAluno === 'gympass') b += '<span class="cc-pill">Gympass</span>';
+    if (!a.senhaHash) b += '<span class="cc-pill rd">sem senha</span>';
+    if (!String(a.contato || '').trim()) b += '<span class="cc-pill">sem contato</span>';
+    if (a.categoria === 'infantil') b += '<span class="cc-pill">infantil</span>';
+    return b;
+  }
+  function itemLista(a, mapaDup) {
+    var chk = !!S.sel[a.id];
+    return '<div class="cc-card cc-item" data-k="' + esc(norm(a.nome + ' ' + (a.apelido || '') + ' ' + (a.contato || ''))) + '">' +
+      '<div class="cc-linha"><label class="cc-chk"><input type="checkbox" data-sel="' + esc(a.id) + '"' + (chk ? ' checked' : '') + '></label>' +
+      '<div class="cc-info" onclick="ccFicha(\'' + esc(a.id) + '\')"><b>' + esc(a.nome) + '</b>' +
+      (a.apelido ? ' <span class="cc-mini">(' + esc(a.apelido) + ')</span>' : '') +
+      '<div class="cc-mini">' + esc(a.graduacao || 'sem graduação') + (a.contato ? ' • ' + esc(a.contato) : '') + '</div>' +
+      '<div>' + badgesAluno(a, mapaDup) + '</div></div>' +
+      '<button type="button" class="cc-btn sec mini" onclick="ccFicha(\'' + esc(a.id) + '\')">Abrir</button></div></div>';
+  }
+  function vLista(corpo, barra, dup) {
+    var mapaDup = {};
+    dup.fortes.forEach(function (g) { g.alunos.forEach(function (a) { mapaDup[a.id] = 1; }); });
+    var lista = ativos().sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); });
+    var html = '<div class="cc-btns" style="margin:0 0 6px"><button type="button" class="cc-btn" onclick="ccAbrir(\'novo\')">＋ Novo cadastro</button>' +
+      '<button type="button" class="cc-btn sec" onclick="ccLimparSel()">Limpar seleção</button></div>' +
+      '<p class="cc-mini">Toque num aluno para abrir a ficha completa. Marque a caixinha de 2 ou mais para <b>comparar e juntar</b>.</p>' +
+      '<input type="search" id="ccBusca" placeholder="Buscar por nome, apelido ou contato..." value="' + esc(S.busca) + '">';
+    var corpoLista = '';
+    try {
+      ucGrupos(lista, function (a) { return a.graduacao || ''; }).forEach(function (g) {
+        corpoLista += '<div class="cc-sep">' + esc(g.nome) + ' · ' + g.itens.length + '</div>' + g.itens.map(function (a) { return itemLista(a, mapaDup); }).join('');
+      });
+    } catch (e) { corpoLista = lista.map(function (a) { return itemLista(a, mapaDup); }).join(''); }
+    html += '<div id="ccLista">' + (corpoLista || '<p class="cc-mini">Nenhum aluno cadastrado ainda.</p>') + '</div>';
+    corpo.innerHTML = html;
+    var b = $('ccBusca');
+    b.addEventListener('input', function () { S.busca = this.value; filtrarLista(); });
+    filtrarLista();
+    barraSel(barra);
+  }
+  function filtrarLista() {
+    var t = norm(S.busca);
+    document.querySelectorAll('#ccLista .cc-item').forEach(function (i) {
+      i.style.display = (!t || (i.getAttribute('data-k') || '').indexOf(t) >= 0) ? '' : 'none';
+    });
+  }
+  function barraSel(barra) {
+    var ids = Object.keys(S.sel).filter(function (k) { return S.sel[k]; });
+    if (!ids.length) { barra.innerHTML = ''; return; }
+    barra.innerHTML = '<div class="cc-sel-bar"><span class="cc-mini" style="flex:1">' + ids.length + ' selecionado(s)</span>' +
+      '<button type="button" class="cc-btn ouro" onclick="ccCompararSel()"' + (ids.length < 2 ? ' disabled style="opacity:.5"' : '') + '>Comparar e juntar</button></div>';
+  }
+  window.ccLimparSel = function () { S.sel = {}; desenhar(); };
+  window.ccCompararSel = function () {
+    var ids = Object.keys(S.sel).filter(function (k) { return S.sel[k]; });
+    if (ids.length < 2) { toast('Marque pelo menos 2 cadastros.', 'erro'); return; }
+    abrirCmp(ids);
+  };
+  window.ccFicha = function (id) { ir('ficha', { fichaId: id, fichaFoto: undefined }); };
+
+  function aoMudar(e) {
+    var t = e.target;
+    if (!t) return;
+    if (t.getAttribute && t.getAttribute('data-sel')) {
+      S.sel[t.getAttribute('data-sel')] = t.checked;
+      barraSel($('ccBarra'));
+    } else if (t.name === 'ccPrinc' && S.cmp) {
+      S.cmp.principal = t.value;
+      S.cmp.escolhas = escolhasPadrao(S.cmp.ids, S.cmp.principal);
+      vCmp($('ccCorpo'));
+    } else if (t.name && t.name.indexOf('ccF_') === 0 && S.cmp) {
+      S.cmp.escolhas[t.name.slice(4)] = t.value;
+    } else if (t.getAttribute && t.getAttribute('data-inc') && S.cmp) {
+      var id = t.getAttribute('data-inc');
+      S.cmp.incluir[id] = t.checked;
+    } else if (t.id === 'ccf_tipoAluno') {
+      var gl = $('ccGympassBox'); if (gl) gl.style.display = t.value === 'gympass' ? '' : 'none';
+    }
+  }
+
+  /* ---------- aba: duplicados ---------- */
+  function cartaoMembro(a) {
+    var v = vinculosDe(a.id);
+    return '<div class="cc-card" style="margin:5px 0;background:#0b222c"><b style="color:var(--primary-green,#20c77a)">' + esc(a.nome) + '</b>' +
+      (a.apelido ? ' <span class="cc-mini">(' + esc(a.apelido) + ')</span>' : '') +
+      '<div class="cc-mini">' + esc(a.graduacao || 'sem graduação') + ' • ' + esc(a.contato || 'sem contato') + '</div>' +
+      '<div class="cc-mini">' + v.presencas + ' presença(s) • ' + v.avaliacoes + ' avaliação(ões) • criado em ' + esc(dataBR(a.criadoEm)) + (a.senhaHash ? ' • tem senha' : ' • sem senha') + '</div></div>';
+  }
+  function cartaoGrupo(g, i, tipo) {
+    var ids = g.alunos.map(function (a) { return a.id; });
+    return '<div class="cc-card" style="border-color:var(--gold,#f4c95d)"><b>' + (tipo === 'fraco' ? 'Parecidos (conferir)' : 'Possível duplicado') + ' ' + (i + 1) + '</b> ' +
+      '<span class="cc-mini">' + esc(g.motivos.join(' · ')) + '</span>' + g.alunos.map(cartaoMembro).join('') +
+      '<div class="cc-btns"><button type="button" class="cc-btn ouro" onclick="ccCompararGrupo(\'' + ids.join(',') + '\')">Comparar e juntar</button>' +
+      '<button type="button" class="cc-btn sec" onclick="ccNaoDuplicado(\'' + ids.join(',') + '\')">Não são a mesma pessoa</button></div></div>';
+  }
+  function vDup(corpo, dup) {
+    var html = '<p class="cc-mini">O app compara nomes sem acento e sem “de/da/do”, contatos, apelidos e erros de digitação. ' +
+      '<b>Nada é juntado sozinho</b>: você compara, escolhe o que vale e confirma.</p>';
+    if (!dup.fortes.length) html += '<div class="cc-ok">✅ Nenhum possível duplicado por nome ou contato.</div>';
+    dup.fortes.forEach(function (g, i) { html += cartaoGrupo(g, i, 'forte'); });
+    if (dup.fracos.length) {
+      html += '<div class="cc-sep">Só o apelido é igual (pode ser gente diferente)</div>';
+      dup.fracos.forEach(function (g, i) { html += cartaoGrupo(g, i, 'fraco'); });
+    }
+    var vv = varrerVinculos();
+    html += '<div class="cc-sep">Históricos (presenças, avaliações, feedbacks...)</div>';
+    if (vv.reparos.length) {
+      html += '<div class="cc-aviso">🔧 <b>' + vv.reparos.length + ' registro(s)</b> estão ligados a um cadastro antigo ou com o nome escrito diferente do cadastro atual. ' +
+        'É isso que faz o mesmo aluno aparecer duas vezes no ranking e nas listas.' +
+        '<div class="cc-btns"><button type="button" class="cc-btn" onclick="ccReparar()">Corrigir agora</button></div></div>';
+    } else html += '<div class="cc-ok">✅ Todos os históricos estão ligados ao cadastro certo.</div>';
+    if (vv.soltos.length) {
+      html += '<p class="cc-mini" style="margin-top:8px">Nomes que aparecem nos históricos mas não têm cadastro ativo. Escolha a quem pertencem:</p>';
+      var opts = '<option value="">— escolher aluno —</option>' + ativos().sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); })
+        .map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(a.nome) + '</option>'; }).join('');
+      window.__ccSoltos = vv.soltos;
+      vv.soltos.forEach(function (s, i) {
+        html += '<div class="cc-card"><b>' + esc(s.nome) + '</b> <span class="cc-mini">' + s.docs.length + ' registro(s)</span>' +
+          '<select id="ccSolto' + i + '">' + opts + '</select>' +
+          '<button type="button" class="cc-btn sec mini" onclick="ccVincularSolto(' + i + ')">Vincular</button></div>';
+      });
+    }
+    corpo.innerHTML = html;
+  }
+  window.ccCompararGrupo = function (ids) { abrirCmp(ids.split(',')); };
+  window.ccNaoDuplicado = function (ids) {
+    var l = ids.split(','), pares = Object.assign({}, ignorados());
+    for (var i = 0; i < l.length; i++) for (var j = i + 1; j < l.length; j++) pares[parKey(l[i], l[j])] = true;
+    Promise.resolve(DB.salvar('config', { pares: pares }, 'duplicados_ignorados')).then(function () {
+      toast('Ok, esses cadastros não serão mais sugeridos como duplicados.');
+      desenhar(); contadores();
+    });
+  };
+  window.ccReparar = function () {
+    var vv = varrerVinculos();
+    if (!vv.reparos.length) { toast('Nada para corrigir.'); return; }
+    dlg('Corrigindo históricos', '<p class="cc-mini" id="ccProg">0 / ' + vv.reparos.length + '</p>', '');
+    aplicarLotes(vv.reparos, function (f, t) { var p = $('ccProg'); if (p) p.textContent = f + ' / ' + t; })
+      .then(function (n) { ccDlgFechar(); toast(n + ' registro(s) corrigidos.'); log('Históricos corrigidos: ' + n); desenhar(); refrescarApp(); })
+      .catch(function () { ccDlgFechar(); toast('Não foi possível corrigir tudo. Tente de novo.', 'erro'); });
+  };
+  window.ccVincularSolto = function (i) {
+    var s = (window.__ccSoltos || [])[i], sel = $('ccSolto' + i);
+    if (!s || !sel || !sel.value) { toast('Escolha o aluno.', 'erro'); return; }
+    var a = porId(sel.value); if (!a) return;
+    var lote = s.docs.map(function (x) {
+      var patch = { alunoId: a.id }; if ('alunoNome' in x.d || true) patch.alunoNome = a.nome;
+      return { c: x.c, id: x.id, patch: patch };
+    });
+    aplicarLotes(lote).then(function () { toast('Vinculado a ' + a.nome + '.'); log('Nome solto "' + s.nome + '" vinculado a ' + a.nome); desenhar(); refrescarApp(); });
+  };
+
+  /* ---------- aba: arquivados ---------- */
+  function vArq(corpo) {
+    var l = arquivados().sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); });
+    var html = '<p class="cc-mini">Aqui ficam os cadastros que foram juntados a outro ou desativados. Dá para restaurar. Para apagar de vez, use “Excluir”.</p>';
+    if (!l.length) html += '<div class="cc-ok">Nenhum cadastro arquivado.</div>';
+    l.forEach(function (a) {
+      var dest = a.mescladoEm ? porId(a.mescladoEm) : null, v = vinculosDe(a.id);
+      html += '<div class="cc-card"><b>' + esc(a.nome) + '</b> <span class="cc-mini">' + esc(a.graduacao || '') + '</span>' +
+        '<div class="cc-mini">' + (a.mescladoEm ? 'Juntado em: <b>' + esc(dest ? dest.nome : '(cadastro não encontrado)') + '</b>' : 'Desativado') +
+        (a.mescladoEmData ? ' em ' + esc(dataBR(a.mescladoEmData)) : '') + (v.total ? ' • ainda tem ' + v.total + ' registro(s) ligados' : '') + '</div>' +
+        '<div class="cc-btns"><button type="button" class="cc-btn sec mini" onclick="ccRestaurar(\'' + esc(a.id) + '\')">Restaurar</button>' +
+        '<button type="button" class="cc-btn perigo mini" onclick="ccExcluir(\'' + esc(a.id) + '\')">Excluir</button></div></div>';
+    });
+    corpo.innerHTML = html;
+  }
+  window.ccRestaurar = function (id) {
+    Promise.resolve(DB.salvar('alunos', { ativo: true, mescladoEm: '', mescladoEmData: '', arquivadoEm: '', arquivadoMotivo: '' }, id))
+      .then(function () { toast('Cadastro restaurado.'); desenhar(); contadores(); });
+  };
+
+  /* ---------- ficha (novo / editar) ---------- */
+  function campo(id, rot, val, tipo, extra) {
+    return '<label class="cc-lab" for="ccf_' + id + '">' + rot + '</label><input type="' + (tipo || 'text') + '" id="ccf_' + id + '" value="' + esc(val || '') + '" ' + (extra || '') + '>';
+  }
+  function vFicha(corpo) {
+    var a = S.fichaId ? porId(S.fichaId) : null;
+    if (S.fichaId && !a) { corpo.innerHTML = '<div class="cc-aviso">Cadastro não encontrado.</div>'; return; }
+    a = a || { tipoAluno: 'normal', categoria: 'adulto', ativo: true };
+    var foto = S.fichaFoto !== undefined ? S.fichaFoto : a.foto;
+    var g = graduacoes().slice();
+    if (a.graduacao && g.indexOf(a.graduacao) < 0) g.unshift(a.graduacao);
+    var polos = listar('polos');
+    var v = S.fichaId ? vinculosDe(a.id) : null;
+    var html = '';
+    if (S.fichaId) {
+      html += '<div class="cc-linha"><img class="cc-foto-grande" id="ccFotoPrev" src="' + esc(foto || 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==') + '" alt="">' +
+        '<div><b style="color:var(--primary-green,#20c77a)">' + esc(a.nome) + '</b><div class="cc-mini">' + esc(a.graduacao || 'sem graduação') + '</div>' +
+        '<div class="cc-mini">Cadastrado em ' + esc(dataBR(a.criadoEm)) + (a.cadastradoPeloProfessor ? ' pelo professor' : '') + '</div></div></div>' +
+        '<div class="cc-card"><div class="cc-mini">' + v.presencas + ' presença(s) (' + v.aprovadas + ' aprovadas) • ' + v.avaliacoes + ' avaliação(ões) • ' + v.certificados + ' certificado(s) • ' + v.outros + ' outros registros' +
+        (v.ultima ? ' • última presença ' + esc(dataBR(v.ultima)) : '') + '</div>' +
+        '<div class="cc-mini">Senha: ' + (a.senhaHash ? 'definida' : '<b style="color:#ff8796">não definida</b>') + ' • ID: ' + esc(a.id) + '</div></div>';
+    } else {
+      html += '<p class="cc-mini">Preencha o que souber. Só o nome é obrigatório. O app avisa se já existir alguém parecido.</p>' +
+        '<div class="cc-linha"><img class="cc-foto-grande" id="ccFotoPrev" src="' + esc(foto || 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==') + '" alt=""></div>';
+    }
+    html += '<label class="cc-lab">Foto (opcional)</label><input type="file" accept="image/*" onchange="ccFoto(this)">';
+    html += '<div class="cc-sep">Identificação</div>' +
+      campo('nome', 'Nome completo *', a.nome, 'text', 'oninput="ccChecarSimilar()" autocomplete="off"') +
+      campo('apelido', 'Apelido na capoeira', a.apelido, 'text') +
+      campo('contato', 'Contato (WhatsApp)', a.contato, 'tel', 'oninput="ccChecarSimilar()"') +
+      '<div id="ccSimilar"></div>' +
+      campo('email', 'E-mail', a.email, 'email') +
+      campo('nascimento', 'Data de nascimento', a.nascimento, 'date') +
+      campo('bairro', 'Bairro / cidade', a.bairro, 'text');
+    html += '<div class="cc-sep">Responsável (para menores de idade)</div>' +
+      campo('responsavel', 'Nome do responsável', a.responsavel, 'text') +
+      campo('responsavelContato', 'Contato do responsável', a.responsavelContato, 'tel');
+    html += '<div class="cc-sep">Capoeira</div>' +
+      '<label class="cc-lab" for="ccf_graduacao">Graduação atual</label><select id="ccf_graduacao"><option value="">Sem graduação</option>' +
+      g.map(function (x) { return '<option value="' + esc(x) + '"' + (x === a.graduacao ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select>' +
+      '<label class="cc-lab"><input type="checkbox" id="ccf_graduacaoLiberada" style="width:auto;margin-right:6px"' + (a.graduacaoLiberada ? ' checked' : '') + '>Mostrar a graduação ao aluno (liberada)</label>' +
+      '<div class="cc-grade"><div><label class="cc-lab" for="ccf_categoria">Categoria</label><select id="ccf_categoria"><option value="adulto"' + (a.categoria !== 'infantil' ? ' selected' : '') + '>Adulto</option><option value="infantil"' + (a.categoria === 'infantil' ? ' selected' : '') + '>Infantil</option></select></div>' +
+      '<div><label class="cc-lab" for="ccf_tipoAluno">Como treina</label><select id="ccf_tipoAluno"><option value="normal"' + (a.tipoAluno !== 'gympass' ? ' selected' : '') + '>Aluno normal</option><option value="gympass"' + (a.tipoAluno === 'gympass' ? ' selected' : '') + '>Gympass / Wellhub</option></select></div></div>' +
+      '<div id="ccGympassBox" style="' + (a.tipoAluno === 'gympass' ? '' : 'display:none') + '">' + campo('gympassLink', 'Link / código Gympass', a.gympassLink, 'text') + '</div>' +
+      '<label class="cc-lab" for="ccf_poloId">Polo / turma principal</label><select id="ccf_poloId"><option value="">—</option>' +
+      polos.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === a.poloId ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select>' +
+      campo('inicioCapoeira', 'Começou a treinar em', a.inicioCapoeira, 'date');
+    html += '<div class="cc-sep">Observações (só o professor vê)</div><textarea id="ccf_obs" placeholder="Saúde, restrições, combinados, histórico...">' + esc(a.obs || '') + '</textarea>';
+    if (S.fichaId) {
+      html += '<label class="cc-lab"><input type="checkbox" id="ccf_atualizaHist" style="width:auto;margin-right:6px" checked>Se eu mudar o nome, atualizar também nas presenças, avaliações e demais históricos</label>';
+    }
+    html += '<div class="cc-btns"><button type="button" class="cc-btn" onclick="ccSalvarFicha()">' + (S.fichaId ? 'Salvar alterações' : 'Cadastrar aluno') + '</button></div>';
+    if (S.fichaId) {
+      html += '<div class="cc-sep">Ações</div><div class="cc-btns">' +
+        '<button type="button" class="cc-btn sec" onclick="ccSenha(\'' + esc(a.id) + '\')">🔑 Senha provisória</button>' +
+        '<button type="button" class="cc-btn sec" onclick="ccHistorico(\'' + esc(a.id) + '\')">📋 Histórico</button>' +
+        '<button type="button" class="cc-btn sec" onclick="ccProcurarDuplicados(\'' + esc(a.id) + '\')">🔍 Achar duplicados deste aluno</button>' +
+        '<button type="button" class="cc-btn sec" onclick="ccArquivar(\'' + esc(a.id) + '\')">📦 Arquivar</button>' +
+        '<button type="button" class="cc-btn perigo" onclick="ccExcluir(\'' + esc(a.id) + '\')">🗑 Excluir</button></div>';
+    }
+    corpo.innerHTML = html;
+    if (!S.fichaId) setTimeout(function () { var n = $('ccf_nome'); if (n) n.focus(); }, 80);
+  }
+  function lerFicha() {
+    function val(id) { var e = $('ccf_' + id); return e ? String(e.value || '').trim() : ''; }
+    var d = {
+      nome: val('nome'), apelido: val('apelido'), contato: val('contato'), email: val('email'), nascimento: val('nascimento'),
+      bairro: val('bairro'), responsavel: val('responsavel'), responsavelContato: val('responsavelContato'),
+      graduacao: val('graduacao'), graduacaoLiberada: !!($('ccf_graduacaoLiberada') || {}).checked,
+      categoria: val('categoria') === 'infantil' ? 'infantil' : 'adulto',
+      tipoAluno: val('tipoAluno') === 'gympass' ? 'gympass' : 'normal', gympassLink: val('gympassLink'),
+      poloId: val('poloId'), inicioCapoeira: val('inicioCapoeira'), obs: ($('ccf_obs') || {}).value || ''
+    };
+    if (!d.apelido && d.nome) d.apelido = d.nome.split(' ')[0];
+    if (d.tipoAluno !== 'gympass') d.gympassLink = '';
+    return d;
+  }
+  window.ccChecarSimilar = function () {
+    var box = $('ccSimilar'); if (!box) return;
+    var n = ($('ccf_nome') || {}).value || '', c = ($('ccf_contato') || {}).value || '';
+    if (norm(n).length < 4 && fone(c) === '') { box.innerHTML = ''; return; }
+    var s = similaresA(n, c, S.fichaId);
+    box.innerHTML = s.length ? '<div class="cc-aviso">⚠️ Já existe cadastro parecido:' + s.map(function (x) {
+      return '<div style="margin-top:4px"><b>' + esc(x.a.nome) + '</b> <span class="cc-mini">(' + esc(x.motivos.join(', ')) + ')</span> ' +
+        '<button type="button" class="cc-btn sec mini" onclick="ccFicha(\'' + esc(x.a.id) + '\')">Abrir esse</button></div>';
+    }).join('') + '</div>' : '';
+  };
+  window.ccFoto = function (inp) {
+    var f = inp.files && inp.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var m = 360, k = Math.min(1, m / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+        cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        S.fichaFoto = cv.toDataURL('image/jpeg', 0.75);
+        var p = $('ccFotoPrev'); if (p) p.src = S.fichaFoto;
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(f);
+  };
+  window.ccSalvarFicha = function (forcar) {
+    var d = lerFicha();
+    if (d.nome.length < 3) { toast('Informe o nome completo.', 'erro'); return; }
+    var sim = forcar === true ? [] : similaresA(d.nome, d.contato, S.fichaId);
+    if (sim.length) {
+      dlg('Já existe cadastro parecido',
+        '<p class="cc-mini">Antes de salvar, confira. Se for a mesma pessoa, abra o cadastro dela em vez de criar outro.</p>' +
+        sim.map(function (x) { return '<div class="cc-card"><b>' + esc(x.a.nome) + '</b> <span class="cc-mini">' + esc(x.motivos.join(', ')) + '</span>' +
+          '<div class="cc-mini">' + esc(x.a.graduacao || 'sem graduação') + ' • ' + esc(x.a.contato || 'sem contato') + '</div>' +
+          '<button type="button" class="cc-btn sec mini" onclick="ccDlgFechar();ccFicha(\'' + esc(x.a.id) + '\')">Abrir esse cadastro</button></div>'; }).join(''),
+        '<button type="button" class="cc-btn ouro" onclick="ccDlgFechar();ccSalvarFicha(true)">É outra pessoa, salvar mesmo assim</button>');
+      return;
+    }
+    if (S.fichaFoto !== undefined) d.foto = S.fichaFoto;
+    if (!S.fichaId) {
+      var senha = (typeof gerarSenhaProvisoria === 'function') ? gerarSenhaProvisoria() : 'capoeira' + Math.floor(1000 + Math.random() * 9000);
+      d.senhaHash = hashSenha(senha); d.criadoEm = agora(); d.ativo = true; d.cadastradoPeloProfessor = true;
+      Promise.resolve(DB.salvar('alunos', d)).then(function (novoId) {
+        log('Aluno cadastrado: ' + d.nome);
+        S.fichaId = novoId; S.fichaFoto = undefined; S.pilha = [];
+        dlg('Aluno cadastrado!', '<p class="cc-mini">Nome: <b>' + esc(d.nome) + '</b></p>' +
+          '<p>Senha provisória: <b style="color:var(--gold,#f4c95d);font-size:1.1rem">' + esc(senha) + '</b></p>' +
+          '<p class="cc-mini">Anote ou avise o aluno agora. Ela não fica visível depois (use “Senha provisória” para gerar outra).</p>',
+          '<button type="button" class="cc-btn" onclick="ccDlgFechar();ccAbrir(\'ficha\',\'' + esc(novoId) + '\')">Abrir a ficha</button>' +
+          '<button type="button" class="cc-btn sec" onclick="ccDlgFechar();ccAbrir(\'novo\')">Cadastrar outro</button>');
+        contadores();
+      });
+      return;
+    }
+    var antigo = porId(S.fichaId), atualiza = !!($('ccf_atualizaHist') || {}).checked, id = S.fichaId;
+    d.atualizadoEm = agora();
+    Promise.resolve(DB.salvar('alunos', d, id)).then(function () {
+      var mudouNome = antigo && (antigo.nome !== d.nome || (antigo.apelido || '') !== (d.apelido || ''));
+      if (mudouNome && atualiza) {
+        var plano = [];
+        colsVinculo().forEach(function (c) {
+          listar(c).forEach(function (x) {
+            if (x.alunoId !== id) return;
+            var patch = {};
+            if ('alunoNome' in x && x.alunoNome !== d.nome) patch.alunoNome = d.nome;
+            if ('alunoApelido' in x && (x.alunoApelido || '') !== (d.apelido || '')) patch.alunoApelido = d.apelido;
+            if (Object.keys(patch).length) plano.push({ c: c, id: x.id, patch: patch });
+          });
+        });
+        return aplicarLotes(plano).then(function () { return plano.length; });
+      }
+      return 0;
+    }).then(function (n) {
+      log('Cadastro editado: ' + d.nome);
+      toast('Cadastro salvo.' + (n ? ' Nome atualizado em ' + n + ' registro(s).' : ''));
+      S.fichaFoto = undefined; desenhar(); contadores(); refrescarApp();
+    }).catch(function () { toast('Não foi possível salvar.', 'erro'); });
+  };
+  window.ccSenha = function (id) {
+    var a = porId(id); if (!a) return;
+    dlg('Gerar senha provisória?', '<p class="cc-mini">A senha atual de <b>' + esc(a.nome) + '</b> deixa de valer.</p>',
+      '<button type="button" class="cc-btn" onclick="ccSenhaOk(\'' + esc(id) + '\')">Gerar</button>');
+  };
+  window.ccSenhaOk = function (id) {
+    var a = porId(id); if (!a) return;
+    var nova = (typeof gerarSenhaProvisoria === 'function') ? gerarSenhaProvisoria() : 'capoeira' + Math.floor(1000 + Math.random() * 9000);
+    Promise.resolve(DB.salvar('alunos', { senhaHash: hashSenha(nova) }, id)).then(function () {
+      log('Senha provisória gerada para ' + a.nome);
+      dlg('Senha provisória de ' + esc(a.nome), '<p>Senha: <b style="color:var(--gold,#f4c95d);font-size:1.15rem">' + esc(nova) + '</b></p><p class="cc-mini">Anote e avise o aluno agora.</p>', '');
+      desenhar();
+    });
+  };
+  window.ccHistorico = function (id) {
+    var a = porId(id); if (!a) return;
+    var pres = listar('presencas').filter(function (p) { return p.alunoId === id; }).sort(function (x, y) { return String(y.data || '').localeCompare(String(x.data || '')); });
+    var av = listar('avaliacoes').filter(function (p) { return p.alunoId === id; }).sort(function (x, y) { return String(y.data || '').localeCompare(String(x.data || '')); });
+    dlg('Histórico de ' + esc(a.nome),
+      '<div class="cc-sep">Presenças (' + pres.length + ')</div>' +
+      (pres.slice(0, 15).map(function (p) { return '<div class="cc-mini">' + esc(dataBR(p.data)) + ' • ' + esc(p.status || '') + (p.poloNome ? ' • ' + esc(p.poloNome) : '') + '</div>'; }).join('') || '<div class="cc-mini">Nenhuma.</div>') +
+      (pres.length > 15 ? '<div class="cc-mini">…e mais ' + (pres.length - 15) + '.</div>' : '') +
+      '<div class="cc-sep">Avaliações (' + av.length + ')</div>' +
+      (av.slice(0, 10).map(function (p) { var m = 0; try { m = mediaAvaliacao(p); } catch (e) {} return '<div class="cc-mini">' + esc(dataBR(p.data)) + ' • nota ' + (m ? m.toFixed(1) : '—') + '</div>'; }).join('') || '<div class="cc-mini">Nenhuma.</div>'), '');
+  };
+  window.ccProcurarDuplicados = function (id) {
+    var a = porId(id); if (!a) return;
+    var s = [];
+    ativos().forEach(function (b) {
+      if (b.id === a.id) return;
+      var r = compararPar(a, b);
+      if (r.forca >= 1) s.push({ a: b, r: r });
+    });
+    if (!s.length) { dlg('Nenhum parecido', '<p class="cc-mini">Não achei outro cadastro parecido com <b>' + esc(a.nome) + '</b>.</p>', ''); return; }
+    dlg('Parecidos com ' + esc(a.nome),
+      s.map(function (x) { return '<div class="cc-card"><b>' + esc(x.a.nome) + '</b><div class="cc-mini">' + esc(x.r.motivos.join(' · ')) + '</div></div>'; }).join(''),
+      '<button type="button" class="cc-btn ouro" onclick="ccDlgFechar();ccCompararGrupo(\'' + [a.id].concat(s.map(function (x) { return x.a.id; })).join(',') + '\')">Comparar todos</button>');
+  };
+  window.ccArquivar = function (id) {
+    var a = porId(id); if (!a) return;
+    dlg('Arquivar cadastro?', '<p class="cc-mini"><b>' + esc(a.nome) + '</b> sai das listas e do login, mas nada é apagado. Dá para restaurar na aba Arquivados.</p>',
+      '<button type="button" class="cc-btn" onclick="ccArquivarOk(\'' + esc(id) + '\')">Arquivar</button>');
+  };
+  window.ccArquivarOk = function (id) {
+    Promise.resolve(DB.salvar('alunos', { ativo: false, arquivadoEm: agora(), arquivadoMotivo: 'manual' }, id)).then(function () {
+      ccDlgFechar(); toast('Cadastro arquivado.'); log('Cadastro arquivado: ' + id); S.pilha = []; S.view = 'lista'; desenhar(); contadores();
+    });
+  };
+  window.ccExcluir = function (id) {
+    var a = porId(id); if (!a) return;
+    var v = vinculosDe(id);
+    dlg('Excluir de vez?', '<p class="cc-mini">Excluir <b>' + esc(a.nome) + '</b> não pode ser desfeito.' +
+      (v.total ? '<br><b style="color:#ff8796">Ele tem ' + v.total + ' registro(s) ligados (presenças, avaliações...). Prefira arquivar ou juntar com o cadastro certo.</b>' : '') + '</p>',
+      '<button type="button" class="cc-btn perigo" onclick="ccExcluirOk(\'' + esc(id) + '\')">Excluir definitivamente</button>');
+  };
+  window.ccExcluirOk = function (id) {
+    var a = porId(id);
+    Promise.resolve(DB.excluir('alunos', id)).then(function () {
+      ccDlgFechar(); toast('Cadastro excluído.'); log('Cadastro excluído: ' + (a ? a.nome : id));
+      S.pilha = []; S.view = 'lista'; delete S.sel[id]; desenhar(); contadores();
+    });
+  };
+
+  /* ---------- comparar e juntar ---------- */
+  function escolhasPadrao(ids, principal) {
+    var e = {};
+    CAMPOS.forEach(function (c) {
+      var p = porId(principal);
+      if (p && preenchido(p[c.k])) { e[c.k] = principal; return; }
+      for (var i = 0; i < ids.length; i++) { var a = porId(ids[i]); if (a && preenchido(a[c.k])) { e[c.k] = a.id; return; } }
+    });
+    return e;
+  }
+  function abrirCmp(ids) {
+    ids = ids.filter(function (id) { return !!porId(id); });
+    if (ids.length < 2) { toast('Selecione ao menos 2 cadastros existentes.', 'erro'); return; }
+    var melhor = ids.slice().sort(function (x, y) {
+      var a = porId(x), b = porId(y);
+      var sa = Object.keys(a).filter(function (k) { return !INTERNOS[k] && preenchido(a[k]); }).length + vinculosDe(x).total;
+      var sb = Object.keys(b).filter(function (k) { return !INTERNOS[k] && preenchido(b[k]); }).length + vinculosDe(y).total;
+      return sb - sa;
+    })[0];
+    var inc = {}; ids.forEach(function (i) { inc[i] = true; });
+    S.cmp = { ids: ids, principal: melhor, escolhas: escolhasPadrao(ids, melhor), incluir: inc };
+    if (S.view === 'cmp') { vCmp($('ccCorpo')); return; }
+    ir('cmp');
+  }
+  function vCmp(corpo) {
+    var C = S.cmp;
+    if (!C) { corpo.innerHTML = '<div class="cc-aviso">Nada para comparar.</div>'; return; }
+    var L = C.ids.map(porId).filter(Boolean);
+    var vinc = {}; L.forEach(function (a) { vinc[a.id] = vinculosDe(a.id); });
+    var h = '<p class="cc-mini">Deslize para o lado para ver todos. <b>Principal</b> = o cadastro que continua existindo. Em cada linha, marque o dado que vale. ' +
+      'As presenças, avaliações, certificados e mensagens dos outros passam para o principal. Os outros ficam <b>arquivados</b> (nada é apagado).</p>' +
+      '<div class="cc-tab-wrap"><table class="cc-tab"><tr><th>Cadastro</th>' +
+      L.map(function (a) {
+        return '<th><label><input type="radio" name="ccPrinc" value="' + esc(a.id) + '"' + (a.id === C.principal ? ' checked' : '') + '> <span><b>Principal</b></span></label>' +
+          '<div style="margin-top:4px"><b style="color:var(--primary-green,#20c77a)">' + esc(a.nome) + '</b></div>' +
+          (a.id !== C.principal ? '<label style="margin-top:4px"><input type="checkbox" data-inc="' + esc(a.id) + '"' + (C.incluir[a.id] !== false ? ' checked' : '') + '> <span class="cc-mini">juntar este</span></label>' : '') + '</th>';
+      }).join('') + '</tr>';
+    h += '<tr><td>Presenças</td>' + L.map(function (a) { return '<td>' + vinc[a.id].presencas + ' (' + vinc[a.id].aprovadas + ' aprov.)</td>'; }).join('') + '</tr>';
+    h += '<tr><td>Avaliações</td>' + L.map(function (a) { return '<td>' + vinc[a.id].avaliacoes + '</td>'; }).join('') + '</tr>';
+    h += '<tr><td>Certificados</td>' + L.map(function (a) { return '<td>' + vinc[a.id].certificados + '</td>'; }).join('') + '</tr>';
+    h += '<tr><td>Outros reg.</td>' + L.map(function (a) { return '<td>' + vinc[a.id].outros + '</td>'; }).join('') + '</tr>';
+    h += '<tr><td>Última presença</td>' + L.map(function (a) { return '<td>' + esc(dataBR(vinc[a.id].ultima)) + '</td>'; }).join('') + '</tr>';
+    h += '<tr><td>Criado em</td>' + L.map(function (a) { return '<td>' + esc(dataBR(a.criadoEm)) + '</td>'; }).join('') + '</tr>';
+    CAMPOS.forEach(function (c) {
+      var com = L.filter(function (a) { return preenchido(a[c.k]); });
+      if (!com.length) return;
+      var distintos = {}; com.forEach(function (a) { distintos[String(a[c.k])] = 1; });
+      var igual = Object.keys(distintos).length === 1 && com.length === L.length;
+      h += '<tr class="' + (igual ? 'igual' : '') + '"><td>' + esc(c.t) + (igual ? '<div class="cc-mini">✓ igual</div>' : '') + '</td>' +
+        L.map(function (a) {
+          if (!preenchido(a[c.k])) return '<td class="cc-mini">— vazio</td>';
+          if (igual) return '<td>' + valTxt(c, a) + '</td>';
+          return '<td><label><input type="radio" name="ccF_' + c.k + '" value="' + esc(a.id) + '"' + (C.escolhas[c.k] === a.id ? ' checked' : '') + '><span>' + valTxt(c, a) + '</span></label></td>';
+        }).join('') + '</tr>';
+    });
+    h += '</table></div>';
+    h += '<div class="cc-btns"><button type="button" class="cc-btn ouro" onclick="ccConfirmarJuncao()">Juntar cadastros</button>' +
+      '<button type="button" class="cc-btn sec" onclick="ccVoltar()">Cancelar</button></div>';
+    corpo.innerHTML = h;
+  }
+  function montarResultado(C) {
+    var inc = C.ids.filter(function (id) { return id === C.principal || C.incluir[id] !== false; });
+    var L = inc.map(porId).filter(Boolean), pr = porId(C.principal), final = {}, trocas = [];
+    CAMPOS.forEach(function (c) {
+      var esc1 = C.escolhas[c.k], src = esc1 ? porId(esc1) : null;
+      if (!src || inc.indexOf(src.id) < 0 || !preenchido(src[c.k])) src = pr && preenchido(pr[c.k]) ? pr : L.filter(function (a) { return preenchido(a[c.k]); })[0];
+      if (!src) return;
+      final[c.k] = src[c.k];
+      if (String(pr[c.k]) !== String(src[c.k])) trocas.push(c.t + ' (de ' + src.nome + ')');
+    });
+    /* campos fora da lista: do principal, senão do primeiro que tiver */
+    var extras = {};
+    L.forEach(function (a) { Object.keys(a).forEach(function (k) { if (!INTERNOS[k] && !CAMPOS.some(function (c) { return c.k === k; })) extras[k] = 1; }); });
+    Object.keys(extras).forEach(function (k) {
+      if (preenchido(pr[k])) return;
+      var o = L.filter(function (a) { return preenchido(a[k]); })[0];
+      if (o) final[k] = o[k];
+    });
+    var datas = L.map(function (a) { return a.criadoEm; }).filter(Boolean).sort();
+    if (datas.length) final.criadoEm = datas[0];
+    final.ativo = true; final.mescladoEm = ''; final.atualizadoEm = agora();
+    return { inc: inc, L: L, pr: pr, final: final, trocas: trocas, outros: inc.filter(function (i) { return i !== C.principal; }) };
+  }
+  /* completa os ajustes (nomes finais) e tira o que já está certo */
+  function ajustarPlano(plano, R) {
+    var nomeFinal = R.final.nome, apelidoFinal = R.final.apelido || '';
+    plano.forEach(function (p) {
+      var d = p.doc || {};
+      if (p.soNome) { p.patch.nome = nomeFinal; return; }
+      if ('alunoNome' in d || p.patch.alunoId) { p.patch.alunoNome = nomeFinal; p.antes.alunoNome = d.alunoNome || ''; }
+      if ('alunoApelido' in d) { p.patch.alunoApelido = apelidoFinal; p.antes.alunoApelido = d.alunoApelido || ''; }
+    });
+    return plano.filter(function (p) {
+      var d = p.doc || {};
+      return Object.keys(p.patch).some(function (k) { return String(d[k] === undefined ? '' : d[k]) !== String(p.patch[k]); });
+    });
+  }
+  window.ccConfirmarJuncao = function () {
+    var C = S.cmp; if (!C) return;
+    var R = montarResultado(C);
+    if (R.outros.length < 1) { toast('Marque pelo menos um cadastro para juntar ao principal.', 'erro'); return; }
+    var plano = ajustarPlano(planoRelink(R.pr.id, R.outros, [R.pr.nome]), R);
+    var presDatas = {}, repetidas = 0;
+    plano.forEach(function (p) { if (p.c === 'presencas' && p.doc) { var k = p.doc.data + '|' + (p.doc.poloId || ''); if (presDatas[k]) repetidas++; presDatas[k] = 1; } });
+    window.__ccRes = R; window.__ccPlano = plano;
+    dlg('Confirmar junção',
+      '<p class="cc-mini">Principal: <b>' + esc(R.final.nome) + '</b> (' + esc(R.pr.nome === R.final.nome ? 'nome mantido' : 'nome será trocado') + ')</p>' +
+      '<p class="cc-mini">Serão juntados e arquivados: <b>' + R.outros.map(function (i) { return esc((porId(i) || {}).nome); }).join(', ') + '</b></p>' +
+      (R.trocas.length ? '<p class="cc-mini">Dados que passam para o principal:</p><ul class="cc-mini">' + R.trocas.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '<p class="cc-mini">Nenhum dado do principal precisa ser trocado.</p>') +
+      '<p class="cc-mini"><b>' + plano.length + '</b> registro(s) (presenças, avaliações, certificados, mensagens, feedbacks…) serão ligados ao principal e o nome será corrigido neles.</p>' +
+      (repetidas ? '<div class="cc-aviso">Atenção: ' + repetidas + ' presença(s) caem no mesmo dia e polo nos dois cadastros. Confira o ranking depois.</div>' : '') +
+      '<p class="cc-mini">Dá para desfazer logo depois em “Desfazer última junção”.</p>',
+      '<button type="button" class="cc-btn ouro" onclick="ccExecutarJuncao()">Juntar agora</button>');
+  };
+  window.ccExecutarJuncao = function () {
+    var R = window.__ccRes, plano = window.__ccPlano;
+    if (!R || !plano) return;
+    var nomeFinal = R.final.nome;
+    var keep = R.pr.id;
+    var antesPr = {};
+    Object.keys(R.final).forEach(function (k) { if (k !== 'foto' || String(R.pr[k] || '').length < 150000) antesPr[k] = R.pr[k] === undefined ? '' : R.pr[k]; });
+    var arqBackup = R.outros.map(function (id) { var a = porId(id) || {}; return { id: id, ativo: a.ativo === false ? false : true }; });
+    dlg('Juntando…', '<p class="cc-mini" id="ccProg">preparando…</p>', '');
+    var etapas = Promise.resolve(DB.salvar('alunos', R.final, keep));
+    etapas.then(function () {
+      return aplicarLotes(plano.map(function (p) { return { c: p.c, id: p.id, patch: p.patch }; }), function (f, t) { var e = $('ccProg'); if (e) e.textContent = 'ligando históricos… ' + f + ' / ' + t; });
+    }).then(function () {
+      return Promise.all(R.outros.map(function (id) {
+        return DB.salvar('alunos', { ativo: false, mescladoEm: keep, mescladoEmData: agora(), arquivadoMotivo: 'junção' }, id);
+      }));
+    }).then(function () {
+      var relinks = plano.map(function (p) { return { c: p.c, i: p.id, a: p.antes }; });
+      return DB.salvar('config', { ts: agora(), keep: keep, antesPr: antesPr, arq: arqBackup, relinks: relinks, nomeFinal: nomeFinal }, 'uc_juncao_log');
+    }).then(function () {
+      log('Cadastros juntados em ' + nomeFinal + ' (' + R.outros.length + ' arquivado(s), ' + plano.length + ' registro(s) religados)');
+      ccDlgFechar();
+      S.sel = {}; S.cmp = null; S.pilha = []; S.view = 'dup';
+      desenhar(); contadores(); refrescarApp();
+      dlg('Cadastros juntados ✅', '<p class="cc-mini"><b>' + esc(nomeFinal) + '</b> agora é um cadastro só. ' + plano.length + ' registro(s) foram ligados a ele e o nome foi corrigido neles. Os outros ficaram arquivados.</p>', '');
+    }).catch(function (e) {
+      console.warn('[cc] junção', e);
+      ccDlgFechar(); toast('Não foi possível terminar a junção. Tente de novo.', 'erro'); desenhar();
+    });
+  };
+  window.ccDesfazerJuncao = function () {
+    var lg = listar('config').filter(function (c) { return c.id === 'uc_juncao_log'; })[0];
+    if (!lg || !lg.keep || !lg.ts) { toast('Não há junção para desfazer.', 'erro'); return; }
+    dlg('Desfazer a última junção?', '<p class="cc-mini">Junção de ' + esc(dataBR(lg.ts)) + ' em <b>' + esc(lg.nomeFinal || '') + '</b>. Os cadastros arquivados voltam e os históricos voltam para onde estavam.</p>',
+      '<button type="button" class="cc-btn ouro" onclick="ccDesfazerOk()">Desfazer</button>');
+  };
+  window.ccDesfazerOk = function () {
+    var lg = listar('config').filter(function (c) { return c.id === 'uc_juncao_log'; })[0];
+    if (!lg) return;
+    dlg('Desfazendo…', '<p class="cc-mini" id="ccProg">…</p>', '');
+    var lote = (lg.relinks || []).map(function (r) { return { c: r.c, id: r.i, patch: r.a || {} }; });
+    Promise.resolve(DB.salvar('alunos', lg.antesPr || {}, lg.keep)).then(function () {
+      return aplicarLotes(lote, function (f, t) { var e = $('ccProg'); if (e) e.textContent = f + ' / ' + t; });
+    }).then(function () {
+      return Promise.all((lg.arq || []).map(function (x) { return DB.salvar('alunos', { ativo: true, mescladoEm: '', mescladoEmData: '', arquivadoMotivo: '' }, x.id); }));
+    }).then(function () {
+      return DB.salvar('config', { ts: '', keep: '', relinks: [], arq: [] }, 'uc_juncao_log');
+    }).then(function () {
+      ccDlgFechar(); toast('Junção desfeita.'); log('Junção desfeita'); desenhar(); contadores(); refrescarApp();
+    }).catch(function () { ccDlgFechar(); toast('Não foi possível desfazer.', 'erro'); });
+  };
+
+  /* ---------- cartão nas abas Professor/ADM ---------- */
+  window.ccHtmlCard = function () {
+    estilos();
+    var tem = listar('config').filter(function (c) { return c.id === 'uc_juncao_log'; })[0];
+    return '<div class="card cc-home" style="border:1px solid var(--primary-green,#20c77a)"><h3><i class="fas fa-address-book"></i> Central de Cadastros</h3>' +
+      '<p class="mini" style="margin-bottom:8px">Criar cadastro, editar em detalhe, comparar e juntar alunos duplicados.</p>' +
+      '<div class="cc-btns" style="margin-top:0">' +
+      '<button type="button" class="btn" onclick="ccAbrir(\'novo\')"><i class="fas fa-user-plus"></i> Novo cadastro</button>' +
+      '<button type="button" class="btn btn-secondary" onclick="ccAbrir(\'lista\')"><i class="fas fa-users"></i> Cadastros (<span class="cc-n-ativos">0</span>)</button>' +
+      '<button type="button" class="btn btn-gold" onclick="ccAbrir(\'dup\')">⚠ Duplicados (<span class="cc-n-dup">0</span>)</button>' +
+      '<button type="button" class="btn btn-secondary" onclick="ccAbrir(\'arq\')">Arquivados</button>' +
+      '<button type="button" class="btn btn-secondary cc-desfazer" onclick="ccDesfazerJuncao()" style="' + (tem && tem.ts ? '' : 'display:none') + '">↩ Desfazer última junção</button>' +
+      '</div></div>';
+  };
+  function contadores() {
+    var na = ativos().length, nd = 0;
+    try { nd = acharDuplicados().fortes.length; } catch (e) {}
+    document.querySelectorAll('.cc-n-ativos').forEach(function (e) { e.textContent = na; });
+    document.querySelectorAll('.cc-n-dup').forEach(function (e) { e.textContent = nd; });
+    var tem = listar('config').filter(function (c) { return c.id === 'uc_juncao_log'; })[0];
+    document.querySelectorAll('.cc-desfazer').forEach(function (e) { e.style.display = tem && tem.ts ? '' : 'none'; });
+    return nd;
+  }
+  window.ccContarDup = function () { try { return acharDuplicados().fortes.length; } catch (e) { return 0; } };
+  window.ccInjetar = function () {
+    var box = $('conteudoProfessor');
+    if (!box) return;
+    if (!$('ccCardProf')) {
+      var d = document.createElement('div');
+      d.id = 'ccCardProf';
+      d.innerHTML = window.ccHtmlCard();
+      box.insertBefore(d, box.firstChild);
+    }
+    contadores();
+  };
+  function refrescarApp() {
+    ['renderRanking', 'renderRankingCompleto', 'renderAbaAdm'].forEach(function (f) {
+      try { if (f === 'renderAbaAdm') { if (typeof sessaoEquipe !== 'undefined' && sessaoEquipe && $('conteudoAdm') && $('conteudoAdm').innerHTML) window[f](); } else if (typeof window[f] === 'function') window[f](); } catch (e) {}
+    });
+  }
+
+  /* atualiza sozinho quando os dados mudam (sem mexer no que está sendo digitado) */
+  function assinatura() {
+    return todos().map(function (a) { return [a.id, a.nome, a.apelido, a.contato, a.ativo, a.mescladoEm].join('~'); }).join('|') + '#' + listar('config').length;
+  }
+  setInterval(function () {
+    var s = assinatura();
+    if (s === S.sig) return;
+    S.sig = s;
+    IDX = null;
+    contadores();
+    var p = $('ccPainel');
+    if (p && p.classList.contains('aberto') && (S.view === 'lista' || S.view === 'dup' || S.view === 'arq')) {
+      var ae = document.activeElement;
+      if (!(ae && ae.id === 'ccBusca')) desenhar();
+    }
+  }, 2500);
+  window.__cc = { acharDuplicados: acharDuplicados, varrerVinculos: varrerVinculos, compararPar: compararPar };
+})();
+
 </script>
 </body>
 </html>
