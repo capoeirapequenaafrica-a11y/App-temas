@@ -7322,6 +7322,45 @@ function renderAvisoLocal() {
   }
 }
 
+/* ================================================================
+   AGRUPAMENTO POR GRADUAÇÃO (gestão de alunos e rankings)
+   Ordem = CONFIG.graduacoes (editável pelo professor); sem graduação vai por último.
+   ================================================================ */
+function ucOrdemGraduacoes() {
+  return (typeof CONFIG !== 'undefined' && CONFIG && Array.isArray(CONFIG.graduacoes) && CONFIG.graduacoes.length)
+    ? CONFIG.graduacoes : GRADUACOES_PADRAO;
+}
+
+function ucGraduacaoDeAluno(id, nome) {
+  var a = id ? DB.buscar('alunos', id) : null;
+  if (!a && nome) a = DB.listar('alunos').filter(function (x) { return normalizar(x.nome) === normalizar(nome); })[0] || null;
+  return (a && a.graduacao) ? a.graduacao : '';
+}
+
+function ucGrupos(itens, fnGrad) {
+  var ordem = ucOrdemGraduacoes(), mapa = {}, sem = [];
+  itens.forEach(function (it) {
+    var g = fnGrad(it);
+    if (!g) { sem.push(it); return; }
+    (mapa[g] = mapa[g] || []).push(it);
+  });
+  var grupos = [];
+  ordem.forEach(function (g) { if (mapa[g]) grupos.push({ nome: g, itens: mapa[g] }); });
+  Object.keys(mapa).forEach(function (g) { if (ordem.indexOf(g) < 0) grupos.push({ nome: g, itens: mapa[g] }); });
+  if (sem.length) grupos.push({ nome: 'Sem graduação', itens: sem });
+  return grupos;
+}
+
+function ucCabecalhoGrupo(nome, n) {
+  return '<div class="uc-mini" style="font-weight:700;color:var(--gold);margin:10px 0 4px;">' + esc(nome) + ' · ' + n + '</div>';
+}
+
+function ucHtmlAgrupado(lista, render, fnGrad) {
+  return ucGrupos(lista, fnGrad).map(function (g) {
+    return ucCabecalhoGrupo(g.nome, g.itens.length) + g.itens.map(render).join('');
+  }).join('');
+}
+
 function renderRanking() {
   var card = $('cardRankingInicio');
   var contagem = {};
@@ -7329,19 +7368,22 @@ function renderRanking() {
     if (p.status !== 'aprovado') return;
     var k = normalizar(p.alunoNome);
     if (!k) return;
-    if (!contagem[k]) contagem[k] = { nome: p.alunoNome, apelido: p.alunoApelido || '', total: 0 };
+    if (!contagem[k]) contagem[k] = { id: p.alunoId || '', nome: p.alunoNome, apelido: p.alunoApelido || '', total: 0 };
     contagem[k].total++;
   });
   var lista = Object.keys(contagem).map(function (k) { return contagem[k]; })
-    .sort(function (a, b) { return b.total - a.total; }).slice(0, 5);
+    .sort(function (a, b) { return b.total - a.total; });
   if (!lista.length) { card.style.display = 'none'; return; }
   card.style.display = 'block';
   var html = '';
-  lista.forEach(function (a, i) {
-    var medalha = ['🥇', '🥈', '🥉'][i] || (i + 1) + 'º';
-    html += '<div class="lista-item"><div class="linha"><span>' + medalha + ' <b>' + esc(a.nome) + '</b>' +
-      (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</span>' +
-      '<span class="badge-count">' + a.total + ' presenças</span></div></div>';
+  ucGrupos(lista, function (a) { return ucGraduacaoDeAluno(a.id, a.nome); }).forEach(function (g) {
+    html += ucCabecalhoGrupo(g.nome, g.itens.length);
+    g.itens.slice(0, 5).forEach(function (a, i) {
+      var medalha = ['🥇', '🥈', '🥉'][i] || (i + 1) + 'º';
+      html += '<div class="lista-item"><div class="linha"><span>' + medalha + ' <b>' + esc(a.nome) + '</b>' +
+        (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</span>' +
+        '<span class="badge-count">' + a.total + ' presenças</span></div></div>';
+    });
   });
   $('conteudoRankingInicio').innerHTML = html;
 }
@@ -7648,10 +7690,13 @@ function renderRankingCompleto() {
     .sort(function (a, b) { return b.media - a.media; });
   card.style.display = 'block';
   var html = '';
-  lista.forEach(function (it, i) {
-    html += '<div class="lista-item"><div class="linha"><span>' + (i + 1) + 'º <b>' + esc(it.av.alunoNome || 'Aluno') + '</b></span>' +
-      '<span class="badge-count">' + it.media.toFixed(1) + '</span></div>' +
-      '<span class="mini">' + esc(it.av.graduacao || '') + ' • avaliação de ' + esc(it.av.data || '-') + '</span></div>';
+  ucGrupos(lista, function (it) { return ucGraduacaoDeAluno(it.av.alunoId, it.av.alunoNome) || it.av.graduacao || ''; }).forEach(function (g) {
+    html += ucCabecalhoGrupo(g.nome, g.itens.length);
+    g.itens.forEach(function (it, i) {
+      html += '<div class="lista-item"><div class="linha"><span>' + (i + 1) + 'º <b>' + esc(it.av.alunoNome || 'Aluno') + '</b></span>' +
+        '<span class="badge-count">' + it.media.toFixed(1) + '</span></div>' +
+        '<span class="mini">' + esc(it.av.graduacao || '') + ' • avaliação de ' + esc(it.av.data || '-') + '</span></div>';
+    });
   });
   $('listaRankingCompletoInicio').innerHTML = html;
 }
@@ -16568,7 +16613,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     }
 
     html += '<input type="text" id="ucGestBusca" placeholder="Buscar aluno..." value="' + esc(busca) + '" style="margin:8px 0">';
-    html += lista.map(function (a) {
+    html += ucHtmlAgrupado(lista, function (a) {
       return '<div class="uc-item" data-nome="' + esc(chave(a.nome + ' ' + (a.apelido || ''))) + '">' +
         '<b>' + esc(a.nome) + '</b> <span class="uc-mini">' + esc(a.apelido || '') + '</span>' +
         '<div class="uc-mini">' + esc(a.graduacao || 'sem graduação') + (a.contato ? ' • ' + esc(a.contato) : '') + '</div>' +
@@ -16577,7 +16622,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
           '<button class="btn btn-secondary btn-mini" type="button" onclick="ucSenhaProvisoria(\'' + a.id + '\')"><i class="fas fa-key"></i> Senha provisória</button>' +
           '<button class="btn btn-danger btn-mini" type="button" onclick="ucExcluirAluno(\'' + a.id + '\')"><i class="fas fa-trash"></i></button>' +
         '</div></div>';
-    }).join('') || '<p class="uc-mini">Nenhum aluno cadastrado.</p>';
+    }, function (a) { return a.graduacao || ''; }) || '<p class="uc-mini">Nenhum aluno cadastrado.</p>';
 
     card.innerHTML = html;
     el('ucGestBusca').addEventListener('input', function () {
@@ -16794,7 +16839,11 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   /* ===== DATA DO BATIZADO (aba ADM edita; todos veem no cronômetro) ===== */
   function garantirAdmBatizado() {
     var box = el('conteudoAdm');
-    if (!box || el('ucAdmBatizado')) return;
+    if (!box) return;
+    /* Só ADM/Dev veem o controle; sem login, remove o bloco se existir */
+    var admOk = sessaoEquipe && ['adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0;
+    if (!admOk) { var x = el('ucAdmBatizado'); if (x) x.remove(); return; }
+    if (el('ucAdmBatizado')) return;
     var d = dataBatizado();
     var dia = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
     var hora = pad(d.getHours()) + ':' + pad(d.getMinutes());
@@ -16971,7 +17020,11 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
   function garantirAdmPrazo() {
     var box = el('conteudoAdm');
-    if (!box || el('ucAdmPrazo')) return;
+    if (!box) return;
+    /* Só ADM/Dev veem o controle; sem login, remove o bloco se existir */
+    var admOk = sessaoEquipe && ['adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0;
+    if (!admOk) { var x = el('ucAdmPrazo'); if (x) x.remove(); return; }
+    if (el('ucAdmPrazo')) return;
     var d = dataPrazo();
     var dia = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
     var c = document.createElement('div');
@@ -17418,6 +17471,13 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   function garantirProfessor() {
     var box = el('conteudoProfessor');
     if (!box) return;
+    /* Sem login de professor/ADM/Dev, só o cartão de login fica na aba (não injeta gestão de alunos) */
+    var equipeOk = sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0;
+    if (!equipeOk) {
+      var gAnt = el('ucGestaoAlunos'); if (gAnt) gAnt.remove();
+      var bAnt = el('ucBtnAvalSemestral'); if (bAnt) bAnt.remove();
+      return;
+    }
     if (!el('ucBtnAvalSemestral')) {
       var b = document.createElement('button');
       b.id = 'ucBtnAvalSemestral';
