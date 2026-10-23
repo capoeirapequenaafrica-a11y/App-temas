@@ -1736,7 +1736,7 @@ function ucIrParaBackup() { location.href = ucUrlBackup(); }
 /* CORE-BASE.JS — Universo Capoeira (v87) · trecho do app dividido sem alterar o código (linhas 1325–1667 do index.html original) */
 /* Remove qualquer Service Worker e cache antigos (de versões anteriores, ex: v86)
    que possam estar guardando uma cópia velha do app no navegador do usuário. */
-if ('serviceWorker' in navigator && navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(function (registrations) {
     registrations.forEach(function (reg) { reg.unregister(); });
   }).catch(function () {});
@@ -1799,7 +1799,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -2395,10 +2395,8 @@ function carregarConfigFirebase() {
 }
 
 function salvarConfigFirebase(cfg) {
-  try {
-    if (cfg) localStorage.setItem(CHAVE_CONFIG_LOCAL, JSON.stringify(cfg));
-    else localStorage.removeItem(CHAVE_CONFIG_LOCAL);
-  } catch (e) { console.warn('[config] armazenamento indisponível', e); }
+  if (cfg) localStorage.setItem(CHAVE_CONFIG_LOCAL, JSON.stringify(cfg));
+  else localStorage.removeItem(CHAVE_CONFIG_LOCAL);
 }
 
 function atualizarStatusFirebase() {
@@ -2893,18 +2891,18 @@ function pedirPermissaoNotificacao() {
   }
   Notification.requestPermission().then(function (perm) {
     if (perm === 'granted') {
-      try { localStorage.setItem(CHAVE_NOTIF, '1'); } catch (e) {}
+      localStorage.setItem(CHAVE_NOTIF, '1');
       $('btnAtivarNotificacao').innerHTML = '<i class="fas fa-bell"></i> Notificações Ativas';
       mostrarToast('Notificações ativadas!');
       notificar('Universo Capoeira', 'Você receberá os avisos do professor.');
     } else {
-      try { localStorage.removeItem(CHAVE_NOTIF); } catch (e) {}
+      localStorage.removeItem(CHAVE_NOTIF);
       mostrarToast('Permissão de notificação negada.', 'erro');
     }
   });
 }
 
-function notificacaoAtiva() { try { return localStorage.getItem(CHAVE_NOTIF) === '1'; } catch (e) { return false; } }
+function notificacaoAtiva() { return localStorage.getItem(CHAVE_NOTIF) === '1'; }
 
 function notificar(titulo, corpo) {
   /* TODAS as notificações são prioridade: ficam na tela até o toque, vibram e tocam som do sistema */
@@ -3048,8 +3046,7 @@ function ucAtividadeRotulo(col, obj) {
     presencas: 'atualizou um check-in',
     solicitacoes: 'atualizou um pedido de treino',
     mensagensPrivadas: 'enviou mensagem privada',
-    feedbacksAula: 'enviou feedback de aula',
-    desafiosSemanais: 'atualizou os desafios semanais (compromisso)'
+    feedbacksAula: 'enviou feedback de aula'
   };
   return nomes[col] || ('fez uma ação (' + col + ')');
 }
@@ -9990,8 +9987,6 @@ function salvarAvaliacao() {
     ritmo: ritmo,
     musicalidade: musicalidade,
     compromisso: compromisso,
-    desafiosFeitos: (typeof dsResumo === 'function' ? dsResumo(aluno.id, semana).feitos : 0),
-    desafiosTotal: (typeof dsResumo === 'function' ? dsResumo(aluno.id, semana).total : 0),
     desenvolvimento: ($('avalDesenvolvimento') || {}).value ? $('avalDesenvolvimento').value.trim() : '',
     observacao: ($('avalObservacao').value || '').trim(),
     data: dataLocalISO(),
@@ -12686,8 +12681,6 @@ decidirPresenca = function (id, status) {
    ================================================================ */
 var TR_CALS = {};
 var TR_CAL_SEL = {};   // CORREÇÃO: declaração que faltava (seleção múltipla de dias)
-var TR_SEM_OFFSET = 0;   // CORREÇÃO: semana exibida no painel do aluno (0 = atual)
-var TR_PED_SEL = {};    // CORREÇÃO: seleção de pedidos de aula do aluno
 var TR_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 var TR_DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -16440,14 +16433,133 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     renderListaPeriodo();
   }
 
+  /* ===== CERTIFICADO DE GRADUAÇÃO (última avaliação semestral, alunos aptos) ===== */
+  function ucEhApto(d) { return d && d.status === 'finalizada' && d.aptoFinal; }
+
+  function ucTextoPara(ctx, texto, x, y, maxW, altLinha) {
+    var palavras = String(texto).split(' '), linha = '', yy = y;
+    palavras.forEach(function (p) {
+      var teste = linha ? linha + ' ' + p : p;
+      if (ctx.measureText(teste).width > maxW && linha) {
+        ctx.fillText(linha, x, yy); linha = p; yy += altLinha;
+      } else { linha = teste; }
+    });
+    if (linha) { ctx.fillText(linha, x, yy); yy += altLinha; }
+    return yy;
+  }
+
+  /* Período no formato 2027-S1 / 2027-S2: o ano do certificado é o do período da avaliação */
+  function ucAnoDoPeriodo(d) {
+    var m = /^(\d{4})/.exec(String((d && d.periodo) || ''));
+    return m ? m[1] : String(new Date().getFullYear());
+  }
+
+  function ucDesenharCertificadoGraduacao(d) {
+    var canvas = document.createElement('canvas');
+    canvas.width = 1600; canvas.height = 1000;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fffdf5'; ctx.fillRect(0, 0, 1600, 1000);
+    ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 8; ctx.strokeRect(24, 24, 1552, 952);
+    ctx.lineWidth = 2; ctx.strokeRect(40, 40, 1520, 920);
+    ctx.textAlign = 'center';
+
+    ctx.fillStyle = '#1b5e20'; ctx.font = 'bold 36px Georgia, serif';
+    ctx.fillText('CENTRO DE CULTURA E PESQUISA DE CAPOEIRA NA PEQUENA ÁFRICA', 800, 105);
+    ctx.fillStyle = '#333'; ctx.font = '24px Georgia, serif';
+    ctx.fillText('Inscrição Jurídica / CNPJ: 59.037.885/0001-46', 800, 145);
+
+    ctx.fillStyle = '#8d6e00'; ctx.font = 'bold 56px Georgia, serif';
+    ctx.fillText('CERTIFICADO DE GRADUAÇÃO', 800, 240);
+
+    ctx.fillStyle = '#333'; ctx.font = '28px Georgia, serif';
+    var nome = d.alunoNome || '-';
+    var intro = 'Certificamos para os devidos fins que ' + nome + ' realizou com pleno êxito todas as etapas de avaliação técnica, teórica e prática de Capoeira. Demonstrando disciplina, dedicação e pleno respeito aos fundamentos da nossa arte, o(a) capoeirista está apto(a) a portar sua nova graduação:';
+    var y = ucTextoPara(ctx, intro, 800, 310, 1300, 42);
+
+    ctx.fillStyle = '#c62828'; ctx.font = 'bold 46px Georgia, serif';
+    ctx.fillText('● ' + (d.cordaFinal || 'Graduação a definir'), 800, y + 30);
+    y += 90;
+
+    ctx.fillStyle = '#333'; ctx.font = '26px Georgia, serif';
+    y = ucTextoPara(ctx, 'Por ser verdade, outorgamos este documento que confere legitimidade ao seu novo estágio e caminhada na nossa instituição.', 800, y, 1300, 38);
+
+    var hoje = new Date();
+    var meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    ctx.fillStyle = '#333'; ctx.font = '26px Georgia, serif';
+    ctx.fillText('Rio de Janeiro, ' + hoje.getDate() + ' de ' + meses[hoje.getMonth()] + ' de ' + ucAnoDoPeriodo(d) + '.', 800, y + 50);
+
+    ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(550, 850); ctx.lineTo(1050, 850); ctx.stroke();
+    ctx.fillStyle = '#222'; ctx.font = 'bold 24px Georgia, serif';
+    ctx.fillText('Anderson dos Santos Ferreira (Instrutor Dyno)', 800, 885);
+    ctx.font = '22px Georgia, serif';
+    ctx.fillText('Coordenador Técnico – Centro de Cultura', 800, 917);
+    return canvas;
+  }
+
+  function ucBaixarBlob(blob, nomeArquivo) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = nomeArquivo;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+  }
+
+  function ucSlug(t) {
+    return String(t || 'aluno').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  window.ucBaixarCertificadoGraduacao = function (docId) {
+    var d = listar('avaliacoesSemestrais').filter(function (x) { return x.id === docId; })[0];
+    if (!ucEhApto(d)) { toast('Certificado só para aluno apto com avaliação finalizada.', 'erro'); return; }
+    ucDesenharCertificadoGraduacao(d).toBlob(function (blob) {
+      ucBaixarBlob(blob, 'certificado-graduacao-' + ucSlug(d.alunoNome) + '.png');
+    }, 'image/png');
+  };
+
+  window.ucTestarCertificadoGraduacao = function () {
+    var campo = el('ucPeriodo');
+    var periodo = campo && campo.value.trim() ? campo.value.trim() : '';
+    var amostra = { alunoNome: 'Aluno de Teste', cordaFinal: 'Aluno - Amarela', periodo: periodo, status: 'finalizada', aptoFinal: true };
+    ucDesenharCertificadoGraduacao(amostra).toBlob(function (blob) {
+      ucBaixarBlob(blob, 'teste-certificado-graduacao.png');
+      toast('Certificado de teste gerado (' + (periodo || 'ano atual') + ').');
+    }, 'image/png');
+  };
+
+  window.ucBaixarTodosCertificados = function (periodo) {
+    var lista = listar('avaliacoesSemestrais').filter(function (d) { return d.periodo === periodo && ucEhApto(d); });
+    if (!lista.length) { toast('Nenhum aluno apto finalizado neste período.', 'erro'); return; }
+    lista.reduce(function (antes, d) {
+      return antes.then(function () {
+        return new Promise(function (res) {
+          ucDesenharCertificadoGraduacao(d).toBlob(function (blob) {
+            ucBaixarBlob(blob, 'certificado-graduacao-' + ucSlug(d.alunoNome) + '.png');
+            setTimeout(res, 800);
+          }, 'image/png');
+        });
+      });
+    }, Promise.resolve()).then(function () { toast('Certificados gerados: ' + lista.length); });
+  };
+
   /* ===== LISTA DO PERÍODO (professor): ajustar e revelar no Batizado ===== */
   function renderListaPeriodo() {
     var box = el('ucListaPeriodo');
     if (!box) return;
     var periodo = el('ucPeriodo').value.trim();
     var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.periodo === periodo; });
-    if (!docs.length) { box.innerHTML = '<div class="uc-mini">Nenhuma avaliação neste período ainda.</div>'; return; }
+    if (!docs.length) {
+      box.innerHTML = '<div class="uc-mini">Nenhuma avaliação neste período ainda.</div>' +
+        '<div class="uc-linha" style="margin:6px 0"><button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button></div>';
+      return;
+    }
     box.innerHTML = '<h4 class="uc-mini" style="font-weight:700">Avaliações do período ' + esc(periodo) + '</h4>' +
+      '<div class="uc-linha" style="margin:6px 0">' +
+        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button>' +
+        (docs.some(ucEhApto)
+          ? '<button class="btn btn-gold btn-mini" type="button" onclick="ucBaixarTodosCertificados(\'' + esc(periodo) + '\')"><i class="fas fa-certificate"></i> Gerar certificados dos aptos</button>'
+          : '') +
+      '</div>' +
       docs.map(function (d) {
         var sit = d.status === 'finalizada'
           ? (d.aptoFinal ? 'Apto' : 'Não apto') + (d.revelado ? ' • graduação revelada' : '')
@@ -16458,6 +16570,9 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
             '<button class="btn btn-secondary btn-mini" type="button" onclick="ucAjustarAval(\'' + d.alunoId + '\')"><i class="fas fa-pen"></i> Ajustar</button>' +
             (d.status === 'finalizada' && d.aptoFinal && !d.revelado
               ? '<button class="btn btn-gold btn-mini" type="button" onclick="ucRevelarBatizado(\'' + d.id + '\')"><i class="fas fa-medal"></i> Revelar no Batizado</button>'
+              : '') +
+            (ucEhApto(d)
+              ? '<button class="btn btn-secondary btn-mini" type="button" onclick="ucBaixarCertificadoGraduacao(\'' + d.id + '\')"><i class="fas fa-certificate"></i> Certificado</button>'
               : '') +
           '</div></div>';
       }).join('');
@@ -18047,182 +18162,6 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 </script>
 
 <script>
-/* ================================================================
-   DESAFIOS SEMANAIS (exercícios em casa) → entram no COMPROMISSO
-   - 3 desafios fixos + 2 que rotacionam toda semana
-   - aluno marca o que fez; professor vê na avaliação semanal
-   - a % concluída gera a sugestão da nota de Compromisso (0–10)
-   ================================================================ */
-var DS_FIXOS = [
-  { id: 'agach', nome: 'Agachamentos', meta: '50 repetições', icone: 'fa-walking', dica: 'Pode dividir em 2 ou 3 séries ao longo do dia.' },
-  { id: 'flex',  nome: 'Flexões de braço', meta: '5 a 10 repetições', icone: 'fa-dumbbell', dica: 'Com joelho no chão vale. O mínimo é 5.' },
-  { id: 'abdo',  nome: 'Abdominais', meta: '30 repetições', icone: 'fa-child', dica: 'Sem puxar o pescoço; pode fazer em séries.' }
-];
-var DS_EXTRAS = [
-  { id: 'prancha',  nome: 'Prancha', meta: '3 x 30 segundos', icone: 'fa-stopwatch', dica: 'Corpo reto, abdômen firme.' },
-  { id: 'polich',   nome: 'Polichinelo', meta: '50 repetições', icone: 'fa-running', dica: 'Aquece e melhora o fôlego.' },
-  { id: 'afundo',   nome: 'Afundo', meta: '10 por perna', icone: 'fa-shoe-prints', dica: 'Joelho da frente não passa da ponta do pé.' },
-  { id: 'ponte',    nome: 'Elevação de quadril (ponte)', meta: '20 repetições', icone: 'fa-grip-lines', dica: 'Deitado, sobe o quadril e aperta o glúteo.' },
-  { id: 'ginga',    nome: 'Ginga contínua', meta: '5 minutos', icone: 'fa-music', dica: 'Mantenha a base baixa e o ritmo.' },
-  { id: 'cocor',    nome: 'Cocorinha + esquiva', meta: '20 repetições', icone: 'fa-compress-arrows-alt', dica: 'Desce controlando, olhando pra frente.' },
-  { id: 'escal',    nome: 'Escalador (mountain climber)', meta: '30 repetições', icone: 'fa-mountain', dica: 'Cada joelho conta como 1.' },
-  { id: 'alonga',   nome: 'Alongamento completo', meta: '5 minutos', icone: 'fa-spa', dica: 'Pernas, costas e ombros, sem forçar.' },
-  { id: 'lombar',   nome: 'Superman (lombar)', meta: '15 repetições', icone: 'fa-male', dica: 'Deitado de barriga pra baixo, sobe braços e pernas.' },
-  { id: 'saltos',   nome: 'Saltos no lugar', meta: '30 repetições', icone: 'fa-arrow-up', dica: 'Aterrisse leve, joelhos macios.' }
-];
-
-function dsNumSemana(sem) {
-  var m = /^(\d{4})-W(\d{1,2})$/.exec(sem || '');
-  return m ? (parseInt(m[1], 10) * 53 + parseInt(m[2], 10)) : 0;
-}
-function dsItensDaSemana(sem) {
-  var n = dsNumSemana(sem), qtd = DS_EXTRAS.length;
-  var e1 = DS_EXTRAS[(n * 2) % qtd], e2 = DS_EXTRAS[(n * 2 + 1) % qtd];
-  return DS_FIXOS.concat([e1, e2]);
-}
-function dsId(alunoId, sem) { return 'ds_' + alunoId + '_' + sem; }
-function dsRegistro(alunoId, sem) { return DB.buscar('desafiosSemanais', dsId(alunoId, sem)); }
-function dsResumo(alunoId, sem) {
-  var itens = dsItensDaSemana(sem), reg = dsRegistro(alunoId, sem), feitos = 0;
-  var lista = itens.map(function (it) {
-    var f = !!(reg && reg.itens && reg.itens[it.id] && reg.itens[it.id].feito);
-    if (f) feitos++;
-    return { item: it, feito: f, em: f ? reg.itens[it.id].em : '' };
-  });
-  var total = itens.length, pct = total ? Math.round(feitos * 100 / total) : 0;
-  /* nota de compromisso sugerida: 0–10 em passos de 0,5 */
-  var nota = Math.round((pct / 10) * 2) / 2;
-  return { semana: sem, lista: lista, feitos: feitos, total: total, pct: pct, nota: nota };
-}
-function dsSemanaAnterior(sem) {
-  var m = /^(\d{4})-W(\d{1,2})$/.exec(sem || ''); if (!m) return sem;
-  var a = parseInt(m[1], 10), w = parseInt(m[2], 10) - 1;
-  if (w < 1) { a--; w = 52; }
-  return a + '-W' + String(w).padStart(2, '0');
-}
-
-function dsMarcar(itemId) {
-  var a = alunoLogado();
-  if (!a) { mostrarToast('Entre na sua conta de aluno.', 'erro'); return; }
-  var sem = semanaISOAtual(), reg = dsRegistro(a.id, sem);
-  var itens = {};
-  if (reg && reg.itens) Object.keys(reg.itens).forEach(function (k) { itens[k] = reg.itens[k]; });
-  var atual = !!(itens[itemId] && itens[itemId].feito);
-  itens[itemId] = { feito: !atual, em: !atual ? agoraISO() : '' };
-  var ids = dsItensDaSemana(sem).map(function (i) { return i.id; });
-  var feitos = ids.filter(function (k) { return itens[k] && itens[k].feito; }).length;
-  var nomeItem = (dsItensDaSemana(sem).filter(function (i) { return i.id === itemId; })[0] || {}).nome || itemId;
-  DB.salvar('desafiosSemanais', {
-    alunoId: a.id, alunoNome: a.nome || '', alunoApelido: a.apelido || '',
-    semana: sem, itens: itens, feitos: feitos, total: ids.length,
-    pct: Math.round(feitos * 100 / ids.length), atualizadoEm: agoraISO()
-  }, dsId(a.id, sem));
-  try { registroLog('aluno', (a.apelido || a.nome) + (atual ? ' desmarcou' : ' fez') + ' o desafio: ' + nomeItem); } catch (e) {}
-  mostrarToast(atual ? 'Desafio desmarcado.' : (feitos === ids.length ? 'Parabéns! Todos os desafios da semana concluídos! 🔥' : 'Desafio concluído: ' + nomeItem));
-  dsRenderAluno();
-}
-
-function dsHtmlAluno(a) {
-  var sem = semanaISOAtual(), r = dsResumo(a.id, sem), ant = dsResumo(a.id, dsSemanaAnterior(sem));
-  var h = '<h3 class="titulo-colapsavel" onclick="alternarCard(this)"><i class="fas fa-fire"></i> Desafios da semana <i class="fas fa-chevron-down seta-colapsavel"></i></h3>' +
-    '<div class="card-corpo-colapsavel">' +
-    '<p class="mini" style="margin-bottom:6px;">Exercícios para fazer em casa. Eles entram na sua avaliação de <b>Compromisso</b>. A semana fecha no domingo.</p>' +
-    '<div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:4px;"><b>' + r.feitos + ' de ' + r.total + ' concluídos</b><span>' + r.pct + '%</span></div>' +
-    '<div style="height:10px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:' + r.pct + '%;background:linear-gradient(90deg,#ffc107,#ff8f00);transition:width .4s;"></div></div>';
-  r.lista.forEach(function (x) {
-    h += '<div style="display:flex;align-items:center;gap:10px;padding:8px;margin-bottom:6px;border-radius:10px;border:1px solid ' + (x.feito ? 'rgba(76,175,80,.6)' : 'var(--card-border)') + ';background:' + (x.feito ? 'rgba(76,175,80,.12)' : 'transparent') + ';">' +
-      '<i class="fas ' + x.item.icone + '" style="width:22px;text-align:center;color:var(--gold);"></i>' +
-      '<div style="flex:1;min-width:0;"><b style="font-size:.85rem;">' + esc(x.item.nome) + '</b>' +
-      '<div class="mini" style="margin:0;">' + esc(x.item.meta) + ' · ' + esc(x.item.dica) + '</div></div>' +
-      '<button type="button" class="btn ' + (x.feito ? 'btn-secondary' : 'btn-gold') + ' btn-mini" style="width:auto;min-width:78px;margin:0;" onclick="dsMarcar(\'' + x.item.id + '\')">' +
-      (x.feito ? '<i class="fas fa-check"></i> Feito' : 'Marcar') + '</button></div>';
-  });
-  h += '<p class="mini" style="margin-top:6px;">Compromisso estimado pelos desafios: <b>' + r.nota.toFixed(1).replace('.', ',') + '/10</b>' +
-    (ant.feitos ? ' · semana passada: ' + ant.feitos + '/' + ant.total : '') + '</p></div>';
-  return h;
-}
-
-function dsRenderAluno() {
-  var logado = alunoLogado(), painel = $('cardAlunoPainel');
-  var velho = $('dsCardAluno');
-  if (!logado || !painel) { if (velho) velho.remove(); return; }
-  var aberto = !(velho && velho.classList.contains('fechado')) ;
-  if (velho) velho.remove();
-  var card = document.createElement('div');
-  card.id = 'dsCardAluno'; card.className = 'card' + (aberto ? '' : ' fechado');
-  card.style.border = '1px solid var(--gold)';
-  card.innerHTML = dsHtmlAluno(logado);
-  var bloco = $('trAlunoBloco');
-  if (bloco && bloco.parentNode === painel) painel.insertBefore(card, bloco.nextSibling);
-  else painel.insertBefore(card, painel.firstChild);
-}
-
-(function () {
-  var base = renderAluno;
-  renderAluno = function () {
-    var r = base.apply(this, arguments);
-    try { dsRenderAluno(); } catch (e) { console.warn('[desafios]', e); }
-    return r;
-  };
-  /* reflete mudanças vindas da nuvem */
-  var avisarOrig = DB.avisar;
-  if (typeof avisarOrig === 'function') {
-    DB.avisar = function (col) {
-      var r = avisarOrig.apply(this, arguments);
-      if (col === 'desafiosSemanais') { try { dsRenderAluno(); dsInjetarProf(); } catch (e) {} }
-      return r;
-    };
-  }
-})();
-
-/* ---------- lado do professor: dentro da Avaliação Semanal ---------- */
-function dsInjetarProf() {
-  var sel = $('avalAluno'), ref = $('boxDesenvolvimentoAluno');
-  if (!sel || !ref) return;
-  var box = $('dsBoxProf');
-  if (!box) {
-    box = document.createElement('div'); box.id = 'dsBoxProf'; box.style.cssText = 'margin:8px 0;padding:8px;border:1px dashed var(--gold);border-radius:10px;';
-    ref.parentNode.insertBefore(box, ref.nextSibling);
-  }
-  var alunoId = sel.value, sem = ($('avalSemana') || {}).value || semanaISOAtual();
-  if (!alunoId) { box.innerHTML = ''; return; }
-  var r = dsResumo(alunoId, sem);
-  var h = '<b style="color:var(--gold);font-size:.85rem;"><i class="fas fa-fire"></i> Desafios da semana (Compromisso)</b>' +
-    '<div class="mini" style="margin:4px 0;">' + r.feitos + ' de ' + r.total + ' concluídos · ' + r.pct + '% · nota sugerida <b>' + r.nota.toFixed(1).replace('.', ',') + '</b></div>';
-  r.lista.forEach(function (x) {
-    h += '<div class="mini" style="margin:1px 0;">' + (x.feito ? '✅' : '⬜') + ' ' + esc(x.item.nome) + ' — ' + esc(x.item.meta) + '</div>';
-  });
-  h += '<button type="button" class="btn btn-secondary btn-mini" style="margin-top:6px;width:auto;" onclick="dsUsarSugestao()"><i class="fas fa-magic"></i> Usar sugestão no Compromisso</button>';
-  box.innerHTML = h;
-}
-function dsUsarSugestao() {
-  var sel = $('avalAluno'); if (!sel || !sel.value) return;
-  var r = dsResumo(sel.value, ($('avalSemana') || {}).value || semanaISOAtual());
-  if ($('avalCompromisso')) $('avalCompromisso').value = r.nota;
-  mostrarToast('Compromisso ajustado para ' + r.nota.toFixed(1).replace('.', ',') + ' pelos desafios.');
-}
-
-(function () {
-  var base = carregarDesenvolvimentoAluno;
-  carregarDesenvolvimentoAluno = function () {
-    var r = base.apply(this, arguments);
-    try {
-      dsInjetarProf();
-      /* sem avaliação lançada nesta semana: já sugere o Compromisso pelos desafios */
-      var sel = $('avalAluno');
-      if (sel && sel.value) {
-        var sem = ($('avalSemana') || {}).value || semanaISOAtual();
-        var jaTem = avaliacoesDoAluno(sel.value).some(function (a) { return a.semana === sem; });
-        var reg = dsRegistro(sel.value, sem);
-        if (!jaTem && reg && $('avalCompromisso')) $('avalCompromisso').value = dsResumo(sel.value, sem).nota;
-      }
-    } catch (e) { console.warn('[desafios prof]', e); }
-    return r;
-  };
-})();
-</script>
-
-<script>
 function abrirSpaceImpact() {
   var w = window.open('space-impact-aberto.html', '_blank');
   if (!w) location.href = 'space-impact-aberto.html';
@@ -18537,7 +18476,9 @@ function abrirSpaceImpact() {
       '.cc-tab th:first-child,.cc-tab td:first-child{position:sticky;left:0;background:#081b25;min-width:92px;max-width:92px;z-index:2;color:var(--text-sub,#8caab1)}' +
       '.cc-tab tr.igual td{opacity:.75}' +
       '.cc-tab label{display:flex;gap:6px;align-items:flex-start;cursor:pointer;word-break:break-word}' +
-      '.cc-tab input[type=radio],.cc-tab input[type=checkbox],.cc-chk input{width:18px;height:18px;flex:none;margin:0}' +
+      '.cc-tab input[type=radio],.cc-tab input[type=checkbox],.cc-chk input,.cc-painel input[type=checkbox],.cc-painel input[type=radio]{width:20px!important;min-width:20px!important;max-width:20px!important;height:20px!important;flex:none!important;margin:0!important;padding:0!important;display:inline-block!important}' +
+      '.cc-tab label span{flex:1;min-width:0;display:block}' +
+      '.cc-tab th label span{white-space:nowrap}' +
       '.cc-foto-mini{width:44px;height:44px;border-radius:50%;object-fit:cover}' +
       '.cc-foto-grande{width:84px;height:84px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-green,#20c77a);background:#081b25}' +
       '.cc-dlg-fundo{position:fixed;inset:0;z-index:3500;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:16px}' +
@@ -19246,6 +19187,17 @@ function abrirSpaceImpact() {
       if (!(ae && ae.id === 'ccBusca')) desenhar();
     }
   }, 2500);
+
+  /* o cartão aparece junto com a aba (sem esperar o ciclo automático) */
+  var rpOrig = window.renderAbaProfessor;
+  if (typeof rpOrig === 'function' && !rpOrig.__cc) {
+    window.renderAbaProfessor = function () {
+      var r = rpOrig.apply(this, arguments);
+      try { if (typeof sessaoEquipe !== 'undefined' && sessaoEquipe) window.ccInjetar(); } catch (e) {}
+      return r;
+    };
+    window.renderAbaProfessor.__cc = true;
+  }
   window.__cc = { acharDuplicados: acharDuplicados, varrerVinculos: varrerVinculos, compararPar: compararPar };
 })();
 
