@@ -7337,16 +7337,38 @@ function ucGraduacaoDeAluno(id, nome) {
   return (a && a.graduacao) ? a.graduacao : '';
 }
 
+var UC_FAIXAS = [
+  { nome: 'Iniciante até Amarela', graus: ['Iniciante - Corda Crua', 'Aluno - Crua e Amarela', 'Aluno - Amarela'] },
+  { nome: 'Amarela até Laranja', graus: ['Aluno - Amarela e Laranja', 'Aluno - Laranja'] },
+  { nome: 'Laranja até Azul', graus: ['Aluno - Laranja e Azul', 'Aluno Formado - Azul'] },
+  { nome: 'Azul até Verde', graus: ['Aluno Formado - Azul e Verde', 'Aluno Formado - Verde'] },
+  { nome: 'Verde até Roxa', graus: ['Aluno Formado - Verde e Roxa', 'Aluno Formado - Roxa'] },
+  { nome: 'Roxa até Marrom', graus: ['Aluno Formado - Roxa e Marrom', 'Aluno Formado - Marrom'] },
+  { nome: 'Marrom até Vermelha', graus: ['Aluno Formado - Marrom e Vermelha', 'Professor - Vermelha'] },
+  { nome: 'Vermelha até Branca', graus: ['Professor - Vermelha e Branca', 'Contramestre - Branca', 'Mestre - Branca'] }
+];
+
+function ucFaixaDaGraduacao(g) {
+  for (var i = 0; i < UC_FAIXAS.length; i++) {
+    if (UC_FAIXAS[i].graus.indexOf(g) >= 0) return UC_FAIXAS[i].nome;
+  }
+  return g;
+}
+
 function ucGrupos(itens, fnGrad) {
-  var ordem = ucOrdemGraduacoes(), mapa = {}, sem = [];
+  var mapa = {}, sem = [];
   itens.forEach(function (it) {
     var g = fnGrad(it);
     if (!g) { sem.push(it); return; }
-    (mapa[g] = mapa[g] || []).push(it);
+    var f = ucFaixaDaGraduacao(g);
+    (mapa[f] = mapa[f] || []).push(it);
   });
+  var ordemBandas = UC_FAIXAS.map(function (f) { return f.nome; });
+  var ordemGrad = ucOrdemGraduacoes();
+  var extras = Object.keys(mapa).filter(function (n) { return ordemBandas.indexOf(n) < 0; })
+    .sort(function (a, b) { return ordemGrad.indexOf(a) - ordemGrad.indexOf(b); });
   var grupos = [];
-  ordem.forEach(function (g) { if (mapa[g]) grupos.push({ nome: g, itens: mapa[g] }); });
-  Object.keys(mapa).forEach(function (g) { if (ordem.indexOf(g) < 0) grupos.push({ nome: g, itens: mapa[g] }); });
+  ordemBandas.concat(extras).forEach(function (n) { if (mapa[n]) grupos.push({ nome: n, itens: mapa[n] }); });
   if (sem.length) grupos.push({ nome: 'Sem graduação', itens: sem });
   return grupos;
 }
@@ -10185,19 +10207,24 @@ function limparPontosJogosAgora() {
   });
 }
 
+function htmlItemAlunoAdm(a) {
+  return '<div class="lista-item" data-nome="' + esc(normalizar(a.nome + ' ' + (a.apelido || ''))) + '">' +
+    '<div class="linha"><b>' + esc(a.nome) + '</b><span class="mini">' + esc(a.apelido || '') + '</span></div>' +
+    '<span class="mini">' + esc(a.graduacao || '-') + (a.contato ? ' • ' + esc(a.contato) : '') +
+    (a.tipoAluno === 'gympass' ? ' • <span class="pill" style="background:var(--gympass-red);color:#fff;">Gympass</span>' : '') + '</span>' +
+    '<div class="flex-btn" style="margin-top:6px;">' +
+      '<button class="btn btn-secondary btn-mini" onclick="alterarGraduacao(\'' + a.id + '\')"><i class="fas fa-medal"></i> Graduação</button>' +
+      '<button class="btn btn-secondary btn-mini" onclick="resetarSenhaAluno(\'' + a.id + '\')"><i class="fas fa-key"></i> Reset senha</button>' +
+      '<button class="btn btn-danger btn-mini" onclick="confirmarExcluirAluno(\'' + a.id + '\')"><i class="fas fa-trash"></i> Excluir</button>' +
+    '</div></div>';
+}
+
 function htmlListaAlunosAdm(alunos) {
   if (!alunos.length) return '<p class="sem-dados">Nenhum aluno cadastrado.</p>';
   var html = '';
-  alunos.forEach(function (a) {
-    html += '<div class="lista-item" data-nome="' + esc(normalizar(a.nome + ' ' + (a.apelido || ''))) + '">' +
-      '<div class="linha"><b>' + esc(a.nome) + '</b><span class="mini">' + esc(a.apelido || '') + '</span></div>' +
-      '<span class="mini">' + esc(a.graduacao || '-') + (a.contato ? ' • ' + esc(a.contato) : '') +
-      (a.tipoAluno === 'gympass' ? ' • <span class="pill" style="background:var(--gympass-red);color:#fff;">Gympass</span>' : '') + '</span>' +
-      '<div class="flex-btn" style="margin-top:6px;">' +
-        '<button class="btn btn-secondary btn-mini" onclick="alterarGraduacao(\'' + a.id + '\')"><i class="fas fa-medal"></i> Graduação</button>' +
-        '<button class="btn btn-secondary btn-mini" onclick="resetarSenhaAluno(\'' + a.id + '\')"><i class="fas fa-key"></i> Reset senha</button>' +
-        '<button class="btn btn-danger btn-mini" onclick="confirmarExcluirAluno(\'' + a.id + '\')"><i class="fas fa-trash"></i> Excluir</button>' +
-      '</div></div>';
+  ucGrupos(alunos, function (a) { return a.graduacao || ''; }).forEach(function (g) {
+    html += ucCabecalhoGrupo(g.nome, g.itens.length);
+    g.itens.forEach(function (a) { html += htmlItemAlunoAdm(a); });
   });
   return html;
 }
