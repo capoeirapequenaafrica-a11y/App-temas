@@ -22004,11 +22004,24 @@ window.addEventListener('load', function () { setTimeout(function () {
       return r;
     };
   }
+  /* Dandara fala por Toast nativo do Android (AndroidAPI.showToast); no navegador usa o aviso do app */
+  window.ucDandaraFalar = function (texto) {
+    var t = String(texto || '').replace(/\s+/g, ' ').trim();
+    if (!t) return;
+    if (t.length > 110) t = t.slice(0, 107) + '…';
+    t = 'Dandara: ' + t;
+    try { if (window.AndroidAPI && typeof AndroidAPI.showToast === 'function') { AndroidAPI.showToast(t); return; } } catch (e) {}
+    try { mostrarToast(t); } catch (e2) {}
+  };
   var bolha = window.assistenteAdicionarBolha;
   if (typeof bolha === 'function') {
-    window.assistenteAdicionarBolha = function (tipo) {
+    window.assistenteAdicionarBolha = function (tipo, texto) {
       var r = bolha.apply(this, arguments);
       try { if (tipo === 'bot' && window.ucDandara) window.ucDandara.gesto(); } catch (e) {}
+      try {
+        var pn = el('assistentePainel');
+        if (tipo === 'bot' && !(pn && pn.classList.contains('aberto'))) window.ucDandaraFalar(texto);
+      } catch (e2) {}
       return r;
     };
   }
