@@ -19075,7 +19075,7 @@ function abrirSpaceImpact() {
     else if (view === 'ficha') { S.view = 'ficha'; S.fichaId = id; S.fichaFoto = undefined; }
     else { S.view = view || 'lista'; }
     desenhar();
-    $('ccPainel').scrollTop = 0;
+    var pn = $('ccPainel'); if (pn) pn.scrollTop = 0;
   };
   window.ccFechar = function () {
     var p = $('ccPainel');
@@ -19089,7 +19089,7 @@ function abrirSpaceImpact() {
     S.view = view;
     if (extra) Object.keys(extra).forEach(function (k) { S[k] = extra[k]; });
     desenhar();
-    $('ccPainel').scrollTop = 0;
+    var pn = $('ccPainel'); if (pn) pn.scrollTop = 0;
   }
   window.ccVoltar = function () {
     var a = S.pilha.pop();
@@ -19180,7 +19180,12 @@ function abrirSpaceImpact() {
     if (ids.length < 2) { toast('Marque pelo menos 2 cadastros.', 'erro'); return; }
     abrirCmp(ids);
   };
-  window.ccFicha = function (id) { ir('ficha', { fichaId: id, fichaFoto: undefined }); };
+  window.ccFicha = function (id) {
+    var pn = $('ccPainel');
+    /* Se o painel de cadastros ainda não foi criado/aberto (ex.: botão "Ficha" da Dandara), abre-o direto na ficha */
+    if (!pn || !pn.classList.contains('aberto')) { ccAbrir('ficha', id); return; }
+    ir('ficha', { fichaId: id, fichaFoto: undefined });
+  };
 
   function aoMudar(e) {
     var t = e.target;
