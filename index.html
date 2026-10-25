@@ -941,6 +941,10 @@ if (typeof Promise !== 'undefined' && !Promise.prototype.finally) Promise.protot
       <span class="aviso-icone">⚠️</span>
       <span><b>Aviso ao aluno:</b> a formação de alunos é uma etapa de aprendizado. <b>Depois de formado, o trabalho de dar aula passa a ser remunerado.</b></span>
     </div>
+    <div class="card fechado" id="cardRelatoriosFormacao" style="border:1px solid var(--gold);">
+      <h3 style="color:var(--gold);"><i class="fas fa-book-open"></i> Formação de Professor — meus relatórios</h3>
+      <div id="boxRelatoriosFormacao"></div>
+    </div>
     <div class="card fechado" id="cardFormacaoInfantil" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-chalkboard-teacher"></i> Formação — Dar aula de Capoeira para Crianças</h3>
       <p class="mini" style="margin-bottom:8px;">Aluno já cadastrado usa o <b>mesmo login</b> da aba Aluno. Ao ser aprovado, aparece um ícone especial no check-in e no painel.</p>
@@ -1181,6 +1185,12 @@ if (typeof Promise !== 'undefined' && !Promise.prototype.finally) Promise.protot
   <!-- ================= ABA 4 - PROFESSOR ================= -->
   <div id="tab4" class="tab-content">
     <div id="conteudoProfessor"></div>
+    <div class="card fechado" id="janelaFormacaoProfessor" style="border:1px solid var(--gold);margin-top:12px;">
+      <h3 style="color:var(--gold);"><i class="fas fa-user-graduate"></i> Formação de Professor</h3>
+      <div id="boxFormacaoProfessorGestao"></div>
+      <h3 style="color:var(--gold);margin-top:14px;"><i class="fas fa-award"></i> Certificados dos alunos</h3>
+      <div id="boxCertificadosProfessorFormacao"></div>
+    </div>
   </div>
 
   <!-- ================= ABA 5 - ADM ================= -->
@@ -7775,8 +7785,11 @@ function renderRankingCompleto() {
 }
 
 function certificadosDoAluno(aluno) {
+  /* Aluno vê só os próprios certificados: se o registro tem alunoId, vale só o id (nunca por nome,
+     para não mostrar certificado de outro aluno com o mesmo nome). Nome só para registros antigos sem id. */
   return DB.listar('certificados').filter(function (c) {
-    return c.alunoId === aluno.id || normalizar(c.alunoNome) === normalizar(aluno.nome);
+    if (c.alunoId) return c.alunoId === aluno.id;
+    return normalizar(c.alunoNome) === normalizar(aluno.nome);
   }).sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
 }
 
@@ -21358,6 +21371,26 @@ function dsUsarSugestao() {
     if (!aluno || !info || !dentroJanelaCheckin(info.aula)) { permanencia.inicioMs = null; return; }
     var dist = distanciaM({ lat: pos.coords.latitude, lng: pos.coords.longitude }, info.centro);
     if (dist > RAIO_ALUNO_M) { permanencia.inicioMs = null; return; }
+    /* Dandara faz o check-in sozinha: aluno no local + professor já registrado no local hoje */
+    ucDandaraCheckinAutomatico(aluno, info);
+  }
+  var ucDandaraUltimoDia = null;
+  function ucDandaraCheckinAutomatico(aluno, info) {
+    var dia = hojeLocal();
+    if (ucDandaraUltimoDia === dia + ':' + aluno.id) return;
+    var profNoLocal = DB.listar('checkinsProfessor').some(function (c) { return c.data === dia; });
+    if (!profNoLocal) return;
+    var ja = DB.listar('presencas').some(function (p) { return p.alunoId === aluno.id && p.data === dia && p.status !== 'rejeitado'; });
+    ucDandaraUltimoDia = dia + ':' + aluno.id;
+    if (ja) return;
+    DB.salvar('presencas', {
+      alunoId: aluno.id, alunoNome: aluno.nome, data: dia, status: 'aprovado',
+      tipo: 'automatico_dandara', automatico: true, poloId: info.polo.id, poloNome: info.polo.nome || '',
+      horaCheckin: new Date().toISOString(), criadoEm: new Date().toISOString()
+    }).then(function () {
+      if (typeof notificar === 'function') notificar('Dandara', 'Seu check-in de hoje foi registrado automaticamente. Bom treino!');
+      mostrarToast('Dandara registrou seu check-in automaticamente.');
+    }).catch(function () { ucDandaraUltimoDia = null; });
   }
   function alunoDentroDoRaio() {
     var info = aulaHojeComLocal();
@@ -22424,6 +22457,134 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   }
   if (document.readyState === 'complete') setTimeout(verificar, 2500);
   else window.addEventListener('load', function () { setTimeout(verificar, 2500); });
+})();
+</script>
+
+<script id="ucRelatoriosFormacao">
+/* Formação de professor — parte teórica: 20 relatórios (alongamento, aquecimento, brincadeira infantil). */
+(function () {
+  var TEMAS = ['Alongamento', 'Aquecimento', 'Brincadeira infantil'];
+  var TOTAL = 20;
+  var MIN_CARACTERES = 200;
+  var HORAS_POR_RELATORIO = 3; /* 60 h teóricas / 20 relatórios */
+  function hojeISO() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function meus(aluno) { return DB.listar('relatoriosFormacao').filter(function (r) { return r.alunoId === aluno.id; }); }
+  function render() {
+    var box = document.getElementById('boxRelatoriosFormacao');
+    if (!box) return;
+    var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (!aluno) {
+      box.innerHTML = '<div class="aviso-info"><i class="fas fa-user-lock"></i> Faça login na aba <b>Aluno</b> para enviar seus relatórios.</div>';
+      return;
+    }
+    var lista = meus(aluno);
+    var total = lista.length;
+    var pct = Math.min(100, Math.round(total / TOTAL * 100));
+    var porTema = TEMAS.map(function (t) { return { t: t, n: lista.filter(function (r) { return r.tema === t; }).length }; });
+    var horas = total * HORAS_POR_RELATORIO;
+    var resumo = porTema.map(function (x) { return '<div class="linha"><span>' + x.t + '</span><b>' + x.n + '</b></div>'; }).join('');
+    var opcoes = TEMAS.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+    var form = total >= TOTAL
+      ? '<div class="aviso-info"><i class="fas fa-check-circle"></i> Os ' + TOTAL + ' relatórios teóricos foram concluídos.</div>'
+      : '<select id="relTema" class="input">' + opcoes + '</select>' +
+        '<textarea id="relTexto" rows="6" placeholder="Escreva seu relatório para a Dandara (mínimo ' + MIN_CARACTERES + ' caracteres)."></textarea>' +
+        '<button class="btn btn-gold" type="button" onclick="ucEnviarRelatorioFormacao(this)"><i class="fas fa-paper-plane"></i> Enviar relatório</button>';
+    box.innerHTML =
+      '<p class="mini">Carga teórica: <b>' + horas + ' de 60 h</b> · relatórios: <b>' + total + ' de ' + TOTAL + '</b></p>' +
+      '<div style="height:8px;background:#0003;border-radius:6px;overflow:hidden;margin:6px 0 10px;"><div style="width:' + pct + '%;height:100%;background:var(--gold);"></div></div>' +
+      resumo + '<div style="margin-top:10px;">' + form + '</div>';
+  }
+  window.ucEnviarRelatorioFormacao = function (btn) {
+    var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (!aluno) { mostrarToast('Faça login na aba Aluno primeiro.', 'erro'); return; }
+    var tema = document.getElementById('relTema').value;
+    var texto = (document.getElementById('relTexto').value || '').trim();
+    if (texto.length < MIN_CARACTERES) { mostrarToast('O relatório precisa ter pelo menos ' + MIN_CARACTERES + ' caracteres.', 'erro'); return; }
+    if (meus(aluno).length >= TOTAL) { mostrarToast('Você já enviou os ' + TOTAL + ' relatórios.', 'erro'); return; }
+    btn.disabled = true;
+    DB.salvar('relatoriosFormacao', {
+      alunoId: aluno.id, alunoNome: aluno.nome, alunoApelido: aluno.apelido || '',
+      tema: tema, texto: texto, data: hojeISO(), criadoEm: new Date().toISOString()
+    }).then(function () {
+      mostrarToast('Relatório enviado para a Dandara.');
+      if (typeof notificarEquipe === 'function') notificarEquipe('Relatório de formação', (aluno.apelido || aluno.nome) + ' enviou um relatório: ' + tema);
+      render();
+    }).catch(function () {
+      mostrarToast('Não foi possível enviar. Tente de novo.', 'erro');
+      btn.disabled = false;
+    });
+  };
+  function iniciar() {
+    render();
+    try { DB.escutar('relatoriosFormacao', function () { render(); }); } catch (e) {}
+  }
+  if (document.readyState === 'complete') setTimeout(iniciar, 1500);
+  else window.addEventListener('load', function () { setTimeout(iniciar, 1500); });
+  setInterval(render, 15000);
+})();
+</script>
+
+<script id="ucFormacaoProfessorGestao">
+/* Janela separada do professor: progresso e relatórios de todos os alunos em formação de professor */
+(function () {
+  var TOTAL = 20, HORAS_POR_RELATORIO = 3;
+  var TEMAS = ['Alongamento', 'Aquecimento', 'Brincadeira infantil'];
+  function escH(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function render() {
+    var box = document.getElementById('boxFormacaoProfessorGestao');
+    if (!box) return;
+    if (!(typeof equipeLogadaAtiva === 'function' && equipeLogadaAtiva())) {
+      box.innerHTML = '<div class="aviso-info">Entre como professor para ver a formação dos alunos.</div>';
+      return;
+    }
+    var rels = DB.listar('relatoriosFormacao');
+    var alunos = DB.listar('alunos').filter(function (a) { return a.ativo !== false; });
+    var emFormacao = alunos.filter(function (a) { return rels.some(function (r) { return r.alunoId === a.id; }); });
+    if (!emFormacao.length) {
+      box.innerHTML = '<div class="aviso-info">Nenhum aluno enviou relatórios de formação ainda.</div>';
+      renderCertificados();
+      return;
+    }
+    box.innerHTML = emFormacao.map(function (a) {
+      var mine = rels.filter(function (r) { return r.alunoId === a.id; }).sort(function (x, y) { return String(y.criadoEm).localeCompare(String(x.criadoEm)); });
+      var porTema = TEMAS.map(function (t) { return escH(t) + ': ' + mine.filter(function (r) { return r.tema === t; }).length; }).join(' · ');
+      var horas = mine.length * HORAS_POR_RELATORIO;
+      var textos = mine.map(function (r) {
+        return '<div class="lista-item" style="margin-top:6px;"><div class="mini"><b>' + escH(r.tema) + '</b> · ' + escH(r.data) + '</div>' +
+          '<div style="white-space:pre-wrap;font-size:.9rem;">' + escH(r.texto) + '</div></div>';
+      }).join('');
+      return '<div class="lista-item" style="margin-bottom:10px;">' +
+        '<div class="linha"><b>' + escH(a.apelido || a.nome) + '</b><span class="pill">' + mine.length + '/' + TOTAL + ' relatórios</span></div>' +
+        '<div class="mini">' + porTema + '</div>' +
+        '<div class="mini">Carga teórica: ' + horas + ' de 60 h</div>' +
+        '<details style="margin-top:6px;"><summary>Ver relatórios</summary>' + textos + '</details>' +
+        '</div>';
+    }).join('');
+    renderCertificados();
+  }
+  /* Certificados de todos os alunos, para o professor abrir e compartilhar */
+  function renderCertificados() {
+    var box = document.getElementById('boxCertificadosProfessorFormacao');
+    if (!box) return;
+    var certs = DB.listar('certificados').slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+    if (!certs.length) { box.innerHTML = '<p class="sem-dados">Nenhum certificado emitido ainda.</p>'; return; }
+    box.innerHTML = certs.map(function (c) {
+      return '<div class="lista-item" style="margin-bottom:8px;"><div class="linha"><b>' + escH(c.alunoNome || '-') + '</b><span class="mini">' + escH(c.data || '') + '</span></div>' +
+        '<div class="mini">' + escH(c.evento || '-') + (c.cargaHoraria ? ' · ' + escH(c.cargaHoraria) : '') + '</div>' +
+        '<div class="flex-btn" style="margin-top:6px;">' +
+        '<button class="btn btn-gold btn-mini" onclick="baixarCertificado(\'' + escH(c.id) + '\')"><i class="fas fa-file-arrow-down"></i> Abrir</button>' +
+        '<button class="btn btn-whatsapp btn-mini" onclick="compartilharCertificadoWhatsApp(\'' + escH(c.id) + '\')"><i class="fab fa-whatsapp"></i> WhatsApp</button>' +
+        '</div></div>';
+    }).join('');
+  }
+  function iniciar() {
+    render();
+    try { DB.escutar('relatoriosFormacao', function () { render(); }); } catch (e) {}
+    try { DB.escutar('certificados', function () { renderCertificados(); }); } catch (e) {}
+  }
+  if (document.readyState === 'complete') setTimeout(iniciar, 1800);
+  else window.addEventListener('load', function () { setTimeout(iniciar, 1800); });
+  setInterval(render, 15000);
 })();
 </script>
 </body>
