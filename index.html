@@ -22383,5 +22383,48 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   else window.addEventListener('load', function () { setTimeout(iniciar, 300); });
 })();
 </script>
+
+<script id="ucDandaraAvisos">
+/* Dandara e os avisos: a notificação só dispara se a chave estiver ligada.
+   1) No APK, a notificação é nativa: liga sozinha.  2) No navegador com permissão concedida: liga sozinha.
+   3) Caso contrário, a Dandara mostra um aviso para o aluno/professor ativar. */
+(function () {
+  var CHAVE = 'uc_notif_ativa_v87';
+  var ESCONDER = 'uc_avisos_ocultos';
+  function temApk() { return !!(window.AndroidAPI && typeof window.AndroidAPI.showNotification === 'function'); }
+  function ligada() { try { return localStorage.getItem(CHAVE) === '1'; } catch (e) { return false; } }
+  function ligar() { try { localStorage.setItem(CHAVE, '1'); } catch (e) {} }
+  function ocultar() { try { sessionStorage.setItem(ESCONDER, '1'); } catch (e) {} }
+  function jaOculto() { try { return sessionStorage.getItem(ESCONDER) === '1'; } catch (e) { return false; } }
+
+  function mostrarBanner() {
+    if (document.getElementById('ucBannerAvisos')) return;
+    var b = document.createElement('div');
+    b.id = 'ucBannerAvisos';
+    b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:9000;' +
+      'background:#0b2a1c;border:1px solid #00e676;border-radius:14px;padding:12px 14px;color:#e8fff1;' +
+      'box-shadow:0 8px 24px #0009;display:flex;gap:10px;align-items:center;font-size:.86rem';
+    b.innerHTML = '<span style="flex:1"><b>Dandara:</b> ative os avisos para receber lembretes de aula e de check-in.</span>' +
+      '<button id="ucBannerSim" style="background:#00e676;color:#04140b;border:0;border-radius:10px;padding:8px 12px;font-weight:700">Ativar</button>' +
+      '<button id="ucBannerNao" style="background:transparent;color:#9fb;border:0;padding:8px">Depois</button>';
+    document.body.appendChild(b);
+    document.getElementById('ucBannerSim').onclick = function () {
+      b.remove();
+      if (typeof pedirPermissaoNotificacao === 'function') pedirPermissaoNotificacao();
+    };
+    document.getElementById('ucBannerNao').onclick = function () { b.remove(); ocultar(); };
+  }
+
+  function verificar() {
+    if (temApk()) { ligar(); return; }
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') { ligar(); return; }
+    if (Notification.permission === 'denied') return;
+    if (!ligada() && !jaOculto()) mostrarBanner();
+  }
+  if (document.readyState === 'complete') setTimeout(verificar, 2500);
+  else window.addEventListener('load', function () { setTimeout(verificar, 2500); });
+})();
+</script>
 </body>
 </html>
