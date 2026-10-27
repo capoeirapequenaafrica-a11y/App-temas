@@ -1819,7 +1819,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'checkinsProfessor', 'atividadeAluno', 'bioCredenciais', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasFormacao', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais', 'errosApp', 'acessosAluno', 'justificativasFalta', 'testesDandaraJogos', 'desafiosDandara', 'contasTeste', 'partidasDandara', 'pontosDandara'];
+var COLECOES = ['damasOnline', 'alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'checkinsProfessor', 'atividadeAluno', 'bioCredenciais', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasFormacao', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais', 'errosApp', 'acessosAluno', 'justificativasFalta', 'testesDandaraJogos', 'desafiosDandara', 'contasTeste', 'partidasDandara', 'pontosDandara'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -5273,7 +5273,7 @@ function tickQuebra() {
     if (b.x > br.x && b.x < br.x + br.w && b.y > br.y && b.y < br.y + br.h) {
       br.vivo = false;
       b.vy *= -1;
-      arcade.score += 15;
+      arcade.score += (typeof ucQuebraPontosBloco === 'function' ? ucQuebraPontosBloco() : 15);
       arcade._fxX = br.x + br.w / 2; arcade._fxY = br.y;
       FXA.burst(br.x + br.w / 2, br.y + br.h / 2, br.cor, 14, 3);
       registrarProgressoNivel(1);
@@ -8106,30 +8106,7 @@ function baixarCertificado(id) {
     }).join('') : '<p class="sem-dados">Nenhuma aula agendada ainda.</p>';
   };
 
-  W.corrigirPresencaManual = function () {
-    var alunoId = (document.getElementById('corrAluno') || {}).value;
-    var data = (document.getElementById('corrData') || {}).value;
-    var status = (document.getElementById('corrStatus') || {}).value || 'presente';
-    var aluno = DB.buscar('alunos', alunoId);
-    if (!aluno || !data) { mostrarToast('Aluno e data obrigatorios.', 'erro'); return; }
-    DB.salvar('checkins', {
-      id: 'ch_' + alunoId + '_' + data, alunoId: alunoId, alunoNome: aluno.nome, data: data,
-      status: status, origem: 'correcao_manual_professor',
-      criadoEm: (typeof agoraISO === 'function' ? agoraISO() : new Date().toISOString())
-    }).then(function () {
-      if (status === 'falta' || status === 'atraso') {
-        try {
-          DB.salvar('advertencias', {
-            id: 'adv_' + alunoId + '_' + data + '_' + status, alunoId: alunoId, tipo: status, data: data,
-            texto: status === 'falta' ? 'Falta (correcao manual).' : 'Atraso (correcao manual).',
-            criadoEm: new Date().toISOString()
-          });
-        } catch (e) {}
-      }
-      mostrarToast('Presenca corrigida: ' + status);
-    });
-  };
-
+  
   W.renderCurriculoAluno = function () {
     var box = document.getElementById('boxCurriculoAluno');
     if (!box) return;
@@ -15281,6 +15258,39 @@ function msIniciar() {
     return 'Jogador';
   }
   function mrRef() { return MPM.fs.collection('pmSalas').doc('mr_' + MPM.sala).collection('jogadores'); }
+  /* Dandara como jogadora no Metal Slug online: um aparelho da sala (o de menor id ativo) escreve a Dandara,
+     que anda de um lado para o outro e atira de tempos em tempos. Ela aparece como qualquer jogador. */
+  var DZM = { timer: null, rx: 300, dir: 1, tiro: 0, ultimo: 0 };
+  function dzmPassos(ref, agora) {
+    DZM.rx += 6 * DZM.dir;
+    if (DZM.rx > 700 || DZM.rx < 60) DZM.dir *= -1;
+    if (agora - DZM.ultimo > 1200) { DZM.ultimo = agora; DZM.tiro++; }
+    ref.collection('jogadores').doc('dandara').set({
+      rx: DZM.rx, y: 0, dir: DZM.dir, ax: DZM.dir, ay: 0, mov: true, ag: false, mi: 0, tf: false, over: false,
+      sc: 0, vd: 0, et: 0, arma: 'pistola', tiroN: DZM.tiro, nome: 'Dandara', t: agora, rp: -1
+    }).catch(function () {});
+  }
+  function dzmIniciar() {
+    if (DZM.timer) return;
+    DZM.timer = setInterval(function () {
+      if (!MPM.on || !MPM.fs || !MPM.id) return;
+      var ref = MPM.fs.collection('pmSalas').doc('mr_' + MPM.sala);
+      ref.collection('jogadores').get().then(function (snap) {
+        var menor = MPM.id, agora = Date.now();
+        snap.forEach(function (doc) {
+          var x = doc.data() || {};
+          if (doc.id === 'dandara' || !x.t || agora - x.t > 6000) return;
+          if (doc.id < menor) menor = doc.id;
+        });
+        if (menor !== MPM.id) return;
+        dzmPassos(ref, agora);
+      }).catch(function () {});
+    }, 500);
+  }
+  if (!window.__dzmVigia) {
+    window.__dzmVigia = setInterval(function () { if (MPM && MPM.on) dzmIniciar(); }, 2000);
+  }
+
   function mrSair() {
     if (MPM.unsub) { try { MPM.unsub(); } catch (e) {} MPM.unsub = null; }
     if (MPM.on && MPM.fs) { try { mrRef().doc(MPM.id).delete(); } catch (e) {} }
@@ -16008,6 +16018,35 @@ function pmIniciar() {
         }, { merge: true }).catch(function () {});
       }
     }
+  }
+  /* Dandara como fantasma no Pac Horror online: quando este aparelho é o Pac da sala, a Dandara entra como fantasma
+     e persegue o Pac (fantasmas atravessam paredes no jogo, então ela anda em linha reta até o Pac). */
+  var DZ = { on: false, x: 12, y: 10, timer: null, fs: null, cod: null };
+  function dzParar() {
+    if (DZ.timer) clearInterval(DZ.timer);
+    DZ.timer = null; DZ.on = false;
+    if (DZ.fs && DZ.cod) { try { DZ.fs.collection('pmSalas').doc(DZ.cod).collection('jogadores').doc('dandara').delete(); } catch (e) {} }
+  }
+  function dzIniciar(cod) {
+    var fs = mpFs(); if (!fs) return;
+    DZ.fs = fs; DZ.cod = cod; DZ.on = true; DZ.x = 12; DZ.y = 10;
+    var ref = fs.collection('pmSalas').doc(cod);
+    DZ.timer = setInterval(function () {
+      if (!MP.on || MP.role !== 'pac' || MP.codigo !== cod) { dzParar(); return; }
+      ref.get().then(function (doc) {
+        var d = doc.data() || {};
+        var alvo = d.pac || { x: 1, y: 1 };
+        var ex = Math.sign(alvo.x - DZ.x), ey = Math.sign(alvo.y - DZ.y);
+        if (Math.abs(alvo.x - DZ.x) >= Math.abs(alvo.y - DZ.y)) { if (ex) DZ.x += ex; else if (ey) DZ.y += ey; }
+        else { if (ey) DZ.y += ey; else if (ex) DZ.x += ex; }
+        ref.collection('jogadores').doc('dandara').set({ role: 'ghost', nome: 'Dandara', x: DZ.x, y: DZ.y, dir: [ex, ey], t: Date.now() });
+      }).catch(function () {});
+    }, 400);
+  }
+  if (!window.__dzVigia) {
+    window.__dzVigia = setInterval(function () {
+      if (MP && MP.on && MP.role === 'pac' && MP.codigo && !DZ.on) dzIniciar(MP.codigo);
+    }, 2000);
   }
   function mpEntrarGeral() {
     var fs = mpFs();
@@ -17931,13 +17970,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     };
   })();
 
-  window.ucEntrarAlunoTeste = function () {
-    sessaoAlunoId = TESTE_ID;
-    toast('Modo teste ativo: nada será salvo.');
-    try { if (typeof abrirAba === 'function') abrirAba('tab3'); } catch (e) {}
-    try { renderAluno(); } catch (e) {}
-  };
-  window.ucSairAlunoTeste = function () {
+    window.ucSairAlunoTeste = function () {
     if (typeof sairAluno === 'function') sairAluno();
   };
 
@@ -23381,7 +23414,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   }
   async function rodarTestes(botao, grupo) {
     if (rodandoTestes) return;
-    rodandoTestes = true; desafioAtual = null;
+    rodandoTestes = true; desafioAtual = null; window.ucDandaraTestando = true;
     if (botao) botao.disabled = true;
     /* os testes não podem gravar pontos reais no ranking */
     var registroOriginal = window.registrarPontosJogo;
@@ -23410,6 +23443,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       }
     } finally {
       window.registrarPontosJogo = registroOriginal;
+      window.ucDandaraTestando = false;
     }
     var cont = function (v) { return resultados.filter(function (r) { return r.veredito === v; }).length; };
     var relatorio = {
@@ -23428,8 +23462,16 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     var l = DB.listar('testesDandaraJogos').slice().sort(function (a, b) { return String(b.criadoEm).localeCompare(String(a.criadoEm)); });
     return l[0] || null;
   }
+  /* Meta do desafio: a Dandara aprende com as partidas dos alunos. A meta é a média dos alunos naquele jogo,
+     subindo um pouco a cada fase. Se ainda não há partidas suficientes, usa o último teste de fase (se houver). */
   function referencia(jogo, fase) {
-    var r = ultimoRelatorio(); if (!r) return null;
+    var ap = DB.buscar('aprendizadoDandara', jogo);
+    if (ap && ap.partidas >= 3 && typeof ap.mediaPontos === 'number') {
+      return Math.max(1, Math.round(ap.mediaPontos * (1 + 0.1 * (Number(fase) - 1))));
+    }
+    var r = DB.listar('testesDandaraJogos').filter(function (t) { return t.tipo !== 'aluno'; })
+      .sort(function (a, b) { return String(b.criadoEm).localeCompare(String(a.criadoEm)); })[0];
+    if (!r) return null;
     var it = (r.resultados || []).filter(function (x) { return x.jogo === jogo && x.fase === fase; })[0];
     return it ? it.pontos : null;
   }
@@ -24331,6 +24373,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     return typeof sessaoEquipe !== 'undefined' && !!sessaoEquipe && (sessaoEquipe.papel === 'adm' || sessaoEquipe.papel === 'dev');
   }
   function tentarAuto() {
+    return; /* desativado: a Dandara agora analisa as partidas reais dos alunos */
     if (!window.ucDJ || typeof window.ucDJ.campanha !== 'function') return;
     if (!ehAdmLogada()) return;
     if (window.ucDJ.DJ && window.ucDJ.DJ.rodando) return;
@@ -24465,6 +24508,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     return false;
   }
   function checar() {
+    return; /* desativado: a Dandara agora analisa as partidas reais dos alunos */
     var hora = cfg().hora || '03:00';
     var chave = 'uc_varredura_' + hojeISO();
     try { if (localStorage.getItem(chave)) return; } catch (e) { return; }
@@ -24576,6 +24620,26 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     }
   }
   function escH(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  window.ucVinculoDeAluno = calcularVinculo;
+  window.ucVinculoAtual = function () {
+    var a = alunoLogado();
+    return a && a.id !== 'dandara_aluno_teste' ? calcularVinculo(a) : { confianca: 0, personalidade: 'Iniciante', recentes: [] };
+  };
+  /* Ritmo da roda (1ª versão): combos. Quanto maior o vínculo, maior a janela para encadear blocos e maior o bônus.
+     Ainda não há toque de berimbau: o ritmo usa a confiança como medida. */
+  var comboAtual = 0, ultimoAcerto = 0;
+  window.ucQuebraPontosBloco = function () {
+    var v = window.ucVinculoAtual();
+    var c = Number(v.confianca) || 0;
+    var janela = c >= 70 ? 2000 : (c >= 30 ? 1500 : 1000);
+    var agora = Date.now();
+    comboAtual = (agora - ultimoAcerto <= janela) ? comboAtual + 1 : 1;
+    ultimoAcerto = agora;
+    var fator = c >= 70 ? 0.15 : 0.1;
+    var mult = 1 + Math.min(2, (comboAtual - 1) * fator);
+    return Math.round(15 * mult);
+  };
+  window.ucPersonalidadeDe = personalidadeDe;
   setInterval(montar, 4000);
 })();
 </script>
@@ -24595,6 +24659,406 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   }
   setInterval(limpar, 60000);
   window.addEventListener('load', function () { setTimeout(limpar, 8000); });
+})();
+</script>
+<style id="ucSemTestesManuais">#ucRelatorioDandara button[onclick*="ucRodarTestesDandara"], #ucRelatorioDandara button[onclick*="ucDandaraRodarProximaEtapa"], button[onclick*="ucDandaraTestaAbaAluno"], button[onclick*="ucDandaraJogar"] {display:none !important;}</style>
+
+<script id="ucAnaliseDurantePartida">
+/* A Dandara analisa cada partida real de aluno: erros, pontos, tempo, progresso e abandono.
+   Gera relatório para a ADM (o último fica no cartão) e soma os dados por jogo para ela aprender. */
+(function () {
+  var atual = null, errosCapturados = [];
+  var onErr = function (e) { errosCapturados.push(String((e && (e.message || (e.error && e.error.message))) || 'erro').slice(0, 160)); };
+  function ehPartidaDeAluno() {
+    if (window.ucDandaraTestando) return false;
+    if (window.ucDJ && window.ucDJ.DJ && window.ucDJ.DJ.rodando) return false;
+    var a = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    return !!a && a.id !== 'dandara_aluno_teste';
+  }
+  function iniciar(tipo, nivel) {
+    if (!ehPartidaDeAluno()) { atual = null; return; }
+    errosCapturados = [];
+    window.addEventListener('error', onErr);
+    atual = { aluno: alunoLogado(), jogo: tipo, nivel: nivel, inicio: Date.now(), pontosIni: 0 };
+  }
+  function finalizar() {
+    if (!atual) return;
+    window.removeEventListener('error', onErr);
+    var d = atual; atual = null;
+    var pontos = Number(arcade.score) || 0;
+    var duracaoS = Math.round((Date.now() - d.inicio) / 1000);
+    var andou = pontos > 0 || duracaoS > 10;
+    var melhorias = [];
+    if (errosCapturados.length) melhorias.push('Erro durante a partida: ' + errosCapturados[0]);
+    if (!andou) melhorias.push('Partida muito curta: o aluno saiu logo ou o jogo não começou.');
+    if (andou && pontos === 0) melhorias.push('Jogou sem pontuar: conferir se a fase está fácil ou se o objetivo está claro.');
+    var veredito = errosCapturados.length ? 'erro' : (melhorias.length ? 'atencao' : 'ok');
+    var relatorio = {
+      criadoEm: new Date().toISOString(), emitidoPor: 'Dandara (análise de partida)', tipo: 'aluno',
+      alunoId: d.aluno.id, alunoNome: d.aluno.nome,
+      resultados: [{ jogo: d.jogo, nome: (typeof NOMES !== 'undefined' && NOMES[d.jogo]) || d.jogo, fase: d.nivel, pontos: pontos, andou: andou, erros: errosCapturados.slice(0, 5), veredito: veredito, melhorias: melhorias, duracaoS: duracaoS }],
+      resumo: { testes: 1, ok: veredito === 'ok' ? 1 : 0, atencao: veredito === 'atencao' ? 1 : 0, erro: veredito === 'erro' ? 1 : 0 }
+    };
+    try { DB.salvar('testesDandaraJogos', relatorio).catch(function () {}); } catch (e) {}
+    /* aprendizado: soma por jogo (partidas, média de pontos, erros) */
+    try {
+      var ap = DB.buscar('aprendizadoDandara', d.jogo) || { partidas: 0, somaPontos: 0, erros: 0 };
+      ap.partidas = (ap.partidas || 0) + 1;
+      ap.somaPontos = (ap.somaPontos || 0) + pontos;
+      ap.erros = (ap.erros || 0) + errosCapturados.length;
+      ap.mediaPontos = Math.round(ap.somaPontos / ap.partidas);
+      ap.atualizadoEm = new Date().toISOString();
+      DB.salvar('aprendizadoDandara', ap, d.jogo).catch(function () {});
+    } catch (e) {}
+  }
+  var abrirOrig = window.abrirJogoArcade, fecharAtual = window.fecharJogoArcade;
+  window.abrirJogoArcade = function (tipo, nivel) {
+    var r = abrirOrig.apply(this, arguments);
+    try { iniciar(tipo, nivel); } catch (e) {}
+    return r;
+  };
+  window.fecharJogoArcade = function () {
+    try { finalizar(); } catch (e) {}
+    return fecharAtual.apply(this, arguments);
+  };
+})();
+</script>
+
+<script id="ucVinculoProfessor">
+/* Professor vê o vínculo de cada aluno com a Dandara: personalidade (graduação) e relação (frase, sem barra). */
+(function () {
+  function escH(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function frase(c) { return c < 30 ? 'ainda se conhecendo' : (c < 70 ? 'treinando junto' : 'parceira de roda'); }
+  function ehEquipe() { return typeof sessaoEquipe !== 'undefined' && !!sessaoEquipe && (sessaoEquipe.papel === 'professor' || sessaoEquipe.papel === 'adm' || sessaoEquipe.papel === 'dev'); }
+  function montar() {
+    var cont = document.getElementById('conteudoProfessor');
+    if (!cont || !ehEquipe() || typeof window.ucVinculoDeAluno !== 'function') return;
+    var card = document.getElementById('ucVinculoProfessor');
+    if (!card) {
+      card = document.createElement('div'); card.id = 'ucVinculoProfessor'; card.className = 'card';
+      var ref = document.getElementById('ucProgressoDandara');
+      if (ref && ref.parentNode === cont) cont.insertBefore(card, ref.nextSibling); else cont.insertBefore(card, cont.firstChild);
+    }
+    var alunos = DB.listar('alunos').filter(function (a) { return a.ativo !== false; })
+      .sort(function (a, b) { return String(a.nome).localeCompare(String(b.nome)); });
+    var linhas = alunos.map(function (a) {
+      var v = window.ucVinculoDeAluno(a);
+      return '<div class="linha"><span><b>' + escH(a.apelido || a.nome) + '</b></span><span class="mini">' + escH(window.ucPersonalidadeDe(a)) + ' · ' + frase(v.confianca) + '</span></div>';
+    }).join('');
+    card.innerHTML = '<h3 style="color:var(--gold);"><i class="fas fa-robot"></i> Vínculo dos alunos com a Dandara</h3>' +
+      (linhas || '<p class="mini">Nenhum aluno cadastrado.</p>');
+  }
+  setInterval(montar, 5000);
+})();
+</script>
+
+<script id="ucProtecaoMinhoca">
+/* Proteção (Minhoca): quando a cabeça iria bater, a Dandara desvia a minhoca para um lado livre (uma vez por partida).
+   Com vínculo a partir de 50 de confiança. Depois de proteger, ela fica exposta por 3 segundos (sem proteção). */
+(function () {
+  var DIRS = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }];
+  var protecaoUsada = false, expostaAte = 0;
+  var abrirOrig = window.abrirJogoArcade;
+  window.abrirJogoArcade = function (tipo, nivel) {
+    protecaoUsada = false; expostaAte = 0;
+    return abrirOrig.apply(this, arguments);
+  };
+  function livre(x, y) {
+    if (x < 0 || y < 0 || x >= arcade.cols || y >= arcade.rows) return false;
+    return !arcade.snake.some(function (s) { return s.x === x && s.y === y; });
+  }
+  function podeProteger() {
+    if (protecaoUsada || Date.now() < expostaAte) return false;
+    var v = window.ucVinculoAtual ? window.ucVinculoAtual() : { confianca: 0 };
+    return (Number(v.confianca) || 0) >= 50;
+  }
+  var tickOrig = window.tickSnake;
+  window.tickSnake = function () {
+    try {
+      if (arcade && arcade.tipo === 'snake' && arcade.snake && arcade.snake.length && arcade.nextDir) {
+        var cabeca = arcade.snake[0];
+        var d = arcade.nextDir;
+        var nx = cabeca.x + d.x, ny = cabeca.y + d.y;
+        var bate = !livre(nx, ny);
+        if (bate && podeProteger()) {
+          var opostoX = -arcade.dir.x, opostoY = -arcade.dir.y;
+          var alvo = DIRS.filter(function (e) {
+            if (e.x === opostoX && e.y === opostoY) return false;
+            return livre(cabeca.x + e.x, cabeca.y + e.y);
+          })[0];
+          if (alvo) {
+            arcade.nextDir = alvo;
+            protecaoUsada = true;
+            expostaAte = Date.now() + 3000;
+            if (typeof mostrarToast === 'function') mostrarToast('A Dandara te protegeu! Desviou a minhoca.');
+          }
+        }
+      }
+    } catch (e) {}
+    return tickOrig.apply(this, arguments);
+  };
+})();
+</script>
+
+<script id="ucAjudaPulo">
+/* Ajuda (Pulo): para alunos com confiança de 30 ou mais, quando o pássaro sai da linha do vão do próximo cano,
+   a Dandara mostra uma linha tracejada até o centro do vão. Ajuda visual, sem mudar a pontuação. */
+(function () {
+  var drawOrig = window.drawPulo;
+  window.drawPulo = function () {
+    var r = drawOrig.apply(this, arguments);
+    try {
+      if (arcade && arcade.tipo === 'pulo' && arcade.bird && arcade.pipes && arcade.ctx) {
+        var v = window.ucVinculoAtual ? window.ucVinculoAtual() : { confianca: 0 };
+        if ((Number(v.confianca) || 0) >= 30) {
+          var prox = arcade.pipes.filter(function (p) { return p.x + 40 > arcade.bird.x; }).sort(function (a, b) { return a.x - b.x; })[0];
+          if (prox) {
+            var alvoY = prox.top + prox.gap / 2;
+            var fora = arcade.bird.y < prox.top || arcade.bird.y > prox.top + prox.gap;
+            if (fora) {
+              var ctx = arcade.ctx;
+              ctx.save();
+              ctx.strokeStyle = 'rgba(0,230,118,0.85)';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([6, 6]);
+              ctx.beginPath();
+              ctx.moveTo(arcade.bird.x, arcade.bird.y);
+              ctx.lineTo(prox.x + 20, alvoY);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.fillStyle = 'rgba(0,230,118,0.9)';
+              ctx.beginPath(); ctx.arc(prox.x + 20, alvoY, 5, 0, Math.PI * 2); ctx.fill();
+              ctx.restore();
+            }
+          }
+        }
+      }
+    } catch (e) {}
+    return r;
+  };
+})();
+</script>
+
+<script id="ucSequenciaAventura">
+/* Sequência (Aventura): pegar 3 moedas seguidas em até 6 segundos libera um salto duplo por 5 segundos.
+   Para alunos com confiança de 30 ou mais. O segundo salto só vale uma vez por pulo, no ar. */
+(function () {
+  var tempos = [], duploAte = 0, duploUsado = false, ultimaContagem = 0;
+  var tickOrig = window.tickMario, jumpOrig = window.marioJump;
+  window.tickMario = function () {
+    var r = tickOrig.apply(this, arguments);
+    try {
+      if (arcade && arcade.tipo === 'mario' && arcade.marioCoins) {
+        var pegas = arcade.marioCoins.filter(function (c) { return c.pega; }).length;
+        if (pegas > ultimaContagem) {
+          var agora = Date.now();
+          for (var k = 0; k < pegas - ultimaContagem; k++) tempos.push(agora);
+          tempos = tempos.filter(function (t) { return agora - t <= 6000; });
+          var v = window.ucVinculoAtual ? window.ucVinculoAtual() : { confianca: 0 };
+          if (tempos.length >= 3 && (Number(v.confianca) || 0) >= 30) {
+            duploAte = agora + 5000;
+            duploUsado = false;
+            tempos = [];
+            if (typeof mostrarToast === 'function') mostrarToast('Sequência! Salto duplo liberado por 5 segundos.');
+          }
+        }
+        ultimaContagem = pegas;
+        if (arcade.mario && arcade.mario.onGround) duploUsado = false;
+      }
+    } catch (e) {}
+    return r;
+  };
+  window.marioJump = function () {
+    try {
+      var m = arcade.mario;
+      if (arcade && arcade.tipo === 'mario' && arcade.rodando && m && !m.onGround && Date.now() < duploAte && !duploUsado) {
+        arcade.marioVy = -9.8;
+        duploUsado = true;
+        return;
+      }
+    } catch (e) {}
+    return jumpOrig.apply(this, arguments);
+  };
+  var iniciarOrig = window.abrirJogoArcade;
+  window.abrirJogoArcade = function () {
+    tempos = []; duploAte = 0; duploUsado = false; ultimaContagem = 0;
+    return iniciarOrig.apply(this, arguments);
+  };
+})();
+</script>
+
+<script id="ucDamasOnline">
+/* Damas online entre dois alunos, em tempo real (mesa GERAL, sem sala).
+   Primeiro aluno = prata (embaixo). Segundo aluno = preto (o tabuleiro dele é girado para ele também jogar de baixo).
+   Quem chega com a mesa cheia assiste. Sem aluno logado, a partida segue contra a Dandara, como antes. */
+(function () {
+  var MESA = 'GERAL', N = 8;
+  function aluno() { return typeof alunoLogado === 'function' ? alunoLogado() : null; }
+  function achatar(b) { var out = []; for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) out.push(b[r][c]); return out; }
+  function desachatar(f) { var b = []; for (var r = 0; r < N; r++) { b.push(f.slice(r * N, r * N + N)); } return b; }
+  function girar(b) { var out = []; for (var r = 0; r < N; r++) { out.push([]); for (var c = 0; c < N; c++) out[r].push(-b[N - 1 - r][N - 1 - c]); } return out; }
+  function doc() { return DB.buscar('damasOnline', MESA) || {}; }
+  function salvar(d) { try { DB.salvar('damasOnline', d, MESA).catch(function () {}); } catch (e) {} }
+
+  function aplicarRemoto(d) {
+    if (!arcade.damasOnline || arcade.tipo !== 'damas' || !d.board) return;
+    var canon = desachatar(d.board);
+    var lado = arcade.damasSide;
+    arcade.damasBoard = lado === -1 ? girar(canon) : canon;
+    if (d.fim) { arcade.damasOver = true; arcade.damasMsg = d.fim; arcade.damasTurn = -1; return; }
+    if (lado === 0) { arcade.damasTurn = -1; arcade.damasMsg = 'Mesa cheia: você assiste'; return; }
+    if (d.turno === lado) { arcade.damasTurn = 1; arcade.damasMsg = 'Sua vez'; }
+    else { arcade.damasTurn = -1; arcade.damasMsg = 'Aguardando o outro aluno…'; }
+  }
+
+  function entrar() {
+    var a = aluno();
+    if (!a || a.id === 'dandara_aluno_teste') { arcade.damasOnline = false; return; }
+    var d = doc();
+    var lado = 0;
+    if (!d.prata || d.prata.alunoId === a.id) lado = 1;
+    else if (!d.preto || d.preto.alunoId === a.id) lado = -1;
+    arcade.damasOnline = true; arcade.damasSide = lado;
+    var nome = { alunoId: a.id, nome: a.apelido || a.nome };
+    var novo = {
+      prata: lado === 1 ? nome : (d.prata || null),
+      preto: lado === -1 ? nome : (d.preto || null),
+      board: d.board || achatar(arcade.damasBoard),
+      turno: d.turno || 1, fim: null, atualizadoEm: new Date().toISOString()
+    };
+    if (!d.board) novo.board = achatar(lado === -1 ? girar(arcade.damasBoard) : arcade.damasBoard);
+    salvar(novo);
+    aplicarRemoto(novo);
+  }
+
+  var abrirOrig = window.abrirJogoArcade;
+  window.abrirJogoArcade = function (tipo, nivel) {
+    var r = abrirOrig.apply(this, arguments);
+    try { if (arcade.tipo === 'damas') entrar(); else arcade.damasOnline = false; } catch (e) {}
+    return r;
+  };
+
+  var iaOrig = window.damasIA;
+  window.damasIA = function () {
+    if (arcade && arcade.damasOnline) return;
+    return iaOrig.apply(this, arguments);
+  };
+
+  var aplicarOrig = window.damasApply;
+  window.damasApply = function (r, c, m) {
+    var res = aplicarOrig.apply(this, arguments);
+    try {
+      if (arcade && arcade.damasOnline && arcade.damasSide !== 0) {
+        var lado = arcade.damasSide;
+        var canon = lado === -1 ? girar(arcade.damasBoard) : arcade.damasBoard;
+        var d = doc();
+        salvar({
+          prata: d.prata || null, preto: d.preto || null, board: achatar(canon),
+          turno: -lado, fim: arcade.damasOver ? (arcade.damasMsg || 'Fim de jogo') : null,
+          atualizadoEm: new Date().toISOString()
+        });
+      }
+    } catch (e) {}
+    return res;
+  };
+
+  var fecharOrig = window.fecharJogoArcade;
+  window.fecharJogoArcade = function () {
+    try {
+      if (arcade && arcade.tipo === 'damas' && arcade.damasOnline && arcade.damasSide !== 0) {
+        var d = doc(), lado = arcade.damasSide;
+        salvar({ prata: lado === 1 ? null : (d.prata || null), preto: lado === -1 ? null : (d.preto || null), board: d.board || null, turno: d.turno || 1, fim: d.fim || null, atualizadoEm: new Date().toISOString() });
+      }
+      arcade.damasOnline = false;
+    } catch (e) {}
+    return fecharOrig.apply(this, arguments);
+  };
+
+  try { DB.escutar('damasOnline', function () { if (arcade && arcade.damasOnline) aplicarRemoto(doc()); }); } catch (e) {}
+})();
+</script>
+
+<script id="ucAvisosPrioritarios">
+/* Notificações com prioridade: um cartão fixo no topo das abas Professor e Aluno com o que precisa de atenção agora.
+   Professor: check-ins aguardando aprovação (com botão para ir até eles) e solicitações pendentes.
+   Aluno: situação do check-in de hoje e o aviso mais recente. Atualiza sozinho. */
+(function () {
+  function escH(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function hojeISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function ehEquipe() { return typeof sessaoEquipe !== 'undefined' && !!sessaoEquipe && (sessaoEquipe.papel === 'professor' || sessaoEquipe.papel === 'adm' || sessaoEquipe.papel === 'dev'); }
+  function irParaCheckins() {
+    var alvo = null;
+    document.querySelectorAll('h3, .titulo-colapsavel').forEach(function (h) {
+      if (!alvo && /check-ins pendentes/i.test(h.textContent || '')) alvo = h;
+    });
+    if (!alvo) return;
+    var card = alvo.closest('.card');
+    if (card) card.classList.remove('fechado');
+    alvo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.ucAvisosIrCheckins = irParaCheckins;
+
+  function linhasProfessor() {
+    var linhas = [];
+    var pendentes = DB.listar('presencas').filter(function (p) { return p.status === 'pendente'; });
+    if (pendentes.length) {
+      linhas.push('<div class="linha"><span><b>Check-ins aguardando aprovação</b></span>' +
+        '<button class="btn btn-gold btn-mini" type="button" onclick="ucAvisosIrCheckins()">' + pendentes.length + ' · ver</button></div>');
+    }
+    var solic = DB.listar('solicitacoes').filter(function (x) { return x.status === 'pendente'; });
+    if (solic.length) {
+      linhas.push('<div class="linha"><span><b>Solicitações pendentes</b></span><span class="pill">' + solic.length + '</span></div>');
+    }
+    return linhas;
+  }
+  function linhasAluno(aluno) {
+    var linhas = [];
+    var hoje = hojeISO();
+    var meu = DB.listar('presencas').filter(function (p) { return p.alunoId === aluno.id && p.data === hoje; });
+    var status = meu.length ? meu[meu.length - 1].status : null;
+    if (status === 'pendente') linhas.push('<div class="linha"><span><b>Seu check-in de hoje</b></span><span class="pill">aguardando o professor</span></div>');
+    else if (status === 'aprovado') linhas.push('<div class="linha"><span><b>Seu check-in de hoje</b></span><span class="pill">aprovado ✓</span></div>');
+    else if (status === 'rejeitado') linhas.push('<div class="linha"><span><b>Seu check-in de hoje</b></span><span class="pill">não aprovado: fale com o professor</span></div>');
+    var avisos = DB.listar('avisos').slice().sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
+    if (avisos.length) {
+      var texto = String(avisos[0].texto || avisos[0].titulo || 'Novo aviso').slice(0, 90);
+      linhas.push('<div class="mini" style="margin-top:6px;"><b>Aviso mais recente:</b> ' + escH(texto) + '</div>');
+    }
+    return linhas;
+  }
+
+  function montar() {
+    var cont = document.getElementById('conteudoProfessor');
+    var aba = document.getElementById('tab3');
+    if (cont && ehEquipe()) {
+      var c = document.getElementById('ucAvisosProfessor');
+      var linhas = linhasProfessor();
+      if (!c) {
+        c = document.createElement('div'); c.id = 'ucAvisosProfessor';
+        c.style.cssText = 'position:sticky;top:0;z-index:40;background:#0b1f14;border:2px solid #f4c430;border-radius:14px;padding:10px 12px;margin-bottom:10px;';
+        cont.insertBefore(c, cont.firstChild);
+      }
+      c.innerHTML = '<h3 style="color:#f4c430;margin:0 0 6px;"><i class="fas fa-bell"></i> Precisa da sua atenção</h3>' +
+        (linhas.length ? linhas.join('') : '<p class="mini">Nada pendente agora.</p>');
+    }
+    var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
+    if (aba && aluno && aluno.id !== 'dandara_aluno_teste') {
+      var a = document.getElementById('ucAvisosAluno');
+      if (!a) {
+        a = document.createElement('div'); a.id = 'ucAvisosAluno';
+        a.style.cssText = 'position:sticky;top:0;z-index:40;background:#0b1f14;border:2px solid #f4c430;border-radius:14px;padding:10px 12px;margin-bottom:10px;';
+        aba.insertBefore(a, aba.firstChild);
+      }
+      var la = linhasAluno(aluno);
+      a.innerHTML = '<h3 style="color:#f4c430;margin:0 0 6px;"><i class="fas fa-bell"></i> Para você agora</h3>' +
+        (la.length ? la.join('') : '<p class="mini">Nada pendente agora.</p>');
+    }
+  }
+  setInterval(montar, 3000);
+  window.addEventListener('load', function () { setTimeout(montar, 2000); });
 })();
 </script>
 </body>
