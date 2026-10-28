@@ -7901,8 +7901,7 @@ function baixarCertificado(id) {
     '<div class="rodape">Código de autenticidade: <strong>' + esc(c.codigo || '-') + '</strong><br>' +
     'Emitido em ' + esc(c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + esc(c.emitidoPor || 'Equipe') + '<br><br>' +
     '_______________________________<br>' + esc(c.assinatura || 'Professor responsável') + '</div></div>' +
-    '
-</body></html>';
+    '</body></html>';
   var w = window.open('', '_blank');
   if (!w) { mostrarToast('Permita pop-ups para abrir o certificado.', 'erro'); return; }
   w.document.write(html);
@@ -21476,47 +21475,98 @@ function dsUsarSugestao() {
     });
   };
 
-  /* Botões de "Entrar com padrão" ao lado dos formulários de login */
+  /* Botões de "Entrar com padrão" — só dentro do card de login, nunca soltos na tela */
   function garantirBotoesLogin() {
-    var alvos = [{ campo: 'alunoLoginNome', id: 'btnPadraoAluno', fn: 'ucLoginPadraoAluno()' }];
+    var logadoAluno = (typeof alunoLogado === 'function' && alunoLogado());
+    var logadoEquipe = !!(typeof sessaoEquipe !== 'undefined' && sessaoEquipe && sessaoEquipe.id);
+
+    var alvos = [{ campo: 'alunoLoginNome', id: 'btnPadraoAluno', fn: 'ucLoginPadraoAluno()', soSe: !logadoAluno }];
     ['professor', 'adm', 'dev'].forEach(function (p) {
-      alvos.push({ campo: 'equipeLoginNome_' + p, id: 'btnPadrao_' + p, fn: "ucLoginPadraoEquipe('" + p + "')" });
+      alvos.push({ campo: 'equipeLoginNome_' + p, id: 'btnPadrao_' + p, fn: "ucLoginPadraoEquipe('" + p + "')", soSe: !logadoEquipe });
     });
+
     alvos.forEach(function (a) {
       var campo = document.getElementById(a.campo);
-      if (!campo || document.getElementById(a.id)) return;
+      var btn = document.getElementById(a.id);
+      var wrap = btn ? btn.closest('.uc-padrao-login-wrap') : null;
+
+      /* campo hidden / fora de card de login → não cria botão (evita flutuar na tela) */
+      if (!campo || campo.type === 'hidden' || campo.offsetParent === null) {
+        if (wrap) wrap.remove();
+        else if (btn) btn.remove();
+        return;
+      }
+      var card = campo.closest('.card, .lock-card, #cardAlunoLogin, #cardFormacaoLoginAba');
+      if (!card) {
+        if (wrap) wrap.remove();
+        else if (btn) btn.remove();
+        return;
+      }
+      if (!a.soSe) {
+        if (wrap) wrap.style.display = 'none';
+        else if (btn) btn.style.display = 'none';
+        return;
+      }
+      if (btn) {
+        if (wrap) wrap.style.display = '';
+        btn.style.display = '';
+        return;
+      }
       var div = document.createElement('div');
+      div.className = 'uc-padrao-login-wrap';
       div.style.marginTop = '8px';
       div.innerHTML = '<button id="' + a.id + '" class="btn btn-secondary" type="button" onclick="' + a.fn + '"><i class="fas fa-th"></i> Entrar com padrão</button>';
-      campo.parentElement.insertAdjacentElement('afterend', div);
+      /* coloca logo após o campo de senha do mesmo card, se existir */
+      var senha = card.querySelector('input[type="password"]');
+      if (senha && senha.parentElement) senha.parentElement.insertAdjacentElement('afterend', div);
+      else campo.parentElement.insertAdjacentElement('afterend', div);
     });
   }
 
-  /* Cartão para definir/alterar o padrão quando a pessoa já está logada */
+  /* Cartão definir/alterar padrão — preso no painel certo, sem dividir a aba */
   function atualizarCartoesPadrao() {
     var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
     var painel = document.getElementById('cardAlunoPainel');
     var cardA = document.getElementById('cardPadraoAluno');
-    if (aluno && painel) {
+    if (aluno && painel && painel.offsetParent !== null) {
       var textoA = aluno.padraoHash ? 'Alterar padrão de login' : 'Definir padrão de login';
-      var htmlA = '<button class="btn btn-secondary" type="button" onclick="ucDefinirPadraoAluno()"><i class="fas fa-th"></i> ' + textoA + '</button>' +
+      var htmlA = '<h3 style="margin-bottom:8px;"><i class="fas fa-th"></i> Login por padrão</h3>' +
+        '<p class="mini" style="margin-bottom:8px;">Desenhe um padrão no lugar da senha nas próximas entradas.</p>' +
+        '<button class="btn btn-secondary" type="button" onclick="ucDefinirPadraoAluno()"><i class="fas fa-th"></i> ' + textoA + '</button>' +
         (aluno.padraoHash ? ' <button class="btn btn-danger btn-mini" type="button" onclick="ucRemoverPadraoAluno()"><i class="fas fa-trash"></i> Remover padrão</button>' : '');
-      if (!cardA) { cardA = document.createElement('div'); cardA.id = 'cardPadraoAluno'; cardA.className = 'card'; painel.insertBefore(cardA, painel.firstChild); }
+      if (!cardA || cardA.parentElement !== painel) {
+        if (cardA) cardA.remove();
+        cardA = document.createElement('div'); cardA.id = 'cardPadraoAluno'; cardA.className = 'card';
+        painel.appendChild(cardA);
+      }
       if (cardA.getAttribute('data-html') !== htmlA) { cardA.setAttribute('data-html', htmlA); cardA.innerHTML = htmlA; }
-    } else if (cardA) { cardA.remove(); }
+      cardA.style.display = '';
+    } else if (cardA) { cardA.style.display = 'none'; }
 
     var cardE = document.getElementById('cardPadraoEquipe');
-    var ativa = document.querySelector('.tab-content.active');
-    if (sessaoEquipe && sessaoEquipe.id && ativa) {
+    if (sessaoEquipe && sessaoEquipe.id) {
+      var destino = null;
+      if (sessaoEquipe.papel === 'dev') destino = document.getElementById('conteudoDev');
+      else if (sessaoEquipe.papel === 'adm') destino = document.getElementById('conteudoAdm');
+      else destino = document.getElementById('conteudoProfessor');
+      if (!destino) destino = document.querySelector('.tab-content.active');
       var u = (DB.carregado('equipe') && DB.listar('equipe').filter(function (x) { return x.id === sessaoEquipe.id; })[0]) || {};
       var textoE = u.padraoHash ? 'Alterar padrão de login' : 'Definir padrão de login';
-      var htmlE = '<button class="btn btn-secondary" type="button" onclick="ucDefinirPadraoEquipe()"><i class="fas fa-th"></i> ' + textoE + '</button>';
-      if (!cardE || cardE.parentElement !== ativa) {
-        if (cardE) cardE.remove();
-        cardE = document.createElement('div'); cardE.id = 'cardPadraoEquipe'; cardE.className = 'card';
-        ativa.insertBefore(cardE, ativa.firstChild);
+      var htmlE = '<h3 style="margin-bottom:8px;"><i class="fas fa-th"></i> Login por padrão</h3>' +
+        '<p class="mini" style="margin-bottom:8px;">Opcional: desenho no lugar da senha da equipe.</p>' +
+        '<button class="btn btn-secondary" type="button" onclick="ucDefinirPadraoEquipe()"><i class="fas fa-th"></i> ' + textoE + '</button>';
+      if (destino) {
+        if (!cardE || cardE.parentElement !== destino) {
+          if (cardE) cardE.remove();
+          cardE = document.createElement('div'); cardE.id = 'cardPadraoEquipe'; cardE.className = 'card';
+          /* depois do card de sessão, se houver */
+          var sess = destino.querySelector('.card');
+          if (sess && sess.parentElement === destino) destino.insertBefore(cardE, sess.nextSibling);
+          else destino.appendChild(cardE);
+        }
+        if (cardE.getAttribute('data-html') !== htmlE) { cardE.setAttribute('data-html', htmlE); cardE.innerHTML = htmlE; }
+        cardE.style.display = '';
       }
-      if (cardE.getAttribute('data-html') !== htmlE) { cardE.setAttribute('data-html', htmlE); cardE.innerHTML = htmlE; }
     } else if (cardE) { cardE.remove(); }
   }
 
@@ -25190,31 +25240,47 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     var cont = document.getElementById('conteudoProfessor');
     var aba = document.getElementById('tab3');
     if (cont && ehEquipe()) {
-      var c = document.getElementById('ucAvisosProfessor');
       var linhas = linhasProfessor();
-      if (!c) {
-        c = document.createElement('div'); c.id = 'ucAvisosProfessor';
-        c.style.cssText = 'position:sticky;top:0;z-index:40;background:#0b1f14;border:2px solid #f4c430;border-radius:14px;padding:10px 12px;margin-bottom:10px;';
-        cont.insertBefore(c, cont.firstChild);
+      var c = document.getElementById('ucAvisosProfessor');
+      if (!linhas.length) {
+        if (c) c.style.display = 'none';
+      } else {
+        var html = '<h3 style="color:#f4c430;margin:0 0 6px;"><i class="fas fa-bell"></i> Precisa da sua atenção</h3>' + linhas.join('');
+        if (!c) {
+          c = document.createElement('div'); c.id = 'ucAvisosProfessor';
+          c.style.cssText = 'position:sticky;top:0;z-index:40;background:#0b1f14;border:2px solid #f4c430;border-radius:14px;padding:10px 12px;margin-bottom:10px;';
+          cont.insertBefore(c, cont.firstChild);
+        }
+        c.style.display = '';
+        if (c.getAttribute('data-html') !== html) {
+          c.setAttribute('data-html', html);
+          c.innerHTML = html;
+        }
       }
-      c.innerHTML = '<h3 style="color:#f4c430;margin:0 0 6px;"><i class="fas fa-bell"></i> Precisa da sua atenção</h3>' +
-        (linhas.length ? linhas.join('') : '<p class="mini">Nada pendente agora.</p>');
     }
     var aluno = typeof alunoLogado === 'function' ? alunoLogado() : null;
     if (aba && aluno && aluno.id !== 'dandara_aluno_teste') {
-      var a = document.getElementById('ucAvisosAluno');
-      if (!a) {
-        a = document.createElement('div'); a.id = 'ucAvisosAluno';
-        a.style.cssText = 'position:sticky;top:0;z-index:40;background:#0b1f14;border:2px solid #f4c430;border-radius:14px;padding:10px 12px;margin-bottom:10px;';
-        aba.insertBefore(a, aba.firstChild);
-      }
       var la = linhasAluno(aluno);
-      a.innerHTML = '<h3 style="color:#f4c430;margin:0 0 6px;"><i class="fas fa-bell"></i> Para você agora</h3>' +
-        (la.length ? la.join('') : '<p class="mini">Nada pendente agora.</p>');
+      var a = document.getElementById('ucAvisosAluno');
+      if (!la.length) {
+        if (a) a.style.display = 'none';
+      } else {
+        var htmlA = '<h3 style="color:#f4c430;margin:0 0 6px;"><i class="fas fa-bell"></i> Para você agora</h3>' + la.join('');
+        if (!a) {
+          a = document.createElement('div'); a.id = 'ucAvisosAluno';
+          a.style.cssText = 'position:sticky;top:0;z-index:40;background:#0b1f14;border:2px solid #f4c430;border-radius:14px;padding:10px 12px;margin-bottom:10px;';
+          aba.insertBefore(a, aba.firstChild);
+        }
+        a.style.display = '';
+        if (a.getAttribute('data-html') !== htmlA) {
+          a.setAttribute('data-html', htmlA);
+          a.innerHTML = htmlA;
+        }
+      }
     }
   }
-  setInterval(montar, 3000);
-  window.addEventListener('load', function () { setTimeout(montar, 2000); });
+  setInterval(montar, 8000);
+  window.addEventListener('load', function () { setTimeout(montar, 2500); });
 })();
 </script>
 
@@ -25264,12 +25330,10 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   /* ---------- estilo ---------- */
   var css = document.createElement('style'); css.id = 'ucOrgCss';
   css.textContent =
-    '.uc-sub{display:flex;flex-wrap:wrap;gap:6px;padding:8px 2px 10px;margin:0 0 6px;position:sticky;top:0;z-index:30;background:rgba(7,16,12,.96);}' +
-    '.uc-sub::-webkit-scrollbar{display:none;}' +
-    '.uc-sub button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#e8f5ee;font:700 13px/1 inherit;white-space:nowrap;cursor:pointer;}' +
-    '.uc-sub button.on{background:var(--gold,#ffc107);color:#1d1600;border-color:transparent;}' +
-    '.uc-sub button.vazio{display:none;}' +
-    '.uc-host .uc-bloco:not(.uc-on){display:none !important;}' +
+    /* Sub-abas desativadas: a aba fica inteira, sem dividir o conteúdo */
+    '.uc-sub{display:none !important;}' +
+    '.uc-host .uc-bloco{display:block !important;}' +
+    '.uc-host .uc-bloco.uc-on{display:block !important;}' +
     '.uc-oculto{display:none !important;}' +
     '#cardAlunoPainel.uc-plano{background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;}' +
     '#toastBox{touch-action:none;pointer-events:auto;}';
@@ -25294,7 +25358,8 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     blocos.forEach(function (el) {
       var g = cfg.classificar(el) || cfg.padrao || ids[ids.length - 1];
       if (ids.indexOf(g) < 0) g = cfg.padrao || ids[ids.length - 1];
-      el.classList.add('uc-bloco'); el.setAttribute('data-ucg', g);
+      el.classList.add('uc-bloco', 'uc-on'); el.setAttribute('data-ucg', g);
+      el.style.display = '';
       if (!vazio(el)) contagem[g] = (contagem[g] || 0) + 1;
     });
     var perm = cfg.permitidos ? cfg.permitidos() : null;
@@ -25303,19 +25368,9 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     if (disponiveis.indexOf(ativo) < 0) ativo = (cfg.inicial && cfg.inicial(contagem)) || disponiveis[0] || ids[0];
     cfg.ativo = ativo;
     blocos.forEach(function (el) { el.classList.toggle('uc-on', el.getAttribute('data-ucg') === ativo); });
+    /* sem barra de sub-abas: conteúdo completo numa rolagem só */
     var barra = host.querySelector(':scope > .uc-sub[data-chave="' + chave + '"]');
-    if (!barra) {
-      barra = document.createElement('div'); barra.className = 'uc-sub'; barra.setAttribute('data-chave', chave);
-      var ref = cfg.depoisDe ? cfg.depoisDe(host) : null;
-      if (ref && ref.parentNode === host) host.insertBefore(barra, ref.nextSibling); else host.insertBefore(barra, host.firstChild);
-    }
-    var html = cfg.grupos.map(function (g) {
-      return '<button type="button" data-g="' + g.id + '" class="' + (g.id === ativo ? 'on' : '') + (disponiveis.indexOf(g.id) >= 0 ? '' : ' vazio') + '"><i class="fas ' + g.icone + '"></i>' + g.rotulo + '</button>';
-    }).join('');
-    if (barra._html !== html) {
-      barra.innerHTML = html; barra._html = html;
-      [].forEach.call(barra.querySelectorAll('button'), function (b) { b.onclick = function () { selecionar(chave, b.getAttribute('data-g')); }; });
-    }
+    if (barra) barra.style.display = 'none';
   }
   function selecionar(chave, grupo) {
     var cfg = ORG[chave]; if (!cfg) return;
@@ -25496,33 +25551,101 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   /* ---------- navegação ---------- */
   var abrirAba0 = window.abrirAba;
   window.abrirAba = function (id, btn) {
+    if (_orgBusy) {
+      try { return abrirAba0.apply(this, arguments); } catch (e) { return; }
+    }
     if (id === 'tab2') {                                  /* Check-in agora é uma função da aba Aluno */
       ORG.aluno.ativo = 'checkin'; gravarAtivo('aluno', 'checkin');
-      var r0 = abrirAba0.call(this, 'tab3', null);
-      mover(); organizar('aluno');
-      try { renderCheckin(); } catch (e) {}
+      var r0 = abrirAba0.call(this, 'tab3', btn || null);
+      setTimeout(function () {
+        try { mover(); organizar('aluno'); } catch (e) {}
+        try { renderCheckin(); } catch (e) {}
+      }, 50);
       return r0;
     }
     var r = abrirAba0.apply(this, arguments);
-    mover();
-    if (id === 'tabFormacao') {
-      try { renderFormacaoInfantilUI(); } catch (e) {}
-      try { renderMinhaInscricaoFormacao(); } catch (e) {}
-    }
-    ['inicio', 'aluno', 'formacao', 'professor', 'adm', 'dev'].forEach(organizar);
+    /* marca o botão ativo correto nas abas principais */
+    try {
+      var tabs = document.getElementById('protectedSystemTabs');
+      if (tabs && btn && tabs.contains(btn)) {
+        [].forEach.call(tabs.querySelectorAll('button'), function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+      }
+      var te = document.getElementById('tabsEquipe');
+      if (te && btn && te.contains(btn)) {
+        [].forEach.call(te.querySelectorAll('button'), function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+      }
+    } catch (e) {}
+    setTimeout(function () {
+      try {
+        mover();
+        if (id === 'tabFormacao') {
+          try { renderFormacaoInfantilUI(); } catch (e2) {}
+          try { renderMinhaInscricaoFormacao(); } catch (e2) {}
+          organizar('formacao');
+        } else if (id === 'tab3') organizar('aluno');
+        else if (id === 'tab1') organizar('inicio');
+        else if (id === 'tab4') organizar('professor');
+        else if (id === 'tab5') organizar('adm');
+        else if (id === 'tab6') organizar('dev');
+      } catch (e) {}
+    }, 80);
     return r;
   };
 
   /* mantém tudo organizado quando algum módulo redesenha o conteúdo */
   var agenda = 0;
-  function agendar() { if (agenda) return; agenda = setTimeout(function () { agenda = 0; try { mover(); Object.keys(ORG).forEach(organizar); } catch (e) { console.warn('[organizar]', e); } }, 160); }
+  var _orgBusy = false, _orgLast = 0;
+  function agendar() {
+    if (agenda || _orgBusy) return;
+    var agora = Date.now();
+    if (agora - _orgLast < 1200) return; /* evita pular/travar no celular */
+    agenda = setTimeout(function () {
+      agenda = 0;
+      if (_orgBusy) return;
+      _orgBusy = true;
+      try {
+        mover();
+        Object.keys(ORG).forEach(organizar);
+        _orgLast = Date.now();
+      } catch (e) { console.warn('[organizar]', e); }
+      _orgBusy = false;
+    }, 400);
+  }
   function vigiar() {
     ['tab1', 'tab3', 'tabFormacao', 'conteudoProfessor', 'ucFormacaoProf', 'conteudoAdm', 'conteudoDev'].forEach(function (id) {
       var el = $(id); if (!el || el._ucVig) return; el._ucVig = true;
-      new MutationObserver(agendar).observe(el, { childList: true, subtree: true });
+      new MutationObserver(function (muts) {
+        /* ignora mudanças só de texto/atributo nos avisos sticky — evita loop */
+        var relevante = false;
+        for (var i = 0; i < muts.length; i++) {
+          var m = muts[i];
+          if (m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length)) {
+            var skip = true;
+            m.addedNodes.forEach(function (n) {
+              if (n.nodeType === 1 && n.id && (n.id.indexOf('ucAvisos') === 0 || n.id.indexOf('ucDandara') === 0)) return;
+              skip = false;
+            });
+            if (!skip) relevante = true;
+          }
+        }
+        if (relevante) agendar();
+      }).observe(el, { childList: true, subtree: false });
     });
   }
-  function iniciar() { mover(); vigiar(); Object.keys(ORG).forEach(organizar); setInterval(function () { vigiar(); agendar(); }, 2500); }
+  function iniciar() {
+    mover();
+    Object.keys(ORG).forEach(organizar);
+    _orgLast = Date.now();
+    setTimeout(vigiar, 1500);
+    setInterval(function () {
+      if (document.hidden) return;
+      vigiar();
+      /* reorganiza no máximo a cada 8s se precisar */
+      if (Date.now() - _orgLast > 8000) agendar();
+    }, 8000);
+  }
   if (document.readyState === 'complete') setTimeout(iniciar, 600); else window.addEventListener('load', function () { setTimeout(iniciar, 600); });
   window.ucOrg = { ORG: ORG, selecionar: selecionar, organizar: organizar, mover: mover };
 
@@ -26224,5 +26347,261 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   });
 })();
 </script>
+
+<script id="ucDandaraAutoCorrecao">
+/* Dandara se auto-corrige: detecta falhas comuns no app e tenta reparar sem apagar dados.
+   Roda no boot, em erros JS e de tempos em tempos. */
+(function () {
+  'use strict';
+  if (window.__ucDandaraAuto) return;
+  window.__ucDandaraAuto = true;
+
+  var log = [];
+  function agora() {
+    try { return typeof agoraISO === 'function' ? agoraISO() : new Date().toISOString(); } catch (e) { return new Date().toISOString(); }
+  }
+  function registrar(msg, tipo) {
+    var linha = { em: agora(), tipo: tipo || 'fix', msg: String(msg || '').slice(0, 220) };
+    log.push(linha);
+    if (log.length > 40) log.shift();
+    try { console.info('[Dandara auto]', tipo || 'fix', msg); } catch (e) {}
+    return linha;
+  }
+  function toast(msg, tipo) {
+    try { if (typeof mostrarToast === 'function') mostrarToast(msg, tipo); } catch (e) {}
+  }
+  function notif(msg, tipo) {
+    try { if (typeof window.ucDandaraNotif === 'function') window.ucDandaraNotif('Dandara · auto-correção', msg, tipo); } catch (e) {}
+  }
+
+  /* ---------- reparos seguros ---------- */
+  function limparOrfaosPadrao() {
+    var n = 0;
+    document.querySelectorAll('.uc-padrao-login-wrap, [id^="btnPadrao"]').forEach(function (el) {
+      var campo = null;
+      if (el.id === 'btnPadraoAluno') campo = document.getElementById('alunoLoginNome');
+      else if (el.id && el.id.indexOf('btnPadrao_') === 0) {
+        var papel = el.id.replace('btnPadrao_', '');
+        campo = document.getElementById('equipeLoginNome_' + papel);
+      }
+      var btn = el.tagName === 'BUTTON' ? el : el.querySelector('button');
+      var host = campo && campo.closest('.card, .lock-card, #cardAlunoLogin, #cardFormacaoLoginAba');
+      var logadoEq = !!(typeof sessaoEquipe !== 'undefined' && sessaoEquipe && sessaoEquipe.id);
+      var logadoAl = false;
+      try { logadoAl = !!(typeof alunoLogado === 'function' && alunoLogado()); } catch (e) {}
+      /* botão solto, sem card de login, ou já logado → some */
+      if (!host || (logadoEq && el.id && el.id.indexOf('btnPadrao_') === 0) || (logadoAl && el.id === 'btnPadraoAluno')) {
+        try { el.remove(); n++; } catch (e) {}
+      } else if (campo && (campo.type === 'hidden' || campo.offsetParent === null)) {
+        try { el.remove(); n++; } catch (e) {}
+      }
+    });
+    /* card de padrão da equipe no lugar errado (fora do painel da equipe) */
+    var cardE = document.getElementById('cardPadraoEquipe');
+    if (cardE) {
+      var okParent = cardE.closest('#conteudoProfessor, #conteudoAdm, #conteudoDev');
+      if (!okParent && !(typeof sessaoEquipe !== 'undefined' && sessaoEquipe)) {
+        try { cardE.remove(); n++; } catch (e) {}
+      }
+    }
+    if (n) registrar('Removidos ' + n + ' botão(ões)/card(s) de padrão fora do lugar', 'fix');
+    return n;
+  }
+
+  function repararAbas() {
+    var n = 0;
+    var tabs = document.querySelectorAll('.tab-content');
+    var ativas = [];
+    tabs.forEach(function (el) { if (el.classList.contains('active')) ativas.push(el); });
+    if (ativas.length > 1) {
+      ativas.forEach(function (el, i) { if (i > 0) { el.classList.remove('active'); n++; } });
+      registrar('Havia ' + ativas.length + ' abas ativas; deixei só uma', 'fix');
+    }
+    if (ativas.length === 0 && tabs.length) {
+      var t1 = document.getElementById('tab1');
+      if (t1) { t1.classList.add('active'); n++; registrar('Nenhuma aba ativa; abri Início', 'fix'); }
+    }
+    /* sub-abas: garante que blocos não fiquem escondidos */
+    document.querySelectorAll('.uc-bloco').forEach(function (el) {
+      if (el.style.display === 'none' || el.classList.contains('uc-on') === false) {
+        el.classList.add('uc-on');
+        el.style.display = '';
+        n++;
+      }
+    });
+    document.querySelectorAll('.uc-sub').forEach(function (el) {
+      if (el.style.display !== 'none') { el.style.display = 'none'; n++; }
+    });
+    return n;
+  }
+
+  function repararScrollTravado() {
+    var n = 0;
+    try {
+      if (document.body.style.overflow === 'hidden' && !document.querySelector('.modal-overlay.aberto, #arcadeOverlay[style*="block"], #assistentePainel.aberto')) {
+        document.body.style.overflow = '';
+        n++;
+        registrar('Overflow do body estava travado; liberei', 'fix');
+      }
+    } catch (e) {}
+    return n;
+  }
+
+  function repararFuncoesCriticas() {
+    var n = 0;
+    var faltando = [];
+    ['abrirAba', 'mostrarToast', 'alunoLogado'].forEach(function (fn) {
+      if (typeof window[fn] !== 'function') faltando.push(fn);
+    });
+    if (faltando.length) {
+      registrar('Funções críticas ausentes: ' + faltando.join(', '), 'erro');
+      notif('Detectei falha grave (' + faltando.join(', ') + '). Atualize o app ou limpe o cache.', 'erro');
+    }
+    /* reatacha abrirAba se sumiu o wrapper mas existe o original */
+    return n;
+  }
+
+  function limparOverlaysPresos() {
+    var n = 0;
+    document.querySelectorAll('.modal-overlay.aberto').forEach(function (el) {
+      /* não fecha se usuário interagindo — só se modal vazio/quebrado */
+      var corpo = el.querySelector('#modalCorpo, .modal-card');
+      if (corpo && !(corpo.textContent || '').trim()) {
+        el.classList.remove('aberto');
+        n++;
+      }
+    });
+    if (n) registrar('Fechei modal vazio preso', 'fix');
+    return n;
+  }
+
+  function reRenderSeguro() {
+    var n = 0;
+    try {
+      var ativa = document.querySelector('.tab-content.active');
+      if (!ativa) return 0;
+      if (ativa.id === 'tab1' && typeof renderInicio === 'function') { renderInicio(); n++; }
+      else if (ativa.id === 'tab3' && typeof renderAluno === 'function') { renderAluno(); n++; }
+      else if (ativa.id === 'tab4' && typeof renderAbaProfessor === 'function' && typeof sessaoEquipe !== 'undefined' && sessaoEquipe) {
+        renderAbaProfessor(); n++;
+      }
+      if (n) registrar('Re-renderizei a aba ativa (' + (ativa.id || '') + ')', 'fix');
+    } catch (e) {
+      registrar('Falha ao re-renderizar: ' + (e && e.message), 'erro');
+    }
+    return n;
+  }
+
+  function capturarErroGlobal() {
+    window.addEventListener('error', function (ev) {
+      var msg = (ev && (ev.message || (ev.error && ev.error.message))) || 'erro';
+      registrar('Erro JS: ' + msg, 'erro');
+      /* auto-reparo leve após erro */
+      setTimeout(function () {
+        var total = 0;
+        total += limparOrfaosPadrao();
+        total += repararAbas();
+        total += repararScrollTravado();
+        total += limparOverlaysPresos();
+        if (total > 0) {
+          notif('Corrigi ' + total + ' ponto(s) após um erro no app.');
+        }
+      }, 400);
+    });
+    window.addEventListener('unhandledrejection', function (ev) {
+      var msg = '';
+      try { msg = String((ev && ev.reason && (ev.reason.message || ev.reason)) || 'promise'); } catch (e) { msg = 'promise'; }
+      registrar('Promise rejeitada: ' + msg.slice(0, 160), 'erro');
+    });
+  }
+
+  function cicloCompleto(origem) {
+    if (document.hidden) return 0;
+    if (window.ucDandaraTestando) return 0;
+    var total = 0;
+    total += limparOrfaosPadrao();
+    total += repararAbas();
+    total += repararScrollTravado();
+    total += limparOverlaysPresos();
+    total += repararFuncoesCriticas();
+    if (origem === 'boot' || origem === 'manual') {
+      try {
+        if (typeof garantirBotoesLogin === 'function') garantirBotoesLogin();
+        if (typeof atualizarCartoesPadrao === 'function') atualizarCartoesPadrao();
+      } catch (e) {}
+    }
+    if (total > 0 && origem !== 'silencioso') {
+      try {
+        if (typeof DB !== 'undefined' && DB.salvar) {
+          DB.salvar('errosApp', {
+            tipo: 'dandara-auto',
+            origem: origem || '',
+            total: total,
+            log: log.slice(-8),
+            criadoEm: agora()
+          }).catch(function () {});
+        }
+      } catch (e) {}
+    }
+    return total;
+  }
+
+  window.ucDandaraAutoCorrigir = function (silencio) {
+    var n = cicloCompleto(silencio ? 'silencioso' : 'manual');
+    if (!silencio) {
+      if (n > 0) {
+        toast('Dandara corrigiu ' + n + ' ponto(s).');
+        notif('Corrigidos ' + n + ' ponto(s) no app.');
+      } else {
+        toast('Dandara: nada quebrado no momento.');
+        notif('Revisei o app — nada para corrigir agora.');
+      }
+    }
+    return n;
+  };
+
+  window.ucDandaraAutoRelatorio = function () {
+    return log.slice();
+  };
+
+  /* botão discreto no ADM se existir */
+  function montarBotaoAdm() {
+    var adm = document.getElementById('conteudoAdm');
+    if (!adm || document.getElementById('ucDandaraAutoCard')) return;
+    if (!(typeof sessaoEquipe !== 'undefined' && sessaoEquipe && (sessaoEquipe.papel === 'adm' || sessaoEquipe.papel === 'dev'))) return;
+    var c = document.createElement('div');
+    c.id = 'ucDandaraAutoCard';
+    c.className = 'card';
+    c.innerHTML = '<h3><i class="fas fa-robot"></i> Dandara · auto-correção</h3>' +
+      '<p class="mini">Ela observa erros, botões fora do lugar, abas travadas e tenta reparar sozinha (sem apagar dados).</p>' +
+      '<button class="btn btn-gold" type="button" onclick="ucDandaraAutoCorrigir()"><i class="fas fa-wrench"></i> Corrigir agora</button>' +
+      '<p class="mini" id="ucDandaraAutoLog" style="margin-top:8px;"></p>';
+    adm.insertBefore(c, adm.firstChild);
+  }
+  function atualizarLogAdm() {
+    var el = document.getElementById('ucDandaraAutoLog');
+    if (!el) return;
+    if (!log.length) { el.textContent = 'Nenhum evento ainda.'; return; }
+    el.innerHTML = log.slice(-6).map(function (l) {
+      return '<div class="mini">[' + (l.tipo || '') + '] ' + String(l.msg || '').replace(/</g, '&lt;') + '</div>';
+    }).join('');
+  }
+
+  capturarErroGlobal();
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      var n = cicloCompleto('boot');
+      if (n > 0) notif('Na abertura corrigi ' + n + ' ponto(s).');
+    }, 2500);
+  });
+  setInterval(function () {
+    cicloCompleto('silencioso');
+    montarBotaoAdm();
+    atualizarLogAdm();
+  }, 20000);
+
+})();
+</script>
+
 </body>
 </html>
