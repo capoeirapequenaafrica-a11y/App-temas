@@ -2943,21 +2943,22 @@ function notificar(titulo, corpo) {
     if (window.AndroidAPI && typeof window.AndroidAPI.showNotification === 'function') {
       if (typeof notificacaoAtiva === 'function' && !notificacaoAtiva()) return;
       window.AndroidAPI.showNotification(String(titulo || 'Universo Capoeira'), String(corpo || ''));
+      setTimeout(function () { ['cancelNotification', 'clearNotifications', 'dismissNotification', 'hideNotification'].forEach(function (fn) { try { if (typeof window.AndroidAPI[fn] === 'function') window.AndroidAPI[fn](); } catch (_) {} }); }, 2000);
       return;
     }
   } catch (e) {}
-  /* TODAS as notificações são prioridade: ficam na tela até o toque, vibram e tocam som do sistema */
+  /* Notificações: vibram, tocam o som do sistema e SOMEM SOZINHAS em 2 s (também saem ao arrastar) */
   if (!notificacaoAtiva() || !('Notification' in window) || Notification.permission !== 'granted') return;
   var op = {
     body: corpo,
-    requireInteraction: true, renotify: true, silent: false, vibrate: [250, 120, 250, 120, 400],
+    requireInteraction: false, renotify: true, silent: false, vibrate: [250, 120, 250, 120, 400],
     tag: 'uc-' + Date.now(), timestamp: Date.now(), data: { prioridade: 'alta' }
   };
   try { if (navigator.vibrate) navigator.vibrate(op.vibrate); } catch (e0) {}
-  var fallback = function () { try { new Notification(titulo, op); } catch (e) { console.warn('Falha ao notificar', e); } };
+  var fallback = function () { try { var nn = new Notification(titulo, op); setTimeout(function () { try { nn.close(); } catch (_) {} }, 2000); } catch (e) { console.warn('Falha ao notificar', e); } };
   try {
     if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
-      navigator.serviceWorker.getRegistration().then(function (reg) { if (reg && reg.showNotification) reg.showNotification(titulo, op).catch(fallback); else fallback(); }).catch(fallback);
+      navigator.serviceWorker.getRegistration().then(function (reg) { if (reg && reg.showNotification) reg.showNotification(titulo, op).then(function () { setTimeout(function () { try { reg.getNotifications({ tag: op.tag }).then(function (l) { l.forEach(function (x) { x.close(); }); }); } catch (_) {} }, 2000); }).catch(fallback); else fallback(); }).catch(fallback);
     } else fallback();
   } catch (e1) { fallback(); }
 }
@@ -2988,12 +2989,12 @@ function notificarEquipe(titulo, corpo) {
     } else if ('Notification' in window && Notification.permission === 'granted') {
       var op = {
         body: corpo,
-        requireInteraction: true, renotify: true, silent: false,
+        requireInteraction: false, renotify: true, silent: false,
         vibrate: [250, 120, 250, 120, 400],
         tag: 'uc-equipe-' + Date.now(), timestamp: Date.now()
       };
       try { if (navigator.vibrate) navigator.vibrate(op.vibrate); } catch (ev) {}
-      try { new Notification(titulo, op); } catch (en) { console.warn(en); }
+      try { var ne = new Notification(titulo, op); setTimeout(function () { try { ne.close(); } catch (_) {} }, 2000); } catch (en) { console.warn(en); }
     }
   } catch (e4) {}
 }
@@ -25090,6 +25091,311 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     return res;
   };
 })();
+</script>
+
+<script id="ucOrganizar">
+/* =====================================================================
+   ORGANIZAÇÃO DAS ABAS — sub-abas por função, sem repetir nada.
+   - Nada é apagado nem reescrito: os blocos continuam com os mesmos ids e funções; aqui só se escolhe
+     qual grupo aparece (sub-abas) e alguns blocos são levados para a aba onde fazem sentido.
+   - Início: Hoje · Ranking · Comunidade. Aluno: Painel · Check-in · Treino · Desafios · Avaliações · Contato.
+   - Nova aba Formação (relatórios). Professor, ADM e Dev com sub-abas por função.
+   - Notificações: somem em 2 s e saem ao arrastar ou tocar.
+   ===================================================================== */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function norm(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+  function titulo(el) {
+    var h = el.querySelector && el.querySelector('h1,h2,h3,h4,summary,.titulo-colapsavel');
+    return norm(h ? h.textContent : (el.tagName === 'BUTTON' ? el.textContent : ''));
+  }
+
+  /* ---------- estilo ---------- */
+  var css = document.createElement('style'); css.id = 'ucOrgCss';
+  css.textContent =
+    '.uc-sub{display:flex;gap:6px;overflow-x:auto;padding:8px 2px 10px;margin:0 0 6px;position:sticky;top:0;z-index:30;background:rgba(7,16,12,.96);-webkit-overflow-scrolling:touch;scrollbar-width:none;}' +
+    '.uc-sub::-webkit-scrollbar{display:none;}' +
+    '.uc-sub button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#e8f5ee;font:700 13px/1 inherit;white-space:nowrap;cursor:pointer;}' +
+    '.uc-sub button.on{background:var(--gold,#ffc107);color:#1d1600;border-color:transparent;}' +
+    '.uc-sub button.vazio{display:none;}' +
+    '.uc-host .uc-bloco:not(.uc-on){display:none !important;}' +
+    '.uc-oculto{display:none !important;}' +
+    '#cardAlunoPainel.uc-plano{background:none !important;border:0 !important;box-shadow:none !important;padding:0 !important;}' +
+    '#toastBox{touch-action:none;pointer-events:auto;}';
+  document.head.appendChild(css);
+
+  /* ---------- motor de sub-abas ---------- */
+  var ORG = {};
+  function lerAtivo(chave) { try { return localStorage.getItem('uc_sub_' + chave) || ''; } catch (e) { return ''; } }
+  function gravarAtivo(chave, v) { try { localStorage.setItem('uc_sub_' + chave, v); } catch (e) {} }
+  function vazio(el) {
+    if (el.hidden || el.style.display === 'none') return true;
+    if (el.tagName === 'BUTTON') return false;
+    return !el.textContent.trim() && !el.querySelector('input,button,select,textarea,img,canvas,a');
+  }
+  function registrar(chave, cfg) { cfg.chave = chave; cfg.ativo = cfg.ativo || lerAtivo(chave); ORG[chave] = cfg; organizar(chave); }
+  function organizar(chave) {
+    var cfg = ORG[chave]; if (!cfg) return;
+    var host = cfg.host(); if (!host) return;
+    host.classList.add('uc-host');
+    var blocos = cfg.coletar(host).filter(function (el) { return el && !el.classList.contains('uc-sub') && !el.classList.contains('uc-oculto'); });
+    var contagem = {}, ids = cfg.grupos.map(function (g) { return g.id; });
+    blocos.forEach(function (el) {
+      var g = cfg.classificar(el) || cfg.padrao || ids[ids.length - 1];
+      if (ids.indexOf(g) < 0) g = cfg.padrao || ids[ids.length - 1];
+      el.classList.add('uc-bloco'); el.setAttribute('data-ucg', g);
+      if (!vazio(el)) contagem[g] = (contagem[g] || 0) + 1;
+    });
+    var perm = cfg.permitidos ? cfg.permitidos() : null;
+    var disponiveis = ids.filter(function (id) { return contagem[id] && (!perm || perm.indexOf(id) >= 0); });
+    var ativo = cfg.ativo;
+    if (disponiveis.indexOf(ativo) < 0) ativo = (cfg.inicial && cfg.inicial(contagem)) || disponiveis[0] || ids[0];
+    cfg.ativo = ativo;
+    blocos.forEach(function (el) { el.classList.toggle('uc-on', el.getAttribute('data-ucg') === ativo); });
+    var barra = host.querySelector(':scope > .uc-sub[data-chave="' + chave + '"]');
+    if (!barra) {
+      barra = document.createElement('div'); barra.className = 'uc-sub'; barra.setAttribute('data-chave', chave);
+      var ref = cfg.depoisDe ? cfg.depoisDe(host) : null;
+      if (ref && ref.parentNode === host) host.insertBefore(barra, ref.nextSibling); else host.insertBefore(barra, host.firstChild);
+    }
+    var html = cfg.grupos.map(function (g) {
+      return '<button type="button" data-g="' + g.id + '" class="' + (g.id === ativo ? 'on' : '') + (disponiveis.indexOf(g.id) >= 0 ? '' : ' vazio') + '"><i class="fas ' + g.icone + '"></i>' + g.rotulo + '</button>';
+    }).join('');
+    if (barra._html !== html) {
+      barra.innerHTML = html; barra._html = html;
+      [].forEach.call(barra.querySelectorAll('button'), function (b) { b.onclick = function () { selecionar(chave, b.getAttribute('data-g')); }; });
+    }
+  }
+  function selecionar(chave, grupo) {
+    var cfg = ORG[chave]; if (!cfg) return;
+    cfg.ativo = grupo; gravarAtivo(chave, grupo); organizar(chave);
+    var barra = cfg.host() && cfg.host().querySelector(':scope > .uc-sub[data-chave="' + chave + '"]');
+    if (cfg.aoSelecionar) { try { cfg.aoSelecionar(grupo); } catch (e) {} }
+    if (barra) { var b = barra.querySelector('button.on'); if (b && b.scrollIntoView) { try { b.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) {} } }
+  }
+  function classificador(regras, porId) {
+    return function (el) {
+      var id = el.id || '';
+      if (id && porId && porId[id]) return porId[id];
+      var t = titulo(el), i;
+      for (i = 0; i < regras.length; i++) if (regras[i][0].test(t)) return regras[i][1];
+      return null;
+    };
+  }
+  function filhosDiretos(host) { return [].slice.call(host.children); }
+
+  /* ---------- mover blocos para a aba onde fazem sentido (os ids e funções não mudam) ---------- */
+  function levar(el, destino) { if (el && destino && el.parentNode !== destino) destino.appendChild(el); }
+  function abrirCard(el) { if (el && !el.getAttribute('data-uc-ab')) { el.setAttribute('data-uc-ab', '1'); el.classList.remove('fechado'); } }
+  function criarAbaFormacao() {
+    if ($('tabFormacao')) return $('tabFormacao');
+    var ref = $('tabEquipe') || $('tab4'); if (!ref) return null;
+    var aba = document.createElement('div'); aba.id = 'tabFormacao'; aba.className = 'tab-content';
+    ref.parentNode.insertBefore(aba, ref);
+    var grupo = $('protectedSystemTabs');
+    if (grupo && !document.querySelector('.tabs button[onclick*="tabFormacao"]')) {
+      var b = document.createElement('button'); b.setAttribute('onclick', "abrirAba('tabFormacao', this)");
+      b.innerHTML = '<i class="fas fa-graduation-cap"></i>Formação';
+      var eq = $('btnToggleEquipe'); if (eq && eq.parentNode === grupo) grupo.insertBefore(b, eq); else grupo.appendChild(b);
+    }
+    return aba;
+  }
+  function mover() {
+    var t3 = $('tab3'), form = criarAbaFormacao();
+    /* Check-in passa a morar no Aluno */
+    if (t3) {
+      ['boxIconeFormadorCheckin', 'boxProfessorNaAulaCheckin', 'boxGympassCheckin'].forEach(function (id) { levar($(id), t3); });
+      var btn = $('btnConfirmarCheckinLocal'); var cardCk = btn && btn.closest('.card'); if (cardCk) { cardCk.setAttribute('data-ucid', 'checkinLocal'); levar(cardCk, t3); }
+      ['cardCalendarioTreino', 'cardMinhasPresencasCheckin', 'cardCertificadosAluno'].forEach(function (id) { levar($(id), t3); });
+    }
+    /* Formação de professor ganha aba própria */
+    if (form) {
+      ['avisoFormacaoRemunerada', 'ucFormacaoProfAluno', 'cardFormacaoProfessor', 'cardRelatoriosFormacao', 'cardFormacaoInfantil'].forEach(function (id) { levar($(id), form); });
+      abrirCard($('cardRelatoriosFormacao')); abrirCard($('cardFormacaoInfantil'));
+    }
+    /* o que repete a aba Jogos e o botão "Abrir arcade" some do Início (continua no HTML para os rankings) */
+    ['cardAtalhoArcadeInicio', 'cardJogosGrupo'].forEach(function (id) { var e = $(id); if (e) e.classList.add('uc-oculto'); });
+    /* "Pedir treino específico" aparecia duas vezes no painel do aluno: fica só o do bloco de treino */
+    var painel = $('cardAlunoPainel');
+    if (painel && $('trCardPedido')) {
+      [].slice.call(painel.children).forEach(function (el) { if (/^pedir treino especifico/.test(titulo(el)) && !el.contains($('trCardPedido'))) el.classList.add('uc-oculto'); });
+    }
+    if (painel) painel.classList.add('uc-plano');
+  }
+
+  /* ---------- Início ---------- */
+  registrar('inicio', {
+    host: function () { return $('tab1'); },
+    grupos: [{ id: 'hoje', rotulo: 'Hoje', icone: 'fa-bolt' }, { id: 'ranking', rotulo: 'Ranking', icone: 'fa-trophy' }, { id: 'comunidade', rotulo: 'Comunidade', icone: 'fa-people-group' }],
+    padrao: 'hoje',
+    depoisDe: function (h) { return h.querySelector(':scope > .uc-quick') || h.querySelector(':scope > .uc-hero'); },
+    coletar: function (h) { return filhosDiretos(h).filter(function (el) { return el.classList.contains('card') || el.tagName === 'DIV' && el.id; }); },
+    classificar: classificador([[/ranking|classificacao/, 'ranking'], [/instagram|mural|bate-papo|cadastrados/, 'comunidade']],
+      { cardRankingInicio: 'ranking', cardRankingCompletoInicio: 'ranking', ucIndicados: 'comunidade' })
+  });
+
+  /* ---------- Aluno: tudo do aluno num só lugar ---------- */
+  var REG_ALUNO = [
+    [/proxima aula|carga horaria|faltas e justif|minhas presencas|para voce agora/, 'painel'],
+    [/check-in|calendario de treino|minhas aulas e check|gympass|wellhub/, 'checkin'],
+    [/desafio/, 'desafios'],
+    [/avaliac|simular|desempenho|conhecimento|boletim|certificad/, 'avaliacoes'],
+    [/semana de treino|pedidos de treino|treino especifico|agendar|curriculo|aulas e alongamento|acesso rapido/, 'treino'],
+    [/falar com|feedback|atualizar meu cadastro|^sair$|definir padrao|salvar perfil|trocar senha|baixar meus dados|perfil/, 'conta'],
+    [/area do aluno|cadastro de aluno/, 'entrar']
+  ];
+  var ID_ALUNO = { cardAlunoLogin: 'entrar', cardAlunoPrimeiroCadastro: 'entrar', trAlunoBloco: 'treino', dsCardAluno: 'desafios', ucFaltasCard: 'painel', ucAvisosAluno: 'painel',
+    ucBoletimAluno: 'avaliacoes', ucSimulacaoAluno: 'avaliacoes', cardTesteConhecimento: 'avaliacoes', cardBoletimAluno: 'avaliacoes', cardCertificadosAluno: 'avaliacoes',
+    cardAgendaAluno: 'treino', cardCurriculoAluno: 'treino', cardFalarProfessor: 'conta', ucAtualizarCadastroAluno: 'conta', cardPadraoAluno: 'conta',
+    perfilNome: 'conta', perfilApelido: 'conta', perfilContato: 'conta',
+    boxIconeFormadorCheckin: 'checkin', boxProfessorNaAulaCheckin: 'checkin', boxGympassCheckin: 'checkin', cardCalendarioTreino: 'checkin', cardMinhasPresencasCheckin: 'checkin' };
+  var clAluno = classificador(REG_ALUNO, ID_ALUNO);
+  registrar('aluno', {
+    host: function () { return $('tab3'); },
+    grupos: [{ id: 'entrar', rotulo: 'Entrar', icone: 'fa-sign-in-alt' }, { id: 'painel', rotulo: 'Painel', icone: 'fa-house-user' }, { id: 'checkin', rotulo: 'Check-in', icone: 'fa-map-marker-alt' },
+      { id: 'treino', rotulo: 'Treino', icone: 'fa-dumbbell' }, { id: 'desafios', rotulo: 'Desafios', icone: 'fa-trophy' }, { id: 'avaliacoes', rotulo: 'Avaliações', icone: 'fa-clipboard-check' },
+      { id: 'conta', rotulo: 'Conta', icone: 'fa-user-gear' }],
+    padrao: 'painel',
+    permitidos: function () { return (typeof sessaoAlunoId !== 'undefined' && sessaoAlunoId) ? null : ['entrar', 'checkin']; },
+    inicial: function (c) { return c.painel ? 'painel' : (c.entrar ? 'entrar' : 'checkin'); },
+    coletar: function (h) {
+      var painel = $('cardAlunoPainel'), lista = filhosDiretos(h).filter(function (el) { return el !== painel; });
+      if (painel) lista = lista.concat(filhosDiretos(painel));
+      return lista;
+    },
+    classificar: function (el) {
+      var g = clAluno(el);
+      if (g) return g;
+      /* corpo de um bloco recolhível: acompanha o título que vem antes */
+      if (el.classList.contains('card-corpo-colapsavel') && el.previousElementSibling) { var gp = clAluno(el.previousElementSibling); if (gp) return gp; }
+      if (el.getAttribute('data-ucid') === 'checkinLocal') return 'checkin';
+      return null;
+    }
+  });
+
+  /* ---------- Formação ---------- */
+  registrar('formacao', {
+    host: function () { return $('tabFormacao'); },
+    grupos: [{ id: 'relatorios', rotulo: 'Relatórios', icone: 'fa-file-signature' }, { id: 'progresso', rotulo: 'Meu progresso', icone: 'fa-chart-line' }, { id: 'infantil', rotulo: 'Curso infantil', icone: 'fa-child' }],
+    padrao: 'relatorios',
+    coletar: function (h) { return filhosDiretos(h); },
+    classificar: classificador([], { cardRelatoriosFormacao: 'relatorios', avisoFormacaoRemunerada: 'relatorios', ucFormacaoProfAluno: 'progresso', cardFormacaoProfessor: 'progresso', cardFormacaoInfantil: 'infantil' })
+  });
+
+  /* ---------- Professor ---------- */
+  registrar('professor', {
+    host: function () { return $('conteudoProfessor'); },
+    grupos: [{ id: 'hoje', rotulo: 'Hoje', icone: 'fa-bolt' }, { id: 'alunos', rotulo: 'Alunos', icone: 'fa-users' }, { id: 'aulas', rotulo: 'Aulas', icone: 'fa-calendar-alt' },
+      { id: 'avaliacoes', rotulo: 'Avaliações', icone: 'fa-clipboard-check' }, { id: 'certificados', rotulo: 'Certificados', icone: 'fa-certificate' }, { id: 'formacao', rotulo: 'Formação', icone: 'fa-graduation-cap' },
+      { id: 'mais', rotulo: 'Mais', icone: 'fa-ellipsis' }],
+    padrao: 'mais',
+    coletar: function (h) { return filhosDiretos(h); },
+    classificar: classificador([
+      [/precisa da sua aten|check-in do professor|check-ins pendentes|wellhub|gympass/, 'hoje'],
+      [/central de cadastros|cadastrar novo aluno|pedidos de treino|mensagens privadas|dandara|feedbacks pos-aula/, 'alunos'],
+      [/certificad/, 'certificados'],
+      [/forma[cç]ao/, 'formacao'],
+      [/avalia|advertenc|comentarios dos alunos/, 'avaliacoes'],
+      [/polos|horario fixo|publicar aviso|aulas e alongamentos|pergunta da semana|leituras de avisos|treinos, agenda/, 'aulas'],
+      [/sessao:/, 'mais']
+    ], { ucAvisosProfessor: 'hoje', ucFormacaoProf: 'formacao', ccCardProf: 'alunos', ucSaudeProfWrap: 'alunos', ucBtnDandaraAluno: 'alunos', ucCardCertGrad: 'certificados', ucBtnAvalSemestral: 'avaliacoes',
+         cardAvaliacaoSemanalProfessor: 'avaliacoes', cardAvalBimestral: 'avaliacoes', trProfBloco: 'aulas' })
+  });
+
+  /* ---------- ADM ---------- */
+  registrar('adm', {
+    host: function () { return $('conteudoAdm'); },
+    grupos: [{ id: 'resumo', rotulo: 'Resumo', icone: 'fa-chart-pie' }, { id: 'cadastros', rotulo: 'Cadastros', icone: 'fa-address-book' }, { id: 'dandara', rotulo: 'Dandara', icone: 'fa-robot' },
+      { id: 'visual', rotulo: 'Aparência', icone: 'fa-palette' }, { id: 'dados', rotulo: 'Dados', icone: 'fa-database' }],
+    padrao: 'resumo',
+    coletar: function (h) { return filhosDiretos(h); },
+    classificar: classificador([
+      [/resumo geral|mural|sessao:/, 'resumo'],
+      [/central de cadastros|dandara . justificativas|data do batizado|prazo da ultima/, 'cadastros'],
+      [/dandara|testar jogos/, 'dandara'],
+      [/aparencia|logotipo/, 'visual'],
+      [/backup|restaura/, 'dados']
+    ], { ucAdmBatizado: 'cadastros', ucAdmPrazo: 'cadastros', ucRelatorioDandara: 'dandara', ucDJCard: 'dandara' })
+  });
+
+  /* ---------- Dev ---------- */
+  registrar('dev', {
+    host: function () { return $('conteudoDev'); },
+    grupos: [{ id: 'atualizar', rotulo: 'Atualizar', icone: 'fa-sync' }, { id: 'dados', rotulo: 'Dados', icone: 'fa-database' }, { id: 'equipe', rotulo: 'Equipe', icone: 'fa-user-shield' }, { id: 'sistema', rotulo: 'Sistema', icone: 'fa-microchip' }],
+    padrao: 'sistema',
+    coletar: function (h) { return filhosDiretos(h); },
+    classificar: classificador([
+      [/abrir e atualizar|publicar atualiza|importar dados/, 'atualizar'],
+      [/conexao de dados|registros por colec|registros de atividade/, 'dados'],
+      [/acessos da equipe|sessao:/, 'equipe'],
+      [/ambiente|telemetria|integridade/, 'sistema']
+    ], { ucCardAtualizar: 'atualizar', cardIntegridadeAbas: 'sistema' })
+  });
+
+  /* ---------- navegação ---------- */
+  var abrirAba0 = window.abrirAba;
+  window.abrirAba = function (id, btn) {
+    if (id === 'tab2') {                                  /* Check-in agora é uma função da aba Aluno */
+      ORG.aluno.ativo = 'checkin'; gravarAtivo('aluno', 'checkin');
+      var r0 = abrirAba0.call(this, 'tab3', null);
+      mover(); organizar('aluno');
+      try { renderCheckin(); } catch (e) {}
+      return r0;
+    }
+    var r = abrirAba0.apply(this, arguments);
+    mover();
+    if (id === 'tabFormacao') {
+      try { renderFormacaoInfantilUI(); } catch (e) {}
+      try { renderMinhaInscricaoFormacao(); } catch (e) {}
+    }
+    ['inicio', 'aluno', 'formacao', 'professor', 'adm', 'dev'].forEach(organizar);
+    return r;
+  };
+
+  /* mantém tudo organizado quando algum módulo redesenha o conteúdo */
+  var agenda = 0;
+  function agendar() { if (agenda) return; agenda = setTimeout(function () { agenda = 0; try { mover(); Object.keys(ORG).forEach(organizar); } catch (e) { console.warn('[organizar]', e); } }, 160); }
+  function vigiar() {
+    ['tab1', 'tab3', 'tabFormacao', 'conteudoProfessor', 'conteudoAdm', 'conteudoDev'].forEach(function (id) {
+      var el = $(id); if (!el || el._ucVig) return; el._ucVig = true;
+      new MutationObserver(agendar).observe(el, { childList: true, subtree: true });
+    });
+  }
+  function iniciar() { mover(); vigiar(); Object.keys(ORG).forEach(organizar); setInterval(function () { vigiar(); agendar(); }, 2500); }
+  if (document.readyState === 'complete') setTimeout(iniciar, 600); else window.addEventListener('load', function () { setTimeout(iniciar, 600); });
+  window.ucOrg = { ORG: ORG, selecionar: selecionar, organizar: organizar, mover: mover };
+
+  /* ---------- notificações: somem em 2 s, saem ao arrastar ou tocar ---------- */
+  function esconder(t) { clearTimeout(t._timer); t.style.display = 'none'; t.style.transform = ''; t.style.opacity = ''; t.style.transition = ''; }
+  function ligarArrastar(t, aoSair) {
+    if (!t || t._ucSwipe) return; t._ucSwipe = true; t.style.touchAction = 'none'; t.style.pointerEvents = 'auto';
+    var x0 = 0, y0 = 0, arr = false;
+    t.addEventListener('pointerdown', function (e) { arr = true; x0 = e.clientX; y0 = e.clientY; t.style.transition = 'none'; clearTimeout(t._timer); try { t.setPointerCapture(e.pointerId); } catch (_) {} });
+    t.addEventListener('pointermove', function (e) { if (!arr) return; var dx = e.clientX - x0, dy = e.clientY - y0; t.style.transform = 'translate(' + dx + 'px,' + dy + 'px)'; t.style.opacity = String(Math.max(0.2, 1 - Math.hypot(dx, dy) / 220)); });
+    function soltar(e) {
+      if (!arr) return; arr = false;
+      var d = Math.hypot(e.clientX - x0, e.clientY - y0);
+      if (d > 40 || d < 6) { aoSair(t); }
+      else { t.style.transition = 'transform .15s, opacity .15s'; t.style.transform = ''; t.style.opacity = ''; if (t.id === 'toastBox') t._timer = setTimeout(function () { esconder(t); }, 2000); }
+    }
+    t.addEventListener('pointerup', soltar); t.addEventListener('pointercancel', soltar);
+  }
+  var toast0 = window.mostrarToast;
+  window.mostrarToast = function () {
+    var r = toast0.apply(this, arguments);
+    var t = $('toastBox');
+    if (t) { ligarArrastar(t, esconder); t.style.transform = ''; t.style.opacity = ''; t.style.transition = ''; clearTimeout(t._timer); t._timer = setTimeout(function () { esconder(t); }, 2000); }
+    return r;
+  };
+  /* avisos que ficavam presos na tela também saem ao arrastar */
+  setInterval(function () {
+    ['bannerAtualizacaoApp', 'dicaAssistentePrimeiroAcesso'].forEach(function (id) {
+      var e = $(id); if (e) ligarArrastar(e, function (x) { x.style.display = 'none'; x.style.transform = ''; x.style.opacity = ''; });
+    });
+  }, 3000);
+})();
+
 </script>
 </body>
 </html>
