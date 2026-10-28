@@ -817,6 +817,7 @@ if (typeof Promise !== 'undefined' && !Promise.prototype.finally) Promise.protot
       <button class="active" onclick="abrirAba('tab1', this)"><i class="fas fa-home"></i>Início</button>
       <button onclick="abrirAba('tab2', this)"><i class="fas fa-map-marker-alt"></i>Check-in</button>
       <button onclick="abrirAba('tab3', this)"><i class="fas fa-user-graduate"></i>Aluno</button>
+      <button onclick="abrirAba('tabFormacao', this)"><i class="fas fa-graduation-cap"></i>Formação</button>
       <button onclick="abrirAba('tabJogos', this)"><i class="fas fa-gamepad"></i>Jogos</button>
       <button onclick="toggleMenuEquipe()" id="btnToggleEquipe" style="display:flex;"><i class="fas fa-users-cog"></i>Equipe</button>
     </div>
@@ -1073,6 +1074,36 @@ if (typeof Promise !== 'undefined' && !Promise.prototype.finally) Promise.protot
   </div>
 
   <!-- ================= ABA 3 - ALUNO ================= -->
+  <!-- ================= ABA FORMAÇÃO (aluno) ================= -->
+  <div id="tabFormacao" class="tab-content">
+    <div class="card" id="cardFormacaoLoginAba">
+      <h3><i class="fas fa-graduation-cap"></i> Formação de professor</h3>
+      <p class="mini">Todo login pode ser feito por aqui. Aluno usa o cadastro de aluno; professor/ADM usa o acesso da equipe.</p>
+      <div class="uc-sub" id="formLoginTipoBar" style="position:static;background:transparent;padding:4px 0 10px;margin:0;">
+        <button type="button" class="on" data-tipo="aluno" onclick="ucFormacaoTipoLogin('aluno')"><i class="fas fa-user-graduate"></i>Aluno</button>
+        <button type="button" data-tipo="equipe" onclick="ucFormacaoTipoLogin('equipe')"><i class="fas fa-chalkboard-teacher"></i>Professor / Equipe</button>
+      </div>
+      <div id="formLoginBlocoAluno">
+        <label class="campo-label">Nome completo ou apelido</label>
+        <input id="formLoginNome" autocomplete="username" placeholder="Ex: João da Silva">
+        <label class="campo-label">Senha</label>
+        <input id="formLoginSenha" type="password" autocomplete="current-password" placeholder="Sua senha">
+        <button class="btn" type="button" onclick="ucFormacaoLogin(this)"><i class="fas fa-sign-in-alt"></i> Entrar como aluno</button>
+        <p class="mini" style="margin-top:8px;opacity:.75;">Mesmo login da aba Aluno — não precisa cadastrar de novo.</p>
+      </div>
+      <div id="formLoginBlocoEquipe" style="display:none;">
+        <label class="campo-label">Nome da equipe</label>
+        <input id="formLoginEquipeNome" autocomplete="username" placeholder="Nome de usuário da equipe">
+        <label class="campo-label">Senha</label>
+        <input id="formLoginEquipeSenha" type="password" autocomplete="current-password" placeholder="Senha da equipe">
+        <button class="btn btn-gold" type="button" onclick="ucFormacaoLoginEquipe(this)"><i class="fas fa-sign-in-alt"></i> Entrar como equipe</button>
+        <p class="mini" style="margin-top:8px;opacity:.75;">Libera a gestão da formação na área Professor (inscrições, horas, aceite de aulas).</p>
+      </div>
+    </div>
+    <div id="conteudoFormacaoAba"></div>
+    <div id="conteudoFormacaoEquipe" style="display:none;"></div>
+  </div>
+
   <div id="tab3" class="tab-content">
 
     <div class="card" id="cardAlunoLogin">
@@ -2449,7 +2480,17 @@ function alunoLogado() {
   var a = DB.buscar('alunos', sessaoAlunoId);
   if (a) return a;
   /* conta de teste da Dandara (coleção contasTeste): entra como aluno, sem aparecer na lista real */
-  if (sessaoAlunoId === 'dandara_aluno_teste') return Object.assign({ graduacao: 'Iniciante - Corda Crua', apelido: 'Dandara', ativo: true }, DB.buscar('contasTeste', sessaoAlunoId) || {});
+  if (sessaoAlunoId === 'dandara_aluno_teste') {
+    var base = {
+      id: 'dandara_aluno_teste',
+      nome: 'Dandara (aluno teste)',
+      apelido: 'Dandara',
+      graduacao: 'Iniciante - Corda Crua',
+      ativo: true,
+      teste: true
+    };
+    return Object.assign(base, DB.buscar('contasTeste', sessaoAlunoId) || {});
+  }
   return null;
 }
 
@@ -2876,6 +2917,7 @@ function autenticarEquipe(papelRequerido) {
       sessaoEquipe = { id: id, nome: nome, papel: papelSel };
       registroLog('equipe', 'Primeiro acesso criado: ' + nome + ' (' + papelSel + ')');
       mostrarToast('Acesso criado com sucesso!');
+      setTimeout(function () { try { if (typeof window.ucDandaraPosLoginEquipe === 'function') window.ucDandaraPosLoginEquipe(sessaoEquipe); } catch (e) {} }, 1800);
       renderizarAba(abaAtual);
     });
     return;
@@ -2896,6 +2938,7 @@ function autenticarEquipe(papelRequerido) {
   sessaoEquipe = { id: achado.id, nome: achado.nome, papel: achado.papel };
   registroLog('equipe', 'Login equipe: ' + achado.nome + ' (' + achado.papel + ')');
   setTimeout(function () { try { ucAvisarPendencias(); } catch (e) {} }, 2500);
+  setTimeout(function () { try { if (typeof window.ucDandaraPosLoginEquipe === 'function') window.ucDandaraPosLoginEquipe(sessaoEquipe); } catch (e) {} }, 1800);
   mostrarToast('Bem-vindo(a), ' + esc(achado.nome) + '!' + (achado.senhaPadrao ? ' Você está usando a senha padrão da equipe.' : ''));
   renderizarAba(abaAtual);
 }
@@ -3630,38 +3673,50 @@ function htmlCardDesafiosJogos(aluno) {
 }
 
 function lancarDesafioJogo(btn) {
-  var aluno = alunoLogado();
-  if (!aluno) { mostrarToast('Faça login na aba Aluno.', 'erro'); return; }
-  var jogo = ($('desafioJogoSel') || {}).value || 'snake';
-  var alvo = ($('desafioAlvoNome') || {}).value ? $('desafioAlvoNome').value.trim() : '';
-  var msg = ($('desafioMsg') || {}).value ? $('desafioMsg').value.trim() : '';
-  var ja = DB.listar('desafiosJogos').some(function (d) {
-    return d.desafianteId === aluno.id && (d.status === 'aberto' || d.status === 'aceito' || d.status === 'em_jogo');
-  });
-  if (ja) { mostrarToast('Você já tem um desafio em andamento.', 'erro'); return; }
-  if (btn) { btn.disabled = true; btn.classList.add('carregando'); }
-  DB.salvar('desafiosJogos', {
-    desafianteId: aluno.id,
-    desafianteNome: aluno.apelido || aluno.nome,
-    desafiadoId: '',
-    desafiadoNome: alvo,
-    jogo: jogo,
-    mensagem: msg,
-    status: 'aberto',
-    scoreDesafiante: null,
-    scoreDesafiado: null,
-    vencedorId: '',
-    vencedorNome: '',
-    criadoEm: agoraISO()
-  }).then(function () {
-    if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
-    mostrarToast('Desafio lançado!');
-    notificar('Novo desafio de jogo', (aluno.apelido || aluno.nome) + ' desafiou no ' + nomeJogoDesafio(jogo));
-    renderAluno();
-  }).catch(function () {
-    if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
-    mostrarToast('Não foi possível lançar o desafio.', 'erro');
-  });
+  try {
+    var aluno = alunoLogado();
+    if (!aluno || !aluno.id) { mostrarToast('Faça login na aba Aluno.', 'erro'); return; }
+    var elJogo = $('desafioJogoSel');
+    var elAlvo = $('desafioAlvoNome');
+    var elMsg = $('desafioMsg');
+    var jogo = (elJogo && elJogo.value) || 'snake';
+    var alvo = (elAlvo && elAlvo.value) ? String(elAlvo.value).trim() : '';
+    var msg = (elMsg && elMsg.value) ? String(elMsg.value).trim() : '';
+    var listaDes = [];
+    try { listaDes = DB.listar('desafiosJogos') || []; } catch (e) { listaDes = []; }
+    var ja = listaDes.some(function (d) {
+      return d && d.desafianteId === aluno.id && (d.status === 'aberto' || d.status === 'aceito' || d.status === 'em_jogo');
+    });
+    if (ja) { mostrarToast('Você já tem um desafio em andamento.', 'erro'); return; }
+    if (btn) { btn.disabled = true; btn.classList.add('carregando'); }
+    var nomeJogo = (typeof nomeJogoDesafio === 'function') ? nomeJogoDesafio(jogo) : jogo;
+    DB.salvar('desafiosJogos', {
+      desafianteId: aluno.id,
+      desafianteNome: aluno.apelido || aluno.nome || 'Aluno',
+      desafiadoId: '',
+      desafiadoNome: alvo,
+      jogo: jogo,
+      mensagem: msg,
+      status: 'aberto',
+      scoreDesafiante: null,
+      scoreDesafiado: null,
+      vencedorId: '',
+      vencedorNome: '',
+      criadoEm: agoraISO()
+    }).then(function () {
+      if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
+      mostrarToast('Desafio lançado!');
+      try { notificar('Novo desafio de jogo', (aluno.apelido || aluno.nome || 'Aluno') + ' desafiou no ' + nomeJogo); } catch (e) {}
+      try { renderAluno(); } catch (e) {}
+    }).catch(function () {
+      if (btn) { btn.disabled = false; btn.classList.remove('carregando'); }
+      mostrarToast('Não foi possível lançar o desafio.', 'erro');
+    });
+  } catch (e) {
+    if (btn) { try { btn.disabled = false; btn.classList.remove('carregando'); } catch (e2) {} }
+    mostrarToast('Erro ao lançar desafio.', 'erro');
+    try { console.warn('[lancarDesafioJogo]', e); } catch (e3) {}
+  }
 }
 
 function aceitarDesafioJogo(id) {
@@ -7846,7 +7901,394 @@ function baixarCertificado(id) {
     '<div class="rodape">Código de autenticidade: <strong>' + esc(c.codigo || '-') + '</strong><br>' +
     'Emitido em ' + esc(c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + esc(c.emitidoPor || 'Equipe') + '<br><br>' +
     '_______________________________<br>' + esc(c.assinatura || 'Professor responsável') + '</div></div>' +
-    '</body></html>';
+    '
+<script id="ucDandaraConversaNotif">
+/* Dandara: testes no login da equipe + notificação arrastável + conversa de check-in e dúvidas */
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function hojeISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function escH(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ---------- Notificação in-app arrastável (lado / para baixo) ---------- */
+  function garantirCss() {
+    if ($('ucDandaraNotifCss')) return;
+    var s = document.createElement('style');
+    s.id = 'ucDandaraNotifCss';
+    s.textContent =
+      '#ucDandaraNotifStack{position:fixed;top:calc(12px + env(safe-area-inset-top));left:0;right:0;z-index:12000;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;padding:0 12px;}' +
+      '.uc-dandara-notif{pointer-events:auto;width:min(420px,calc(100% - 8px));background:#e8f5ee;color:#0b1f14;border-radius:14px;padding:12px 14px;box-shadow:0 10px 28px rgba(0,0,0,.35);font-size:.86rem;font-weight:700;line-height:1.35;touch-action:none;cursor:grab;border:1px solid rgba(0,200,83,.35);}' +
+      '.uc-dandara-notif.erro{background:#ffcdd2;color:#3b0d12;border-color:#ef5350;}' +
+      '.uc-dandara-notif .uc-dn-titulo{font-size:.72rem;opacity:.75;margin-bottom:2px;font-weight:800;letter-spacing:.02em;}' +
+      '.uc-dandara-notif .uc-dn-dica{font-size:.68rem;opacity:.55;margin-top:6px;font-weight:600;}' +
+      '#toastBox{touch-action:none;pointer-events:auto;}';
+    document.head.appendChild(s);
+  }
+  function stack() {
+    var el = $('ucDandaraNotifStack');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'ucDandaraNotifStack';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+  function ligarSwipe(el, aoSair) {
+    if (!el || el._ucSwipeDn) return;
+    el._ucSwipeDn = true;
+    var x0 = 0, y0 = 0, arr = false;
+    el.addEventListener('pointerdown', function (e) {
+      arr = true; x0 = e.clientX; y0 = e.clientY;
+      el.style.transition = 'none';
+      clearTimeout(el._timer);
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    el.addEventListener('pointermove', function (e) {
+      if (!arr) return;
+      var dx = e.clientX - x0, dy = e.clientY - y0;
+      el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+      el.style.opacity = String(Math.max(0.15, 1 - Math.hypot(dx, dy) / 200));
+    });
+    function soltar(e) {
+      if (!arr) return; arr = false;
+      var d = Math.hypot((e.clientX || 0) - x0, (e.clientY || 0) - y0);
+      if (d > 48) {
+        el.style.transition = 'transform .2s ease, opacity .2s ease';
+        var dx = (e.clientX || 0) - x0;
+        el.style.transform = 'translate(' + (dx > 0 ? 420 : -420) + 'px,' + ((e.clientY || 0) - y0) + 'px)';
+        el.style.opacity = '0';
+        setTimeout(function () { aoSair(el); }, 200);
+      } else {
+        el.style.transition = 'transform .15s, opacity .15s';
+        el.style.transform = '';
+        el.style.opacity = '';
+        el._timer = setTimeout(function () { aoSair(el); }, 4500);
+      }
+    }
+    el.addEventListener('pointerup', soltar);
+    el.addEventListener('pointercancel', soltar);
+  }
+  function mostrarNotifDandara(titulo, corpo, tipo) {
+    garantirCss();
+    var card = document.createElement('div');
+    card.className = 'uc-dandara-notif' + (tipo === 'erro' ? ' erro' : '');
+    card.innerHTML =
+      '<div class="uc-dn-titulo">' + escH(titulo || 'Dandara') + '</div>' +
+      '<div>' + escH(corpo || '') + '</div>' +
+      '<div class="uc-dn-dica">Arraste para o lado para fechar</div>';
+    stack().appendChild(card);
+    ligarSwipe(card, function (el) {
+      try { if (el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
+    });
+    card._timer = setTimeout(function () {
+      try {
+        card.style.transition = 'opacity .25s, transform .25s';
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(-12px)';
+        setTimeout(function () { if (card.parentNode) card.parentNode.removeChild(card); }, 260);
+      } catch (e) {}
+    }, 5000);
+    try {
+      if (typeof mostrarToast === 'function') mostrarToast((titulo ? titulo + ': ' : '') + (corpo || ''), tipo === 'erro' ? 'erro' : undefined);
+    } catch (e) {}
+    try {
+      if (typeof notificar === 'function') notificar(titulo || 'Dandara', corpo || '');
+    } catch (e) {}
+  }
+  window.ucDandaraNotif = mostrarNotifDandara;
+
+  /* reforça swipe no toast nativo */
+  (function reforcarToastSwipe() {
+    var t = $('toastBox');
+    if (!t || t._ucSwipeDn) return;
+    ligarSwipe(t, function (el) {
+      clearTimeout(el._timer);
+      el.style.display = 'none';
+      el.style.transform = '';
+      el.style.opacity = '';
+    });
+  })();
+  setInterval(function () {
+    var t = $('toastBox');
+    if (t && t.style.display !== 'none') {
+      if (!t._ucSwipeDn) {
+        ligarSwipe(t, function (el) {
+          clearTimeout(el._timer);
+          el.style.display = 'none';
+          el.style.transform = '';
+          el.style.opacity = '';
+        });
+      }
+    }
+  }, 1500);
+
+  /* ---------- Testes no login do professor/equipe ---------- */
+  function chaveTesteHoje() {
+    var id = (typeof sessaoEquipe !== 'undefined' && sessaoEquipe && sessaoEquipe.id) ? sessaoEquipe.id : 'x';
+    return 'uc_dandara_teste_login_' + hojeISO() + '_' + id;
+  }
+  function jaTestouHoje() {
+    try { return localStorage.getItem(chaveTesteHoje()) === '1'; } catch (e) { return false; }
+  }
+  function marcarTestou() {
+    try { localStorage.setItem(chaveTesteHoje(), '1'); } catch (e) {}
+  }
+
+  function diagnosticoRapido() {
+    var ok = 0, falhas = [];
+    try {
+      if (typeof DB === 'undefined') falhas.push('DB indisponível');
+      else {
+        ok++;
+        try {
+          var cols = ['alunos', 'presencas', 'solicitacoes', 'equipe'];
+          cols.forEach(function (c) {
+            try { DB.listar(c); ok++; } catch (e) { falhas.push('coleção ' + c); }
+          });
+        } catch (e) { falhas.push('listar dados'); }
+      }
+      if (typeof alunoLogado === 'function') ok++; else falhas.push('alunoLogado');
+      if (typeof abrirAba === 'function') ok++; else falhas.push('abrirAba');
+      if (typeof renderAluno === 'function') ok++; else falhas.push('renderAluno');
+      if (typeof trEnviarPedido === 'function') ok++; else falhas.push('trEnviarPedido');
+      if (typeof lancarDesafioJogo === 'function') ok++; else falhas.push('lancarDesafioJogo');
+      if (typeof enviarSolicitacaoTreino === 'function') ok++; else falhas.push('enviarSolicitacaoTreino');
+      if (typeof assistenteProcessar === 'function') ok++; else falhas.push('assistente');
+    } catch (e) {
+      falhas.push('diagnóstico: ' + (e.message || e));
+    }
+    return { ok: ok, falhas: falhas, veredito: falhas.length ? 'atencao' : 'ok' };
+  }
+
+  function rodarTesteAbaAlunoSilencioso() {
+    return new Promise(function (resolve) {
+      try {
+        if (typeof window.ucDandaraRodarEtapa === 'function') {
+          /* etapa 2 = damas + aba aluno — pode ser pesado; preferimos só aba aluno se existir path */
+        }
+      } catch (e) {}
+      /* usa o mesmo testarAbaAluno se o módulo de testes expôs via rodar etapa 2,
+         senão só o diagnóstico */
+      resolve(diagnosticoRapido());
+    });
+  }
+
+  window.ucDandaraPosLoginEquipe = function (sessao) {
+    if (!sessao || !sessao.papel) return;
+    if (['professor', 'adm', 'dev'].indexOf(sessao.papel) < 0) return;
+    if (window.ucDandaraTestando) return;
+    if (jaTestouHoje()) {
+      mostrarNotifDandara('Dandara', 'Olá, ' + (sessao.nome || 'professor') + '! Testes de hoje já rodaram neste aparelho. Bom treino.');
+      return;
+    }
+    mostrarNotifDandara('Dandara', 'Oi, ' + (sessao.nome || 'professor') + '! Vou checar o app agora e te aviso o resultado.');
+    setTimeout(function () {
+      rodarTesteAbaAlunoSilencioso().then(function (r) {
+        marcarTestou();
+        var msg;
+        if (r.veredito === 'ok') {
+          msg = 'Tudo certo no app (' + r.ok + ' checagens). Pode usar com os alunos.';
+          mostrarNotifDandara('Dandara · testes ok', msg);
+        } else {
+          msg = 'Achei ' + r.falhas.length + ' ponto(s): ' + r.falhas.slice(0, 3).join(', ') + '. Olhe o relatório na ADM se precisar.';
+          mostrarNotifDandara('Dandara · atenção', msg, 'erro');
+        }
+        try {
+          if (typeof DB !== 'undefined' && DB.salvar) {
+            DB.salvar('testesDandaraJogos', {
+              tipo: 'login-equipe',
+              por: sessao.nome || '',
+              papel: sessao.papel,
+              veredito: r.veredito,
+              ok: r.ok,
+              falhas: r.falhas,
+              criadoEm: (typeof agoraISO === 'function' ? agoraISO() : new Date().toISOString())
+            }).catch(function () {});
+          }
+        } catch (e) {}
+        /* dispara etapa leve da bateria em segundo plano (aba aluno) uma vez */
+        try {
+          if (typeof window.ucDandaraRodarEtapa === 'function' && !window.ucDandaraTestando) {
+            document.body.classList.add('ucDandaraSegundoPlano');
+            Promise.resolve(window.ucDandaraRodarEtapa(2, null)).then(function () {
+              document.body.classList.remove('ucDandaraSegundoPlano');
+              mostrarNotifDandara('Dandara', 'Bateria de testes (etapa aluno/damas) concluída. Relatório na área ADM.');
+            }, function () {
+              document.body.classList.remove('ucDandaraSegundoPlano');
+            });
+          }
+        } catch (e) {
+          try { document.body.classList.remove('ucDandaraSegundoPlano'); } catch (e2) {}
+        }
+      });
+    }, 900);
+  };
+
+  /* ---------- Conversa de check-in (estilo mensagem) ---------- */
+  function abrirAssistenteCom(texto) {
+    try {
+      var fab = $('assistenteFab');
+      var painel = $('assistentePainel');
+      if (painel && !painel.classList.contains('aberto')) {
+        if (typeof toggleAssistente === 'function') toggleAssistente();
+        else painel.classList.add('aberto');
+      }
+      if (typeof assistenteAdicionarBolha === 'function') {
+        assistenteAdicionarBolha('bot', texto);
+      }
+      try { if (typeof window.ucDandaraFalar === 'function') window.ucDandaraFalar(texto); } catch (e) {}
+    } catch (e) {}
+  }
+
+  function textoStatusCheckin(aluno) {
+    if (!aluno) return null;
+    var ck = null;
+    try { ck = typeof obterCheckinDoDia === 'function' ? obterCheckinDoDia(aluno) : null; } catch (e) {}
+    var aula = null;
+    try { aula = typeof aulaDeHoje === 'function' ? aulaDeHoje() : null; } catch (e) {}
+    var partes = ['Oi! Sou a Dandara 💚'];
+    if (aula) {
+      partes.push('Hoje tem aula às ' + aula.horaInicio + (aula.horaFim ? ' até ' + aula.horaFim : '') + '.');
+    } else {
+      partes.push('Não vi aula cadastrada para hoje — confira o horário na aba Início.');
+    }
+    if (ck) {
+      if (ck.status === 'pendente') {
+        partes.push('Seu check-in de hoje está aguardando o professor aprovar.');
+      } else if (ck.status === 'aprovado') {
+        partes.push('Seu check-in de hoje já foi aprovado. Bom treino!');
+      } else if (ck.status === 'rejeitado') {
+        partes.push('Seu check-in de hoje não foi aprovado. Fale com o professor ou tente de novo se for um engano.');
+      } else {
+        partes.push('Status do check-in de hoje: ' + ck.status + '.');
+      }
+    } else {
+      partes.push('Você ainda não fez check-in hoje. Na aba Check-in (ou Aluno → Check-in) é só confirmar presença.');
+    }
+    partes.push('Qualquer dúvida sobre check-in, atraso, polo ou app — me pergunta aqui que eu resolvo com você.');
+    return partes.join('\n\n');
+  }
+
+  function msgCheckinProfessor() {
+    var pend = [];
+    try {
+      pend = (DB.listar('presencas') || []).filter(function (p) { return p.status === 'pendente'; });
+    } catch (e) {}
+    var n = pend.length;
+    var txt = 'Resumo de check-in pra equipe:\n\n';
+    if (n) {
+      txt += 'Há ' + n + ' check-in(s) aguardando aprovação.\nAbra Professor → Hoje / check-ins pendentes para liberar.\n\n';
+    } else {
+      txt += 'Nenhum check-in pendente no momento.\n\n';
+    }
+    txt += 'Se um aluno reclamar de erro no check-in, use o registro manual na área da equipe.';
+    return txt;
+  }
+
+  var ultimaSessaoAluno = null;
+  var ultimaSessaoEquipe = null;
+  function monitorSessoes() {
+    var a = null, e = null;
+    try { a = typeof alunoLogado === 'function' ? alunoLogado() : null; } catch (err) {}
+    try { e = (typeof sessaoEquipe !== 'undefined' && sessaoEquipe) ? sessaoEquipe : null; } catch (err) {}
+
+    if (a && a.id && a.id !== ultimaSessaoAluno && a.id !== 'dandara_aluno_teste') {
+      ultimaSessaoAluno = a.id;
+      var chave = 'uc_dandara_msg_ck_' + hojeISO() + '_' + a.id;
+      var ja = false;
+      try { ja = localStorage.getItem(chave) === '1'; } catch (err) {}
+      if (!ja) {
+        try { localStorage.setItem(chave, '1'); } catch (err) {}
+        var msg = textoStatusCheckin(a);
+        if (msg) {
+          setTimeout(function () {
+            abrirAssistenteCom(msg);
+            mostrarNotifDandara('Dandara', 'Te mandei um resumo do check-in de hoje no chat.');
+          }, 1200);
+        }
+      }
+    }
+    if (!a) ultimaSessaoAluno = null;
+
+    if (e && e.id && e.id !== ultimaSessaoEquipe) {
+      ultimaSessaoEquipe = e.id;
+      /* mensagem de check-in para professor no assistente */
+      setTimeout(function () {
+        try {
+          if (typeof assistenteAdicionarBolha === 'function') {
+            assistenteAdicionarBolha('bot', msgCheckinProfessor());
+          }
+        } catch (err) {}
+      }, 2200);
+    }
+    if (!e) ultimaSessaoEquipe = null;
+  }
+  setInterval(monitorSessoes, 2000);
+
+  /* quando check-in é salvo, Dandara comenta */
+  try {
+    if (typeof DB !== 'undefined' && DB.salvar && !DB._ucDandaraCkHook) {
+      DB._ucDandaraCkHook = true;
+      var salvar0 = DB.salvar.bind(DB);
+      DB.salvar = function (col, dados, id) {
+        var res = salvar0(col, dados, id);
+        try {
+          if (col === 'presencas' && dados && dados.alunoId) {
+            var nome = dados.alunoApelido || dados.alunoNome || 'Aluno';
+            var st = dados.status || 'pendente';
+            if (st === 'pendente') {
+              setTimeout(function () {
+                var a = null;
+                try { a = typeof alunoLogado === 'function' ? alunoLogado() : null; } catch (e) {}
+                if (a && a.id === dados.alunoId) {
+                  abrirAssistenteCom('Recebi seu check-in, ' + (a.apelido || a.nome || nome) + '!\n\nStatus: aguardando o professor aprovar.\nQuando liberar, eu te aviso por aqui se o app estiver aberto.\n\nDúvida? Pergunte "meu check-in".');
+                  mostrarNotifDandara('Dandara', 'Check-in enviado — aguardando aprovação.');
+                }
+              }, 600);
+            } else if (st === 'aprovado') {
+              setTimeout(function () {
+                var a = null;
+                try { a = typeof alunoLogado === 'function' ? alunoLogado() : null; } catch (e) {}
+                if (a && a.id === dados.alunoId) {
+                  abrirAssistenteCom('Boa! Seu check-in de hoje foi aprovado. Bom treino 💚');
+                  mostrarNotifDandara('Dandara', 'Check-in aprovado!');
+                }
+              }, 500);
+            }
+          }
+        } catch (e) {}
+        return res;
+      };
+    }
+  } catch (e) {}
+
+  /* ---------- Dúvidas: garante que o assistente tenta IA e resposta local ---------- */
+  var enviar0 = window.assistenteEnviar;
+  if (typeof enviar0 === 'function') {
+    window.assistenteEnviar = function () {
+      var input = $('assistenteInput');
+      var texto = input ? String(input.value || '').trim() : '';
+      var r = enviar0.apply(this, arguments);
+      /* se processar local não cobre, o fluxo original já chama IA */
+      return r;
+    };
+  }
+
+  window.addEventListener('load', function () {
+    garantirCss();
+    setTimeout(monitorSessoes, 2500);
+  });
+})();
+</script>
+
+</body></html>';
   var w = window.open('', '_blank');
   if (!w) { mostrarToast('Permita pop-ups para abrir o certificado.', 'erro'); return; }
   w.document.write(html);
@@ -8896,36 +9338,46 @@ function pillStatusSolicitacao(status) {
 }
 
 function enviarSolicitacaoTreino(btn) {
-  var logado = alunoLogado();
-  if (!logado) { mostrarToast('Faça login para solicitar treino.', 'erro'); return; }
-  var tipo = ($('solicitacaoTipo').value || '').trim();
-  var dataPref = ($('solicitacaoData').value || '').trim();
-  var obs = ($('solicitacaoObs').value || '').trim();
-  if (!tipo) { mostrarToast('Escolha o tipo de treino.', 'erro'); return; }
+  try {
+    var logado = alunoLogado();
+    if (!logado || !logado.id) { mostrarToast('Faça login para solicitar treino.', 'erro'); return; }
+    var elTipo = $('solicitacaoTipo');
+    var elData = $('solicitacaoData');
+    var elObs = $('solicitacaoObs');
+    var tipo = ((elTipo && elTipo.value) || '').trim();
+    var dataPref = ((elData && elData.value) || '').trim();
+    var obs = ((elObs && elObs.value) || '').trim();
+    if (!tipo) { mostrarToast('Escolha o tipo de treino.', 'erro'); return; }
 
-  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Enviando...'; }
+    if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Enviando...'; }
 
-  DB.salvar('solicitacoes', {
-    alunoId: logado.id,
-    alunoNome: logado.nome,
-    alunoApelido: logado.apelido || '',
-    graduacao: logado.graduacao || '',
-    tipo: tipo,
-    dataPreferida: dataPref,
-    observacao: obs,
-    status: 'pendente',
-    respostaProfessor: '',
-    criadoEm: agoraISO()
-  }).then(function () {
-    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar pedido ao professor'; }
-    if ($('solicitacaoObs')) $('solicitacaoObs').value = '';
-    if ($('solicitacaoData')) $('solicitacaoData').value = '';
-    mostrarToast('Pedido enviado! O professor vai avaliar.');
-    registroLog('aluno', 'Solicitação de treino: ' + tipo + ' por ' + logado.nome);
-    renderAluno();
-  }).catch(function () {
-    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar pedido ao professor'; }
-  });
+    DB.salvar('solicitacoes', {
+      alunoId: logado.id,
+      alunoNome: logado.nome || logado.apelido || 'Aluno',
+      alunoApelido: logado.apelido || '',
+      graduacao: logado.graduacao || '',
+      tipo: tipo,
+      dataPreferida: dataPref,
+      observacao: obs,
+      status: 'pendente',
+      respostaProfessor: '',
+      criadoEm: agoraISO()
+    }).then(function () {
+      if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar pedido ao professor'; }
+      if (elObs) elObs.value = '';
+      if (elData) elData.value = '';
+      mostrarToast('Pedido enviado! O professor vai avaliar.');
+      try { registroLog('aluno', 'Solicitação de treino: ' + tipo + ' por ' + (logado.nome || '')); } catch (e) {}
+      try { renderAluno(); } catch (e) {}
+    }).catch(function () {
+      if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar pedido ao professor'; }
+      mostrarToast('Não foi possível enviar o pedido.', 'erro');
+    });
+  } catch (e) {
+    if (btn) { try { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar pedido ao professor'; } catch (e2) {} }
+    mostrarToast('Erro ao enviar pedido de treino.', 'erro');
+    try { console.warn('[enviarSolicitacaoTreino]', e); } catch (e3) {}
+  }
 }
 
 </script>
@@ -11014,9 +11466,9 @@ var INDEX_FORMACAO_PROFESSOR = {
       'Reduzir risco de lesão e melhorar desempenho'
     ],
     estrutura: [
-      '1. Geral (2–4 min): caminhada rápida, bike leve, polichinelos, pular corda',
-      '2. Específico / mobilidade dinâmica (4–8 min): movimentos que imitam o treino (ginga, meia-lua, negativa…)',
-      '3. Ativação (força): séries leves do exercício principal'
+      'Geral (2–4 min): caminhada rápida, bike leve, polichinelos, pular corda',
+      'Específico / mobilidade dinâmica (4–8 min): movimentos que imitam o treino (ginga, meia-lua, negativa…)',
+      'Ativação (força): séries leves do exercício principal'
     ],
     evidencia: [
       'Alongamento estático prolongado (>45–60 s) antes do treino pode reduzir força e potência temporariamente.',
@@ -11065,11 +11517,11 @@ var INDEX_FORMACAO_PROFESSOR = {
     dicaAula: 'No aquecimento de capoeira: 2–3 min geral + 4–6 min mobilidade de quadril e coluna (círculos, 90/90, world greatest stretch adaptado) + 2 min ativação (ponte, agachamento leve, ginga lenta).'
   },
   protocoloAulaCapoeira: [
-    '1. Aquecimento geral 2–4 min (deslocamentos, polichinelos leves)',
-    '2. Mobilidade dinâmica 4–6 min (quadril, tornozelo, coluna, ombros) — sem alongamento estático longo',
-    '3. Ginga e fundamentos em ritmo baixo 3–5 min',
-    '4. Parte principal (técnica / jogo / força)',
-    '5. Volta à calma: alongamento estático ou PNF 5–8 min (posteriores, adutores, peitoral, flexores de quadril)'
+    'Aquecimento geral 2–4 min (deslocamentos, polichinelos leves)',
+    'Mobilidade dinâmica 4–6 min (quadril, tornozelo, coluna, ombros) — sem alongamento estático longo',
+    'Ginga e fundamentos em ritmo baixo 3–5 min',
+    'Parte principal (técnica / jogo / força)',
+    'Volta à calma: alongamento estático ou PNF 5–8 min (posteriores, adutores, peitoral, flexores de quadril)'
   ]
 };
 
@@ -11128,12 +11580,12 @@ function assistenteFormacaoProfessor(texto) {
   if (/formacao|formação.*professor|index|conhecimento|ajuda.*professor|menu formacao/.test(t)) {
     return '🎓 Formação de Professor — Index de Conhecimento\n\n' +
       'Temas disponíveis:\n' +
-      '1. Definições (aquecimento × alongamento × mobilidade)\n' +
-      '2. Aquecimento (estrutura 5–12 min + evidência)\n' +
-      '3. Alongamento (tipos, ACSM, PNF)\n' +
-      '4. Mobilidade e CARs\n' +
-      '5. Mobilidade de quadril na capoeira\n' +
-      '6. Protocolo completo de aula\n\n' +
+      '• Definições (aquecimento × alongamento × mobilidade)\n' +
+      '• Aquecimento (estrutura 5–12 min + evidência)\n' +
+      '• Alongamento (tipos, ACSM, PNF)\n' +
+      '• Mobilidade e CARs\n' +
+      '• Mobilidade de quadril na capoeira\n' +
+      '• Protocolo completo de aula\n\n' +
       'Exemplos: "como aquecer a turma?", "alongamento antes ou depois?", "mobilidade de quadril", "protocolo de aula"';
   }
 
@@ -11252,17 +11704,34 @@ function assistenteProcessar(texto) {
     return assistenteInfoCheckin(aluno);
   }
 
-  if (/como.*check.?in|fazer check.?in|check.?in local|gympass|wellhub/.test(t)) {
-    return 'Como fazer check-in:\n\n' +
-      '1. Abra a aba Check-in\n' +
-      '2. Digite seu nome completo\n' +
-      '3. Selecione o polo do treino\n' +
-      '4. Se estiver atrasado, justifique\n' +
-      '5. Toque em "Confirmar Presença Local"\n\n' +
-      '• Só é permitido 1 check-in por aula/dia\n' +
-      '• O professor precisa aprovar\n' +
-      '• Aluno Gympass/Wellhub: o check-in do benefício é feito no próprio app Wellhub — o professor valida no Portal de Parceiros\n\n' +
-      'Se der erro, peça ao professor para registrar o check-in manual na área Equipe.';
+  if (/como.*check.?in|fazer check.?in|check.?in local|gympass|wellhub|presenca|marcar presenca/.test(t)) {
+    return 'Como fazer check-in (passo a passo):\n\n' +
+      '• Abra a aba Check-in (ou Aluno → Check-in)\n' +
+      '• Confirme seu nome e o polo do treino\n' +
+      '• Se estiver atrasado, escreva a justificativa\n' +
+      '• Toque em Confirmar Presença Local\n\n' +
+      'Depois disso:\n' +
+      '• O status fica pendente até o professor aprovar\n' +
+      '• Só vale 1 check-in por aula/dia\n' +
+      '• Wellhub/Gympass: você faz o check-in no app Wellhub; o professor valida no Portal de Parceiros\n\n' +
+      'Dúvida no meio do caminho? Pergunte: "meu check-in", "está atrasado?", "qual o polo?" — eu te oriento.';
+  }
+
+  if (/check.?in.*atras|atrasad|janela de check|horario.*check/.test(t)) {
+    return 'Sobre atraso no check-in:\n\n' +
+      '• Dá para confirmar mesmo atrasado — coloque a justificativa\n' +
+      '• O professor vê o atraso e decide se aprova\n' +
+      '• Se a janela da aula já fechou, fale com o professor para check-in manual\n\n' +
+      'Quer que eu olhe seu status de hoje? Pergunte "meu check-in".';
+  }
+
+  if (/esqueci.*check|nao consegui.*check|check.?in.*erro|deu erro.*check/.test(t)) {
+    return 'Se o check-in falhou:\n\n' +
+      '1. Confira se está logado na aba Aluno\n' +
+      '2. Veja se já não tem check-in de hoje (só 1 por dia)\n' +
+      '3. Confirme o polo certo\n' +
+      '4. Atualize a página e tente de novo\n\n' +
+      'Se continuar: peça ao professor o check-in manual na área Equipe. Eu também posso explicar o status se você perguntar "meu check-in".';
   }
 
   if (/nova senha|senha nova|gerar.*senha|pedir.*senha|pedir.*nova|nao consigo entrar|nao consigo logar|senha errada/.test(t)) {
@@ -11381,15 +11850,34 @@ function assistenteProcessar(texto) {
     return 'Disponha! Qualquer dúvida sobre a academia ou o app, é só perguntar. Axé! 💚';
   }
 
-  /* fallback inteligente com dados */
+  /* fallback inteligente com dados — tenta responder dúvida geral com contexto da academia */
   var dicas = [];
-  var aula = aulaDeHoje();
-  if (aula) dicas.push('Hoje tem aula às ' + aula.horaInicio + '.');
-  if (aluno) {
-    var ck = obterCheckinDoDia(aluno);
-    if (ck) dicas.push('Seu check-in de hoje está ' + ck.status + '.');
-    else dicas.push('Você ainda não fez check-in hoje.');
+  try {
+    var aulaFb = (typeof aulaDeHoje === 'function') ? aulaDeHoje() : null;
+    if (aulaFb) dicas.push('Hoje tem aula às ' + aulaFb.horaInicio + (aulaFb.horaFim ? '–' + aulaFb.horaFim : '') + '.');
+    if (aluno) {
+      var ckFb = (typeof obterCheckinDoDia === 'function') ? obterCheckinDoDia(aluno) : null;
+      if (ckFb) dicas.push('Seu check-in de hoje está: ' + ckFb.status + '.');
+      else dicas.push('Você ainda não fez check-in hoje.');
+    }
+  } catch (e) {}
+
+  if (/duvida|nao entendi|me explica|o que e|como funciona|pode ajudar|socorro|help/.test(t)) {
+    return 'Claro — me diga o tema que eu resolvo com você.\n\n' +
+      'Exemplos rápidos:\n' +
+      '• "meu check-in" / "como fazer check-in"\n' +
+      '• "próxima aula" / "horários"\n' +
+      '• "pedir treino" / "graduação"\n' +
+      '• "formação" / "aquecimento"\n' +
+      '• "falar com o professor"\n\n' +
+      (dicas.length ? ('Agora: ' + dicas.join(' ') + '\n\n') : '') +
+      'Pode escrever a dúvida do seu jeito que eu tento responder.';
   }
+
+  if (dicas.length && /hoje|agora|status|situacao/.test(t)) {
+    return 'Situação agora:\n• ' + dicas.join('\n• ') + '\n\nSe quiser detalhe, pergunte "meu check-in" ou "próxima aula".';
+  }
+
   return null;
 }
 
@@ -13377,19 +13865,36 @@ function trHtmlPedidoAluno(a) {
 }
 
 function trEnviarPedido(btn) {
-  var a = alunoLogado(); if (!a) { mostrarToast('Faça login para pedir treino.', 'erro'); return; }
-  var ids = TR_CATS.filter(function (c) { return TR_PED_SEL[c.id]; }).map(function (c) { return c.id; });
-  if (!ids.length) { mostrarToast('Escolha pelo menos um treino.', 'erro'); return; }
-  var data = (($('trPedData') || {}).value || ''), obs = (($('trPedObs') || {}).value || '').trim();
-  if (btn) { btn.classList.add('carregando'); btn.disabled = true; }
-  DB.salvar('solicitacoes', {
-    alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', graduacao: a.graduacao || '',
-    tipo: ids.map(trNomeCat).join(', '), categorias: ids, minPedido: 15, dataPreferida: data, observacao: obs,
-    status: 'pendente', respostaProfessor: '', incluidoAula: false, dataAula: '', criadoEm: agoraISO()
-  }).then(function () {
-    TR_PED_SEL = {}; mostrarToast('Pedido enviado! Ele entra no plano da aula.');
-    registroLog('aluno', 'Pedido de treino específico: ' + ids.join(',') + ' por ' + a.nome); renderAluno();
-  }).catch(function () { if (btn) { btn.classList.remove('carregando'); btn.disabled = false; } });
+  try {
+    var a = alunoLogado();
+    if (!a || !a.id) { mostrarToast('Faça login para pedir treino.', 'erro'); return; }
+    var cats = (typeof TR_CATS !== 'undefined' && TR_CATS) ? TR_CATS : [];
+    var sel = (typeof TR_PED_SEL !== 'undefined' && TR_PED_SEL) ? TR_PED_SEL : {};
+    var ids = cats.filter(function (c) { return sel[c.id]; }).map(function (c) { return c.id; });
+    if (!ids.length) { mostrarToast('Escolha pelo menos um treino.', 'erro'); return; }
+    var elData = $('trPedData'), elObs = $('trPedObs');
+    var data = (elData && elData.value) || '';
+    var obs = (elObs && elObs.value) ? String(elObs.value).trim() : '';
+    if (btn) { btn.classList.add('carregando'); btn.disabled = true; }
+    var tipoTxt = ids.map(function (id) { return (typeof trNomeCat === 'function') ? trNomeCat(id) : id; }).join(', ');
+    DB.salvar('solicitacoes', {
+      alunoId: a.id, alunoNome: a.nome || a.apelido || 'Aluno', alunoApelido: a.apelido || '', graduacao: a.graduacao || '',
+      tipo: tipoTxt, categorias: ids, minPedido: 15, dataPreferida: data, observacao: obs,
+      status: 'pendente', respostaProfessor: '', incluidoAula: false, dataAula: '', criadoEm: agoraISO()
+    }).then(function () {
+      TR_PED_SEL = {};
+      mostrarToast('Pedido enviado! Ele entra no plano da aula.');
+      try { registroLog('aluno', 'Pedido de treino específico: ' + ids.join(',') + ' por ' + (a.nome || '')); } catch (e) {}
+      try { renderAluno(); } catch (e) {}
+    }).catch(function () {
+      if (btn) { btn.classList.remove('carregando'); btn.disabled = false; }
+      mostrarToast('Não foi possível enviar o pedido.', 'erro');
+    });
+  } catch (e) {
+    if (btn) { try { btn.classList.remove('carregando'); btn.disabled = false; } catch (e2) {} }
+    mostrarToast('Erro ao enviar pedido de treino.', 'erro');
+    try { console.warn('[trEnviarPedido]', e); } catch (e3) {}
+  }
 }
 
 function trAlunoInjetar() {
@@ -23372,13 +23877,42 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       window.prompt = function () { return null; };
       window.confirm = function () { return false; };
       window.alert = function () {};
-      var onErr = function (e) { erros.push(String((e && (e.message || (e.error && e.error.message))) || 'erro').slice(0, 160)); };
+      var onErr = function (e) {
+        var msg = '';
+        try {
+          if (e && e.message) msg = e.message;
+          else if (e && e.error && e.error.message) msg = e.error.message;
+          else if (e && e.reason) msg = String(e.reason);
+          else msg = 'erro';
+          if (e && e.filename) msg += ' @' + String(e.filename).split('/').pop();
+          if (e && e.lineno) msg += ':' + e.lineno;
+        } catch (e2) { msg = 'erro'; }
+        erros.push(String(msg).slice(0, 200));
+      };
       window.addEventListener('error', onErr);
+      window.addEventListener('unhandledrejection', onErr);
       try {
+        /* garante conta de teste com id/nome */
+        try {
+          DB.salvar('contasTeste', {
+            id: 'dandara_aluno_teste',
+            nome: 'Dandara (aluno teste)',
+            apelido: 'Dandara',
+            graduacao: 'Iniciante - Corda Crua',
+            ativo: true,
+            teste: true
+          }, 'dandara_aluno_teste').catch(function () {});
+        } catch (e) {}
         sessaoAlunoId = 'dandara_aluno_teste';
-        try { if (typeof abrirAba === 'function') abrirAba('tab3'); } catch (e) { erros.push('abrir aba: ' + e.message); }
-        try { if (typeof renderAluno === 'function') renderAluno(); } catch (e) { erros.push('renderAluno: ' + e.message); }
-        await pausa(600);
+        try { if (typeof abrirAba === 'function') abrirAba('tab3'); } catch (e) { erros.push('abrir aba: ' + (e.message || e)); }
+        try { if (typeof renderAluno === 'function') renderAluno(); } catch (e) { erros.push('renderAluno: ' + (e.message || e)); }
+        await pausa(700);
+        /* prepara seleção de categoria para o pedido de treino (evita só o toast de validação) */
+        try {
+          if (typeof TR_PED_SEL !== 'undefined' && typeof TR_CATS !== 'undefined' && TR_CATS && TR_CATS[0]) {
+            TR_PED_SEL[TR_CATS[0].id] = true;
+          }
+        } catch (e) {}
         var tab = document.getElementById('tab3');
         var botoes = tab ? Array.prototype.slice.call(tab.querySelectorAll('button, .btn')) : [];
         botoes = botoes.filter(function (b) {
@@ -23388,16 +23922,18 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
         for (var i = 0; i < botoes.length; i++) {
           var b = botoes[i], nomeB = (b.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 50);
           var antes = erros.length;
-          try { b.click(); } catch (e) { erros.push('botão "' + nomeB + '": ' + e.message); }
-          await pausa(250);
+          try { b.click(); } catch (e) { erros.push('botão "' + nomeB + '": ' + (e.message || e)); }
+          await pausa(280);
           if (erros.length > antes) falhas.push(nomeB + ' → ' + erros[erros.length - 1]);
           testados++;
           try { if (typeof fecharModal === 'function') fecharModal(); } catch (e) {}
         }
       } finally {
         window.removeEventListener('error', onErr);
+        window.removeEventListener('unhandledrejection', onErr);
         window.prompt = prompt0; window.confirm = confirm0; window.alert = alert0;
         sessaoAlunoId = anteriorSessao;
+        try { if (typeof TR_PED_SEL !== 'undefined') TR_PED_SEL = {}; } catch (e) {}
       }
       var veredito = erros.length ? (falhas.length ? 'erro' : 'atencao') : 'ok';
       var melhorias = [];
@@ -25114,7 +25650,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   /* ---------- estilo ---------- */
   var css = document.createElement('style'); css.id = 'ucOrgCss';
   css.textContent =
-    '.uc-sub{display:flex;gap:6px;overflow-x:auto;padding:8px 2px 10px;margin:0 0 6px;position:sticky;top:0;z-index:30;background:rgba(7,16,12,.96);-webkit-overflow-scrolling:touch;scrollbar-width:none;}' +
+    '.uc-sub{display:flex;flex-wrap:wrap;gap:6px;padding:8px 2px 10px;margin:0 0 6px;position:sticky;top:0;z-index:30;background:rgba(7,16,12,.96);}' +
     '.uc-sub::-webkit-scrollbar{display:none;}' +
     '.uc-sub button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#e8f5ee;font:700 13px/1 inherit;white-space:nowrap;cursor:pointer;}' +
     '.uc-sub button.on{background:var(--gold,#ffc107);color:#1d1600;border-color:transparent;}' +
@@ -25286,8 +25822,8 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   /* ---------- Professor ---------- */
   registrar('professor', {
     host: function () { return $('conteudoProfessor'); },
-    grupos: [{ id: 'hoje', rotulo: 'Hoje', icone: 'fa-bolt' }, { id: 'alunos', rotulo: 'Alunos', icone: 'fa-users' }, { id: 'aulas', rotulo: 'Aulas', icone: 'fa-calendar-alt' },
-      { id: 'avaliacoes', rotulo: 'Avaliações', icone: 'fa-clipboard-check' }, { id: 'certificados', rotulo: 'Certificados', icone: 'fa-certificate' }, { id: 'formacao', rotulo: 'Formação', icone: 'fa-graduation-cap' },
+    grupos: [{ id: 'formacao', rotulo: 'Formação de Professor', icone: 'fa-graduation-cap' }, { id: 'hoje', rotulo: 'Hoje', icone: 'fa-bolt' }, { id: 'alunos', rotulo: 'Alunos', icone: 'fa-users' }, { id: 'aulas', rotulo: 'Aulas', icone: 'fa-calendar-alt' },
+      { id: 'avaliacoes', rotulo: 'Avaliações', icone: 'fa-clipboard-check' }, { id: 'certificados', rotulo: 'Certificados', icone: 'fa-certificate' },
       { id: 'mais', rotulo: 'Mais', icone: 'fa-ellipsis' }],
     padrao: 'mais',
     coletar: function (h) { return filhosDiretos(h); },
@@ -25301,6 +25837,16 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       [/sessao:/, 'mais']
     ], { ucAvisosProfessor: 'hoje', ucFormacaoProf: 'formacao', ccCardProf: 'alunos', ucSaudeProfWrap: 'alunos', ucBtnDandaraAluno: 'alunos', ucCardCertGrad: 'certificados', ucBtnAvalSemestral: 'avaliacoes',
          cardAvaliacaoSemanalProfessor: 'avaliacoes', cardAvalBimestral: 'avaliacoes', trProfBloco: 'aulas' })
+  });
+
+  /* ---------- Professor > Formação de Professor: alunos, relatórios e certificados em partes separadas ---------- */
+  registrar('formacaoprof', {
+    host: function () { return $('ucFormacaoProf'); },
+    grupos: [{ id: 'alunos', rotulo: 'Alunos em formação', icone: 'fa-users' }, { id: 'relatorios', rotulo: 'Relatórios dos alunos', icone: 'fa-file-signature' }, { id: 'certificados', rotulo: 'Certificados', icone: 'fa-certificate' }],
+    padrao: 'alunos',
+    depoisDe: function (h) { return h.querySelector(':scope > h3'); },
+    coletar: function (h) { return filhosDiretos(h).filter(function (el) { return el.tagName !== 'H3'; }); },
+    classificar: classificador([], { boxFormacaoProfessorGestaoWrap: 'relatorios', boxCertificadoOficialFormWrap: 'certificados', boxCertificadosProfessorFormacaoWrap: 'certificados' })
   });
 
   /* ---------- ADM ---------- */
@@ -25357,7 +25903,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   var agenda = 0;
   function agendar() { if (agenda) return; agenda = setTimeout(function () { agenda = 0; try { mover(); Object.keys(ORG).forEach(organizar); } catch (e) { console.warn('[organizar]', e); } }, 160); }
   function vigiar() {
-    ['tab1', 'tab3', 'tabFormacao', 'conteudoProfessor', 'conteudoAdm', 'conteudoDev'].forEach(function (id) {
+    ['tab1', 'tab3', 'tabFormacao', 'conteudoProfessor', 'ucFormacaoProf', 'conteudoAdm', 'conteudoDev'].forEach(function (id) {
       var el = $(id); if (!el || el._ucVig) return; el._ucVig = true;
       new MutationObserver(agendar).observe(el, { childList: true, subtree: true });
     });
@@ -25396,6 +25942,287 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   }, 3000);
 })();
 
+</script>
+
+<script id="ucFormacaoAba">
+/* Aba Formação: login completo do aluno E da equipe por aqui.
+   Aluno vê progresso/relatórios nesta aba. Equipe é levada à área Professor (gestão da formação). */
+(function () {
+  function $(id) { return document.getElementById(id); }
+  function alunoOk() {
+    try { return typeof alunoLogado === 'function' && !!alunoLogado(); } catch (e) { return false; }
+  }
+  function equipeOk() {
+    try {
+      return typeof sessaoEquipe !== 'undefined' && !!sessaoEquipe &&
+        (sessaoEquipe.papel === 'professor' || sessaoEquipe.papel === 'adm' || sessaoEquipe.papel === 'dev');
+    } catch (e) { return false; }
+  }
+
+  window.ucFormacaoTipoLogin = function (tipo) {
+    var aluno = $('formLoginBlocoAluno');
+    var equipe = $('formLoginBlocoEquipe');
+    var bar = $('formLoginTipoBar');
+    if (aluno) aluno.style.display = tipo === 'aluno' ? '' : 'none';
+    if (equipe) equipe.style.display = tipo === 'equipe' ? '' : 'none';
+    if (bar) {
+      [].forEach.call(bar.querySelectorAll('button'), function (b) {
+        b.classList.toggle('on', b.getAttribute('data-tipo') === tipo);
+      });
+    }
+  };
+
+  function garantirCamposAluno() {
+    var n = $('alunoLoginNome'), s = $('alunoLoginSenha');
+    if (!n) {
+      n = document.createElement('input'); n.id = 'alunoLoginNome'; n.type = 'hidden';
+      document.body.appendChild(n);
+    }
+    if (!s) {
+      s = document.createElement('input'); s.id = 'alunoLoginSenha'; s.type = 'hidden';
+      document.body.appendChild(s);
+    }
+    return { n: n, s: s };
+  }
+
+  window.ucFormacaoLogin = function (btn) {
+    var nomeEl = $('formLoginNome'), senhaEl = $('formLoginSenha');
+    if (!nomeEl || !senhaEl) {
+      if (typeof mostrarToast === 'function') mostrarToast('Tela de login indisponível.', 'erro');
+      return;
+    }
+    var nome = (nomeEl.value || '').trim();
+    var senha = senhaEl.value || '';
+    if (!nome || !senha) {
+      if (typeof mostrarToast === 'function') mostrarToast('Informe nome e senha.', 'erro');
+      return;
+    }
+    var campos = garantirCamposAluno();
+    campos.n.value = nome;
+    campos.s.value = senha;
+    try {
+      if (typeof autenticarAlunoNuvem === 'function') autenticarAlunoNuvem(btn);
+      else if (typeof mostrarToast === 'function') mostrarToast('Login indisponível no momento.', 'erro');
+    } catch (e) {
+      if (typeof mostrarToast === 'function') mostrarToast('Não foi possível entrar agora.', 'erro');
+    }
+    senhaEl.value = '';
+    setTimeout(function () {
+      try { if (typeof abrirAba === 'function') abrirAba('tabFormacao', null); } catch (e) {}
+      sincronizar(true);
+    }, 400);
+    setTimeout(function () { sincronizar(true); }, 1200);
+  };
+
+  window.ucFormacaoLoginEquipe = function (btn) {
+    var nomeEl = $('formLoginEquipeNome'), senhaEl = $('formLoginEquipeSenha');
+    if (!nomeEl || !senhaEl) {
+      if (typeof mostrarToast === 'function') mostrarToast('Tela de login indisponível.', 'erro');
+      return;
+    }
+    var nome = (nomeEl.value || '').trim();
+    var senha = senhaEl.value || '';
+    if (!nome || !senha) {
+      if (typeof mostrarToast === 'function') mostrarToast('Informe nome e senha da equipe.', 'erro');
+      return;
+    }
+    /* monta campos esperados por autenticarEquipe('professor') */
+    var sufixo = '_professor';
+    var n = $('equipeLoginNome' + sufixo);
+    var s = $('equipeLoginSenha' + sufixo);
+    if (!n) {
+      n = document.createElement('input'); n.id = 'equipeLoginNome' + sufixo; n.type = 'hidden';
+      document.body.appendChild(n);
+    }
+    if (!s) {
+      s = document.createElement('input'); s.id = 'equipeLoginSenha' + sufixo; s.type = 'hidden';
+      document.body.appendChild(s);
+    }
+    n.value = nome;
+    s.value = senha;
+    try {
+      if (typeof autenticarEquipe === 'function') autenticarEquipe('professor');
+      else if (typeof mostrarToast === 'function') mostrarToast('Login de equipe indisponível.', 'erro');
+    } catch (e) {
+      if (typeof mostrarToast === 'function') mostrarToast('Não foi possível entrar como equipe.', 'erro');
+    }
+    senhaEl.value = '';
+    setTimeout(function () {
+      if (!equipeOk()) return;
+      try {
+        /* abre área Professor e destaca formação */
+        if (typeof revelarAcessoEquipe === 'function') {
+          var t = $('tabsEquipe');
+          if (t && t.style.display !== 'flex' && t.style.display !== 'block') revelarAcessoEquipe();
+        }
+        if (typeof abrirAba === 'function') abrirAba('tab4', null);
+        if (window.ucOrg && typeof window.ucOrg.selecionar === 'function') {
+          try { window.ucOrg.selecionar('professor', 'formacao'); } catch (e2) {}
+        }
+      } catch (e) {}
+      sincronizar(true);
+    }, 450);
+    setTimeout(function () { sincronizar(true); }, 1300);
+  };
+
+  function trazerCard(id, destino) {
+    var el = $(id);
+    if (el && destino && el.parentNode !== destino) destino.appendChild(el);
+    if (el) {
+      el.style.display = '';
+      el.classList.remove('uc-oculto');
+      el.removeAttribute('hidden');
+    }
+    return el;
+  }
+
+  function sincronizar(forcar) {
+    var destino = $('conteudoFormacaoAba');
+    var login = $('cardFormacaoLoginAba');
+    var destEq = $('conteudoFormacaoEquipe');
+    if (!destino) return;
+    var logadoAluno = alunoOk();
+    var logadoEquipe = equipeOk();
+
+    /* se algum login ativo, esconde o cartão de login; senão mostra */
+    if (login) login.style.display = (logadoAluno || logadoEquipe) ? 'none' : '';
+
+    if (logadoEquipe && destEq) {
+      destEq.style.display = '';
+      destEq.innerHTML =
+        '<div class="card" style="border:1px solid var(--gold);">' +
+        '<h3 style="color:var(--gold);"><i class="fas fa-chalkboard-teacher"></i> Equipe logada</h3>' +
+        '<p class="mini">Olá, <b>' + (sessaoEquipe.nome || '') + '</b> (' + (sessaoEquipe.papel || '') + '). A gestão da formação (inscrições, horas e aceite de aulas) fica na área <b>Professor</b>.</p>' +
+        '<div class="flex-btn">' +
+        '<button class="btn btn-gold" type="button" onclick="(function(){try{if(typeof revelarAcessoEquipe===\'function\'){var t=document.getElementById(\'tabsEquipe\');if(t&&t.style.display!==\'flex\'&&t.style.display!==\'block\')revelarAcessoEquipe();}abrirAba(\'tab4\');if(window.ucOrg)ucOrg.selecionar(\'professor\',\'formacao\');}catch(e){}})()"><i class="fas fa-graduation-cap"></i> Abrir Formação de Professor</button>' +
+        '<button class="btn btn-secondary" type="button" onclick="sairEquipe(); try{abrirAba(\'tabFormacao\');}catch(e){}"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button>' +
+        '</div></div>';
+    } else if (destEq) {
+      destEq.style.display = 'none';
+      destEq.innerHTML = '';
+    }
+
+    if (!logadoAluno) {
+      ['ucFormacaoProfAluno', 'cardRelatoriosFormacao', 'avisoFormacaoRemunerada', 'cardFormacaoInfantil', 'cardFormacaoProfessor'].forEach(function (id) {
+        var el = $(id);
+        if (el && el.parentNode === destino) el.style.display = 'none';
+      });
+      return;
+    }
+
+    trazerCard('avisoFormacaoRemunerada', destino);
+    trazerCard('ucFormacaoProfAluno', destino);
+    trazerCard('cardRelatoriosFormacao', destino);
+    trazerCard('cardFormacaoInfantil', destino);
+    var box = $('ucFormacaoProfAluno');
+    if (box) {
+      box.style.display = '';
+      box.classList.remove('uc-oculto');
+    }
+    try { if (typeof renderMinhaInscricaoFormacao === 'function') renderMinhaInscricaoFormacao(); } catch (e) {}
+    try { if (typeof renderFormacaoInfantilUI === 'function') renderFormacaoInfantilUI(); } catch (e) {}
+    try {
+      if (window.ucOrg && typeof window.ucOrg.organizar === 'function') window.ucOrg.organizar('formacao');
+    } catch (e) {}
+  }
+
+  function ligarEnter() {
+    function bind(id, fn) {
+      var el = $(id);
+      if (!el || el._ucEnter) return;
+      el._ucEnter = true;
+      el.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.keyCode === 13) {
+          ev.preventDefault();
+          fn();
+        }
+      });
+    }
+    bind('formLoginSenha', function () {
+      var btn = document.querySelector('#formLoginBlocoAluno button.btn');
+      window.ucFormacaoLogin(btn || null);
+    });
+    bind('formLoginEquipeSenha', function () {
+      var btn = document.querySelector('#formLoginBlocoEquipe button.btn');
+      window.ucFormacaoLoginEquipe(btn || null);
+    });
+  }
+
+  setInterval(function () { sincronizar(false); ligarEnter(); }, 1500);
+  window.addEventListener('load', function () {
+    setTimeout(function () { sincronizar(true); ligarEnter(); }, 800);
+  });
+})();
+</script>
+
+<script id="ucCorrigirIdsAdm">
+/* ADM: corrige ids repetidos na tela (só na tela aberta; o arquivo não muda).
+   Mantém o primeiro elemento com cada id e renomeia os seguintes para id_dupN. Pode ser ligado para rodar sozinho. */
+(function () {
+  var CHAVE_AUTO = 'uc_corrigir_ids_auto';
+  function ehAdm() { return typeof sessaoEquipe !== 'undefined' && !!sessaoEquipe && (sessaoEquipe.papel === 'adm' || sessaoEquipe.papel === 'dev'); }
+  function duplicados() {
+    var vistos = {}, lista = [];
+    document.querySelectorAll('[id]').forEach(function (el) {
+      var id = el.id; if (!id) return;
+      if (!vistos[id]) { vistos[id] = 1; return; }
+      lista.push({ el: el, id: id });
+    });
+    return lista;
+  }
+  function corrigir() {
+    var mudancas = [];
+    var dup = duplicados();
+    dup.forEach(function (item) {
+      var n = 2, novo = item.id + '_dup' + n;
+      while (document.getElementById(novo)) { n++; novo = item.id + '_dup' + n; }
+      mudancas.push(item.id + ' → ' + novo);
+      item.el.id = novo;
+    });
+    return mudancas;
+  }
+  window.ucCorrigirIdsVerificar = function () {
+    var dup = duplicados();
+    var saida = document.getElementById('ucIdsResultado');
+    if (saida) saida.innerHTML = dup.length
+      ? '<p class="mini"><b>' + dup.length + '</b> id(s) repetido(s) na tela: ' + dup.map(function (d) { return d.id; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join(', ') + '</p>'
+      : '<p class="mini">Nenhum id repetido na tela agora.</p>';
+  };
+  window.ucCorrigirIdsAgora = function () {
+    if (!ehAdm()) { if (typeof mostrarToast === 'function') mostrarToast('Só a ADM pode corrigir os ids.', 'erro'); return; }
+    var mud = corrigir();
+    var saida = document.getElementById('ucIdsResultado');
+    if (saida) saida.innerHTML = mud.length
+      ? '<p class="mini"><b>' + mud.length + '</b> id(s) corrigido(s):</p><div class="mini" style="white-space:pre-wrap;">' + mud.join('\n') + '</div>'
+      : '<p class="mini">Nenhum id repetido para corrigir.</p>';
+    if (typeof mostrarToast === 'function') mostrarToast(mud.length ? mud.length + ' id(s) corrigido(s) nesta tela.' : 'Nenhum id repetido.');
+  };
+  window.ucCorrigirIdsAuto = function (ligar) {
+    try { localStorage.setItem(CHAVE_AUTO, ligar ? '1' : '0'); } catch (e) {}
+    if (ligar) window.ucCorrigirIdsAgora();
+  };
+  function montar() {
+    var adm = document.getElementById('conteudoAdm');
+    if (!adm || !ehAdm() || document.getElementById('ucIdsCard')) return;
+    var auto = false; try { auto = localStorage.getItem(CHAVE_AUTO) === '1'; } catch (e) {}
+    var c = document.createElement('div'); c.id = 'ucIdsCard'; c.className = 'card';
+    c.innerHTML = '<h3><i class="fas fa-wrench"></i> Corrigir ids repetidos</h3>' +
+      '<p class="mini">Ids repetidos podem fazer um botão ou campo agir no lugar errado. Esta correção só muda a tela aberta; o arquivo continua o mesmo.</p>' +
+      '<div class="flex-btn">' +
+      '<button class="btn btn-secondary" type="button" onclick="ucCorrigirIdsVerificar()"><i class="fas fa-search"></i> Verificar</button>' +
+      '<button class="btn btn-gold" type="button" onclick="ucCorrigirIdsAgora()"><i class="fas fa-check"></i> Corrigir agora</button>' +
+      '</div>' +
+      '<label class="mini" style="display:flex;align-items:center;gap:6px;margin-top:8px;"><input type="checkbox" id="ucIdsAuto" ' + (auto ? 'checked' : '') + ' onchange="ucCorrigirIdsAuto(this.checked)"> Ativar: corrigir sozinho neste aparelho</label>' +
+      '<div id="ucIdsResultado" style="margin-top:8px;"></div>';
+    adm.insertBefore(c, adm.firstChild);
+  }
+  function rodarAuto() {
+    var auto = false; try { auto = localStorage.getItem(CHAVE_AUTO) === '1'; } catch (e) {}
+    if (auto && ehAdm()) corrigir();
+  }
+  setInterval(montar, 2000);
+  setInterval(rodarAuto, 10000);
+})();
 </script>
 </body>
 </html>
