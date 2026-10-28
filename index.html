@@ -24338,24 +24338,29 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
 </script>
 
 <script id="ucDandaraAlunoTeste">
-/* Dandara entra no app como aluno (conta de teste "Dandara (aluno teste)"). Não aparece na lista real de alunos. */
+/* Dandara (aluno teste): o botão fica só na área do Professor, para a equipe logada. Não aparece para o público. */
 (function () {
+  function ehEquipe() {
+    return typeof sessaoEquipe !== 'undefined' && !!sessaoEquipe && (sessaoEquipe.papel === 'professor' || sessaoEquipe.papel === 'adm' || sessaoEquipe.papel === 'dev');
+  }
   window.ucEntrarDandaraAluno = function () {
+    if (!ehEquipe()) { if (typeof mostrarToast === 'function') mostrarToast('Só a equipe pode abrir a conta de teste.', 'erro'); return; }
     sessaoAlunoId = 'dandara_aluno_teste';
     try { if (typeof abrirAba === 'function') abrirAba('tab3'); } catch (e) {}
     try { renderAluno(); } catch (e) {}
     if (typeof mostrarToast === 'function') mostrarToast('Entrou como Dandara (aluno teste).');
   };
   function botao() {
-    var inp = document.getElementById('alunoLoginSenha');
-    if (!inp || document.getElementById('ucBtnDandaraAluno')) return;
+    var velho = document.getElementById('ucBtnDandaraAluno');
+    if (!ehEquipe()) { if (velho) velho.remove(); return; }
+    var cont = document.getElementById('conteudoProfessor');
+    if (!cont || document.getElementById('ucBtnDandaraAluno')) return;
     var b = document.createElement('button');
     b.id = 'ucBtnDandaraAluno'; b.type = 'button'; b.className = 'btn btn-secondary';
-    b.style.marginTop = '8px';
-    b.innerHTML = '<i class="fas fa-robot"></i> Entrar como Dandara (aluno teste)';
+    b.style.margin = '0 0 10px';
+    b.innerHTML = '<i class="fas fa-robot"></i> Ver a aba do aluno com a conta da Dandara (teste)';
     b.onclick = function () { window.ucEntrarDandaraAluno(); };
-    var bloco = inp.parentNode;
-    bloco.parentNode.insertBefore(b, bloco.nextSibling);
+    cont.insertBefore(b, cont.firstChild);
   }
   setInterval(botao, 2000);
 })();
@@ -25059,6 +25064,31 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   }
   setInterval(montar, 3000);
   window.addEventListener('load', function () { setTimeout(montar, 2000); });
+})();
+</script>
+
+<script id="ucVincularFormacaoCheckin">
+/* Check-in do aluno em formação de professor: o mesmo check-in também abre a aula de formação (30 min),
+   que já conta nas horas, sem outra ação do aluno. Só para alunos aprovados na formação. */
+(function () {
+  var salvarOrig = DB.salvar;
+  DB.salvar = function (col, dados, id) {
+    var res = salvarOrig.apply(DB, arguments);
+    try {
+      if (col === 'presencas' && dados && dados.alunoId && dados.status !== 'rejeitado') {
+        var hoje = new Date();
+        var iso = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+        if (dados.data === iso) {
+          var insc = DB.listar('formacaoProfessor').filter(function (f) { return f.alunoId === dados.alunoId && f.status !== 'removido'; })[0];
+          var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
+          if (insc && insc.status === 'aprovado' && logado && logado.id === dados.alunoId && typeof window.ucFpAceitarDarAula === 'function') {
+            Promise.resolve(res).then(function () { window.ucFpAceitarDarAula(); }).catch(function () {});
+          }
+        }
+      }
+    } catch (e) {}
+    return res;
+  };
 })();
 </script>
 </body>
