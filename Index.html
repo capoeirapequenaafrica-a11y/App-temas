@@ -1818,7 +1818,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'checkinsProfessor', 'atividadeAluno', 'bioCredenciais', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasFormacao', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais', 'errosApp', 'acessosAluno', 'justificativasFalta', 'testesDandaraJogos', 'desafiosDandara', 'contasTeste', 'partidasDandara', 'pontosDandara', 'checkinsFormacao'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'checkinsProfessor', 'atividadeAluno', 'bioCredenciais', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasFormacao', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais', 'errosApp', 'acessosAluno', 'justificativasFalta', 'testesDandaraJogos', 'desafiosDandara', 'contasTeste', 'partidasDandara', 'pontosDandara', 'checkinsFormacao', 'provasFormacaoProfessor'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -10111,6 +10111,47 @@ function atualizarCargaCertificado() {
   }
 }
 
+/* ---- Teste de certificado (ADM): prévia do layout, nunca salva no banco ---- */
+function podeGerenciarCertificados() {
+  return !!sessaoEquipe && ['adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0;
+}
+
+function abrirTesteCertificado() {
+  if (!podeGerenciarCertificados()) { mostrarToast('Acesso restrito à ADM.', 'erro'); return; }
+  abrirModal('Testar certificado',
+    '<p class="mini">A prévia <b>não é salva</b> e não aparece na lista de certificados emitidos.</p>' +
+    '<label class="campo-label">Nome do aluno (teste)</label><input id="testeCertNome" placeholder="Ex: Nome de Teste">' +
+    '<label class="campo-label">Evento</label><input id="testeCertEvento" placeholder="Ex: Teste de layout">' +
+    '<label class="campo-label">Data</label><input id="testeCertData" type="date" value="' + dataLocalISO() + '">' +
+    '<label class="campo-label">Assinatura</label><input id="testeCertAssinatura" placeholder="Ex: Mestre Formiga">',
+    '<button class="btn btn-gold" onclick="gerarTesteCertificado()"><i class="fas fa-file-arrow-down"></i> Gerar prévia</button>');
+}
+
+function gerarTesteCertificado() {
+  if (!podeGerenciarCertificados()) { mostrarToast('Acesso restrito à ADM.', 'erro'); return; }
+  var nome = (($('testeCertNome') || {}).value || '').trim();
+  if (!nome) { mostrarToast('Informe um nome para o teste.', 'erro'); return; }
+  var c = {
+    alunoNome: nome,
+    evento: (($('testeCertEvento') || {}).value || '').trim() || 'Teste de layout',
+    data: ($('testeCertData') || {}).value || dataLocalISO(),
+    cargaHoraria: '',
+    assinatura: (($('testeCertAssinatura') || {}).value || '').trim(),
+    codigo: 'TESTE-NAO-OFICIAL',
+    emitidoPor: sessaoEquipe ? sessaoEquipe.nome : 'Equipe',
+    emitidoEm: agoraISO()
+  };
+  fecharModal();
+  gerarImagemCertificado(c).then(function (blob) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'teste-certificado.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    mostrarToast('Prévia gerada (não salva).');
+  });
+}
+
 function emitirCertificado() {
   var aluno = DB.buscar('alunos', $('certAluno').value);
   if (!aluno) { mostrarToast('Selecione um aluno.', 'erro'); return; }
@@ -10186,6 +10227,14 @@ function renderAbaAdm() {
     '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + DB.listar('avaliacoes').length + '</div><div class="mini">avaliações</div></div>' +
     '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + DB.listar('certificados').length + '</div><div class="mini">certificados</div></div>' +
     '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + DB.listar('polos').length + '</div><div class="mini">polos</div></div>' +
+    '</div></div>';
+
+  /* --- certificados: emitir (fluxo oficial) e testar (prévia sem salvar) --- */
+  html += '<div class="card"><h3><i class="fas fa-award"></i> Certificados</h3>' +
+    '<p class="mini">Emitir usa o formulário da aba Professor, com carga horária calculada pelas aulas aprovadas. Testar gera uma prévia do layout que <b>não é salva</b>.</p>' +
+    '<div class="flex-btn" style="margin-top:8px;">' +
+    '<button class="btn btn-gold btn-mini" onclick="abrirAba(\'tab4\')"><i class="fas fa-award"></i> Emitir certificado</button>' +
+    '<button class="btn btn-back btn-mini" onclick="abrirTesteCertificado()"><i class="fas fa-vial"></i> Testar certificado</button>' +
     '</div></div>';
 
   /* --- alunos --- */
@@ -18241,7 +18290,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var aluno = alunoLogado();
     var insc = aluno && fpInscricao(aluno.id);
     if (!insc || insc.status !== 'aprovado') { toast('Você ainda não está aprovado na formação de professor.', 'erro'); return; }
-    if ((insc.diasAula || []).indexOf(new Date().getDay()) < 0) { toast('Hoje não é um dia de aula seu.', 'erro'); return; }
+    if (!fpEhDiaDeAula(insc, fpHoje())) { toast('Hoje não é um dia de aula seu.', 'erro'); return; }
     var hoje = fpHoje();
     if (fpAulasDo(aluno.id).some(function (a) { return a.data === hoje && a.status !== 'recusada'; })) {
       toast('Você já fez a aula de hoje.', 'erro'); return;
@@ -18295,6 +18344,153 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (typeof notificar === 'function') notificar('Hoje você dá aula', 'Faça o check-in da sua aula de 30 min.');
   }
 
+  /* ---- Calendário (mesmo visual do aluno) + prova da formação ---- */
+  var FP_CAL_ST = {}, FP_CAL_SEL = {}, FP_PROVA = null;
+  function fpIso(dt) {
+    return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+  }
+  function fpDescreverDias(insc) {
+    if (Array.isArray(insc.datasAula) && insc.datasAula.length) {
+      var ds = insc.datasAula.slice().sort();
+      var txt = ds.slice(0, 6).map(function (d) { return d.split('-').reverse().join('/'); }).join(', ');
+      return ds.length > 6 ? txt + ' +' + (ds.length - 6) : txt;
+    }
+    return (insc.diasAula || []).map(function (d) { return FP_DIAS[d]; }).join(', ');
+  }
+  function fpEhDiaDeAula(insc, iso) {
+    if (Array.isArray(insc.datasAula) && insc.datasAula.length) return insc.datasAula.indexOf(iso) >= 0;
+    var d = new Date(iso + 'T00:00:00');
+    return (insc.diasAula || []).indexOf(d.getDay()) >= 0;
+  }
+  function fpLerDatas(id) { return Object.keys(FP_CAL_SEL[id] || {}).sort(); }
+  function fpSelecaoInicial(insc) {
+    var sel = {};
+    if (Array.isArray(insc.datasAula)) { insc.datasAula.forEach(function (d) { sel[d] = true; }); return sel; }
+    var hoje = new Date(), ano = hoje.getFullYear(), mes = hoje.getMonth(), n = new Date(ano, mes + 1, 0).getDate();
+    for (var d = 1; d <= n; d++) {
+      var iso = fpIso(new Date(ano, mes, d));
+      if (fpEhDiaDeAula(insc, iso)) sel[iso] = true;
+    }
+    return sel;
+  }
+  function fpCalGrade(ano, mes, marcadas, feitas, idClique) {
+    var primeiro = new Date(ano, mes, 1), n = new Date(ano, mes + 1, 0).getDate(), hoje = fpIso(new Date());
+    var h = '<div class="tr-cal">';
+    TR_DIAS_CURTOS.forEach(function (c) { h += '<div class="tr-cal-cab">' + c + '</div>'; });
+    for (var v = 0; v < primeiro.getDay(); v++) h += '<div class="tr-cal-dia tr-cal-vazio"></div>';
+    for (var d = 1; d <= n; d++) {
+      var iso = ano + '-' + String(mes + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      var cls = 'tr-cal-dia' + (iso === hoje ? ' hoje' : '') + (marcadas[iso] ? ' tr-cal-sel' : '') + (feitas[iso] ? ' ok' : '');
+      var ico = feitas[iso] ? '✓' : (marcadas[iso] ? '•' : '');
+      var click = idClique ? ' onclick="ucFpCalToggle(\'' + idClique + '\',\'' + iso + '\')"' : '';
+      h += '<button type="button" class="' + cls + '"' + click + '><span>' + d + '</span><small>' + ico + '</small></button>';
+    }
+    return h + '</div>';
+  }
+  function fpCalRenderProf(id) {
+    var box = el(id);
+    if (!box) return;
+    var st = FP_CAL_ST[id] || (FP_CAL_ST[id] = { ano: new Date().getFullYear(), mes: new Date().getMonth() });
+    var marcadas = FP_CAL_SEL[id] || {}, n = Object.keys(marcadas).length;
+    box.innerHTML = '<div class="tr-sem-nav"><button type="button" class="btn btn-secondary btn-mini" onclick="ucFpCalMes(\'' + id + '\',-1)"><i class="fas fa-chevron-left"></i></button>' +
+      '<b>' + TR_MESES[st.mes] + ' ' + st.ano + '</b>' +
+      '<button type="button" class="btn btn-secondary btn-mini" onclick="ucFpCalMes(\'' + id + '\',1)"><i class="fas fa-chevron-right"></i></button></div>' +
+      fpCalGrade(st.ano, st.mes, marcadas, {}, id) +
+      '<p class="mini" style="margin-top:6px;">Toque nos dias para marcar ou desmarcar. <b>' + n + '</b> dia(s) selecionado(s).</p>';
+  }
+  window.ucFpCalToggle = function (id, iso) {
+    var s = FP_CAL_SEL[id] = FP_CAL_SEL[id] || {};
+    if (s[iso]) delete s[iso]; else s[iso] = true;
+    fpCalRenderProf(id);
+  };
+  window.ucFpCalMes = function (id, delta) {
+    var st = FP_CAL_ST[id]; if (!st) return;
+    st.mes += delta;
+    if (st.mes < 0) { st.mes = 11; st.ano--; }
+    if (st.mes > 11) { st.mes = 0; st.ano++; }
+    fpCalRenderProf(id);
+  };
+  function fpHtmlCalAluno(insc, aulas) {
+    var hoje = new Date();
+    var st = FP_CAL_ST.aluno || (FP_CAL_ST.aluno = { ano: hoje.getFullYear(), mes: hoje.getMonth() });
+    var marcadas = {}, n = new Date(st.ano, st.mes + 1, 0).getDate();
+    for (var d = 1; d <= n; d++) {
+      var iso = fpIso(new Date(st.ano, st.mes, d));
+      if (fpEhDiaDeAula(insc, iso)) marcadas[iso] = true;
+    }
+    var feitas = {};
+    aulas.forEach(function (a) { if (a.data && (a.status === 'aprovado' || a.status === 'aberta')) feitas[a.data] = true; });
+    return '<div style="margin-top:8px;"><h4 style="font-size:0.8rem;color:var(--gold);margin:0 0 6px;">Calendário das aulas — ' + TR_MESES[st.mes] + ' ' + st.ano + '</h4>' +
+      fpCalGrade(st.ano, st.mes, marcadas, feitas, null) +
+      '<p class="mini">Dias marcados pelo professor são os dias de aula. ✓ = aula feita.</p></div>';
+  }
+  function fpResumoProva(alunoId) {
+    var p = listar('provasFormacaoProfessor').filter(function (x) { return x.alunoId === alunoId; })
+      .sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); })[0];
+    return p ? 'nota ' + Number(p.nota).toFixed(1) + '/10 (' + p.acertos + '/' + p.total + ') · ' + esc(p.semana) : 'sem prova';
+  }
+  function fpHtmlProvaAluno(alunoId) {
+    var semana = semanaAtualISO();
+    var feita = listar('provasFormacaoProfessor').filter(function (x) { return x.alunoId === alunoId && x.semana === semana; })[0];
+    if (feita) return '<div class="aviso-info" style="margin-top:8px;"><i class="fas fa-check-circle"></i> Prova desta semana feita: nota <b>' + Number(feita.nota).toFixed(1) + '/10</b>.</div>';
+    return '<button class="btn btn-gold btn-mini" type="button" style="margin-top:8px;" onclick="ucFpAbrirProva()"><i class="fas fa-pen"></i> Fazer prova da formação</button>';
+  }
+  window.ucFpAbrirProva = function () {
+    var aluno = alunoLogado();
+    var insc = aluno && fpInscricao(aluno.id);
+    if (!insc || insc.status !== 'aprovado') { toast('Você precisa estar aprovado na formação para fazer a prova.', 'erro'); return; }
+    var semana = semanaAtualISO();
+    if (listar('provasFormacaoProfessor').some(function (x) { return x.alunoId === aluno.id && x.semana === semana; })) { toast('Você já fez a prova desta semana.', 'erro'); return; }
+    if (!CONFIG.iaProxyUrl) { toast('Assistente de IA ainda não configurado pelo ADM.', 'erro'); return; }
+    abrirModal('Prova da formação', '<p class="mini"><span class="spinner-btn"></span> Gerando sua prova...</p>', '');
+    fetch(CONFIG.iaProxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gerarQuiz: true,
+        contexto: 'Prova da formação de professor de capoeira infantil: alongamento, aquecimento, brincadeira infantil, segurança e didática de aula.',
+        baseConhecimento: CONFIG.baseConhecimento || ''
+      })
+    }).then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.perguntas || !data.perguntas.length) throw new Error('vazio');
+        FP_PROVA = { alunoId: aluno.id, alunoNome: aluno.nome, semana: semana, perguntas: data.perguntas };
+        document.getElementById('modalCorpo').innerHTML = FP_PROVA.perguntas.map(function (p, i) {
+          return '<div class="lista-item"><p style="font-weight:bold;margin-bottom:6px;">' + (i + 1) + '. ' + esc(p.pergunta) + '</p>' +
+            p.opcoes.map(function (op, j) {
+              return '<label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;margin-bottom:4px;"><input type="radio" name="fpQ' + i + '" value="' + j + '" style="width:auto;"> ' + esc(op) + '</label>';
+            }).join('') + '</div>';
+        }).join('');
+        document.getElementById('modalAcoes').innerHTML =
+          '<button class="btn btn-gold" type="button" onclick="ucFpEnviarProva()"><i class="fas fa-check"></i> Enviar respostas</button>' +
+          '<button class="btn btn-back" type="button" onclick="fecharModal()">Fechar</button>';
+      })
+      .catch(function () {
+        document.getElementById('modalCorpo').innerHTML = '<p class="sem-dados">Não consegui gerar a prova agora. Tente de novo.</p>';
+        document.getElementById('modalAcoes').innerHTML = '<button class="btn btn-back" type="button" onclick="fecharModal()">Fechar</button>';
+      });
+  };
+  window.ucFpEnviarProva = function () {
+    if (!FP_PROVA) return;
+    var acertos = 0, faltam = false, total = FP_PROVA.perguntas.length;
+    FP_PROVA.perguntas.forEach(function (p, i) {
+      var m = document.querySelector('input[name="fpQ' + i + '"]:checked');
+      if (!m) { faltam = true; return; }
+      if (Number(m.value) === Number(p.correta)) acertos++;
+    });
+    if (faltam) { toast('Responda todas as perguntas antes de enviar.', 'erro'); return; }
+    var nota = Math.round(acertos / total * 100) / 10;
+    var p = FP_PROVA; FP_PROVA = null;
+    DB.salvar('provasFormacaoProfessor', {
+      alunoId: p.alunoId, alunoNome: p.alunoNome, semana: p.semana, data: fpHoje(),
+      acertos: acertos, total: total, nota: nota, criadoEm: agoraISO()
+    }).then(function () {
+      fecharModal();
+      toast('Prova enviada! Nota ' + nota.toFixed(1) + '/10.');
+      fpRenderAluno(true); fpRenderProfessor(true);
+    }).catch(function () { FP_PROVA = p; toast('Não foi possível enviar. Tente de novo.', 'erro'); });
+  };
+
   function fpRenderAluno(forcar) {
     var painel = el('cardAlunoPainel');
     if (!painel) return;
@@ -18319,9 +18515,10 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (insc.status !== 'aprovado') {
       html += '<p class="mini">Aguardando aprovação do professor.</p>';
     } else {
-      var dias = (insc.diasAula || []).map(function (d) { return FP_DIAS[d]; }).join(', ') || 'sem dias definidos';
+      var dias = fpDescreverDias(insc) || 'sem dias definidos';
       html += '<div class="mini">Horas de aula aceitas: <b>' + fpFormatarHoras(fpHorasAprovadas(aluno.id)) + '</b> · Dias de aula: ' + esc(dias) + '</div>';
-      var hojeEhDiaDeAula = (insc.diasAula || []).indexOf(new Date().getDay()) >= 0;
+      html += fpHtmlCalAluno(insc, aulas) + fpHtmlProvaAluno(aluno.id);
+      var hojeEhDiaDeAula = fpEhDiaDeAula(insc, fpHoje());
       var jaTemHoje = aulas.some(function (a) { return a.data === hoje && a.status !== 'recusada'; });
 
       if (aberta) {
@@ -18403,18 +18600,19 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + '</option>'; }).join('');
     abrirModal('Inscrever na formação de professor',
       '<label class="campo-label">Aluno</label><select id="fpAluno">' + opcoes + '</select>' +
-      '<label class="campo-label">Dias de aula (30 min cada)</label><div>' + fpCheckDias([]) + '</div>',
+      '<label class="campo-label">Dias de aula (30 min cada) — toque nos dias</label><div id="fpCalInsc"></div>',
       '<button class="btn" type="button" onclick="ucFpSalvarInscricao()">Salvar</button>');
+    FP_CAL_SEL.fpCalInsc = {}; fpCalRenderProf('fpCalInsc');
   };
 
   window.ucFpSalvarInscricao = function () {
     var sel = el('fpAluno');
     var alunoId = sel ? sel.value : '';
     var aluno = listar('alunos').filter(function (a) { return a.id === alunoId; })[0];
-    var dias = fpLerDias();
-    if (!aluno || !dias.length) { toast('Escolha o aluno e pelo menos um dia.', 'erro'); return; }
+    var datas = fpLerDatas('fpCalInsc');
+    if (!aluno || !datas.length) { toast('Escolha o aluno e pelo menos um dia no calendário.', 'erro'); return; }
     DB.salvar('formacaoProfessor', {
-      alunoId: aluno.id, alunoNome: aluno.nome, status: 'aprovado', diasAula: dias,
+      alunoId: aluno.id, alunoNome: aluno.nome, status: 'aprovado', datasAula: datas, diasAula: [],
       criadoEm: agoraISO(), aprovadoEm: agoraISO()
     }).then(function () { fecharModal(); toast('Aluno inscrito na formação.'); fpRenderProfessor(true); })
       .catch(function () { toast('Não foi possível inscrever.', 'erro'); });
@@ -18425,16 +18623,17 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (!insc) return;
     abrirModal('Editar formação: ' + insc.alunoNome,
       '<label class="campo-label">Situação</label><select id="fpStatus"><option value="aprovado"' + (insc.status === 'aprovado' ? ' selected' : '') + '>Aprovado</option><option value="pendente"' + (insc.status !== 'aprovado' ? ' selected' : '') + '>Pendente</option></select>' +
-      '<label class="campo-label">Dias de aula</label><div>' + fpCheckDias(insc.diasAula || []) + '</div>',
+      '<label class="campo-label">Dias de aula — toque para marcar ou desmarcar</label><div id="fpCalEdit"></div>',
       '<button class="btn" type="button" onclick="ucFpSalvarEdicao(\'' + id + '\')">Salvar</button>' +
       '<button class="btn btn-danger" type="button" onclick="ucFpRemover(\'' + id + '\')">Remover da formação</button>');
+    FP_CAL_SEL.fpCalEdit = fpSelecaoInicial(insc); fpCalRenderProf('fpCalEdit');
   };
 
   window.ucFpSalvarEdicao = function (id) {
     var status = el('fpStatus').value;
-    var dias = fpLerDias();
-    if (!dias.length) { toast('Escolha pelo menos um dia.', 'erro'); return; }
-    DB.salvar('formacaoProfessor', { status: status, diasAula: dias, atualizadoEm: agoraISO() }, id).then(function () {
+    var datas = fpLerDatas('fpCalEdit');
+    if (!datas.length) { toast('Escolha pelo menos um dia no calendário.', 'erro'); return; }
+    DB.salvar('formacaoProfessor', { status: status, datasAula: datas, diasAula: [], atualizadoEm: agoraISO() }, id).then(function () {
       fecharModal(); toast('Formação atualizada.'); fpRenderProfessor(true);
     }).catch(function () { toast('Não foi possível salvar.', 'erro'); });
   };
@@ -18467,10 +18666,11 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
     inscritos.forEach(function (insc) {
       var aulas = fpAulasDo(insc.alunoId);
-      var dias = (insc.diasAula || []).map(function (d) { return FP_DIAS[d]; }).join(', ') || '-';
+      var dias = fpDescreverDias(insc) || '-';
       html += '<div class="lista-item" style="margin-top:8px"><div class="linha"><b>' + esc(insc.alunoNome) + '</b>' +
         '<span class="pill">' + (insc.status === 'aprovado' ? 'Aprovado' : 'Pendente') + '</span></div>' +
         '<span class="mini">Dias: ' + esc(dias) + ' · Horas aceitas: ' + fpFormatarHoras(fpHorasAprovadas(insc.alunoId)) + '</span>' +
+        '<span class="mini" style="display:block">Prova: ' + fpResumoProva(insc.alunoId) + '</span>' +
         '<div class="flex-btn" style="margin-top:6px"><button class="btn btn-secondary btn-mini" type="button" onclick="ucFpAbrirEditar(\'' + insc.id + '\')"><i class="fas fa-pen"></i> Editar</button></div>';
       aulas.slice(0, 10).forEach(function (a) {
         html += '<div class="lista-item" style="margin-top:6px"><div class="linha"><span>' + esc(String(a.data).split('-').reverse().join('/')) + ' · ' + (Number(a.duracaoMin) || 0) + ' min</span>' +
