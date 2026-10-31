@@ -2135,6 +2135,11 @@ var DB = {
       try {
         if (!firebase.apps || !firebase.apps.length) { firebase.initializeApp(cfg); }
         this.fs = firebase.firestore();
+        /* cache offline no celular: os dados continuam disponíveis sem internet */
+        try {
+          var pers = this.fs.enablePersistence ? this.fs.enablePersistence({ synchronizeTabs: true }) : null;
+          if (pers && pers.catch) pers.catch(function (e) { console.warn('[DB] cache offline indisponível', e && e.code); });
+        } catch (e) {}
         this.modo = 'nuvem';
       } catch (e) {
         console.warn('[DB] Falha ao iniciar Firebase; usando modo local.', e);
@@ -2162,6 +2167,13 @@ var DB = {
         snap.forEach(function (doc) { arr.push(Object.assign({ id: doc.id }, doc.data())); });
         self.cache[col] = arr;
         self.primeiraCarga[col] = true;
+        if (col === 'alunos') {
+          try {
+            localStorage.setItem('uc_alunos_login_v1', JSON.stringify(arr.map(function (a) {
+              return { id: a.id, nome: a.nome, apelido: a.apelido, senhaHash: a.senhaHash, ativo: a.ativo };
+            })));
+          } catch (e) {}
+        }
         self.avisar(col);
       }, function (err) {
         console.warn('[DB] Erro na escuta de "' + col + '".', err);
@@ -2720,19 +2732,25 @@ function limparFalhasLogin(nome) {
 }
 function falhasLogin(nome) { return lerFalhasLogin()[normalizar(nome)] || 0; }
 
+/* cópia dos dados de login guardada no aparelho (para entrar sem internet) */
+function ucAlunosLoginLocal() {
+  try { return JSON.parse(localStorage.getItem('uc_alunos_login_v1') || '[]') || []; } catch (e) { return []; }
+}
+
 function autenticarAlunoNuvem(btn) {
   var nome = ($('alunoLoginNome').value || '').trim();
   var senha = $('alunoLoginSenha').value || '';
   if (!nome || !senha) { mostrarToast('Informe nome e senha.', 'erro'); return; }
-  if (!DB.carregado('alunos')) {
-    mostrarToast('Ainda carregando os dados da academia. Aguarde alguns segundos e tente de novo.', 'erro');
+  var listaAlunos = DB.carregado('alunos') ? DB.listar('alunos') : ucAlunosLoginLocal();
+  if (!listaAlunos.length) {
+    mostrarToast('Sem dados salvos neste aparelho. Conecte-se à internet uma vez para liberar o login offline.', 'erro');
     return;
   }
   if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Entrando...'; }
 
   var alvo = normalizar(nome);
   var achado = null;
-  DB.listar('alunos').forEach(function (a) {
+  listaAlunos.forEach(function (a) {
     if (!achado && a.ativo !== false && (normalizar(a.nome) === alvo || normalizar(a.apelido) === alvo)) achado = a;
   });
   setTimeout(function () {
@@ -18709,6 +18727,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   }
 
   function ciclo() {
+    if (document.hidden) return; /* não trabalha com o app em segundo plano */
     try { garantirCronometroInicio(); } catch (e) { console.warn('[ucCrono]', e); }
     try { garantirPrazo(); renderPrazo(); } catch (e) { console.warn('[ucPrazo]', e); }
     try { garantirAdmPrazo(); } catch (e) { console.warn('[ucAdmPrazo]', e); }
@@ -18721,7 +18740,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     try { garantirFormacaoProfessor(); } catch (e) { console.warn('[ucFP]', e); }
   }
   setTimeout(ciclo, 1200);
-  setInterval(ciclo, 3000);
+  /* ciclo de atualização das abas: a cada 15 s (antes 3 s) para não travar celulares simples */
+  setInterval(ciclo, 15000);
   setInterval(atualizarCronometroBatizado, 1000);
 
   console.log('✅ Avaliação Semestral v3 + Gestão de Alunos + Boletim carregados');
