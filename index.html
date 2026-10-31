@@ -8830,19 +8830,34 @@ function uploadFotoPerfil(input) {
   });
 }
 
+/* troca de senha em formulário próprio (sem prompt(), que trava em alguns APKs) */
 function trocarSenhaAluno() {
   var logado = alunoLogado();
+  if (!logado) { mostrarToast('Entre na sua conta antes de trocar a senha.', 'erro'); return; }
+  abrirModal('Trocar senha',
+    '<label class="campo-label">Senha atual</label><input id="trocaSenhaAtual" type="password" autocomplete="current-password">' +
+    '<label class="campo-label">Nova senha (mín. 4 caracteres)</label><input id="trocaSenhaNova" type="password" autocomplete="new-password">' +
+    '<label class="campo-label">Repita a nova senha</label><input id="trocaSenhaNova2" type="password" autocomplete="new-password">',
+    '<button class="btn btn-gold" type="button" onclick="ucSalvarTrocaSenha()"><i class="fas fa-check"></i> Salvar nova senha</button>');
+}
+
+function ucSalvarTrocaSenha() {
+  var logado = alunoLogado();
   if (!logado) return;
-  var atual = prompt('Digite sua senha atual:');
-  if (atual === null) return;
+  var atual = (document.getElementById('trocaSenhaAtual') || {}).value || '';
+  var nova = (document.getElementById('trocaSenhaNova') || {}).value || '';
+  var nova2 = (document.getElementById('trocaSenhaNova2') || {}).value || '';
+  if (!atual) { mostrarToast('Digite sua senha atual.', 'erro'); return; }
   if (hashSenha(atual) !== logado.senhaHash) { mostrarToast('Senha atual incorreta.', 'erro'); return; }
-  var nova = prompt('Digite a nova senha (mín. 4 caracteres):');
-  if (nova === null) return;
-  if (String(nova).length < 4) { mostrarToast('Senha muito curta.', 'erro'); return; }
+  if (nova.length < 4) { mostrarToast('Senha muito curta (mín. 4 caracteres).', 'erro'); return; }
+  if (nova !== nova2) { mostrarToast('As senhas novas não coincidem.', 'erro'); return; }
   DB.salvar('alunos', { senhaHash: hashSenha(nova), senhaPadrao: false }, logado.id).then(function () {
+    fecharModal();
     mostrarToast('Senha alterada com sucesso.');
     try { var av = document.getElementById('ucAvisoSenhaPadrao'); if (av) av.remove(); } catch (e) {}
     registroLog('auth', 'Aluno trocou a senha: ' + logado.nome);
+  }).catch(function () {
+    mostrarToast('Não foi possível salvar agora. Tente de novo.', 'erro');
   });
 }
 
