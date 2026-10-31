@@ -14094,9 +14094,21 @@ iniciarApp();
   var agenda = 0, ocupado = false;
   function iniciarVigia() {
     if (typeof MutationObserver === 'undefined') return;
-    new MutationObserver(function () {
+    var ultimaChecagem = 0;
+    new MutationObserver(function (muts) {
       if (ocupado || agenda) return;
-      agenda = setTimeout(function () { agenda = 0; ocupado = true; try { checar('remoção detectada'); } finally { ocupado = false; } }, 80);
+      /* ignora mudanças só de avisos (toast) e modais, que não afetam as abas */
+      var relevante = muts.some(function (m) {
+        var t = m.target;
+        return !(t && t.closest && t.closest('#toastBox, #modalOverlay'));
+      });
+      if (!relevante) return;
+      /* no máximo uma checagem a cada 2,5 s: evita travar celulares com muitas mudanças de tela */
+      var espera = Math.max(2500 - (Date.now() - ultimaChecagem), 80);
+      agenda = setTimeout(function () {
+        agenda = 0; ultimaChecagem = Date.now(); ocupado = true;
+        try { checar('remoção detectada'); } finally { ocupado = false; }
+      }, espera);
     }).observe(document.body, { childList: true, subtree: true });
   }
 
