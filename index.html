@@ -2186,6 +2186,13 @@ var DB = {
             })));
           } catch (e) {}
         }
+        if (col === 'equipe') {
+          try {
+            localStorage.setItem('uc_equipe_login_v1', JSON.stringify(arr.map(function (u) {
+              return { id: u.id, nome: u.nome, senhaHash: u.senhaHash, papel: u.papel, ativo: u.ativo, senhaPadrao: !!u.senhaPadrao };
+            })));
+          } catch (e) {}
+        }
         self.avisar(col);
       }, function (err) {
         console.warn('[DB] Erro na escuta de "' + col + '".', err);
@@ -2852,8 +2859,10 @@ function cadastrarAlunoNuvem(btn) {
     boasVindasNovoAluno = true;
     renderAluno();
     mostrarToast('Cadastro concluído! Bem-vindo(a).');
-  }).catch(function () {
+  }).catch(function (err) {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-check"></i> Concluir Cadastro'; }
+    try { console.warn('[cadastro]', err); } catch (e) {}
+    mostrarToast('Não foi possível salvar o cadastro. Verifique a conexão e tente de novo.', 'erro');
   });
 }
 
@@ -2881,20 +2890,83 @@ function montarLoginEquipe(container, papelRequerido) {
   return false;
 }
 
+function ucEquipeLoginLocal() {
+  try { return JSON.parse(localStorage.getItem('uc_equipe_login_v1') || '[]') || []; } catch (e) { return []; }
+}
+
+function ucPersistirSessaoEquipe() {
+  try {
+    if (sessaoEquipe && sessaoEquipe.id) {
+      localStorage.setItem('uc_sessao_equipe_v87', JSON.stringify({
+        id: sessaoEquipe.id,
+        nome: sessaoEquipe.nome,
+        papel: sessaoEquipe.papel
+      }));
+    } else {
+      localStorage.removeItem('uc_sessao_equipe_v87');
+    }
+  } catch (e) {}
+}
+
+function ucRestaurarSessaoEquipe() {
+  try {
+    var bruto = localStorage.getItem('uc_sessao_equipe_v87');
+    if (!bruto) return false;
+    var s = JSON.parse(bruto);
+    if (!s || !s.id) return false;
+    /* confirma que o usuário ainda existe e está ativo */
+    var u = null;
+    if (DB.carregado('equipe')) {
+      u = DB.buscar('equipe', s.id);
+    }
+    if (!u) {
+      var lista = ucEquipeLoginLocal();
+      u = lista.filter(function (x) { return x.id === s.id; })[0] || null;
+    }
+    if (!u || u.ativo === false) {
+      localStorage.removeItem('uc_sessao_equipe_v87');
+      return false;
+    }
+    sessaoEquipe = { id: u.id || s.id, nome: u.nome || s.nome, papel: u.papel || s.papel };
+    return true;
+  } catch (e) { return false; }
+}
+
 function autenticarEquipe(papelRequerido) {
   var sufixo = '_' + papelRequerido;
   var campoNome = $('equipeLoginNome' + sufixo);
   var campoSenha = $('equipeLoginSenha' + sufixo);
+  var btn = null;
+  try {
+    if (campoSenha && campoSenha.parentNode) {
+      btn = campoSenha.parentNode.querySelector('button.btn, button[onclick*="autenticarEquipe"]');
+    }
+  } catch (eB) {}
   var nome = (campoNome && campoNome.value || '').trim();
   var senha = (campoSenha && campoSenha.value) || '';
-  if (nome.length < 3 || senha.length < 4) { mostrarToast('Informe nome e senha (mín. 4 caracteres).', 'erro'); return; }
-  if (!DB.carregado('equipe')) {
-    mostrarToast('Ainda carregando os dados da academia. Aguarde alguns segundos e tente de novo.', 'erro');
+  if (nome.length < 3 || senha.length < 4) {
+    mostrarToast('Informe nome e senha (mín. 4 caracteres).', 'erro');
     return;
   }
 
-  var equipe = DB.listar('equipe');
+  var equipe = [];
+  if (DB.carregado('equipe')) {
+    equipe = DB.listar('equipe');
+  } else {
+    equipe = ucEquipeLoginLocal();
+    if (!equipe.length) {
+      mostrarToast('Ainda carregando os dados da academia. Sem cache offline — conecte-se uma vez e tente de novo.', 'erro');
+      return;
+    }
+  }
 
+  if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Entrando...'; }
+
+  function fimBtn() {
+    if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar'; }
+  }
+
+  /* Primeiro acesso: nenhum usuário de equipe */
   if (equipe.length === 0) {
     var campoPapel = $('equipeLoginPapel' + sufixo);
     var papelSel = campoPapel ? campoPapel.value : 'dev';
@@ -2902,35 +2974,56 @@ function autenticarEquipe(papelRequerido) {
       nome: nome, senhaHash: hashSenha(senha), papel: papelSel,
       criadoEm: agoraISO(), ativo: true
     }).then(function (id) {
+      fimBtn();
       sessaoEquipe = { id: id, nome: nome, papel: papelSel };
+      ucPersistirSessaoEquipe();
       registroLog('equipe', 'Primeiro acesso criado: ' + nome + ' (' + papelSel + ')');
       mostrarToast('Acesso criado com sucesso!');
       renderizarAba(abaAtual);
+    }).catch(function (err) {
+      fimBtn();
+      try { console.warn('[equipe-primeiro]', err); } catch (e) {}
+      mostrarToast('Não foi possível criar o acesso. Verifique a conexão e tente de novo.', 'erro');
     });
     return;
   }
 
   var alvo = normalizar(nome);
+  var h = hashSenha(senha);
   var achado = null;
   equipe.forEach(function (u) {
-    if (!achado && normalizar(u.nome) === alvo && u.senhaHash === hashSenha(senha)) achado = u;
+    if (!achado && u.ativo !== false && normalizar(u.nome) === alvo && u.senhaHash === h) achado = u;
   });
-  if (!achado) { mostrarToast('Credenciais de equipe inválidas.', 'erro'); return; }
 
-  var permitidos = { professor: ['professor', 'adm', 'dev'], adm: ['adm', 'dev'], dev: ['dev'] };
-  if ((permitidos[papelRequerido] || []).indexOf(achado.papel) < 0) {
-    mostrarToast('Seu perfil (' + esc(achado.papel) + ') não tem acesso a esta área.', 'erro');
-    return;
-  }
-  sessaoEquipe = { id: achado.id, nome: achado.nome, papel: achado.papel };
-  registroLog('equipe', 'Login equipe: ' + achado.nome + ' (' + achado.papel + ')');
-  setTimeout(function () { try { ucAvisarPendencias(); } catch (e) {} }, 2500);
-  mostrarToast('Bem-vindo(a), ' + esc(achado.nome) + '!' + (achado.senhaPadrao ? ' Você está usando a senha padrão da equipe.' : ''));
-  renderizarAba(abaAtual);
+  setTimeout(function () {
+    fimBtn();
+    if (!achado) {
+      var mesmoNome = equipe.filter(function (u) { return u.ativo !== false && normalizar(u.nome) === alvo; })[0];
+      if (mesmoNome) {
+        mostrarToast('Senha incorreta para este usuário da equipe.', 'erro');
+      } else {
+        mostrarToast('Usuário de equipe não encontrado. Confira o nome.', 'erro');
+      }
+      return;
+    }
+
+    var permitidos = { professor: ['professor', 'adm', 'dev'], adm: ['adm', 'dev'], dev: ['dev'] };
+    if ((permitidos[papelRequerido] || []).indexOf(achado.papel) < 0) {
+      mostrarToast('Seu perfil (' + esc(achado.papel) + ') não tem acesso a esta área.', 'erro');
+      return;
+    }
+    sessaoEquipe = { id: achado.id, nome: achado.nome, papel: achado.papel };
+    ucPersistirSessaoEquipe();
+    registroLog('equipe', 'Login equipe: ' + achado.nome + ' (' + achado.papel + ')');
+    setTimeout(function () { try { ucAvisarPendencias(); } catch (e) {} }, 2500);
+    mostrarToast('Bem-vindo(a), ' + esc(achado.nome) + '!' + (achado.senhaPadrao ? ' Você está usando a senha padrão da equipe.' : ''));
+    renderizarAba(abaAtual);
+  }, 200);
 }
 
 function sairEquipe() {
   sessaoEquipe = null;
+  ucPersistirSessaoEquipe();
   renderizarAba(abaAtual);
   mostrarToast('Sessão de equipe encerrada.');
 }
@@ -14516,10 +14609,53 @@ function iniciarApp() {
   try { iniciarMonitorEquipe(); } catch (eMon) { console.warn('[monitor-equipe] init', eMon); }
 
   /* restaura sessões leves */
+  function ucRestaurarSessaoAluno() {
+    try {
+      var alunoSalvo = localStorage.getItem('uc_sessao_aluno_v87');
+      if (!alunoSalvo) return false;
+      if (DB.buscar('alunos', alunoSalvo)) {
+        sessaoAlunoId = alunoSalvo;
+        return true;
+      }
+      /* tenta cache offline de login */
+      try {
+        var lista = (typeof ucAlunosLoginLocal === 'function' ? ucAlunosLoginLocal() : []) || [];
+        var ach = lista.filter(function (a) { return a.id === alunoSalvo; })[0];
+        if (ach) { sessaoAlunoId = alunoSalvo; return true; }
+      } catch (e2) {}
+      return false;
+    } catch (e) { return false; }
+  }
+  try { ucRestaurarSessaoAluno(); } catch (e) {}
   try {
-    var alunoSalvo = localStorage.getItem('uc_sessao_aluno_v87');
-    if (alunoSalvo && DB.buscar('alunos', alunoSalvo)) sessaoAlunoId = alunoSalvo;
-  } catch (e) {}
+    if (typeof ucRestaurarSessaoEquipe === 'function') ucRestaurarSessaoEquipe();
+  } catch (eEq) {}
+  try {
+    if (typeof DB !== 'undefined' && DB.escutar) {
+      var _ucSessaoEqJa = false;
+      DB.escutar('equipe', function () {
+        if (_ucSessaoEqJa || sessaoEquipe) return;
+        if (typeof ucRestaurarSessaoEquipe === 'function' && ucRestaurarSessaoEquipe()) {
+          _ucSessaoEqJa = true;
+          try { renderizarAba(abaAtual); } catch (eR) {}
+        }
+      });
+    }
+  } catch (eEscEq) {}
+  /* se o DB ainda não tinha alunos, tenta de novo quando a coleção carregar */
+  try {
+    if (typeof DB !== 'undefined' && DB.escutar) {
+      var _ucSessaoJa = false;
+      DB.escutar('alunos', function () {
+        if (_ucSessaoJa || sessaoAlunoId) return;
+        if (ucRestaurarSessaoAluno()) {
+          _ucSessaoJa = true;
+          try { renderAluno(); } catch (eR) {}
+          try { renderCheckin(); } catch (eC) {}
+        }
+      });
+    }
+  } catch (eEsc) {}
 
   aplicarConfig();
   atualizarTimerUI();
@@ -21235,9 +21371,21 @@ function dsUsarSugestao() {
     el('alunoLoginNome').classList.remove('uc-invalido'); el('alunoLoginSenha').classList.remove('uc-invalido');
     if (!nome) { msg('alunoLoginMsg', 'Digite seu <b>nome ou apelido</b>.'); el('alunoLoginNome').classList.add('uc-invalido'); el('alunoLoginNome').focus(); return; }
     if (!senha) { msg('alunoLoginMsg', 'Digite sua <b>senha</b>.'); el('alunoLoginSenha').classList.add('uc-invalido'); el('alunoLoginSenha').focus(); return; }
-    if (!DB.carregado('alunos')) { msg('alunoLoginMsg', 'Ainda carregando os dados da academia. Tente de novo em alguns segundos.', 'info'); return; }
+    /* Offline: usa cache local se a coleção ainda não carregou */
+    var todos = [];
+    var modoOffline = false;
+    if (DB.carregado('alunos')) {
+      todos = DB.listar('alunos');
+    } else {
+      try { todos = (typeof ucAlunosLoginLocal === 'function' ? ucAlunosLoginLocal() : []) || []; } catch (eOff) { todos = []; }
+      modoOffline = true;
+      if (!todos.length) {
+        msg('alunoLoginMsg', 'Ainda carregando os dados da academia. Sem cache offline neste aparelho — conecte-se uma vez e tente de novo.', 'info');
+        return;
+      }
+    }
     if (btn) { btn.classList.add('carregando'); btn.innerHTML = '<span class="spinner-btn"></span> Entrando...'; }
-    var alvo = normalizar(nome), todos = DB.listar('alunos');
+    var alvo = normalizar(nome);
     var ativos = todos.filter(function (a) { return a.ativo !== false && casa(a, alvo); });
     setTimeout(function () {
       fimBtn(btn);
@@ -22136,18 +22284,24 @@ function dsUsarSugestao() {
   window.ucLoginPadraoEquipe = function (papelRequerido) {
     var nome = (($('equipeLoginNome_' + papelRequerido) || {}).value || '').trim();
     if (nome.length < 3) { mostrarToast('Digite seu nome no campo acima.', 'erro'); return; }
-    if (!DB.carregado('equipe')) { mostrarToast('Ainda carregando os dados. Tente de novo em alguns segundos.', 'erro'); return; }
+    var listaEq = [];
+    if (DB.carregado('equipe')) listaEq = DB.listar('equipe');
+    else {
+      try { listaEq = (typeof ucEquipeLoginLocal === 'function' ? ucEquipeLoginLocal() : []) || []; } catch (e) { listaEq = []; }
+      if (!listaEq.length) { mostrarToast('Ainda carregando os dados. Sem cache offline — tente de novo em alguns segundos.', 'erro'); return; }
+    }
     abrirPadraoDesenho('Desenhe seu padrão', function (seq) {
       var permitidos = { professor: ['professor', 'adm', 'dev'], adm: ['adm', 'dev'], dev: ['dev'] };
       var alvo = normalizar(nome), achado = null;
-      DB.listar('equipe').forEach(function (u) {
-        if (!achado && normalizar(u.nome) === alvo && u.padraoHash && u.padraoHash === hashPadrao(seq)) achado = u;
+      listaEq.forEach(function (u) {
+        if (!achado && u.ativo !== false && normalizar(u.nome) === alvo && u.padraoHash && u.padraoHash === hashPadrao(seq)) achado = u;
       });
       if (!achado) { mostrarToast('Padrão não confere.', 'erro'); return; }
       if ((permitidos[papelRequerido] || []).indexOf(achado.papel) < 0) {
         mostrarToast('Seu perfil (' + esc(achado.papel) + ') não tem acesso a esta área.', 'erro'); return;
       }
       sessaoEquipe = { id: achado.id, nome: achado.nome, papel: achado.papel };
+      try { if (typeof ucPersistirSessaoEquipe === 'function') ucPersistirSessaoEquipe(); } catch (eP) {}
       registroLog('equipe', 'Login equipe com padrão: ' + achado.nome + ' (' + achado.papel + ')');
       mostrarToast('Bem-vindo(a), ' + esc(achado.nome) + '!');
       renderizarAba(abaAtual);
