@@ -26763,5 +26763,313 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
 })();
 </script>
 
+
+<script id="ucModoTesteDocumentos">
+/* Modo teste + emissão real da Declaração de Matrícula pelo professor.
+   - Testar os 3 modelos oficiais (prévia, não salva)
+   - Gerar declaração de matrícula de qualquer aluno (impressão/PDF ou PNG) */
+(function () {
+  if (window.__ucModoTesteDocsV2) return;
+  window.__ucModoTesteDocsV2 = true;
+
+  function toast(msg, tipo) {
+    try { if (typeof mostrarToast === 'function') mostrarToast(msg, tipo || 'ok'); else alert(msg); } catch (e) { try { alert(msg); } catch (e2) {} }
+  }
+  function hojeISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function listarAlunos() {
+    try {
+      return (DB.listar('alunos') || []).filter(function (a) { return a && a.ativo !== false && String(a.nome || '').trim(); })
+        .sort(function (a, b) { return String(a.nome).localeCompare(String(b.nome), 'pt'); });
+    } catch (e) { return []; }
+  }
+  function horasSugeridasAluno(id) {
+    var n = 0, lim = new Date(); lim.setMonth(lim.getMonth() - 2);
+    var limIso = lim.toISOString().slice(0, 10);
+    try {
+      (DB.listar('presencas') || []).forEach(function (p) {
+        if (p.alunoId === id && p.status === 'aprovado' && String(p.data || '') >= limIso) n++;
+      });
+    } catch (e) {}
+    var porAula = 1.5;
+    try { if (typeof horasPorAulaConfig === 'function') porAula = Number(horasPorAulaConfig()) || 1.5; } catch (e2) {}
+    var porSemana = Math.max(1, Math.round(n / 8));
+    var horas = Math.round(porSemana * porAula * 2) / 2;
+    return { aulas: n, semana: porSemana, horas: horas };
+  }
+  function horasTexto(n) {
+    var s = String(n).replace('.', ',');
+    return s + (Number(n) === 1 ? ' hora' : ' horas');
+  }
+  function equipeOk() {
+    try { return typeof equipeLogadaAtiva === 'function' && equipeLogadaAtiva(); } catch (e) { return false; }
+  }
+
+  /* ========== EMISSÃO REAL: Declaração de matrícula ========== */
+  window.ucProfAbrirDeclaracao = function () {
+    if (!equipeOk()) { toast('Faça login como Professor ou ADM.', 'erro'); return; }
+    if (typeof window.ucDesenharDeclaracao !== 'function') {
+      toast('Módulo da declaração ainda não carregou. Aguarde e tente de novo.', 'erro');
+      return;
+    }
+    var alunos = listarAlunos();
+    if (!alunos.length) { toast('Nenhum aluno cadastrado.', 'erro'); return; }
+    var opts = alunos.map(function (a) {
+      return '<option value="' + esc(a.id) + '">' + esc(a.nome) + (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</option>';
+    }).join('');
+    var primeiro = alunos[0];
+    var sug = horasSugeridasAluno(primeiro.id);
+    var html =
+      '<p class="mini">Gera a <b>Declaração de Matrícula e Frequência</b> oficial do aluno. Pode imprimir/PDF ou baixar PNG.</p>' +
+      '<label class="campo-label">Aluno</label>' +
+      '<select id="ucProfDecAluno" onchange="ucProfDecAtualizarHoras()">' + opts + '</select>' +
+      '<label class="campo-label">Horas de treino por semana</label>' +
+      '<input id="ucProfDecHoras" type="text" inputmode="decimal" value="' + esc(String(sug.horas).replace('.', ',')) + '">' +
+      '<p class="mini" id="ucProfDecHint">Sugestão pelos check-ins aprovados dos últimos 2 meses: ' + sug.aulas + ' aula(s), cerca de ' + sug.semana + '/semana.</p>' +
+      '<label class="campo-label">Data da declaração</label>' +
+      '<input id="ucProfDecData" type="date" value="' + hojeISO() + '">';
+    if (typeof abrirModal === 'function') {
+      abrirModal('Declaração de matrícula', html,
+        '<button class="btn btn-gold" type="button" onclick="ucProfGerarDeclaracao(\'abrir\')"><i class="fas fa-print"></i> Abrir / imprimir PDF</button>' +
+        '<button class="btn btn-secondary" type="button" onclick="ucProfGerarDeclaracao(\'baixar\')"><i class="fas fa-download"></i> Baixar PNG</button>');
+    } else {
+      toast('Interface de modal indisponível.', 'erro');
+    }
+  };
+  window.ucProfDecAtualizarHoras = function () {
+    var id = ((document.getElementById('ucProfDecAluno') || {}).value || '');
+    var sug = horasSugeridasAluno(id);
+    var inp = document.getElementById('ucProfDecHoras');
+    var hint = document.getElementById('ucProfDecHint');
+    if (inp) inp.value = String(sug.horas).replace('.', ',');
+    if (hint) hint.textContent = 'Sugestão pelos check-ins aprovados dos últimos 2 meses: ' + sug.aulas + ' aula(s), cerca de ' + sug.semana + '/semana.';
+  };
+  window.ucProfGerarDeclaracao = function (modo) {
+    if (!equipeOk()) { toast('Faça login como Professor ou ADM.', 'erro'); return; }
+    var id = ((document.getElementById('ucProfDecAluno') || {}).value || '');
+    var aluno = null;
+    try { aluno = DB.buscar('alunos', id); } catch (e) {}
+    if (!aluno) {
+      var lista = listarAlunos();
+      for (var i = 0; i < lista.length; i++) if (lista[i].id === id) { aluno = lista[i]; break; }
+    }
+    if (!aluno) { toast('Selecione um aluno.', 'erro'); return; }
+    var horasN = parseFloat(String(((document.getElementById('ucProfDecHoras') || {}).value || '')).replace(',', '.'));
+    var data = ((document.getElementById('ucProfDecData') || {}).value || hojeISO());
+    if (!horasN || horasN <= 0) { toast('Informe as horas por semana.', 'erro'); return; }
+    if (typeof window.ucDesenharDeclaracao !== 'function') {
+      toast('Função de declaração indisponível.', 'erro'); return;
+    }
+    try { if (typeof fecharModal === 'function') fecharModal(); } catch (e) {}
+    var canvas = window.ucDesenharDeclaracao({
+      alunoNome: aluno.nome,
+      alunoApelido: aluno.apelido || '',
+      horas: horasTexto(horasN),
+      data: data
+    });
+    try {
+      if (typeof registroLog === 'function') registroLog('professor', 'Declaração de matrícula gerada: ' + aluno.nome);
+    } catch (e2) {}
+    if (modo === 'baixar' && typeof window.ucBaixarCanvas === 'function') {
+      var slug = (typeof window.ucSlugPublico === 'function') ? window.ucSlugPublico(aluno.nome) : 'aluno';
+      window.ucBaixarCanvas(canvas, 'declaracao-matricula-' + slug + '.png');
+      toast('Declaração baixada: ' + aluno.nome);
+    } else if (typeof window.ucImprimirCanvases === 'function') {
+      window.ucImprimirCanvases([canvas], 'Declaração - ' + aluno.nome);
+      toast('Declaração aberta: ' + aluno.nome);
+    } else {
+      var url = canvas.toDataURL('image/png');
+      var a = document.createElement('a');
+      a.href = url; a.download = 'declaracao-matricula.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      toast('Declaração baixada: ' + aluno.nome);
+    }
+  };
+
+  /* ========== TESTES (prévia, não salva) ========== */
+  window.ucTesteDeclaracao = function () {
+    if (typeof window.ucDesenharDeclaracao !== 'function') {
+      toast('Função de declaração ainda não carregou.', 'erro'); return;
+    }
+    var nome = 'Lorena de Fátima', apelido = 'Agulha', horas = '7,5 horas', data = hojeISO();
+    if (typeof abrirModal === 'function') {
+      abrirModal('Testar declaração (não salva)',
+        '<p class="mini">Prévia da declaração. <b>Não grava</b> nada.</p>' +
+        '<label class="campo-label">Nome</label><input id="ucTdNome" value="' + esc(nome) + '">' +
+        '<label class="campo-label">Apelido</label><input id="ucTdApelido" value="' + esc(apelido) + '">' +
+        '<label class="campo-label">Horas por semana</label><input id="ucTdHoras" value="' + esc(horas) + '">' +
+        '<label class="campo-label">Data</label><input id="ucTdData" type="date" value="' + data + '">',
+        '<button class="btn btn-gold" type="button" onclick="ucTesteDeclaracaoGerar(\'abrir\')"><i class="fas fa-print"></i> Abrir</button>' +
+        '<button class="btn btn-secondary" type="button" onclick="ucTesteDeclaracaoGerar(\'baixar\')"><i class="fas fa-download"></i> Baixar</button>');
+      return;
+    }
+    ucTesteDeclaracaoGerar('abrir', { alunoNome: nome, alunoApelido: apelido, horas: horas, data: data });
+  };
+  window.ucTesteDeclaracaoGerar = function (modo, dados) {
+    var d = dados || {
+      alunoNome: ((document.getElementById('ucTdNome') || {}).value || 'Aluno de Teste').trim(),
+      alunoApelido: ((document.getElementById('ucTdApelido') || {}).value || '').trim(),
+      horas: ((document.getElementById('ucTdHoras') || {}).value || '7,5 horas').trim(),
+      data: ((document.getElementById('ucTdData') || {}).value || hojeISO())
+    };
+    if (!d.alunoNome) { toast('Informe o nome.', 'erro'); return; }
+    try { if (typeof fecharModal === 'function') fecharModal(); } catch (e) {}
+    var canvas = window.ucDesenharDeclaracao(d);
+    if (modo === 'baixar' && typeof window.ucBaixarCanvas === 'function') {
+      window.ucBaixarCanvas(canvas, 'teste-declaracao-matricula.png');
+      toast('Prévia baixada (não salva).');
+    } else if (typeof window.ucImprimirCanvases === 'function') {
+      window.ucImprimirCanvases([canvas], 'Teste — Declaração de matrícula');
+      toast('Prévia aberta (não salva).');
+    } else {
+      var url = canvas.toDataURL('image/png');
+      var a = document.createElement('a'); a.href = url; a.download = 'teste-declaracao.png';
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  };
+
+  function emitirOficialTeste(tipo) {
+    if (typeof window.ucAbrirCertificadoOficial !== 'function') {
+      toast('Módulo de certificado oficial ainda não carregou.', 'erro'); return;
+    }
+    var isForm = tipo === 'formacao_professor';
+    var titulo = isForm ? 'Testar Formação de Professor' : 'Testar Aptidão para Graduação';
+    var hoje = hojeISO();
+    var html =
+      '<p class="mini">Prévia oficial — <b>não é salva</b>.</p>' +
+      '<label class="campo-label">Nome completo</label><input id="ucToNome" value="Lorena de Fátima">' +
+      '<label class="campo-label">Apelido</label><input id="ucToApelido" value="Agulha">' +
+      '<label class="campo-label">CPF (opcional)</label><input id="ucToCpf" value="">' +
+      (isForm
+        ? '<label class="campo-label">Carga total (h)</label><input id="ucToCargaTotal" value="200">' +
+          '<label class="campo-label">Teórica / Prática / Estágio</label>' +
+          '<div class="grade-2"><input id="ucToCargaTeo" value="60"><input id="ucToCargaPra" value="120"></div>' +
+          '<input id="ucToCargaEst" value="20" style="margin-top:6px">' +
+          '<label class="campo-label">Período início</label><input id="ucToPerIni" type="date" value="2026-03-01">' +
+          '<label class="campo-label">Período fim</label><input id="ucToPerFim" type="date" value="' + hoje + '">'
+        : '<label class="campo-label">Graduação atual</label><input id="ucToGradAtual" value="Crua">' +
+          '<label class="campo-label">Graduação apta</label><input id="ucToGradApta" value="Amarela">' +
+          '<label class="campo-label">Data da avaliação</label><input id="ucToDataAval" type="date" value="' + hoje + '">' +
+          '<label class="campo-label">Carga horária</label><input id="ucToCarga" value="120 horas">' +
+          '<label class="campo-label">Período início</label><input id="ucToPerIni" type="date" value="2026-01-01">' +
+          '<label class="campo-label">Período fim</label><input id="ucToPerFim" type="date" value="' + hoje + '">');
+    if (typeof abrirModal === 'function') {
+      abrirModal(titulo, html,
+        '<button class="btn btn-gold" type="button" onclick="ucTesteOficialGerar(\'' + tipo + '\')"><i class="fas fa-file-arrow-down"></i> Gerar prévia PNG</button>');
+    } else {
+      ucTesteOficialGerar(tipo);
+    }
+  }
+  window.ucTesteAptidao = function () { emitirOficialTeste('graduacao'); };
+  window.ucTesteFormacaoProfessor = function () { emitirOficialTeste('formacao_professor'); };
+  window.ucTesteOficialGerar = function (tipo) {
+    var isForm = tipo === 'formacao_professor';
+    var nome = ((document.getElementById('ucToNome') || {}).value || 'Aluno de Teste').trim();
+    if (!nome) { toast('Informe o nome.', 'erro'); return; }
+    var dados = {
+      apelido: ((document.getElementById('ucToApelido') || {}).value || '').trim(),
+      cpf: ((document.getElementById('ucToCpf') || {}).value || '').trim(),
+      periodoIni: ((document.getElementById('ucToPerIni') || {}).value || ''),
+      periodoFim: ((document.getElementById('ucToPerFim') || {}).value || hojeISO())
+    };
+    if (isForm) {
+      dados.cargaTotal = ((document.getElementById('ucToCargaTotal') || {}).value || '200');
+      dados.cargaTeorica = ((document.getElementById('ucToCargaTeo') || {}).value || '60');
+      dados.cargaPratica = ((document.getElementById('ucToCargaPra') || {}).value || '120');
+      dados.cargaEstagio = ((document.getElementById('ucToCargaEst') || {}).value || '20');
+    } else {
+      dados.graduacaoAtual = ((document.getElementById('ucToGradAtual') || {}).value || 'Crua');
+      dados.graduacaoApta = ((document.getElementById('ucToGradApta') || {}).value || 'Amarela');
+      dados.dataAvaliacao = ((document.getElementById('ucToDataAval') || {}).value || hojeISO());
+      dados.cargaHoraria = ((document.getElementById('ucToCarga') || {}).value || '120 horas');
+    }
+    try { if (typeof fecharModal === 'function') fecharModal(); } catch (e) {}
+    var rec = {
+      alunoId: 'TESTE', alunoNome: nome, alunoApelido: dados.apelido,
+      tipo: tipo, oficial: true, dados: dados, codigo: 'TESTE-NAO-OFICIAL',
+      emitidoEm: new Date().toISOString(),
+      evento: isForm ? 'Certificado de Formação de Professor(a) de Capoeira' : 'Certificado de Avaliação e Aptidão para Graduação'
+    };
+    try {
+      window.ucAbrirCertificadoOficial(rec);
+      toast('Prévia gerada (não salva).');
+    } catch (err) {
+      toast('Falha ao gerar prévia.', 'erro');
+    }
+  };
+
+  /* ========== Painel ========== */
+  function htmlPainel() {
+    return '' +
+      '<h3 style="color:var(--gold,#ffc107)"><i class="fas fa-file-signature"></i> Documentos do aluno</h3>' +
+      '<p class="mini" style="margin-bottom:8px;">O professor gera a declaração oficial com os dados do cadastro.</p>' +
+      '<button type="button" class="btn btn-gold" style="width:100%;margin-bottom:10px" onclick="ucProfAbrirDeclaracao()">' +
+        '<i class="fas fa-file-lines"></i> Gerar declaração de matrícula</button>' +
+      '<details style="margin-top:4px">' +
+        '<summary class="mini" style="cursor:pointer;color:var(--text-sub)">Testar layouts (prévia, não salva)</summary>' +
+        '<div class="flex-btn" style="flex-wrap:wrap;gap:8px;margin-top:8px">' +
+          '<button type="button" class="btn btn-secondary btn-mini" onclick="ucTesteDeclaracao()">Teste declaração</button>' +
+          '<button type="button" class="btn btn-secondary btn-mini" onclick="ucTesteAptidao()">Teste aptidão</button>' +
+          '<button type="button" class="btn btn-secondary btn-mini" onclick="ucTesteFormacaoProfessor()">Teste formação</button>' +
+        '</div>' +
+      '</details>';
+  }
+
+  function montarPainel() {
+    if (!equipeOk()) {
+      ['ucCardTesteDocumentos', 'ucCardTesteDocumentosForm'].forEach(function (id) {
+        var el = document.getElementById(id); if (el) el.remove();
+      });
+      return;
+    }
+    var host = document.getElementById('conteudoProfessor') || document.getElementById('tab4');
+    if (!host) return;
+    var card = document.getElementById('ucCardTesteDocumentos');
+    if (!card) {
+      card = document.createElement('div');
+      card.id = 'ucCardTesteDocumentos';
+      card.className = 'card';
+      card.style.border = '1px solid var(--gold,#ffc107)';
+      if (host.firstChild) host.insertBefore(card, host.firstChild);
+      else host.appendChild(card);
+    }
+    card.innerHTML = htmlPainel();
+
+    var janela = document.getElementById('janelaFormacaoProfessor');
+    if (janela) {
+      var c2 = document.getElementById('ucCardTesteDocumentosForm');
+      if (!c2) {
+        c2 = document.createElement('div');
+        c2.id = 'ucCardTesteDocumentosForm';
+        c2.className = 'card';
+        c2.style.border = '1px solid var(--gold,#ffc107)';
+        janela.insertBefore(c2, janela.firstChild);
+      }
+      c2.innerHTML = htmlPainel();
+    }
+  }
+
+  function tentar() { try { montarPainel(); } catch (e) {} }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(tentar, 800); });
+  else setTimeout(tentar, 800);
+  setInterval(tentar, 3000);
+
+  window.ucTestarDocumentos = {
+    declaracao: function () { window.ucTesteDeclaracao(); },
+    aptidao: function () { window.ucTesteAptidao(); },
+    formacao: function () { window.ucTesteFormacaoProfessor(); },
+    gerarDeclaracaoAluno: function () { window.ucProfAbrirDeclaracao(); }
+  };
+})();
+</script>
+
 </body>
 </html>
