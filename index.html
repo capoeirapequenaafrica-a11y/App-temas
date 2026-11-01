@@ -1267,6 +1267,18 @@ button.uc-btn-invalido{opacity:.55;pointer-events:none;filter:grayscale(.2);}
   </div>
 </div>
 
+
+<!-- ================= MODAL PERGUNTAS DA SEMANA (compacto) ================= -->
+<div class="modal-overlay" id="modalPerguntasSemana" style="z-index:10001;">
+  <div class="modal-card" style="max-width:340px; padding:0; overflow:hidden;">
+    <div style="background:#11222a; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--card-border);">
+      <h3 style="color:var(--primary-green); font-size:0.88rem; margin:0;">🥋 Perguntas da Semana</h3>
+      <span id="ucPergSemanaLbl" style="font-size:0.68rem; color:var(--text-sub);"></span>
+    </div>
+    <div id="ucPerguntasCorpo" style="padding:14px; max-height:70vh; overflow-y:auto; font-size:0.8rem;"></div>
+  </div>
+</div>
+
 <div class="toast" id="toastBox"></div>
 
 <!-- Overlay jogos arcade — interface tech (Canvas 2D grátis) -->
@@ -7862,7 +7874,574 @@ function baixarCertificado(id) {
     '<div class="rodape">Código de autenticidade: <strong>' + esc(c.codigo || '-') + '</strong><br>' +
     'Emitido em ' + esc(c.emitidoEm ? dataBR(String(c.emitidoEm).slice(0, 10)) : '-') + ' por ' + esc(c.emitidoPor || 'Equipe') + '<br><br>' +
     '_______________________________<br>' + esc(c.assinatura || 'Professor responsável') + '</div></div>' +
-    '</body></html>';
+    '
+<script id="ucPerguntasSemana">
+/* ============================================================
+   PERGUNTAS DA SEMANA — modal compacto
+   Aluno responde (logado ou não) | Professor vê relatório
+   Para adicionar perguntas: edite o array UC_PERGUNTAS abaixo
+   ============================================================ */
+(function (global) {
+  'use strict';
+  if (global.UCPerguntasSemana && global.UCPerguntasSemana.__ok) return;
+
+  // ====== EDITE AQUI PARA ADICIONAR / MUDAR PERGUNTAS ======
+  var UC_PERGUNTAS = [
+    {
+      id: 1,
+      texto: "Quantas vezes você treinou Capoeira esta semana (incluindo aula e treino em casa)?",
+      opcoes: [
+        { valor: "0", texto: "Nenhuma vez" },
+        { valor: "1", texto: "1 vez" },
+        { valor: "2", texto: "2 vezes" },
+        { valor: "3+", texto: "3 vezes ou mais" }
+      ]
+    },
+    {
+      id: 2,
+      texto: "Qual foi o maior obstáculo para treinar esta semana?",
+      opcoes: [
+        { valor: "tempo", texto: "Falta de tempo" },
+        { valor: "cansaco", texto: "Cansaço / sono" },
+        { valor: "motivacao", texto: "Falta de motivação" },
+        { valor: "nenhum", texto: "Não tive obstáculo" }
+      ]
+    },
+    {
+      id: 3,
+      texto: "Como está sua evolução na ginga e nas esquivas atualmente?",
+      opcoes: [
+        { valor: "dificuldade", texto: "Ainda tenho muita dificuldade" },
+        { valor: "melhorando", texto: "Estou melhorando aos poucos" },
+        { valor: "bom", texto: "Já me sinto bem" },
+        { valor: "dominado", texto: "Já domino bem" }
+      ]
+    },
+    {
+      id: 4,
+      texto: "Você treinou em casa (mesmo que 10–15 minutos) nos dias sem aula?",
+      opcoes: [
+        { valor: "nao", texto: "Não treinei em casa" },
+        { valor: "1x", texto: "Sim, 1 vez" },
+        { valor: "2x", texto: "Sim, 2 vezes" },
+        { valor: "3+", texto: "Sim, 3 vezes ou mais" }
+      ]
+    },
+    {
+      id: 5,
+      texto: "Qual é seu principal objetivo com a Capoeira nos próximos 90 dias?",
+      opcoes: [
+        { valor: "frequencia", texto: "Ser mais frequente nas aulas" },
+        { valor: "graduacao", texto: "Conquistar a próxima graduação" },
+        { valor: "jogo", texto: "Melhorar no jogo (roda)" },
+        { valor: "saude", texto: "Usar a Capoeira para saúde e disciplina" }
+      ]
+    }
+  ];
+  // ========================================================
+
+  var CHAVE = "uc_perguntas_respostas_v1";
+
+  function obterSemana() {
+    var agora = new Date();
+    var inicio = new Date(agora.getFullYear(), 0, 1);
+    var dias = Math.floor((agora - inicio) / 86400000);
+    return agora.getFullYear() + "-S" + Math.ceil((dias + inicio.getDay() + 1) / 7);
+  }
+
+  function carregar() {
+    try { return JSON.parse(localStorage.getItem(CHAVE) || "[]"); } catch (e) { return []; }
+  }
+
+  function salvar(lista) {
+    localStorage.setItem(CHAVE, JSON.stringify(lista));
+  }
+
+  function jaRespondeu(nome) {
+    var sem = obterSemana();
+    return carregar().some(function (r) { return r.nome === nome && r.semana === sem; });
+  }
+
+  function registrar(nome, respostas) {
+    var lista = carregar().filter(function (r) { return !(r.nome === nome && r.semana === obterSemana()); });
+    lista.push({ nome: nome.trim(), semana: obterSemana(), data: new Date().toISOString(), respostas: respostas });
+    salvar(lista);
+  }
+
+  function obterRelatorio() {
+    var lista = carregar();
+    var sem = obterSemana();
+    return { semanaAtual: sem, total: lista.length, destaSemana: lista.filter(function (r) { return r.semana === sem; }), todas: lista };
+  }
+
+  function textoOpcao(id, valor) {
+    var p = UC_PERGUNTAS.find(function (x) { return x.id === id; });
+    if (!p) return valor;
+    var o = p.opcoes.find(function (x) { return x.valor === valor; });
+    return o ? o.texto : valor;
+  }
+
+  function esc(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function renderFormulario() {
+    var corpo = document.getElementById("ucPerguntasCorpo");
+    if (!corpo) return;
+    var lbl = document.getElementById("ucPergSemanaLbl");
+    if (lbl) lbl.textContent = obterSemana();
+
+    var html = '<div style="margin-bottom:12px;"><label style="font-size:0.72rem;color:var(--text-sub);display:block;margin-bottom:3px;">Seu nome</label>' +
+      '<input type="text" id="ucPergNome" placeholder="Nome completo" style="width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--card-border);background:#0a1419;color:#fff;font-size:0.85rem;"></div>';
+
+    UC_PERGUNTAS.forEach(function (p, i) {
+      html += '<div style="margin-bottom:14px;"><div style="font-size:0.8rem;font-weight:600;margin-bottom:7px;line-height:1.3;">' + (i + 1) + ". " + esc(p.texto) + "</div>";
+      p.opcoes.forEach(function (o) {
+        html += '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:5px;background:#0c151a;border:1px solid var(--card-border);border-radius:9px;cursor:pointer;font-size:0.78rem;">' +
+          '<input type="radio" name="ucp' + p.id + '" value="' + esc(o.valor) + '" style="accent-color:var(--primary-green);width:16px;height:16px;">' +
+          "<span>" + esc(o.texto) + "</span></label>";
+      });
+      html += "</div>";
+    });
+
+    html += '<button type="button" class="btn" id="ucPergBtnEnviar" style="margin-top:4px;">Enviar respostas</button>';
+    corpo.innerHTML = html;
+
+    document.getElementById("ucPergBtnEnviar").onclick = function () {
+      var nome = (document.getElementById("ucPergNome").value || "").trim();
+      if (nome.length < 3) {
+        if (typeof mostrarToast === "function") mostrarToast("Digite seu nome completo.", "erro");
+        else alert("Digite seu nome completo.");
+        return;
+      }
+      if (jaRespondeu(nome)) {
+        corpo.innerHTML = '<div style="text-align:center;padding:24px 10px;color:var(--text-sub);">Você já respondeu esta semana.<br>Até a próxima!</div>';
+        return;
+      }
+      var respostas = [];
+      var falta = false;
+      UC_PERGUNTAS.forEach(function (p) {
+        var m = document.querySelector('input[name="ucp' + p.id + '"]:checked');
+        if (!m) falta = true;
+        else respostas.push({ id: p.id, valor: m.value });
+      });
+      if (falta) {
+        if (typeof mostrarToast === "function") mostrarToast("Responda as 5 perguntas.", "erro");
+        else alert("Responda as 5 perguntas.");
+        return;
+      }
+      registrar(nome, respostas);
+      corpo.innerHTML = '<div style="text-align:center;padding:28px 10px;color:var(--primary-green);font-weight:600;">✅ Pronto!<br>Respostas enviadas.<br><br>Obrigado.</div>';
+      try { if (window.UCSom) UCSom.tocar('ok'); else if (window.ucTocarSom) ucTocarSom('ok'); } catch(e) {}
+      setTimeout(function () {
+        var ov = document.getElementById("modalPerguntasSemana");
+        if (ov) ov.classList.remove("aberto");
+      }, 1600);
+      try { if (typeof mostrarToast === "function") mostrarToast("Perguntas da semana respondidas!"); } catch (e) {}
+    };
+  }
+
+  function mostrarModalPerguntas() {
+    var ov = document.getElementById("modalPerguntasSemana");
+    if (!ov) return;
+    renderFormulario();
+    ov.classList.add("aberto");
+  }
+
+  function precisaMostrar() {
+    // Mostra se ainda não respondeu com nenhum nome nesta semana?
+    // Critério simples: se não há resposta desta semana neste aparelho com nome salvo
+    var ultimo = localStorage.getItem("uc_perg_ultimo_nome") || "";
+    if (ultimo && jaRespondeu(ultimo)) return false;
+    // Se não tem nome salvo, mostra sempre (até responder)
+    return true;
+  }
+
+  // Lembra o nome para não reaparecer
+  function lembrarNome(nome) {
+    try { localStorage.setItem("uc_perg_ultimo_nome", nome); } catch (e) {}
+  }
+
+  // Override do registrar para lembrar nome
+  var _reg = registrar;
+  registrar = function (nome, respostas) {
+    _reg(nome, respostas);
+    lembrarNome(nome);
+  };
+
+  function renderRelatorioProfessor(containerId) {
+    var el = document.getElementById(containerId || "ucPergRelatorioBox");
+    if (!el) return;
+    var rel = obterRelatorio();
+    var dados = rel.destaSemana.slice().sort(function (a, b) { return new Date(b.data) - new Date(a.data); });
+
+    var html = '<div style="font-size:0.78rem;margin-bottom:10px;color:var(--text-sub);">Semana <b style="color:#fff;">' + esc(rel.semanaAtual) + "</b> · " + dados.length + " resposta(s)</div>";
+
+    if (!dados.length) {
+      html += '<p class="sem-dados">Nenhuma resposta esta semana ainda.</p>';
+    } else {
+      dados.forEach(function (item) {
+        html += '<div class="lista-item" style="margin-bottom:8px;"><b>' + esc(item.nome) + "</b> <span class=\"mini\">" + esc(new Date(item.data).toLocaleString("pt-BR")) + "</span>";
+        item.respostas.forEach(function (r) {
+          var p = UC_PERGUNTAS.find(function (x) { return x.id === r.id; });
+          html += '<div class="mini" style="margin-top:3px;">• ' + esc(p ? p.texto : "P" + r.id) + ": <b style=\"color:#e0f2f1;\">" + esc(textoOpcao(r.id, r.valor)) + "</b></div>";
+        });
+        html += "</div>";
+      });
+    }
+
+    html += '<div class="flex-btn" style="margin-top:10px;">' +
+      '<button type="button" class="btn btn-secondary btn-mini" onclick="UCPerguntasSemana.exportarCSV()">Exportar CSV</button>' +
+      '<button type="button" class="btn btn-danger btn-mini" onclick="UCPerguntasSemana.limpar()">Limpar</button></div>';
+
+    el.innerHTML = html;
+  }
+
+  function exportarCSV() {
+    var rel = obterRelatorio();
+    var csv = "Nome;Semana;Data;Pergunta;Resposta\n";
+    rel.todas.forEach(function (item) {
+      item.respostas.forEach(function (r) {
+        var p = UC_PERGUNTAS.find(function (x) { return x.id === r.id; });
+        csv += '"' + item.nome + '";"' + item.semana + '";"' + item.data + '";"' + (p ? p.texto : r.id) + '";"' + textoOpcao(r.id, r.valor) + '"\n';
+      });
+    });
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "perguntas-semana-capoeira.csv";
+    a.click();
+  }
+
+  function limpar() {
+    if (!confirm("Apagar todas as respostas das perguntas?")) return;
+    localStorage.removeItem(CHAVE);
+    localStorage.removeItem("uc_perg_ultimo_nome");
+    if (typeof mostrarToast === "function") mostrarToast("Respostas apagadas.");
+    renderRelatorioProfessor();
+  }
+
+  function boot() {
+    // Mostra o modal se ainda não respondeu esta semana neste aparelho
+    setTimeout(function () {
+      try {
+        if (precisaMostrar() && document.getElementById("modalPerguntasSemana")) {
+          mostrarModalPerguntas();
+        }
+      } catch (e) {}
+    }, 1200);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { setTimeout(boot, 600); });
+  else setTimeout(boot, 600);
+
+  global.UCPerguntasSemana = {
+    __ok: true,
+    perguntas: UC_PERGUNTAS,
+    mostrar: mostrarModalPerguntas,
+    relatorio: obterRelatorio,
+    renderRelatorio: renderRelatorioProfessor,
+    exportarCSV: exportarCSV,
+    limpar: limpar,
+    semana: obterSemana
+  };
+})(typeof window !== "undefined" ? window : this);
+</script>
+
+
+<script id="ucSomNotificacao">
+/* ============================================================
+   SOM DE NOTIFICAÇÃO — Universo Capoeira
+   Toca em toasts, check-in, perguntas, avisos e ações importantes
+   ============================================================ */
+(function (global) {
+  'use strict';
+  if (global.UCSom && global.UCSom.__ok) return;
+
+  var ctx = null;
+  var ligado = true;
+  var CHAVE = 'uc_som_notif_v1';
+
+  try {
+    var salva = localStorage.getItem(CHAVE);
+    if (salva === '0') ligado = false;
+  } catch (e) {}
+
+  function getCtx() {
+    if (ctx) return ctx;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      return ctx;
+    } catch (e) { return null; }
+  }
+
+  // Garante que o áudio pode tocar após primeiro toque do usuário
+  function desbloquear() {
+    var c = getCtx();
+    if (!c) return;
+    if (c.state === 'suspended') {
+      c.resume().catch(function () {});
+    }
+  }
+  ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(function (ev) {
+    document.addEventListener(ev, desbloquear, { once: true, passive: true });
+  });
+
+  /**
+   * Tipos:
+   *  - ok      : sucesso (tom ascendente curto)
+   *  - erro    : erro (tom grave)
+   *  - info    : informação / toast normal
+   *  - alerta  : atenção
+   *  - checkin : check-in registrado
+   *  - msg     : mensagem / mural
+   *  - pergunta: perguntas da semana
+   */
+  function tocar(tipo) {
+    if (!ligado) return;
+    var c = getCtx();
+    if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(function () {});
+
+    tipo = (tipo || 'info').toLowerCase();
+    var agora = c.currentTime;
+    var o = c.createOscillator();
+    var g = c.createGain();
+    o.connect(g);
+    g.connect(c.destination);
+
+    // Config por tipo
+    var conf = {
+      ok:       { freq: [523, 659, 784], dur: 0.08, tipo: 'sine', vol: 0.12 },
+      checkin:  { freq: [440, 554, 659], dur: 0.09, tipo: 'sine', vol: 0.14 },
+      info:     { freq: [520],          dur: 0.07, tipo: 'sine', vol: 0.10 },
+      msg:      { freq: [392, 523],     dur: 0.08, tipo: 'triangle', vol: 0.11 },
+      pergunta: { freq: [587, 740],     dur: 0.09, tipo: 'sine', vol: 0.12 },
+      alerta:   { freq: [480, 380],     dur: 0.10, tipo: 'square', vol: 0.08 },
+      erro:     { freq: [220, 180],     dur: 0.12, tipo: 'sawtooth', vol: 0.09 }
+    };
+    var cfg = conf[tipo] || conf.info;
+
+    o.type = cfg.tipo;
+    g.gain.setValueAtTime(0.0001, agora);
+
+    // Sequência de notas curtas
+    var t = agora;
+    cfg.freq.forEach(function (f, i) {
+      o.frequency.setValueAtTime(f, t);
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(cfg.vol, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + cfg.dur);
+      t += cfg.dur + 0.025;
+    });
+
+    try {
+      o.start(agora);
+      o.stop(t + 0.02);
+    } catch (e) {}
+  }
+
+  function setLigado(v) {
+    ligado = !!v;
+    try { localStorage.setItem(CHAVE, ligado ? '1' : '0'); } catch (e) {}
+  }
+
+  function toggle() {
+    setLigado(!ligado);
+    if (ligado) tocar('ok');
+    return ligado;
+  }
+
+  // ---- Integra com mostrarToast ----
+  var _toast = global.mostrarToast;
+  if (typeof _toast === 'function') {
+    global.mostrarToast = function (msg, tipo) {
+      try {
+        var t = (tipo || '').toLowerCase();
+        if (t === 'erro' || t === 'error') tocar('erro');
+        else if (t === 'alerta' || t === 'warning') tocar('alerta');
+        else tocar('info');
+      } catch (e) {}
+      return _toast.apply(this, arguments);
+    };
+  }
+
+  // ---- Hook em eventos comuns (delegação) ----
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button, .btn, [onclick]') : null;
+    if (!b) return;
+    var txt = ((b.textContent || '') + ' ' + (b.getAttribute('onclick') || '')).toLowerCase();
+    try {
+      if (/check-?in|presen[cç]a|confirmar presen/.test(txt)) setTimeout(function () { tocar('checkin'); }, 80);
+      else if (/enviar|salvar|cadastrar|registrar|publicar/.test(txt)) setTimeout(function () { tocar('ok'); }, 80);
+      else if (/excluir|apagar|remover|limpar|sair/.test(txt)) setTimeout(function () { tocar('alerta'); }, 80);
+    } catch (err) {}
+  }, true);
+
+  // Quando o modal de perguntas abre
+  var _obs;
+  try {
+    _obs = new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        if (m.target && m.target.id === 'modalPerguntasSemana' && m.target.classList.contains('aberto')) {
+          tocar('pergunta');
+        }
+      });
+    });
+    var el = document.getElementById('modalPerguntasSemana');
+    if (el) _obs.observe(el, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+
+  global.UCSom = {
+    __ok: true,
+    tocar: tocar,
+    ligado: function () { return ligado; },
+    setLigado: setLigado,
+    toggle: toggle,
+    desbloquear: desbloquear
+  };
+
+  // Atalho global
+  global.ucTocarSom = tocar;
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
+
+<script id="ucHapticoExtra">
+/* ============================================================
+   FEEDBACK HÁPTICO COMPLETO — Universo Capoeira
+   Complementa o módulo nativo já existente
+   Padrões: leve | medio | ok | erro | checkin | alerta | pergunta
+   Desligar: localStorage.uc_haptico = '0'
+   ============================================================ */
+(function (global) {
+  'use strict';
+  if (global.UCHaptico && global.UCHaptico.__ok) return;
+
+  var PADROES = {
+    leve:     12,
+    medio:    28,
+    toque:    18,
+    ok:       [40, 30, 60],
+    checkin:  [50, 40, 80, 40, 120],
+    pergunta: [35, 25, 35],
+    alerta:   [70, 50, 70],
+    erro:     [90, 60, 90, 60, 120],
+    sucesso:  [30, 20, 50, 20, 80],
+    msg:      [25, 20, 40]
+  };
+
+  function ativo() {
+    try { return localStorage.getItem('uc_haptico') !== '0'; } catch (e) { return true; }
+  }
+
+  function vibrar(padrao) {
+    if (!ativo()) return false;
+    // Usa AndroidAPI se existir (APK)
+    try {
+      var API = window.AndroidAPI;
+      if (API) {
+        if (typeof API.vibratePattern === 'function' && Array.isArray(padrao)) {
+          API.vibratePattern(JSON.stringify(padrao), -1);
+          return true;
+        }
+        if (typeof API.vibrate === 'function') {
+          API.vibrate(Array.isArray(padrao) ? padrao[0] : padrao);
+          return true;
+        }
+      }
+    } catch (e) {}
+    // Navegador
+    try {
+      if (navigator.vibrate) {
+        navigator.vibrate(padrao);
+        return true;
+      }
+    } catch (e2) {}
+    return false;
+  }
+
+  function tocar(tipo) {
+    var p = PADROES[tipo] != null ? PADROES[tipo] : PADROES.leve;
+    return vibrar(p);
+  }
+
+  function setAtivo(v) {
+    try { localStorage.setItem('uc_haptico', v ? '1' : '0'); } catch (e) {}
+    if (v) tocar('ok');
+  }
+
+  function toggle() {
+    var novo = !ativo();
+    setAtivo(novo);
+    return novo;
+  }
+
+  // ---- Cliques em botões importantes ----
+  document.addEventListener('click', function (e) {
+    if (!ativo()) return;
+    var el = e.target.closest ? e.target.closest('button, .btn, .jogo-card-btn, .tabs button, .uc-nav-item, .opcao, label.opcao') : null;
+    if (!el) return;
+
+    var txt = ((el.textContent || '') + ' ' + (el.className || '') + ' ' + (el.getAttribute('onclick') || '')).toLowerCase();
+
+    if (/check-?in|presen[cç]a|confirmar presen/.test(txt)) {
+      setTimeout(function () { tocar('checkin'); }, 30);
+    } else if (/enviar|salvar|cadastrar|registrar|publicar|confirmar/.test(txt)) {
+      setTimeout(function () { tocar('ok'); }, 30);
+    } else if (/excluir|apagar|remover|limpar|sair|cancelar/.test(txt)) {
+      setTimeout(function () { tocar('alerta'); }, 30);
+    } else if (el.classList.contains('btn') || el.tagName === 'BUTTON') {
+      tocar('leve');
+    }
+  }, true);
+
+  // ---- Modal de perguntas ----
+  try {
+    var obs = new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        if (m.target && m.target.id === 'modalPerguntasSemana') {
+          if (m.target.classList.contains('aberto')) tocar('pergunta');
+        }
+      });
+    });
+    function observarModal() {
+      var el = document.getElementById('modalPerguntasSemana');
+      if (el) obs.observe(el, { attributes: true, attributeFilter: ['class'] });
+      else setTimeout(observarModal, 800);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', observarModal);
+    else observarModal();
+  } catch (e) {}
+
+  // ---- Integra com UCSom (som + háptico juntos) ----
+  if (global.UCSom && global.UCSom.tocar) {
+    var _somTocar = global.UCSom.tocar;
+    global.UCSom.tocar = function (tipo) {
+      try { tocar(tipo); } catch (e) {}
+      return _somTocar.apply(this, arguments);
+    };
+  }
+
+  // ---- Atalhos globais ----
+  global.UCHaptico = {
+    __ok: true,
+    vibrar: vibrar,
+    tocar: tocar,
+    ativo: ativo,
+    setAtivo: setAtivo,
+    toggle: toggle,
+    padroes: PADROES
+  };
+  global.ucVibrar = vibrar;
+  global.ucHaptico = tocar;
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
+</body></html>';
   var w = window.open('', '_blank');
   if (!w) { mostrarToast('Permita pop-ups para abrir o certificado.', 'erro'); return; }
   w.document.write(html);
