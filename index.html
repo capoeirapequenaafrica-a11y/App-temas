@@ -13957,11 +13957,28 @@ function iniciarApp() {
     var abaPedida = (new URLSearchParams(window.location.search)).get('aba') ||
       (window.location.hash || '').replace('#', '');
     if (abaPedida) {
-      var mapaAba = { checkin: 'tab2', inicio: 'tab1', aluno: 'tab3' };
+      var mapaAba = { inicio: 'tab1', checkin: 'tab2', aluno: 'tab3', jogos: 'tabJogos', professor: 'tab4', equipe: 'tab4', adm: 'tab5', dev: 'tab6' };
       var idAba = mapaAba[normalizar(abaPedida)];
       if (idAba) { abrirAba(idAba); }
     }
   } catch (e) {}
+
+  /* âncora de registro: ?alterar=ID&tela=checkinFormacao abre direto a edição (precisa estar logado como professor) */
+  (function ucAncoraRegistro() {
+    var p = new URLSearchParams(window.location.search);
+    var id = p.get('alterar'), tela = p.get('tela') || 'checkinFormacao';
+    if (!id) return;
+    var tentativas = 0;
+    var t = setInterval(function () {
+      tentativas++;
+      if (tentativas > 60) { clearInterval(t); return; }
+      if (tela === 'checkinFormacao' && typeof DB !== 'undefined' && DB.carregado && DB.carregado('checkinsFormacao') && DB.buscar('checkinsFormacao', id)) {
+        clearInterval(t);
+        try { abrirAba('tab4'); } catch (e) {}
+        try { window.fcAjustar(id); } catch (e) {}
+      }
+    }, 1000);
+  })();
 
   /* revalida o atraso a cada minuto */
   setInterval(avaliarAtrasoHoje, 60000);
@@ -21716,6 +21733,7 @@ function dsUsarSugestao() {
   }
   function professorNoLocal(pos) {
     if (!sessaoEquipe || sessaoEquipe.papel !== 'professor') return;
+    if (!ucConsentiu('professor', sessaoEquipe.id)) return;
     var info = aulaHojeComLocal();
     if (!info || !dentroJanelaCheckin(info.aula)) return;
     var dia = hojeLocal();
@@ -21743,6 +21761,7 @@ function dsUsarSugestao() {
     var dist = distanciaM({ lat: pos.coords.latitude, lng: pos.coords.longitude }, info.centro);
     if (dist > RAIO_ALUNO_M) { permanencia.inicioMs = null; return; }
     /* Dandara faz o check-in sozinha: aluno no local + professor já registrado no local hoje */
+    if (!ucConsentiu('aluno', aluno.id)) return;
     ucDandaraCheckinAutomatico(aluno, info);
   }
   var ucDandaraUltimoDia = null;
@@ -21810,12 +21829,29 @@ function dsUsarSugestao() {
 
   /* Localização ativa conforme quem está logado */
   var watchId = null, watchPapel = null;
+  /* Monitoramento de localização só nos 10 minutos antes do início da aula de hoje */
+  var JANELA_MONITORAMENTO_MIN = 10;
+  function ucNaJanelaMonitoramento() {
+    var info = aulaHojeComLocal();
+    if (!info) return false;
+    var inicio = minutosDoHM(info.aula.horaInicio);
+    if (inicio === null) return false;
+    var agora = agoraEmMinutos();
+    return agora >= inicio - JANELA_MONITORAMENTO_MIN && agora < inicio;
+  }
   function garantirLocalizacao() {
     var papel = sessaoEquipe && sessaoEquipe.papel === 'professor' ? 'professor' : (alunoLogado() ? 'aluno' : null);
+    if (papel && !ucConsentiu(papel, papel === 'professor' ? sessaoEquipe.id : alunoLogado().id)) papel = null;
+    if (papel && !ucNaJanelaMonitoramento()) papel = null;
     if (papel === watchPapel) return;
     if (watchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     watchId = null;
     watchPapel = papel;
+    registroLog('local', papel ? 'Monitoramento de localização ativado (' + papel + ') — janela de ' + JANELA_MONITORAMENTO_MIN + ' min antes da aula' : 'Monitoramento de localização desativado');
+    if (papel === 'aluno') {
+      mostrarToast('Localização ativa: a presença de hoje é checada nos ' + JANELA_MONITORAMENTO_MIN + ' min antes da aula.');
+      if (typeof notificar === 'function') notificar('Check-in automático', 'Sua localização está sendo usada para o check-in de hoje, nos ' + JANELA_MONITORAMENTO_MIN + ' minutos antes da aula.');
+    }
     if (!papel || !navigator.geolocation) return;
     watchId = navigator.geolocation.watchPosition(function (pos) {
       if (papel === 'professor') professorNoLocal(pos); else alunoNoLocal(pos);
@@ -25188,7 +25224,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
         '<div class="mini">' + quando(c.data) + ' · ' + esc(c.tipo) + ' · ' + bonito(c.horas) + (poloNome(c.poloId) ? ' · ' + esc(poloNome(c.poloId)) : '') + (c.origem === 'professor' ? ' · lançado pelo professor' : '') + '</div>' +
         (c.obs ? '<div class="mini">“' + esc(c.obs) + '”</div>' : '') + (c.respostaProfessor ? '<div class="mini">Prof.: ' + esc(c.respostaProfessor) + '</div>' : '') +
         '<div class="flex-btn" style="margin-top:6px">' + (c.status === 'pendente' ? '<button class="btn btn-mini" type="button" onclick="fcDecidir(\'' + esc(c.id) + '\',\'aprovado\')"><i class="fas fa-check"></i> Aprovar</button><button class="btn btn-mini btn-danger" type="button" onclick="fcDecidir(\'' + esc(c.id) + '\',\'rejeitado\')"><i class="fas fa-xmark"></i></button>' : '') +
-        '<button class="btn btn-mini btn-secondary" type="button" onclick="fcAjustar(\'' + esc(c.id) + '\')"><i class="fas fa-pen"></i> Ajustar</button></div></div>';
+        '<button class="btn btn-mini btn-secondary" type="button" onclick="fcAjustar(\'' + esc(c.id) + '\')"><i class="fas fa-pen"></i> Editar</button></div></div>';
     });
     if (rows.length > 12) h += '<p class="mini">+ ' + (rows.length - 12) + ' registro(s). Use o filtro por formando.</p>';
     h += '<h4 style="margin:14px 0 6px;color:var(--gold)">Acompanhamento dos formandos</h4>';
@@ -25221,7 +25257,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   function formularioHtml(c, novo) {
     var forms = formandos();
     return (novo ? '<label class="campo-label" for="fcAluno">Formando</label><select id="fcAluno">' + forms.map(function (f) { return '<option value="' + esc(f.alunoId) + '"' + (f.alunoId === filtro.aluno ? ' selected' : '') + '>' + esc(f.apelido || f.nome) + '</option>'; }).join('') + '</select>' : '<p class="mini"><b>' + esc(c.alunoApelido || c.alunoNome) + '</b></p>') +
-      '<label class="campo-label" for="fcEData">Data</label><input id="fcEData" type="date" value="' + (c.data || hoje()) + '" max="' + hoje() + '">' +
+      (novo ? '<label class="campo-label">Dias da aula (toque em quantos quiser)</label><div id="fcCalLanc"></div>' : '<label class="campo-label" for="fcEData">Data</label><input id="fcEData" type="date" value="' + fcDataISO(c.data) + '" max="' + hoje() + '">') +
       '<label class="campo-label" for="fcETipo">Atividade</label><select id="fcETipo">' + optsTipo(c.tipo) + '</select>' +
       '<label class="campo-label" for="fcEHoras">Duração</label><select id="fcEHoras">' + optsHoras(c.horas || 1.5) + '</select>' +
       '<label class="campo-label" for="fcEPolo">Polo / local</label><select id="fcEPolo">' + optsPolo(c.poloId) + '</select>' +
@@ -25242,7 +25278,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       if (mudou.length) avisar(c, 'O professor ajustou seu check-in da formação: ' + quando(novo.data) + ' · ' + novo.tipo + ' · ' + bonito(novo.horas) + ' · ' + novo.status + '.' + (novo.respostaProfessor ? ' ' + novo.respostaProfessor : ''));
       try { registroLog('professor', 'Ajustou check-in da formação de ' + (c.alunoApelido || c.alunoNome)); } catch (e) {}
       fecharModal(); mostrarToast('Check-in ajustado.'); renderProf();
-    });
+    }).catch(function () { mostrarToast('Não foi possível salvar o ajuste. Tente de novo.', 'erro'); });
   };
   window.fcLancar = function () {
     if (!eq()) return; if (!formandos().length) { mostrarToast('Aprove uma inscrição na formação primeiro.', 'erro'); return; }
@@ -25253,6 +25289,112 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     var d = (el('fcEData') || {}).value || hoje(); if (d > hoje()) { mostrarToast('A data não pode ser no futuro.', 'erro'); return; }
     var rec = { alunoId: f.alunoId, alunoNome: f.nome || '', alunoApelido: f.apelido || '', data: d, tipo: (el('fcETipo') || {}).value, horas: parseFloat((el('fcEHoras') || {}).value) || 1.5, poloId: (el('fcEPolo') || {}).value || '', status: (el('fcESt') || {}).value || 'aprovado', respostaProfessor: ((el('fcEResp') || {}).value || '').trim(), origem: 'professor', ajustadoPor: (sessaoEquipe && sessaoEquipe.nome) || 'Professor', criadoEm: new Date().toISOString() };
     DB.salvar('checkinsFormacao', rec).then(function () { avisar(rec, 'O professor lançou sua presença na formação: ' + quando(rec.data) + ' · ' + rec.tipo + ' · ' + bonito(rec.horas) + '.'); fecharModal(); mostrarToast('Presença lançada.'); renderProf(); });
+  };
+
+  /* ---------- datas e calendário de vários dias (lançamento) ---------- */
+  function fcDataISO(v) {
+    v = String(v || '');
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+    var m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m) return m[3] + '-' + m[2] + '-' + m[1];
+    return hoje();
+  }
+  var FC_CAL = { ano: 0, mes: 0, sel: {} };
+  function fcIsoDia(dt) {
+    return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+  }
+  function fcCalRender(id) {
+    var box = el(id);
+    if (!box) return;
+    if (!FC_CAL.ano) { var t = new Date(); FC_CAL.ano = t.getFullYear(); FC_CAL.mes = t.getMonth(); }
+    var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    var cab = ['D','S','T','Q','Q','S','S'];
+    var hojeIso = fcIsoDia(new Date());
+    var primeiro = new Date(FC_CAL.ano, FC_CAL.mes, 1), n = new Date(FC_CAL.ano, FC_CAL.mes + 1, 0).getDate();
+    var h = '<div class="tr-sem-nav"><button type="button" class="btn btn-secondary btn-mini" onclick="fcCalMes(-1)">&lsaquo;</button>' +
+      '<b>' + meses[FC_CAL.mes] + ' ' + FC_CAL.ano + '</b>' +
+      '<button type="button" class="btn btn-secondary btn-mini" onclick="fcCalMes(1)">&rsaquo;</button></div>';
+    h += '<div class="tr-cal">';
+    cab.forEach(function (c) { h += '<div class="tr-cal-cab">' + c + '</div>'; });
+    for (var v = 0; v < primeiro.getDay(); v++) h += '<div class="tr-cal-dia tr-cal-vazio"></div>';
+    for (var d = 1; d <= n; d++) {
+      var iso = FC_CAL.ano + '-' + String(FC_CAL.mes + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      var futuro = iso > hojeIso;
+      var cls = 'tr-cal-dia' + (iso === hojeIso ? ' hoje' : '') + (FC_CAL.sel[iso] ? ' tr-cal-sel' : '');
+      if (futuro) {
+        h += '<button type="button" class="' + cls + '" disabled style="opacity:.35"><span>' + d + '</span></button>';
+      } else {
+        h += '<button type="button" class="' + cls + '" onclick="fcCalToggle(\'' + iso + '\')"><span>' + d + '</span><small>' + (FC_CAL.sel[iso] ? '•' : '') + '</small></button>';
+      }
+    }
+    h += '</div><p class="mini" style="margin-top:6px;">Toque nos dias para marcar ou desmarcar. <b>' +
+      Object.keys(FC_CAL.sel).length + '</b> dia(s) marcado(s).</p>';
+    box.innerHTML = h;
+  }
+  window.fcCalMes = function (delta) {
+    FC_CAL.mes += delta;
+    if (FC_CAL.mes < 0) { FC_CAL.mes = 11; FC_CAL.ano--; }
+    if (FC_CAL.mes > 11) { FC_CAL.mes = 0; FC_CAL.ano++; }
+    fcCalRender('fcCalLanc');
+  };
+  window.fcCalToggle = function (iso) {
+    if (FC_CAL.sel[iso]) delete FC_CAL.sel[iso]; else FC_CAL.sel[iso] = true;
+    fcCalRender('fcCalLanc');
+  };
+  var _fcLancarOriginal = window.fcLancar;
+  window.fcLancar = function () {
+    FC_CAL.sel = {}; FC_CAL.ano = 0;
+    _fcLancarOriginal();
+    fcCalRender('fcCalLanc');
+  };
+  window.fcSalvarLancamento = function () {
+    var f = formandos().filter(function (x) { return x.alunoId === (el('fcAluno') || {}).value; })[0];
+    if (!f) { mostrarToast('Escolha um formando.', 'erro'); return; }
+    var datas = Object.keys(FC_CAL.sel).sort();
+    if (!datas.length) { mostrarToast('Escolha pelo menos um dia no calendário.', 'erro'); return; }
+    var tipo = (el('fcETipo') || {}).value;
+    var horas = parseFloat((el('fcEHoras') || {}).value) || 1.5;
+    var polo = (el('fcEPolo') || {}).value || '';
+    var situacao = (el('fcESt') || {}).value || 'aprovado';
+    var resp = (((el('fcEResp') || {}).value) || '').trim();
+    var existentes = lista('checkinsFormacao');
+    var novos = datas.filter(function (d) {
+      return !existentes.some(function (c) { return c.alunoId === f.alunoId && c.data === d && c.tipo === tipo && c.status !== 'rejeitado'; });
+    });
+    if (!novos.length) { mostrarToast('Esses dias já estão lançados para este formando.', 'erro'); return; }
+    Promise.all(novos.map(function (d) {
+      return DB.salvar('checkinsFormacao', {
+        alunoId: f.alunoId, alunoNome: f.nome || '', alunoApelido: f.apelido || '',
+        data: d, tipo: tipo, horas: horas, poloId: polo, status: situacao,
+        respostaProfessor: resp, origem: 'professor', criadoEm: new Date().toISOString()
+      });
+    })).then(function () {
+      avisar({ alunoId: f.alunoId, alunoNome: f.nome || '', alunoApelido: f.apelido || '' },
+        'O professor lançou ' + novos.length + ' presença(s) na formação: ' + novos.map(function (d) { return quando(d); }).join(', ') + ' · ' + tipo + ' · ' + bonito(horas) + '.');
+      fecharModal();
+      mostrarToast(novos.length + ' check-in(s) lançado(s).');
+      renderProf();
+    }).catch(function () { mostrarToast('Não foi possível salvar. Tente de novo.', 'erro'); });
+  };
+
+  /* ---------- Check-in da formação: uma só função para lançar, editar e salvar ---------- */
+  window.fcSalvar = function (id) {
+    if (id) return window.fcSalvarAjuste(id);
+    return window.fcSalvarLancamento();
+  };
+  window.fcAjustar = function (id) {
+    if (!eq()) return;
+    var c = DB.buscar('checkinsFormacao', id); if (!c) return;
+    abrirModal('Check-in da formação', formularioHtml(c, false),
+      '<button class="btn btn-gold" type="button" onclick="fcSalvar(\'' + esc(id) + '\')"><i class="fas fa-check"></i> Salvar</button>');
+  };
+  window.fcLancar = function () {
+    if (!eq()) return;
+    if (!formandos().length) { mostrarToast('Aprove uma inscrição na formação primeiro.', 'erro'); return; }
+    FC_CAL.sel = {}; FC_CAL.ano = 0;
+    abrirModal('Check-in da formação', formularioHtml({ status: 'aprovado' }, true),
+      '<button class="btn btn-gold" type="button" onclick="fcSalvar(null)"><i class="fas fa-check"></i> Salvar</button>');
+    fcCalRender('fcCalLanc');
   };
 
   /* ---------- ciclo ---------- */
@@ -26494,5 +26636,132 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   global.ucHaptico = tocar;
 })(typeof window !== 'undefined' ? window : this);
 </script>
+<script id="ucTesteCertificadoAbas">
+(function () {
+  function isoHoje() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  /* Teste de certificado: prévia do layout, não salva em lugar nenhum. Disponível em qualquer aba com certificado. */
+  window.ucAbrirTesteCertificado = function () {
+    var nomeSug = '';
+    try { var a = alunoLogado(); if (a && a.nome) nomeSug = a.nome; } catch (e) {}
+    abrirModal('Testar certificado',
+      '<p class="mini">A prévia <b>não é salva</b> e não aparece em nenhuma lista. Serve para conferir o layout.</p>' +
+      '<label class="campo-label">Nome (teste)</label><input id="ucTesteNome" value="' + String(nomeSug).replace(/"/g, '&quot;') + '" placeholder="Ex.: Nome de Teste">' +
+      '<label class="campo-label">Evento</label><input id="ucTesteEvento" placeholder="Ex.: Teste de layout">' +
+      '<label class="campo-label">Data</label><input id="ucTesteData" type="date" value="' + isoHoje() + '">' +
+      '<label class="campo-label">Assinatura</label><input id="ucTesteAss" placeholder="Ex.: Mestre Formiga">',
+      '<button class="btn btn-gold" type="button" onclick="ucGerarTesteCertificado()"><i class="fas fa-file-arrow-down"></i> Gerar prévia</button>');
+  };
+  window.ucGerarTesteCertificado = function () {
+    var nome = ((document.getElementById('ucTesteNome') || {}).value || '').trim();
+    if (!nome) { mostrarToast('Informe um nome para o teste.', 'erro'); return; }
+    var c = {
+      alunoNome: nome,
+      evento: ((document.getElementById('ucTesteEvento') || {}).value || '').trim() || 'Teste de layout',
+      data: (document.getElementById('ucTesteData') || {}).value || isoHoje(),
+      cargaHoraria: '',
+      assinatura: ((document.getElementById('ucTesteAss') || {}).value || '').trim(),
+      codigo: 'TESTE-NAO-OFICIAL',
+      emitidoPor: (typeof sessaoEquipe !== 'undefined' && sessaoEquipe) ? sessaoEquipe.nome : 'Teste',
+      emitidoEm: new Date().toISOString()
+    };
+    fecharModal();
+    gerarImagemCertificado(c).then(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'teste-certificado.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      mostrarToast('Prévia gerada (não salva).');
+    }).catch(function () { mostrarToast('Não foi possível gerar a prévia agora.', 'erro'); });
+  };
+  /* põe o botão Testar em cada seção que tem certificado */
+  function injetar() {
+    document.querySelectorAll('h3').forEach(function (h) {
+      if (h.getAttribute('data-uc-teste')) return;
+      var t = (h.textContent || '').toLowerCase();
+      if (!/certificado/.test(t) || /carga hor/.test(t) || /testar/.test(t)) return;
+      h.setAttribute('data-uc-teste', '1');
+      var card = h.closest('.card');
+      if (card && /testar certificado/i.test(card.textContent || '')) return;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'btn btn-secondary btn-mini';
+      b.style.marginLeft = '8px';
+      b.innerHTML = '<i class="fas fa-flask"></i> Testar';
+      b.addEventListener('click', function (e) { e.stopPropagation(); e.preventDefault(); window.ucAbrirTesteCertificado(); });
+      h.appendChild(b);
+    });
+  }
+  injetar();
+  setInterval(injetar, 3000);
+})();
+</script>
+
+<script id="ucConsentimentoLocal">
+(function () {
+  /* Consentimento do check-in automático por localização (aluno e professor).
+     Sem aceite, o app não usa a localização para registrar presença. */
+  var COL = 'consentimentosLocal';
+  function registros() { try { return DB.listar(COL) || []; } catch (e) { return []; } }
+  window.ucConsentiu = function (papel, pessoaId) {
+    if (!papel || !pessoaId) return false;
+    return registros().some(function (r) { return r.papel === papel && r.pessoaId === pessoaId && r.aceito === true; });
+  };
+  function pessoaAtual() {
+    if (typeof sessaoEquipe !== 'undefined' && sessaoEquipe && sessaoEquipe.papel === 'professor') {
+      return { papel: 'professor', id: sessaoEquipe.id, nome: sessaoEquipe.nome || 'Professor' };
+    }
+    var a = null; try { a = alunoLogado(); } catch (e) {}
+    if (a && !a.teste) return { papel: 'aluno', id: a.id, nome: a.nome || a.apelido || 'Aluno' };
+    return null;
+  }
+  window.ucSalvarConsentimentoLocal = function (aceito) {
+    var p = pessoaAtual(); if (!p) return;
+    var atual = registros().filter(function (r) { return r.papel === p.papel && r.pessoaId === p.id; })[0];
+    var dados = { papel: p.papel, pessoaId: p.id, pessoaNome: p.nome, aceito: !!aceito, dataAceite: new Date().toISOString() };
+    var pr = atual ? DB.salvar(COL, dados, atual.id) : DB.salvar(COL, dados);
+    pr.then(function () {
+      mostrarToast(aceito ? 'Check-in automático ativado.' : 'Check-in automático desativado.');
+      renderCartaoConsentimento(true);
+    }).catch(function () { mostrarToast('Não foi possível salvar agora. Tente de novo.', 'erro'); });
+  };
+  var TEXTO = {
+    aluno: '<b>Check-in automático por localização.</b> Quando você estiver a até <b>10 m</b> do polo da aula de hoje, e o professor já tiver registrado a aula no local, sua presença é marcada sozinha. Se preferir, você ainda pode usar o botão "Estou no local" e confirmar após 20 minutos.',
+    professor: '<b>Check-in automático do professor.</b> Ao chegar a até <b>100 m</b> do polo, durante o horário da aula de hoje, o app registra seu check-in e avisa os alunos que a aula começou.'
+  };
+  function renderCartaoConsentimento(forcar) {
+    var ativa = document.querySelector('.tab-content.active');
+    var card = document.getElementById('ucCardConsentLocal');
+    var p = pessoaAtual();
+    var deveMostrar = !!ativa && !!p && (ativa.id === 'tab2' || (ativa.id === 'tab4' && p.papel === 'professor'));
+    if (!deveMostrar) { if (card) card.remove(); return; }
+    if (!card || card.parentElement !== ativa || forcar) {
+      if (card) card.remove();
+      card = document.createElement('div');
+      card.id = 'ucCardConsentLocal';
+      card.className = 'card';
+      card.style.border = '1px solid var(--gold)';
+      ativa.insertBefore(card, ativa.firstChild);
+    }
+    var aceito = ucConsentiu(p.papel, p.id);
+    card.innerHTML =
+      '<h3><i class="fas fa-location-dot"></i> Check-in automático</h3>' +
+      '<p class="mini" style="margin:6px 0 10px;">' + TEXTO[p.papel] + '</p>' +
+      '<p class="mini" style="margin-bottom:10px;">A localização só é usada nos <b>10 minutos antes</b> do horário da aula, com o aplicativo aberto e a permissão liberada no celular. Você pode desligar quando quiser.</p>' +
+      '<div class="flex-btn">' +
+      (aceito
+        ? '<button class="btn btn-secondary btn-mini" type="button" onclick="ucSalvarConsentimentoLocal(false)"><i class="fas fa-toggle-off"></i> Desativar check-in automático</button>'
+        : '<button class="btn btn-gold btn-mini" type="button" onclick="ucSalvarConsentimentoLocal(true)"><i class="fas fa-toggle-on"></i> Aceitar e ativar</button>') +
+      '</div>' +
+      '<p class="mini" style="margin-top:8px;">Situação: <b>' + (aceito ? 'ativado' : 'desativado') + '</b></p>';
+  }
+  window.ucRenderCartaoConsentimento = renderCartaoConsentimento;
+  setInterval(function () { try { renderCartaoConsentimento(false); } catch (e) {} }, 3000);
+})();
+</script>
+
 </body>
 </html>
