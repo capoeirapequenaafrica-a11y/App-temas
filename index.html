@@ -1137,6 +1137,7 @@ button.uc-btn-invalido{opacity:.55;pointer-events:none;filter:grayscale(.2);}
       </select>
       <label class="campo-label">Contato (WhatsApp)</label>
       <input id="autoCadContato" placeholder="(21) 90000-0000" inputmode="tel">
+      <label class="campo-label">Há quanto tempo treina? (opcional)</label><input id="autoCadTempo" placeholder="Ex.: 2 anos e 6 meses">
       <label class="campo-label">Como você treina na academia?</label>
       <select id="autoCadTipoAluno">
         <option value="normal">Aluno normal (matrícula direta)</option>
@@ -2794,6 +2795,7 @@ function cadastrarAlunoNuvem(btn) {
   var apelido = ($('autoCadApelido').value || '').trim();
   var graduacao = $('autoCadGraduacaoSelect').value;
   var contato = ($('autoCadContato').value || '').trim();
+  var tempoTreino = (($('autoCadTempo') || {}).value || '').trim();
   var s1 = $('autoCadSenha').value || '';
   var s2 = $('autoCadSenha2').value || '';
 
@@ -2830,11 +2832,12 @@ function cadastrarAlunoNuvem(btn) {
     ativo: true
   };
 
+  if (tempoTreino) novo.tempoTreino = tempoTreino;
   DB.salvar('alunos', novo).then(function (novoId) {
     if (btn) { btn.classList.remove('carregando'); btn.innerHTML = '<i class="fas fa-check"></i> Concluir Cadastro'; }
     sessaoAlunoId = novoId;
     if (typeof window.ucAposCadastroAluno === 'function') { try { window.ucAposCadastroAluno(novoId); } catch (e) {} }
-    ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadSenha', 'autoCadSenha2'].forEach(function (id) { if ($(id)) $(id).value = ''; });
+    ['autoCadNome', 'autoCadApelido', 'autoCadContato', 'autoCadTempo', 'autoCadSenha', 'autoCadSenha2'].forEach(function (id) { if ($(id)) $(id).value = ''; });
     registroLog('cadastro', 'Novo aluno cadastrado: ' + nome);
     toggleAutoCadastroAluno(false);
     boasVindasNovoAluno = true;
@@ -9079,6 +9082,7 @@ function renderAbaProfessor() {
     '<label class="campo-label">Apelido na capoeira</label><input id="profCadApelido" placeholder="Opcional">' +
     '<label class="campo-label">Graduação</label><select id="profCadGraduacaoSelect"></select>' +
     '<label class="campo-label">Contato (WhatsApp, opcional)</label><input id="profCadContato" placeholder="(21) 90000-0000">' +
+    '<label class="campo-label">Há quanto tempo treina? (opcional)</label><input id="profCadTempo" placeholder="Ex.: 2 anos e 6 meses">' +
     '<label class="campo-label">Como treina?</label><select id="profCadTipoAluno"><option value="normal">Aluno normal (matrícula direta)</option><option value="gympass">Aluno Gympass / Wellhub</option></select>' +
     '<button class="btn" onclick="cadastrarAlunoPeloProfessor(this)"><i class="fas fa-user-plus"></i> Cadastrar Aluno</button>' +
     '<p class="mini" style="margin-top:6px;">Uma senha provisória é gerada automaticamente — o aluno pode trocar depois em "Esqueci minha senha".</p></div>' +
@@ -9603,6 +9607,7 @@ function cadastrarAlunoPeloProfessor(btn) {
   var apelido = ($('profCadApelido').value || '').trim();
   var graduacao = $('profCadGraduacaoSelect').value;
   var contato = ($('profCadContato').value || '').trim();
+  var tempoTreino = (($('profCadTempo') || {}).value || '').trim();
   var tipoAluno = (($('profCadTipoAluno') || {}).value || 'normal');
   if (tipoAluno !== 'gympass') tipoAluno = 'normal';
 
@@ -9621,6 +9626,7 @@ function cadastrarAlunoPeloProfessor(btn) {
     apelido: apelido || nome.split(' ')[0],
     graduacao: graduacao,
     contato: contato,
+    tempoTreino: tempoTreino,
     tipoAluno: tipoAluno,
     senhaHash: hashSenha(senhaProvisoria),
     criadoEm: agoraISO(),
@@ -11980,7 +11986,7 @@ function contarNaoLidosAluno(aluno) {
   if (!aluno) return 0;
   var n = 0;
   DB.listar('mensagensPrivadas').forEach(function (m) {
-    if (m.alunoId === aluno.id && m.de === 'professor' && !m.lidaPeloAluno) n++;
+    if (m.alunoId === aluno.id && m.de === 'professor' && !m.lidaPeloAluno && m.tipo !== 'lembrete_cadastro') n++;
   });
   DB.listar('solicitacoes').forEach(function (s) {
     if ((s.alunoId === aluno.id || normalizar(s.alunoNome) === normalizar(aluno.nome)) && s.respostaProfessor && !s.respostaVistaAluno) n++;
@@ -12032,7 +12038,7 @@ function atualizarBadgesInteracao() {
 
 /* ---------- 1. Mensagens privadas ---------- */
 function mensagensDoAluno(alunoId) {
-  return DB.listar('mensagensPrivadas').filter(function (m) { return m.alunoId === alunoId; })
+  return DB.listar('mensagensPrivadas').filter(function (m) { return m.alunoId === alunoId && m.tipo !== 'lembrete_cadastro'; })
     .sort(function (a, b) { return String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); });
 }
 
@@ -12937,7 +12943,9 @@ function trCalRender(containerId) {
         '<button class="btn btn-secondary" onclick="trCalLote(\'' + containerId + '\',\'naotreinou\')"><i class="fas fa-eraser"></i> Tirar treino</button>' +
         '</div>';
     } else if (nSel && st.modo !== 'equipe') {
-      h += '<p class="mini">Aluno: use a seleção para pedir ajuste de vários dias ao professor (toque em um dia com a seleção desligada para detalhar).</p>';
+      h += '<label class="campo-label">Motivo do ajuste (para os ' + nSel + ' dia(s))</label>' +
+        '<textarea id="trCalMotivoLote" rows="2" placeholder="Ex.: treinei esses dias e esqueci o check-in"></textarea>' +
+        '<button class="btn" onclick="trCalPedirAjusteLote(\'' + containerId + '\')"><i class="fas fa-paper-plane"></i> Pedir ajuste de ' + nSel + ' dia(s)</button>';
     }
   } else {
     h += '<p class="mini">Toque em um dia para ver detalhes' + (st.modo === 'equipe' ? ' e ajustar.' : ' ou pedir ajuste ao professor.') + ' Use <b>Selecionar vários dias</b> para marcar em lote.</p>';
@@ -16368,6 +16376,102 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     { id: 'grp', nome: 'Assuntos do grupo (reuniões e ações)' }
   ];
 
+  /* ===== LISTA EDITÁVEL DE ITENS (professor edita; salva em config/itensAvaliacaoSemestral) ===== */
+  var ITENS_CATS = [
+    { k: 'chutes', t: 'Chutes', arr: CHUTES, obj: true },
+    { k: 'esquivas', t: 'Esquivas', arr: ESQUIVAS, obj: true },
+    { k: 'decidas', t: 'Decidas', arr: DECIDAS, obj: true },
+    { k: 'sequencias', t: 'Sequências', arr: SEQUENCIAS, obj: true },
+    { k: 'toques', t: 'Toques de berimbau', arr: TOQUES, obj: false },
+    { k: 'jogos', t: 'Jogos', arr: JOGOS, obj: false },
+    { k: 'instrumentos', t: 'Instrumentos', arr: INSTRUMENTOS, obj: true }
+  ];
+  var ITENS_PADRAO = {};
+  ITENS_CATS.forEach(function (c) { ITENS_PADRAO[c.k] = JSON.parse(JSON.stringify(c.arr)); });
+  var itensEdit = null;
+
+  function limparNomeItem(v) { return String(v || '').replace(/[\"'<>&]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60); }
+  function aplicarItensConfig() {
+    var cfg = null;
+    try { cfg = DB.listar('config').filter(function (x) { return x.id === 'itensAvaliacaoSemestral'; })[0]; } catch (e) {}
+    ITENS_CATS.forEach(function (c) {
+      var fonte = cfg && Array.isArray(cfg[c.k]) && cfg[c.k].length ? cfg[c.k] : ITENS_PADRAO[c.k];
+      c.arr.length = 0;
+      fonte.forEach(function (it) { c.arr.push(typeof it === 'string' ? it : { id: it.id, nome: it.nome }); });
+    });
+  }
+  function htmlEditorItens() {
+    return ITENS_CATS.map(function (c) {
+      var linhas = itensEdit[c.k].map(function (it, i) {
+        var nome = c.obj ? it.nome : it;
+        return '<div style="display:flex;gap:6px;margin:4px 0">' +
+          '<input type="text" value="' + esc(nome) + '" oninput="ucItemRen(\'' + c.k + '\',' + i + ',this.value)" style="flex:1">' +
+          '<button type="button" class="btn btn-secondary btn-mini" onclick="ucItemDel(\'' + c.k + '\',' + i + ')" title="Remover"><i class="fas fa-trash"></i></button></div>';
+      }).join('');
+      return '<details class="uc-acc"><summary>' + esc(c.t) + ' (' + itensEdit[c.k].length + ')</summary><div class="uc-acc-corpo">' + linhas +
+        '<div style="display:flex;gap:6px;margin-top:6px"><input type="text" id="ucItemNovo_' + c.k + '" placeholder="Novo item..." style="flex:1">' +
+        '<button type="button" class="btn btn-mini" onclick="ucItemAdd(\'' + c.k + '\')"><i class="fas fa-plus"></i> Adicionar</button></div></div></details>';
+    }).join('');
+  }
+  function redesenharEditorItens() {
+    var abertas = [];
+    document.querySelectorAll('#ucItensBox details').forEach(function (d, i) { if (d.open) abertas.push(i); });
+    var b = el('ucItensBox'); if (!b) return;
+    b.innerHTML = htmlEditorItens();
+    document.querySelectorAll('#ucItensBox details').forEach(function (d, i) { if (abertas.indexOf(i) >= 0) d.open = true; });
+  }
+  window.ucAbrirEditorItens = function () {
+    itensEdit = {};
+    ITENS_CATS.forEach(function (c) { itensEdit[c.k] = JSON.parse(JSON.stringify(c.arr)); });
+    abrirModal('Editar itens da avaliação',
+      '<p class="mini">Renomeie, remova ou adicione itens. Itens de Chutes, Esquivas, Decidas e Sequências são avaliados nos lados E e D.</p><div id="ucItensBox">' + htmlEditorItens() + '</div>',
+      '<button class="btn" type="button" onclick="ucItemSalvar()"><i class="fas fa-save"></i> Salvar lista</button>' +
+      '<button class="btn btn-secondary" type="button" onclick="ucItemRestaurar()">Restaurar padrão</button>');
+  };
+  window.ucItemRen = function (k, i, v) {
+    var c = ITENS_CATS.filter(function (x) { return x.k === k; })[0];
+    if (c.obj) itensEdit[k][i].nome = v; else itensEdit[k][i] = v;
+  };
+  window.ucItemDel = function (k, i) {
+    var it = itensEdit[k][i];
+    if (k === 'instrumentos' && it && it.id === 'Berimbau') { toast('O Berimbau é obrigatório e não pode ser removido.', 'erro'); return; }
+    itensEdit[k].splice(i, 1);
+    redesenharEditorItens();
+  };
+  window.ucItemAdd = function (k) {
+    var inp = el('ucItemNovo_' + k);
+    var nome = limparNomeItem(inp && inp.value);
+    if (!nome) { toast('Digite o nome do item.', 'erro'); return; }
+    var c = ITENS_CATS.filter(function (x) { return x.k === k; })[0];
+    if (c.obj) itensEdit[k].push({ id: 'n' + Date.now().toString(36) + Math.floor(Math.random() * 99), nome: nome });
+    else itensEdit[k].push(nome);
+    redesenharEditorItens();
+  };
+  window.ucItemSalvar = function () {
+    var dados = {};
+    var ok = true;
+    ITENS_CATS.forEach(function (c) {
+      dados[c.k] = itensEdit[c.k].map(function (it) {
+        return c.obj ? { id: it.id, nome: limparNomeItem(it.nome) } : limparNomeItem(it);
+      }).filter(function (it) { return c.obj ? it.nome : it; });
+      if (!dados[c.k].length) ok = false;
+    });
+    if (!ok) { toast('Cada lista precisa ter ao menos um item.', 'erro'); return; }
+    Promise.resolve(DB.salvar('config', dados, 'itensAvaliacaoSemestral')).then(function () {
+      ITENS_CATS.forEach(function (c) { c.arr.length = 0; dados[c.k].forEach(function (it) { c.arr.push(it); }); });
+      fecharModal();
+      toast('Lista de itens salva.');
+      if (el('ucCardAvaliacao')) abrirAvaliacao();
+    }).catch(function () { toast('Não foi possível salvar a lista.', 'erro'); });
+  };
+  window.ucItemRestaurar = function () {
+    itensEdit = JSON.parse(JSON.stringify(ITENS_PADRAO));
+    redesenharEditorItens();
+    toast('Padrão carregado. Toque em "Salvar lista" para confirmar.');
+  };
+  try { aplicarItensConfig(); } catch (e) {}
+  try { DB.escutar('config', function () { aplicarItensConfig(); }); } catch (e) {}
+
   /* ===== UTILITÁRIOS ===== */
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -16500,6 +16604,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     return '' +
     '<div class="card" id="ucCardAvaliacao">' +
       '<h3><i class="fas fa-clipboard-check"></i> Avaliação Semestral</h3>' +
+      '<button class="btn btn-secondary" type="button" onclick="ucAbrirEditorItens()" style="margin-bottom:8px"><i class="fas fa-list-check"></i> Editar lista de itens</button>' +
       '<label class="campo-label">Aluno</label><select id="ucAlunoSel"><option value="">-- Selecione --</option></select>' +
       '<div class="uc-linha">' +
         '<div><label class="campo-label">Período</label><input type="text" id="ucPeriodo" value="' + periodoAtual() + '"></div>' +
@@ -17492,10 +17597,19 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       return d.alunoId === logado.id && d.status === 'finalizada';
     }).sort(function (a, b) { return String(b.periodo).localeCompare(String(a.periodo)); });
 
-    var sig = JSON.stringify(docs.map(function (d) { return [d.id, d.salvoPeloAluno, d.revelado, d.atualizadoEm, resultadosLiberados(d.periodo)]; })) + logado.graduacaoLiberada;
+    var docsLib = docs.filter(function (d) { return resultadosLiberados(d.periodo); });
+    var diaPub = dataPrazo();
+    var txtPub = ('0' + diaPub.getDate()).slice(-2) + '/' + ('0' + (diaPub.getMonth() + 1)).slice(-2);
+    var sig = JSON.stringify(docsLib.map(function (d) { return [d.id, d.salvoPeloAluno, d.revelado, d.atualizadoEm]; })) + logado.graduacaoLiberada + '|' + docsLib.length + '|' + txtPub;
     if (card.getAttribute('data-sig') === sig && card.style.display !== 'none') return;
     card.setAttribute('data-sig', sig);
     card.style.display = 'block';
+    if (!docsLib.length) {
+      card.innerHTML = '<h3><i class="fas fa-file-alt"></i> Avaliação Semestral</h3>' +
+        '<p class="uc-mini" style="font-size:.9rem">📅 O resultado da Avaliação Semestral será publicado no dia <b>' + txtPub + '</b>.</p>';
+      return;
+    }
+    docs = docsLib;
 
     var html = '<h3><i class="fas fa-file-alt"></i> Minhas Avaliações Semestrais</h3>' +
       '<p class="uc-mini">Sua graduação e o resultado final são revelados no dia do Batizado. Aqui você pode escolher salvar ou não o boletim no seu painel.</p>';
@@ -18235,24 +18349,17 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
   /* Uma vez por mês, o aluno recebe o lembrete para conferir o cadastro (ao abrir o app no mês) */
   window.ucVerificarLembreteCadastro = function (aluno) {
+    /* Só um aviso leve, uma vez por mês neste aparelho, e só se faltar apelido ou contato.
+       Não grava mensagem nem notificação na nuvem (isso se repetia a cada aparelho/abertura). */
     if (!aluno || aluno.ativo === false) return;
+    if (aluno.apelido && aluno.contato) return;
     var mes = mesAtualCadastro();
-    if (aluno.ultimoLembreteCadastro === mes || window.__lembreteCadastroMes === mes + ':' + aluno.id) return;
-    window.__lembreteCadastroMes = mes + ':' + aluno.id;
-    DB.salvar('mensagensPrivadas', {
-      alunoId: aluno.id,
-      alunoNome: aluno.nome,
-      alunoApelido: aluno.apelido || '',
-      texto: 'Olá, ' + (aluno.apelido || aluno.nome) + '! Este é o lembrete mensal para conferir seu cadastro (nome, apelido e contato). Toque em "Atualizar meu cadastro" no seu painel.',
-      tipo: 'lembrete_cadastro',
-      de: 'professor',
-      professorNome: 'Gestão de Alunos (aviso automático)',
-      lidaPeloAluno: false,
-      lidaPeloProfessor: true,
-      criadoEm: agoraISO()
-    }).catch(function () {});
-    DB.salvar('alunos', { ultimoLembreteCadastro: mes }, aluno.id).catch(function () {});
-    if (typeof notificar === 'function') notificar('Atualize seu cadastro', 'Confira seu nome, apelido e contato.');
+    var chaveLs = 'ucLembreteCadastro_' + aluno.id;
+    try {
+      if (localStorage.getItem(chaveLs) === mes) return;
+      localStorage.setItem(chaveLs, mes);
+    } catch (e) { if (window.__lembreteCadastroMes === mes + ':' + aluno.id) return; window.__lembreteCadastroMes = mes + ':' + aluno.id; }
+    toast('Complete seu apelido e contato em "Atualizar meu cadastro".');
   };
 
   window.ucAbrirAtualizarCadastro = function () {
@@ -26281,6 +26388,79 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   }
   DB.escutar('agendamentos', function () { checarEquipe(); checarAluno(); atualizarPainelAluno(); });
   DB.escutar('avisos', function () { checarAluno(); });
+})();
+</script>
+
+<script id="ucPendenciasV1">
+(function () {
+  function lst(c) { try { var l = DB.listar(c); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function h(x) { return esc(x == null ? '' : String(x)); }
+  function agoraIso() { return new Date().toISOString(); }
+  function ordenarNome(arr) { return arr.slice().sort(function (a, b) { return normalizar(a.nome).localeCompare(normalizar(b.nome)); }); }
+
+  /* ===== SELEÇÃO DE VÁRIOS DIAS: pedido de ajuste em lote (aluno) ===== */
+  window.trCalPedirAjusteLote = function (containerId) {
+    var st = TR_CALS[containerId]; if (!st) return;
+    var a = DB.buscar('alunos', st.alunoId); if (!a) return;
+    var motivo = (((document.getElementById('trCalMotivoLote') || {}).value) || '').trim();
+    if (motivo.length < 5) return mostrarToast('Explique o motivo em poucas palavras.', 'erro');
+    var sel = trCalSelSet(containerId);
+    var dias = Object.keys(sel).filter(function (k) { return sel[k]; }).sort();
+    if (!dias.length) return mostrarToast('Selecione os dias primeiro.', 'erro');
+    Promise.all(dias.map(function (iso) {
+      return DB.salvar('solicitacoes', {
+        alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', graduacao: a.graduacao || '',
+        tipo: 'Ajuste de calendário', ajusteCalendario: true, dataPreferida: iso,
+        observacao: '[Pedido em lote] ' + motivo, categorias: [],
+        status: 'pendente', respostaProfessor: '', criadoEm: agoraIso()
+      });
+    })).then(function () {
+      TR_CAL_SEL[containerId] = {}; st.multi = false;
+      mostrarToast('Pedido enviado para ' + dias.length + ' dia(s)!');
+      trCalRender(containerId);
+      if (typeof renderAluno === 'function') renderAluno();
+    }).catch(function () { mostrarToast('Não foi possível enviar os pedidos.', 'erro'); });
+  };
+
+  /* ===== DUPLICADOS: o professor decide; nada é apagado ===== */
+  function htmlDuplicadosProf() {
+    var ativos = ordenarNome(lst('alunos').filter(function (a) { return a.ativo !== false; }));
+    var marcados = lst('alunos').filter(function (a) { return a.ativo === false && a.duplicadoDe; });
+    var opts = ativos.map(function (a) { return '<option value="' + h(a.id) + '">' + h(a.nome) + '</option>'; }).join('');
+    var html = '<div class="card" style="border:1px solid var(--danger);"><h3><i class="fas fa-clone"></i> Alunos duplicados</h3>' +
+      '<p class="mini">Você decide quais cadastros são a mesma pessoa. O duplicado sai das listas e não consegue entrar, mas o histórico fica guardado e pode ser restaurado.</p>' +
+      '<label class="campo-label">Este cadastro é duplicado</label><select id="dupSel"><option value="">Selecione...</option>' + opts + '</select>' +
+      '<label class="campo-label">Manter este cadastro</label><select id="dupKeep"><option value="">Selecione...</option>' + opts + '</select>' +
+      '<button class="btn btn-danger" onclick="ucDuplicadoMarcar()"><i class="fas fa-link"></i> Marcar como duplicado</button>';
+    if (marcados.length) {
+      html += '<h4 style="margin-top:10px;">Duplicados marcados</h4>' + marcados.map(function (a) {
+        var keep = lst('alunos').filter(function (x) { return x.id === a.duplicadoDe; })[0];
+        return '<div style="border-bottom:1px solid var(--card-border);padding:4px 0;"><b>' + h(a.nome) + '</b> <span class="mini">→ mantido: ' + h(keep ? keep.nome : '—') + '</span> ' +
+          '<button class="btn btn-secondary btn-mini" onclick="ucDuplicadoRestaurar(\'' + a.id + '\')"><i class="fas fa-undo"></i> Restaurar</button></div>';
+      }).join('');
+    }
+    return html + '</div>';
+  }
+  window.ucDuplicadoMarcar = function () {
+    var dup = (document.getElementById('dupSel') || {}).value, keep = (document.getElementById('dupKeep') || {}).value;
+    if (!dup || !keep) return mostrarToast('Escolha os dois cadastros.', 'erro');
+    if (dup === keep) return mostrarToast('Escolha cadastros diferentes.', 'erro');
+    var a = DB.buscar('alunos', dup), k = DB.buscar('alunos', keep);
+    if (!a || !k) return mostrarToast('Cadastro não encontrado.', 'erro');
+    if (!confirm('Marcar "' + a.nome + '" como duplicado de "' + k.nome + '"?\n\nEle sai das listas e não consegue entrar. Você pode restaurar depois.')) return;
+    Promise.resolve(DB.salvar('alunos', { ativo: false, duplicadoDe: k.id, duplicadoEm: agoraIso() }, a.id))
+      .then(function () { mostrarToast('Cadastro marcado como duplicado.'); })
+      .catch(function () { mostrarToast('Não foi possível atualizar.', 'erro'); });
+  };
+  window.ucDuplicadoRestaurar = function (id) {
+    Promise.resolve(DB.salvar('alunos', { ativo: true, duplicadoDe: '', duplicadoEm: '' }, id))
+      .then(function () { mostrarToast('Cadastro restaurado.'); })
+      .catch(function () { mostrarToast('Não foi possível restaurar.', 'erro'); });
+  };
+  var _antesProf = window.htmlPainelInteracaoProfessor;
+  window.htmlPainelInteracaoProfessor = function () {
+    return htmlDuplicadosProf() + (_antesProf ? _antesProf() : '');
+  };
 })();
 </script>
 </body>
