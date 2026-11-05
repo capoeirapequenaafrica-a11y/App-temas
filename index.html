@@ -780,21 +780,38 @@ window.ucFreqMesHtml = function () { return ''; };
 #tabJogos { touch-action: pan-x pan-y; }
 </style>
 <style>
-/* Dandara: personagem 3D sem fundo, só ela na tela */
-#assistenteFab { background: transparent !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; outline: none !important; padding: 0 !important; width: 80px !important; height: 96px !important; overflow: visible; -webkit-tap-highlight-color: transparent; }
-#assistenteFab canvas#jarvisCanvas { width: 80px; height: 96px; display: block; background: transparent; }
-#assistentePainel { bottom: calc(192px + env(safe-area-inset-bottom)) !important; }
-</style>
-<style>
-
-/* Dandara / Assistente removidos */
-#assistenteFab, #assistentePainel, .dica-assistente-bolha, #dicaAssistentePrimeiroAcesso, #jarvisCanvas {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  opacity: 0 !important;
+/* Assistente restaurado (sem GLB / sem personagem 3D) — botão clássico */
+#assistenteFab {
+  background: linear-gradient(135deg, var(--primary-green-dark), #00a844) !important;
+  box-shadow: 0 4px 18px rgba(0, 200, 83, 0.45) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 54px !important;
+  height: 54px !important;
+  color: #fff !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+#assistenteFab canvas#jarvisCanvas { display: none !important; }
+#assistentePainel {
+  display: none;
+  bottom: calc(148px + env(safe-area-inset-bottom)) !important;
+}
+#assistentePainel.aberto { display: flex !important; }
+.dica-assistente-bolha, #dicaAssistentePrimeiroAcesso {
+  display: none; /* controlado por JS */
+  visibility: visible !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 /* Arcade: fundo no tema da capoeira (verde escuro com dourado) */
@@ -1214,7 +1231,7 @@ button.uc-btn-invalido{opacity:.55;pointer-events:none;filter:grayscale(.2);}
 
   <!-- ================= ABA 4 - PROFESSOR ================= -->
   <div id="tab4" class="tab-content">
-    <div class="card" id="janelaFormacaoProfessor" style="border:2px solid var(--gold);margin:0 0 12px 0;">
+    <div class="card" id="janelaFormacaoProfessor" style="border:2px solid var(--gold);margin:0 0 12px 0;display:none;">
       <h3 style="color:var(--gold);"><i class="fas fa-user-graduate"></i> Formação de Professor</h3>
       <div id="boxFormacaoProfessorGestao"></div>
       <h3 style="color:var(--gold);margin-top:14px;"><i class="fas fa-award"></i> Certificados dos alunos</h3>
@@ -2921,16 +2938,83 @@ function autenticarEquipe(papelRequerido) {
 }
 
 function sairEquipe() {
+  try { if (typeof ucPortaoEquipe === 'function') ucPortaoEquipe(false); } catch (ePort) {}
   sessaoEquipe = null;
   renderizarAba(abaAtual);
   mostrarToast('Sessão de equipe encerrada.');
 }
 
 function exigirEquipe(papeis, container, rotuloPapel) {
-  if (sessaoEquipe && papeis.indexOf(sessaoEquipe.papel) >= 0) return true;
+  if (sessaoEquipe && papeis.indexOf(sessaoEquipe.papel) >= 0) {
+    try { if (typeof ucPortaoEquipe === 'function') ucPortaoEquipe(true); } catch (e) {}
+    return true;
+  }
   montarLoginEquipe(container, rotuloPapel || papeis[papeis.length - 1]);
+  try { if (typeof ucPortaoEquipe === 'function') ucPortaoEquipe(false); } catch (e2) {}
   return false;
 }
+
+/* Portão: aba Professor/ADM/Dev — sem login só o formulário de entrada; funções só depois */
+function ucEquipeLogadaOk() {
+  return !!(typeof sessaoEquipe !== 'undefined' && sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0);
+}
+function ucPortaoEquipe(liberado) {
+  liberado = liberado === true || (liberado == null && ucEquipeLogadaOk());
+  var idsOcultarSemLogin = [
+    'janelaFormacaoProfessor',
+    'ucCardAvaliacao',
+    'ucBtnAvalSemestral',
+    'ucGestaoAlunos',
+    'ucFormacaoProf',
+    'ucListaPeriodo',
+    'ucEvolucaoAluno',
+    'ucAdmBatizado',
+    'ucAdmPrazo'
+  ];
+  idsOcultarSemLogin.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (liberado) {
+      if (id === 'ucBtnAvalSemestral') {
+        /* display controlado pelo ciclo de avaliação */
+      } else {
+        el.style.display = '';
+      }
+    } else {
+      if (id === 'ucBtnAvalSemestral' || id === 'ucCardAvaliacao' || id === 'ucGestaoAlunos') {
+        try { el.remove(); } catch (e) { el.style.display = 'none'; }
+      } else {
+        el.style.display = 'none';
+      }
+    }
+  });
+  /* esconde cards injetados no conteudoProfessor que não sejam o login */
+  var box = document.getElementById('conteudoProfessor');
+  if (box && !liberado) {
+    Array.prototype.slice.call(box.children).forEach(function (ch) {
+      if (ch.classList && ch.classList.contains('lock-card')) {
+        ch.style.display = '';
+        return;
+      }
+      /* mantém só o card de login */
+      if (ch.querySelector && ch.querySelector('[id^="equipeLoginNome"]')) {
+        ch.style.display = '';
+        return;
+      }
+      ch.style.display = 'none';
+    });
+  }
+  var boxAdm = document.getElementById('conteudoAdm');
+  if (boxAdm && !liberado && !(sessaoEquipe && ['adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0)) {
+    Array.prototype.slice.call(boxAdm.children).forEach(function (ch) {
+      if (ch.querySelector && ch.querySelector('[id^="equipeLoginNome"]')) { ch.style.display = ''; return; }
+      if (ch.classList && ch.classList.contains('lock-card')) { ch.style.display = ''; return; }
+      ch.style.display = 'none';
+    });
+  }
+}
+window.ucPortaoEquipe = ucPortaoEquipe;
+window.ucEquipeLogadaOk = ucEquipeLogadaOk;
 
 /* ---------------------------------------------------------------
    8. NOTIFICAÇÕES
@@ -7610,8 +7694,13 @@ function enviarAdvertenciaAluno(alunoId) {
   });
 }
 
+var __ucAnaliseCache = {};
 function analisarDesempenhoAtletico(aluno) {
   if (!aluno) return null;
+  /* cache 20s — evita recalcular a cada re-render da aba Aluno */
+  var ck = String(aluno.id || aluno.nome || '') + '|' + (aluno.atualizadoEm || '');
+  var hit = __ucAnaliseCache[ck];
+  if (hit && (Date.now() - hit.t) < 20000) return hit.v;
   var campos = ['tecnica', 'disciplina', 'ritmo', 'musicalidade', 'compromisso'];
   var labels = {
     tecnica: 'Técnica',
@@ -7709,7 +7798,7 @@ function analisarDesempenhoAtletico(aluno) {
   if (!avals.length) recomendacoes.push('Aguarde a primeira avaliação do professor para um diagnóstico mais preciso.');
   if (!recomendacoes.length) recomendacoes.push('Mantenha a constância nos treinos e peça feedback ao professor após as rodas.');
 
-  return {
+  var resultado = {
     score: score,
     nivel: nivel,
     aprovadas: aprovadas.length,
@@ -7726,6 +7815,8 @@ function analisarDesempenhoAtletico(aluno) {
     totalAvals: avals.length,
     recomendacoes: recomendacoes
   };
+  try { __ucAnaliseCache[ck] = { t: Date.now(), v: resultado }; } catch (e) {}
+  return resultado;
 }
 
 function htmlBarraHabilidade(nome, media) {
@@ -7739,8 +7830,19 @@ function htmlBarraHabilidade(nome, media) {
 }
 
 function htmlAnaliseDesempenho(aluno) {
+  /* Versão leve: não calcula análise ao abrir a aba — só sob demanda */
+  if (!aluno) return '';
+  return '<div class="card" id="ucCardAnaliseLeve" style="margin-top:12px; border:1px solid var(--accent-blue);">' +
+    '<h3 style="color:var(--accent-blue);"><i class="fas fa-chart-line"></i> Análise de Desempenho</h3>' +
+    '<p class="mini">Toque para calcular (evita travar a aba no celular).</p>' +
+    '<button type="button" class="btn btn-secondary" onclick="ucCarregarAnaliseDesempenho()"><i class="fas fa-play"></i> Ver minha análise</button>' +
+    '<div id="ucAnaliseDesempenhoBody" style="display:none;margin-top:8px"></div>' +
+  '</div>';
+}
+
+function htmlAnaliseDesempenhoCompleta(aluno) {
   var a = analisarDesempenhoAtletico(aluno);
-  if (!a) return '';
+  if (!a) return '<p class="sem-dados">Sem dados suficientes.</p>';
   var corScore = a.score >= 70 ? 'var(--primary-green)' : (a.score >= 50 ? 'var(--gold)' : 'var(--danger)');
   var tendenciaTxt = {
     evoluindo: '📈 Em evolução',
@@ -7748,8 +7850,7 @@ function htmlAnaliseDesempenho(aluno) {
     estavel: '➡️ Estável',
     primeira_avaliacao: '🆕 Primeira avaliação'
   };
-  var html = '<div class="card" style="margin-top:12px; border:1px solid var(--accent-blue);">' +
-    '<h3 style="color:var(--accent-blue);"><i class="fas fa-chart-line"></i> Análise de Desempenho Atlético</h3>' +
+  var html = '' +
     '<div style="text-align:center; margin:8px 0 10px;">' +
       '<div style="font-size:2rem; font-weight:800; color:' + corScore + ';">' + a.score + '</div>' +
       '<div class="mini">Índice geral (0–100)</div>' +
@@ -7761,12 +7862,9 @@ function htmlAnaliseDesempenho(aluno) {
       '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + a.aprovadas30 + '</div><div class="mini">últimos 30d</div></div>' +
       '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + (a.mediaGeral !== null ? a.mediaGeral.toFixed(1) : '-') + '</div><div class="mini">média notas</div></div>' +
     '</div>';
-
   if (a.totalAvals) {
     html += '<h3 style="margin-top:10px; font-size:0.82rem;"><i class="fas fa-dumbbell"></i> Habilidades</h3>';
-    a.habilidades.forEach(function (h) {
-      html += htmlBarraHabilidade(h.nome, h.media);
-    });
+    a.habilidades.forEach(function (h) { html += htmlBarraHabilidade(h.nome, h.media); });
     if (a.pontoForte && a.pontoForte.media !== null) {
       html += '<p class="mini" style="margin-top:8px; color:var(--primary-green);"><i class="fas fa-star"></i> Ponto forte: <b>' + esc(a.pontoForte.nome) + '</b> (' + a.pontoForte.media.toFixed(1) + ')</p>';
     }
@@ -7776,19 +7874,31 @@ function htmlAnaliseDesempenho(aluno) {
   } else {
     html += '<p class="sem-dados" style="margin-top:8px;">Ainda sem avaliações — o índice usa principalmente frequência e pontualidade.</p>';
   }
-
   html += '<div class="grade-2" style="margin-top:8px;">' +
     '<div class="lista-item"><span class="mini">Atrasos em aulas aprovadas</span><br><b>' + a.comAtraso + '</b>' +
     (a.atrasoMedio ? ' <span class="mini">(média ' + a.atrasoMedio + ' min)</span>' : '') + '</div>' +
     '<div class="lista-item"><span class="mini">Check-ins rejeitados</span><br><b>' + a.rejeitadas + '</b></div>' +
   '</div>';
-
   html += '<h3 style="margin-top:10px; font-size:0.82rem;"><i class="fas fa-lightbulb"></i> Recomendações</h3>';
   a.recomendacoes.forEach(function (r) {
     html += '<div class="aviso-info" style="margin:4px 0;">' + esc(r) + '</div>';
   });
-  html += '</div>';
   return html;
+}
+
+window.ucCarregarAnaliseDesempenho = function () {
+  var body = document.getElementById('ucAnaliseDesempenhoBody');
+  if (!body) return;
+  body.style.display = 'block';
+  body.innerHTML = '<p class="mini">Calculando…</p>';
+  setTimeout(function () {
+    try {
+      var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
+      body.innerHTML = htmlAnaliseDesempenhoCompleta(logado);
+    } catch (e) {
+      body.innerHTML = '<p class="sem-dados">Não foi possível calcular agora.</p>';
+    }
+  }, 30);
 }
 
 function renderRankingCompleto() {
@@ -8614,7 +8724,13 @@ function htmlCardGympassAluno(logado) {
 /* ---------------------------------------------------------------
    11. MÓDULO ALUNO (painel)
    --------------------------------------------------------------- */
+var __ucRenderAlunoTimer = null;
 function renderAluno() {
+  /* debounce 80ms — evita re-render em cascata na aba Aluno */
+  if (__ucRenderAlunoTimer) clearTimeout(__ucRenderAlunoTimer);
+  __ucRenderAlunoTimer = setTimeout(renderAlunoAgora, 80);
+}
+function renderAlunoAgora() {
   try {
     if (sessaoAlunoId) localStorage.setItem('uc_sessao_aluno_v87', sessaoAlunoId);
     else localStorage.removeItem('uc_sessao_aluno_v87');
@@ -8637,14 +8753,21 @@ function renderAluno() {
     return p.alunoId === logado.id || normalizar(p.alunoNome) === normalizar(logado.nome);
   }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
 
-  var aprovadas = presencas.filter(function (p) { return p.status === 'aprovado'; }).length;
+  var aprovadas = 0, pendentes = 0, falhasTmp = 0;
+  for (var pi = 0; pi < presencas.length; pi++) {
+    var st = presencas[pi].status;
+    if (st === 'aprovado') aprovadas++;
+    else if (st === 'pendente') pendentes++;
+    else if (st === 'rejeitado') falhasTmp++;
+  }
+  var presencasUI = presencas.slice(0, 15); /* lista na tela: só as 15 mais recentes */
   var cargaAluno = calcularCargaHorariaAluno(logado);
-  var pendentes = presencas.filter(function (p) { return p.status === 'pendente'; }).length;
   var avals = DB.listar('avaliacoes').filter(function (a) {
     return a.alunoId === logado.id || normalizar(a.alunoNome) === normalizar(logado.nome);
   }).sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+  var avalsUI = avals.slice(0, 10);
   var certs = certificadosDoAluno(logado);
-  var falhas = presencas.filter(function (p) { return p.status === 'rejeitado'; }).length;
+  var falhas = typeof falhasTmp === "number" ? falhasTmp : presencas.filter(function (p) { return p.status === 'rejeitado'; }).length;
   var solicitacoes = DB.listar('solicitacoes').filter(function (s) {
     return s.alunoId === logado.id || normalizar(s.alunoNome) === normalizar(logado.nome);
   }).sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); });
@@ -8766,7 +8889,7 @@ function renderAluno() {
 
     /* ===== AVALIAÇÕES ===== */
     '<h3 style="margin-top:14px;"><i class="fas fa-star-half-alt"></i> Minhas Avaliações Semanais</h3>' +
-    htmlAvaliacoesComComentario(avals) +
+    htmlAvaliacoesComComentario(typeof avalsUI !== "undefined" ? avalsUI : avals.slice(0, 10)) +
 
     /* ===== CERTIFICADOS ===== */
     '<h3 style="margin-top:14px;"><i class="fas fa-award"></i> Meus Certificados</h3>' +
@@ -8995,7 +9118,11 @@ function enviarSolicitacaoTreino(btn) {
    --------------------------------------------------------------- */
 function renderAbaProfessor() {
   var box = $('conteudoProfessor');
-  if (!exigirEquipe(['professor', 'adm', 'dev'], box, 'professor')) return;   /* v87: cada aba usa ids próprios no login (antes repetia os da aba Dev) */
+  if (!exigirEquipe(['professor', 'adm', 'dev'], box, 'professor')) {
+    try { ucPortaoEquipe(false); } catch (e) {}
+    return;
+  }
+  try { ucPortaoEquipe(true); } catch (e2) {}
 
   var pendentes = DB.listar('presencas').filter(function (p) { return p.status === 'pendente'; })
     .sort(function (a, b) { return String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); });
@@ -12405,6 +12532,9 @@ function htmlCardPerguntaSemanaAluno(aluno) {
 }
 
 function htmlAvaliacoesComComentario(avals) {
+  if (!avals) avals = [];
+  if (avals.length > 12) avals = avals.slice(0, 12);
+
   if (!avals.length) return '<p class="sem-dados">Nenhuma avaliação semanal lançada ainda.</p>';
   return avals.map(function (a) {
     var html = '<div class="lista-item"><div class="linha"><span><b>' + esc(a.semana || dataBR(a.data) || '-') + '</b></span><span class="badge-count">' + mediaAvaliacao(a).toFixed(1) + '</span></div>' +
@@ -16390,7 +16520,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   ITENS_CATS.forEach(function (c) { ITENS_PADRAO[c.k] = JSON.parse(JSON.stringify(c.arr)); });
   var itensEdit = null;
 
-  function limparNomeItem(v) { return String(v || '').replace(/[\"'<>&]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60); }
+  function limparNomeItem(v) { return String(v || '').replace(/[\"'<>&.\/\[\]~*`#$]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60); }
   function aplicarItensConfig() {
     var cfg = null;
     try { cfg = DB.listar('config').filter(function (x) { return x.id === 'itensAvaliacaoSemestral'; })[0]; } catch (e) {}
@@ -16605,6 +16735,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     '<div class="card" id="ucCardAvaliacao">' +
       '<h3><i class="fas fa-clipboard-check"></i> Avaliação Semestral</h3>' +
       '<button class="btn btn-secondary" type="button" onclick="ucAbrirEditorItens()" style="margin-bottom:8px"><i class="fas fa-list-check"></i> Editar lista de itens</button>' +
+      '<button class="btn btn-secondary" type="button" onclick="ucProgressoDoSelecionado()" style="margin:0 0 8px 6px"><i class="fas fa-chart-line"></i> Progresso detalhado do aluno</button>' +
       '<label class="campo-label">Aluno</label><select id="ucAlunoSel"><option value="">-- Selecione --</option></select>' +
       '<div class="uc-linha">' +
         '<div><label class="campo-label">Período</label><input type="text" id="ucPeriodo" value="' + periodoAtual() + '"></div>' +
@@ -16627,9 +16758,16 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       acc('8. Participação', '<label class="campo-label">Participação geral</label><select data-key="part_status" data-tipo="sel" data-default="sim">' +
         sim.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') +
         '</select>' + sl('part_nota', 'Nota de participação') + part) +
-      acc('9. Compromisso', num('comp_faltas', 'Faltas de compromisso') + num('comp_atrasos', 'Atrasos') +
-        num('comp_justificados', 'Atrasos justificados') + num('comp_semanas', 'Semanas no período (para frequência)') +
-        '<label class="campo-label">Observação do professor</label><textarea data-key="obs" data-tipo="txt" placeholder="Observações..."></textarea>') +
+      acc('9. Compromisso (automático pelo check-in)', 
+        '<div id="ucCompAutoResumo" class="aviso-info" style="margin-bottom:8px">Selecione o aluno para preencher automaticamente com check-ins e faltas da semana.</div>' +
+        '<button type="button" class="btn btn-secondary btn-mini" id="ucBtnCompAuto" style="margin-bottom:8px"><i class="fas fa-sync"></i> Atualizar do check-in e avaliação semanal</button>' +
+        '<p class="mini" style="margin-bottom:8px">Valores vêm dos <b>check-ins aprovados</b>, <b>atrasos registrados</b> e do sistema de <b>2 aulas/semana</b>. Você pode ajustar manualmente se precisar.</p>' +
+        num('comp_faltas', 'Faltas (semanas abaixo de 2 aulas, sem justificativa aceita)') +
+        num('comp_atrasos', 'Atrasos (check-in depois do horário)') +
+        num('comp_justificados', 'Faltas/atrasos justificados (aceitos pelo professor)') +
+        num('comp_semanas', 'Semanas fechadas no período') +
+        num('pa_reg_pres', 'Presenças aprovadas no período') +
+        '<label class="campo-label">Observação do professor</label><textarea data-key="obs" data-tipo="txt" placeholder="Observações..."></textarea>', true) +
 
       '<div class="uc-linha" style="margin-top:10px">' +
         '<button class="btn" type="button" id="ucBtnCalc"><i class="fas fa-calculator"></i> Calcular</button>' +
@@ -16683,7 +16821,11 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
   function alunoSelecionado() {
     var s = el('ucAlunoSel');
-    var op = s && s.options[s.selectedIndex];
+    if (!s || !s.value) return null;
+    var id = s.value;
+    var a = listar('alunos').filter(function (x) { return x.id === id; })[0];
+    if (a) return a;
+    var op = s.options[s.selectedIndex];
     return op && op._dados ? op._dados : null;
   }
 
@@ -16692,6 +16834,137 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       return d.alunoId === alunoId && d.periodo === periodo;
     })[0] || null;
   }
+
+  /* Intervalo do período semestral: 2026-S1 = jan–jun; 2026-S2 = jul–nov (até prazo) */
+  function intervaloDoPeriodo(periodo) {
+    var m = String(periodo || '').match(/(20\d{2})-S([12])/i);
+    var y = m ? parseInt(m[1], 10) : new Date().getFullYear();
+    var s = m ? m[2] : (new Date().getMonth() < 6 ? '1' : '2');
+    if (s === '1') {
+      return { de: y + '-01-01', ate: y + '-06-30', label: '1º semestre ' + y };
+    }
+    var prazo = (typeof dataPrazo === 'function') ? dataPrazo() : new Date(y, 10, 30);
+    var ate = prazo.getFullYear() === y
+      ? (prazo.getFullYear() + '-' + String(prazo.getMonth() + 1).padStart(2, '0') + '-' + String(prazo.getDate()).padStart(2, '0'))
+      : (y + '-11-30');
+    return { de: y + '-07-01', ate: ate, label: '2º semestre ' + y };
+  }
+
+  function calcularCompromissoAuto(aluno, periodo) {
+    var out = { faltas: 0, atrasos: 0, justificados: 0, semanas: 0, presencas: 0, resumo: '', detalhes: [] };
+    if (!aluno) return out;
+    var iv = intervaloDoPeriodo(periodo || periodoAtual());
+    var de = iv.de, ate = iv.ate;
+
+    /* Presenças no intervalo */
+    var pres = listar('presencas').filter(function (p) {
+      if (!(p.alunoId === aluno.id || (aluno.nome && normalizar(p.alunoNome) === normalizar(aluno.nome)))) return false;
+      var dia = String(p.data || (p.criadoEm || '')).slice(0, 10);
+      return dia >= de && dia <= ate;
+    });
+    var aprovadas = pres.filter(function (p) { return p.status === 'aprovado'; });
+    out.presencas = aprovadas.length;
+    out.atrasos = aprovadas.filter(function (p) { return (Number(p.atrasoMin) || 0) > 0; }).length;
+    /* atraso justificado no próprio check-in, se existir */
+    var atrJustCheckin = aprovadas.filter(function (p) {
+      return (Number(p.atrasoMin) || 0) > 0 && (p.justificado || p.atrasoJustificado || p.faltaJustificada);
+    }).length;
+
+    /* Faltas pelo sistema 2 aulas/semana (quando disponível) */
+    if (typeof ucResumoMin === 'function' && typeof ucSemanasMin === 'function') {
+      try {
+        var r = ucResumoMin(aluno, de, ate);
+        out.faltas = r.faltas || 0;
+        out.justificados = (r.faltasJust || 0) + atrJustCheckin;
+        out.semanas = (r.semanas && r.semanas.length) ? r.semanas.length : 0;
+        out.detalhes.push('Meta: 2 aulas/semana · cumpridas ' + (r.cumpriu || 0) + '/' + (r.need || 0));
+      } catch (e) {
+        out.semanas = 0;
+      }
+    }
+
+    /* Fallback se módulo de faltas ainda não contou semanas */
+    if (!out.semanas) {
+      var setSem = {};
+      aprovadas.forEach(function (p) {
+        var dia = String(p.data || p.criadoEm || '').slice(0, 10);
+        if (dia) setSem[dia.slice(0, 7)] = 1; /* aproximação mensal se sem módulo */
+      });
+      /* conta semanas pelo calendário do intervalo */
+      try {
+        var d0 = new Date(de + 'T12:00:00'), d1 = new Date(ate + 'T12:00:00');
+        var ms = Math.max(0, d1 - d0);
+        out.semanas = Math.max(1, Math.round(ms / (7 * 86400000)));
+      } catch (e2) { out.semanas = 0; }
+    }
+
+    /* Justificativas aceitas no período */
+    try {
+      var justs = listar('justificativasFalta').filter(function (j) {
+        if (j.alunoId !== aluno.id) return false;
+        if (j.status !== 'aceita') return false;
+        var s = String(j.semana || j.criadoEm || '').slice(0, 10);
+        return s >= de && s <= ate;
+      });
+      var somaJust = justs.reduce(function (s, j) { return s + (Number(j.faltas) || 0); }, 0);
+      if (somaJust > out.justificados) out.justificados = somaJust + atrJustCheckin;
+    } catch (e3) {}
+
+    /* Avaliação semanal: quantas o aluno respondeu no período */
+    var semanais = 0;
+    try {
+      semanais = listar('notasAvaliacoesSemanais').filter(function (n) {
+        if (n.alunoId !== aluno.id) return false;
+        var d = String(n.criadoEm || n.data || '').slice(0, 10);
+        return d >= de && d <= ate;
+      }).length;
+    } catch (e4) {}
+
+    out.resumo =
+      '<b>' + esc(iv.label) + '</b> (' + de.slice(5) + ' → ' + ate.slice(5) + ')<br>' +
+      '✅ Presenças aprovadas: <b>' + out.presencas + '</b><br>' +
+      '⏰ Atrasos no check-in: <b>' + out.atrasos + '</b><br>' +
+      '📉 Faltas (meta 2 aulas/sem): <b>' + out.faltas + '</b><br>' +
+      '📝 Justificadas: <b>' + out.justificados + '</b> · Semanas: <b>' + out.semanas + '</b><br>' +
+      (semanais ? '📋 Avaliações semanais respondidas: <b>' + semanais + '</b><br>' : '') +
+      (out.detalhes.length ? '<span class="mini">' + out.detalhes.map(esc).join(' · ') + '</span>' : '');
+    out.semanais = semanais;
+    return out;
+  }
+
+  function aplicarCompromissoAuto(aluno, periodo, forcar) {
+    var box = el('ucCompAutoResumo');
+    if (!aluno) {
+      if (box) box.innerHTML = 'Selecione o aluno para preencher automaticamente com check-ins e faltas da semana.';
+      return null;
+    }
+    var c = calcularCompromissoAuto(aluno, periodo);
+    if (box) box.innerHTML = c.resumo + (forcar ? '<div class="mini" style="margin-top:4px;color:var(--primary-green)">Valores atualizados nos campos abaixo.</div>' : '');
+
+    function setNum(key, val) {
+      var e = document.querySelector('#ucCardAvaliacao [data-key="' + key + '"]');
+      if (!e) return;
+      /* se já tem valor salvo e não forçar, só preenche se estiver 0/vazio */
+      var atual = parseInt(e.value, 10);
+      if (!forcar && atual > 0) return;
+      e.value = val;
+    }
+    setNum('comp_faltas', c.faltas);
+    setNum('comp_atrasos', c.atrasos);
+    setNum('comp_justificados', c.justificados);
+    setNum('comp_semanas', c.semanas);
+    setNum('pa_reg_pres', c.presencas);
+    return c;
+  }
+
+  window.ucAtualizarCompromissoAuto = function () {
+    var aluno = alunoSelecionado();
+    if (!aluno) { toast('Selecione o aluno.', 'erro'); return; }
+    var periodo = el('ucPeriodo') ? el('ucPeriodo').value.trim() : periodoAtual();
+    aplicarCompromissoAuto(aluno, periodo, true);
+    toast('Compromisso atualizado com check-ins e faltas.');
+  }
+
 
   /* ===== CÁLCULO ===== */
   function calcular(d) {
@@ -16764,7 +17037,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (!aluno) { toast('Selecione o aluno.', 'erro'); return; }
     var periodo = el('ucPeriodo').value.trim();
     if (!periodo) { toast('Informe o período (ex: 2026-S2).', 'erro'); return; }
-    if (!el('ucIdade').value || !el('ucAnos').value) { toast('Preencha idade e anos de capoeira.', 'erro'); return; }
+    if (status === 'finalizada' && (!el('ucIdade').value || !el('ucAnos').value)) { toast('Para finalizar, preencha idade e anos de capoeira (rascunho não exige).', 'erro'); return; }
 
     var d = coletar();
     var r = calcular(d);
@@ -16772,7 +17045,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var dados = {
       alunoId: aluno.id, alunoNome: aluno.nome, alunoApelido: aluno.apelido || '',
       periodo: periodo, cordaAtual: r.corda,
-      idade: parseInt(el('ucIdade').value, 10), anos: parseInt(el('ucAnos').value, 10),
+      idade: isNaN(parseInt(el('ucIdade').value, 10)) ? null : parseInt(el('ucIdade').value, 10),
+      anos: isNaN(parseInt(el('ucAnos').value, 10)) ? null : parseInt(el('ucAnos').value, 10),
       notas: d.notas, nums: d.nums, textos: d.textos,
       mediaTecnica: r.mediaTec, mediaMusical: r.mediaMus, frequenciaSemanal: r.freq,
       aptoSugerido: r.apto, cordaSugerida: r.sugerida, motivos: r.motivos, avisos: r.avisos,
@@ -16786,13 +17060,18 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       atualizadoEm: agoraISO()
     };
 
-    Promise.resolve(DB.salvar('avaliacoesSemestrais', dados, existente ? existente.id : undefined))
+    Promise.resolve().then(function () { return DB.salvar('avaliacoesSemestrais', dados, existente ? existente.id : undefined); })
       .then(function () {
-        toast(status === 'finalizada' ? 'Avaliação finalizada.' : 'Rascunho salvo.');
-        atualizarStatus();
+        toast(status === 'finalizada' ? 'Avaliação finalizada e salva.' : 'Rascunho salvo.');
+        /* Recarrega do banco para garantir que o formulário reflete o que foi gravado */
+        try { carregarAlunoNoForm(); } catch (e1) {
+          atualizarStatus();
+          try { renderEvolucaoNoForm(alunoSelecionado()); } catch (e2) {}
+        }
         renderListaPeriodo();
+        try { renderBoletim(); } catch (e3) {}
       })
-      .catch(function () { toast('Não foi possível salvar. Verifique a conexão.', 'erro'); });
+      .catch(function (e) { console.warn('[avaliação] erro ao salvar', e); toast('Não foi possível salvar: ' + ((e && e.message) || 'verifique a conexão') + '.', 'erro'); });
   }
 
   function atualizarStatus() {
@@ -16808,18 +17087,77 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
   function carregarAlunoNoForm() {
     var aluno = alunoSelecionado();
-    if (!aluno) { preencher(null); atualizarStatus(); return; }
-    if (el('ucIdade') && aluno.idade != null) el('ucIdade').value = aluno.idade;
-    var anos = aluno.anosCapoeira != null ? aluno.anosCapoeira : aluno.anosTreino;
-    if (anos != null) el('ucAnos').value = anos;
+    if (!aluno) {
+      preencher(null);
+      atualizarStatus();
+      renderEvolucaoNoForm(null);
+      return;
+    }
+    var periodo = (el('ucPeriodo') && el('ucPeriodo').value.trim()) || periodoAtual();
+    var doc = docDoAluno(aluno.id, periodo);
+
+    /* Se não há doc deste período, tenta o mais recente do aluno para pré-preencher base */
+    var base = doc;
+    if (!base) {
+      var todos = listar('avaliacoesSemestrais').filter(function (d) { return d.alunoId === aluno.id; })
+        .sort(function (a, b) { return String(b.atualizadoEm || b.criadoEm || '').localeCompare(String(a.atualizadoEm || a.criadoEm || '')); });
+      base = null; /* não copia notas de outro período — só dados cadastrais */
+    }
+
+    preencher(doc); /* carrega TUDO que já foi salvo neste período */
+
     var corda = aluno.graduacao || aluno.corda;
-    var doc = docDoAluno(aluno.id, el('ucPeriodo').value.trim());
-    preencher(doc);
     if (!doc && corda && CORDAS.indexOf(corda) >= 0) el('ucCordaAtual').value = corda;
-    if (!doc && aluno.idade != null) el('ucIdade').value = aluno.idade;
-    if (!doc && anos != null) el('ucAnos').value = anos;
+    if (!doc || doc.idade == null) {
+      if (aluno.idade != null && el('ucIdade')) el('ucIdade').value = aluno.idade;
+    }
+    var anos = aluno.anosCapoeira != null ? aluno.anosCapoeira : aluno.anosTreino;
+    if ((!doc || doc.anos == null) && anos != null && el('ucAnos')) el('ucAnos').value = anos;
+
     atualizarStatus();
+    renderEvolucaoNoForm(aluno);
     renderListaPeriodo();
+    /* Compromisso: preenche do check-in (força se não havia doc salvo; senão só preenche zeros) */
+    try {
+      aplicarCompromissoAuto(aluno, periodo, !doc);
+    } catch (eComp) { console.warn('[comp auto]', eComp); }
+  }
+
+  /* Painel de evolução completa do aluno dentro do formulário de avaliação */
+  function renderEvolucaoNoForm(aluno) {
+    var box = el('ucEvolucaoAluno');
+    if (!box) return;
+    if (!aluno) { box.innerHTML = ''; box.style.display = 'none'; return; }
+    var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.alunoId === aluno.id; })
+      .sort(function (a, b) { return String(b.periodo || '').localeCompare(String(a.periodo || '')); });
+    box.style.display = 'block';
+    if (!docs.length) {
+      box.innerHTML = '<div class="uc-mini">Nenhuma avaliação anterior salva para <b>' + esc(aluno.apelido || aluno.nome) + '</b>.</div>';
+      return;
+    }
+    var html = '<div style="font-weight:700;margin-bottom:6px;color:var(--primary-green,#00c853)"><i class="fas fa-chart-line"></i> Evolução completa — ' + esc(aluno.apelido || aluno.nome) + '</div>';
+    docs.forEach(function (d) {
+      var st = d.status === 'finalizada' ? '✅ finalizada' : '📝 rascunho';
+      html += '<div class="uc-item" style="margin:6px 0;padding:8px;border:1px solid var(--card-border,#2a3f4a);border-radius:10px">' +
+        '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">' +
+          '<b>' + esc(d.periodo || '—') + '</b> <span class="uc-mini">' + st + '</span></div>' +
+        '<div class="uc-mini">Técnica: <b>' + (d.mediaTecnica != null ? d.mediaTecnica + '%' : '—') +
+          '</b> · Toques/jogos: <b>' + (d.mediaMusical != null ? d.mediaMusical + '%' : '—') +
+          '</b> · Freq.: <b>' + (d.frequenciaSemanal != null ? d.frequenciaSemanal + '/sem' : '—') + '</b></div>' +
+        '<div class="uc-mini">Corda: ' + esc(d.cordaAtual || '—') +
+          (d.status === 'finalizada' && d.cordaFinal ? ' → <b>' + esc(d.cordaFinal) + '</b>' : '') +
+          (d.status === 'finalizada' ? (d.aptoFinal ? ' · apto' : ' · não apto') : '') + '</div>' +
+        '<button type="button" class="btn btn-secondary btn-mini" style="margin-top:4px" onclick="ucCarregarPeriodoNoForm(\'' + esc(d.periodo || '') + '\')">' +
+          '<i class="fas fa-folder-open"></i> Abrir este período</button>' +
+      '</div>';
+    });
+    box.innerHTML = html;
+  }
+
+  window.ucCarregarPeriodoNoForm = function (periodo) {
+    if (el('ucPeriodo')) el('ucPeriodo').value = periodo;
+    carregarAlunoNoForm();
+    try { el('ucCardAvaliacao').scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
   }
 
   /* ===== CERTIFICADO DE GRADUAÇÃO (última avaliação semestral, alunos aptos) ===== */
@@ -17125,46 +17463,173 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     }, Promise.resolve()).then(function () { toast('Certificados gerados: ' + lista.length); });
   };
 
-  /* ===== LISTA DO PERÍODO (professor): ajustar e revelar no Batizado ===== */
+  /* ===== LISTA DO PERÍODO (professor) ===== */
+  function fmtDia(d) { return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2); }
+  function rotuloItem(chaveSemPrefixo, arr) {
+    var lado = '';
+    var m = /_(E|D)$/.exec(chaveSemPrefixo);
+    var base = chaveSemPrefixo;
+    if (m) { lado = m[1] === 'E' ? ' (lado E)' : ' (lado D)'; base = chaveSemPrefixo.slice(0, -2); }
+    var nome = null;
+    arr.forEach(function (it) { if (typeof it === 'object' && it.id === base) nome = it.nome; });
+    return (nome || base.replace(/_/g, ' ')) + lado;
+  }
+  function corNota(v) { return v >= 80 ? '#22c55e' : (v >= 60 ? '#f5c451' : '#ef4444'); }
+  function barraNota(rot, v) {
+    return '<div style="margin:4px 0"><div style="display:flex;justify-content:space-between;font-size:.82rem"><span>' + esc(rot) + '</span><b style="color:' + corNota(v) + '">' + v + '%</b></div>' +
+      '<div style="height:7px;border-radius:5px;background:rgba(255,255,255,.12)"><div style="height:7px;border-radius:5px;width:' + Math.max(0, Math.min(100, v)) + '%;background:' + corNota(v) + '"></div></div></div>';
+  }
+  function docAnterior(d) {
+    return listar('avaliacoesSemestrais').filter(function (x) {
+      return x.alunoId === d.alunoId && x.id !== d.id && String(x.periodo) < String(d.periodo);
+    }).sort(function (a, b) { return String(b.periodo).localeCompare(String(a.periodo)); })[0] || null;
+  }
+  function sitDoc(d) {
+    if (!d) return 'Sem avaliação';
+    if (d.status !== 'finalizada') return 'Rascunho';
+    return d.aptoFinal ? 'Finalizada · apto' : 'Finalizada · não apto';
+  }
+
+  /* ===== PROGRESSO DETALHADO DO ALUNO (professor) ===== */
+  window.ucAbrirProgressoAluno = function (alunoId) {
+    var periodo = el('ucPeriodo') ? el('ucPeriodo').value.trim() : periodoAtual();
+    var aluno = listar('alunos').filter(function (a) { return a.id === alunoId; })[0];
+    var d = docDoAluno(alunoId, periodo);
+    var nome = aluno ? (aluno.apelido || aluno.nome) : (d ? d.alunoNome : 'Aluno');
+    var corpo = '<h4 style="margin:0 0 6px">' + esc(nome) + ' · ' + esc(periodo) + '</h4>';
+    if (!d) {
+      corpo += '<p class="uc-mini">Este aluno ainda não tem avaliação neste período.</p>';
+    } else {
+      var n = d.nums || {};
+      var cats = [
+        { t: 'Chutes', p: 'chu_', arr: CHUTES }, { t: 'Esquivas', p: 'esq_', arr: ESQUIVAS },
+        { t: 'Decidas', p: 'dec_', arr: DECIDAS }, { t: 'Sequências', p: 'seq_', arr: SEQUENCIAS },
+        { t: 'Toques de berimbau', p: 'toq_', arr: TOQUES }, { t: 'Jogos', p: 'jog_', arr: JOGOS }
+      ];
+      var todos = [];
+      var blocos = cats.map(function (c) {
+        var itens = [];
+        Object.keys(d.notas || {}).forEach(function (k) {
+          if (k.indexOf(c.p) !== 0) return;
+          var v = d.notas[k];
+          itens.push({ rot: rotuloItem(k.slice(c.p.length), c.arr), v: v, cat: c.t });
+        });
+        if (!itens.length) return '';
+        itens.forEach(function (i) { todos.push(i); });
+        var m = media(itens.map(function (i) { return i.v; }));
+        itens.sort(function (a, b) { return a.v - b.v; });
+        return '<details class="uc-acc"' + (m < 60 ? ' open' : '') + '><summary>' + esc(c.t) + ' · média <b style="color:' + corNota(m) + '">' + m + '%</b></summary><div class="uc-acc-corpo">' +
+          itens.map(function (i) { return barraNota(i.rot, i.v); }).join('') + '</div></details>';
+      }).join('');
+      var ordem = todos.slice().sort(function (a, b) { return a.v - b.v; });
+      var fracos = ordem.slice(0, 3), fortes = ordem.slice(-3).reverse();
+      var ant = docAnterior(d);
+      var instr = Object.keys(d.textos || {}).filter(function (k) { return k.indexOf('ins_') === 0; }).map(function (k) {
+        return esc(rotuloItem(k.slice(4), INSTRUMENTOS)) + ': ' + (d.textos[k] === 'sim' ? '✅ domina' : '❌ ainda não');
+      });
+      corpo +=
+        '<div class="uc-mini">Situação: <b>' + esc(sitDoc(d)) + '</b> · Corda atual: ' + esc(d.cordaAtual || '—') +
+          ' → sugerida: <b>' + esc(d.cordaSugerida || '—') + '</b>' + (d.status === 'finalizada' ? ' · decisão: <b>' + esc(d.cordaFinal || '—') + '</b>' : '') + '</div>' +
+        '<div class="uc-linha" style="margin:8px 0;gap:6px;flex-wrap:wrap">' +
+          '<span class="uc-item" style="padding:6px 10px">Técnica <b style="color:' + corNota(d.mediaTecnica) + '">' + d.mediaTecnica + '%</b></span>' +
+          '<span class="uc-item" style="padding:6px 10px">Toques/jogos <b style="color:' + corNota(d.mediaMusical) + '">' + d.mediaMusical + '%</b></span>' +
+          '<span class="uc-item" style="padding:6px 10px">Frequência <b>' + (d.frequenciaSemanal != null ? d.frequenciaSemanal + '/sem' : '—') + '</b></span>' +
+        '</div>' +
+        '<div class="uc-mini">Compromisso: ' + (n.comp_faltas || 0) + ' falta(s) · ' + (n.comp_atrasos || 0) + ' atraso(s) · ' + (n.comp_semanas || 0) + ' semana(s) · ' + (n.pa_reg_pres || 0) + ' presença(s) registrada(s)</div>' +
+        (d.motivos && d.motivos.length ? '<div class="uc-aviso" style="margin-top:8px">❌ ' + d.motivos.map(esc).join('<br>❌ ') + '</div>' : '') +
+        (d.avisos && d.avisos.length ? '<div class="uc-aviso" style="margin-top:8px">⚠️ ' + d.avisos.map(esc).join('<br>⚠️ ') + '</div>' : '') +
+        (ant ? '<div class="uc-item" style="margin-top:8px"><b>Evolução desde ' + esc(ant.periodo) + '</b><div class="uc-mini">Técnica ' + ant.mediaTecnica + '% → ' + d.mediaTecnica + '% (' + (d.mediaTecnica - ant.mediaTecnica >= 0 ? '+' : '') + (d.mediaTecnica - ant.mediaTecnica) +
+          ') · Toques/jogos ' + ant.mediaMusical + '% → ' + d.mediaMusical + '% (' + (d.mediaMusical - ant.mediaMusical >= 0 ? '+' : '') + (d.mediaMusical - ant.mediaMusical) + ')</div></div>' : '') +
+        (fracos.length ? '<div class="uc-item" style="margin-top:8px"><b>🔧 Para melhorar</b>' + fracos.map(function (i) { return '<div class="uc-mini">' + esc(i.cat + ' · ' + i.rot) + ' — ' + i.v + '%</div>'; }).join('') +
+          '</div><div class="uc-item" style="margin-top:6px"><b>⭐ Pontos fortes</b>' + fortes.map(function (i) { return '<div class="uc-mini">' + esc(i.cat + ' · ' + i.rot) + ' — ' + i.v + '%</div>'; }).join('') + '</div>' : '') +
+        '<div style="margin-top:8px">' + blocos + '</div>' +
+        (instr.length ? '<div class="uc-item" style="margin-top:8px"><b>🎶 Instrumentos</b><div class="uc-mini">' + instr.join('<br>') + '</div></div>' : '') +
+        (d.textos && d.textos.obs ? '<div class="uc-item" style="margin-top:8px"><b>📝 Observação do professor</b><div class="uc-mini">' + esc(d.textos.obs) + '</div></div>' : '') +
+        '<div class="uc-mini" style="margin-top:8px">Atualizada em ' + new Date(d.atualizadoEm || d.criadoEm || Date.now()).toLocaleDateString('pt-BR') + ' por ' + esc(d.professor || 'Professor') + '</div>';
+    }
+    abrirModal('Progresso detalhado', corpo,
+      '<button class="btn" type="button" onclick="fecharModal();ucAjustarAval(\'' + alunoId + '\')"><i class="fas fa-pen"></i> Avaliar / ajustar</button>' +
+      '<button class="btn btn-secondary" type="button" onclick="fecharModal()">Fechar</button>');
+  };
+  window.ucProgressoDoSelecionado = function () {
+    var a = alunoSelecionado();
+    if (!a) { toast('Selecione o aluno.', 'erro'); return; }
+    ucAbrirProgressoAluno(a.id);
+  };
+  window.ucLancarResultados = function (periodo) {
+    var lib = resultadosLiberados(periodo);
+    var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.periodo === periodo; });
+    var rasc = docs.filter(function (d) { return d.status !== 'finalizada'; }).length;
+    var msg = lib
+      ? 'Ocultar os resultados de ' + periodo + '? Os alunos voltam a ver só o aviso de data.'
+      : 'LANÇAR os resultados de ' + periodo + ' para todos os alunos agora?' + (rasc ? '\n\nAtenção: ' + rasc + ' avaliação(ões) ainda em rascunho NÃO aparecem para os alunos.' : '');
+    if (!window.confirm(msg)) return;
+    ucToggleLiberacaoResultados(periodo);
+    setTimeout(function () { try { renderListaPeriodo(); } catch (e) {} }, 600);
+  };
+
+  /* ===== PAINEL DA AVALIAÇÃO (professor): etapas, status por aluno, lançar ===== */
   function renderListaPeriodo() {
     var box = el('ucListaPeriodo');
     if (!box) return;
     var periodo = el('ucPeriodo').value.trim();
     var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.periodo === periodo; });
-    if (!docs.length) {
-      box.innerHTML = '<div class="uc-mini">Nenhuma avaliação neste período ainda.</div>' +
-        '<div class="uc-linha" style="margin:6px 0"><button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button></div>';
-      return;
+    var porAluno = {};
+    docs.forEach(function (d) { porAluno[d.alunoId] = d; });
+    var alunos = ordenarPorNome(listar('alunos').filter(function (a) { return a.ativo !== false; }));
+    var semDoc = [], rasc = [], fin = [];
+    alunos.forEach(function (a) {
+      var d = porAluno[a.id];
+      if (!d) semDoc.push({ a: a }); else if (d.status === 'finalizada') fin.push({ a: a, d: d }); else rasc.push({ a: a, d: d });
+    });
+    docs.forEach(function (d) {
+      if (!alunos.some(function (a) { return a.id === d.alunoId; })) {
+        var item = { a: { id: d.alunoId, nome: d.alunoNome }, d: d };
+        if (d.status === 'finalizada') fin.push(item); else rasc.push(item);
+      }
+    });
+    var total = semDoc.length + rasc.length + fin.length;
+    var aptos = fin.filter(function (x) { return x.d.aptoFinal; }).length;
+    var lib = resultadosLiberados(periodo);
+    var pct = total ? Math.round(fin.length / total * 100) : 0;
+    var dia = fmtDia(dataPrazo());
+
+    function linha(x) {
+      var d = x.d;
+      return '<div class="uc-item"><b>' + esc(x.a.apelido || x.a.nome) + '</b> <span class="uc-mini">' + esc(sitDoc(d)) + (d && d.revelado ? ' · graduação revelada' : '') + '</span>' +
+        (d ? '<div class="uc-mini">Técnica ' + d.mediaTecnica + '% • Toques/jogos ' + d.mediaMusical + '%</div>' : '') +
+        '<div class="uc-linha" style="margin-top:6px;flex-wrap:wrap;gap:6px">' +
+          '<button class="btn btn-secondary btn-mini" type="button" onclick="ucAjustarAval(\'' + x.a.id + '\')"><i class="fas fa-pen"></i> ' + (d ? 'Ajustar' : 'Avaliar') + '</button>' +
+          '<button class="btn btn-secondary btn-mini" type="button" onclick="ucAbrirProgressoAluno(\'' + x.a.id + '\')"><i class="fas fa-chart-line"></i> Progresso</button>' +
+          (d && d.status === 'finalizada' && d.aptoFinal && !d.revelado
+            ? '<button class="btn btn-gold btn-mini" type="button" onclick="ucRevelarBatizado(\'' + d.id + '\')"><i class="fas fa-medal"></i> Revelar no Batizado</button>' : '') +
+          (d && ucEhApto(d) ? '<button class="btn btn-secondary btn-mini" type="button" onclick="ucBaixarCertificadoGraduacao(\'' + d.id + '\')"><i class="fas fa-certificate"></i> Certificado</button>' : '') +
+        '</div></div>';
     }
-    box.innerHTML = '<h4 class="uc-mini" style="font-weight:700">Avaliações do período ' + esc(periodo) + '</h4>' +
-      (function () {
-        var lib = resultadosLiberados(periodo);
-        return '<p class="uc-mini">' + (lib ? 'Os alunos já podem ver as notas deste período.' : 'Os alunos só veem as notas quando você liberar para todos.') + '</p>' +
-          '<div class="uc-linha" style="margin:6px 0"><button class="btn ' + (lib ? 'btn-secondary' : 'btn-gold') + ' btn-mini" type="button" onclick="ucToggleLiberacaoResultados(\'' + esc(periodo) + '\')"><i class="fas fa-eye"></i> ' +
-          (lib ? 'Ocultar resultados dos alunos' : 'Liberar resultados para todos os alunos') + '</button></div>';
-      })() +
-      '<div class="uc-linha" style="margin:6px 0">' +
-        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button>' +
-        (docs.some(ucEhApto)
-          ? '<button class="btn btn-gold btn-mini" type="button" onclick="ucBaixarTodosCertificados(\'' + esc(periodo) + '\')"><i class="fas fa-certificate"></i> Gerar certificados dos aptos</button>'
-          : '') +
+    function secao(titulo, lista, aberta) {
+      if (!lista.length) return '';
+      return '<details class="uc-acc"' + (aberta ? ' open' : '') + '><summary>' + titulo + ' (' + lista.length + ')</summary><div class="uc-acc-corpo">' + lista.map(linha).join('') + '</div></details>';
+    }
+    function etapa(ok, txt) { return '<div class="uc-mini" style="margin:3px 0">' + (ok ? '✅' : '⬜') + ' ' + txt + '</div>'; }
+
+    box.innerHTML =
+      '<h4 style="font-weight:700;margin:0 0 6px"><i class="fas fa-tasks"></i> Painel do período ' + esc(periodo) + '</h4>' +
+      '<div style="height:9px;border-radius:6px;background:rgba(255,255,255,.12)"><div style="height:9px;border-radius:6px;width:' + pct + '%;background:#22c55e"></div></div>' +
+      '<div class="uc-mini" style="margin:4px 0 8px">' + fin.length + ' de ' + total + ' alunos finalizados · ' + rasc.length + ' rascunho(s) · ' + semDoc.length + ' sem avaliação · ' + aptos + ' apto(s)</div>' +
+      '<div class="uc-item">' +
+        etapa(semDoc.length === 0 && rasc.length === 0 && total > 0, '1. Avaliar e finalizar todos os alunos') +
+        etapa(lib, '2. Lançar os resultados (até lá o aluno só vê "será publicado dia ' + dia + '")') +
+        etapa(fin.some(function (x) { return x.d.revelado; }), '3. Revelar a graduação no Batizado') +
+        etapa(false, '4. Gerar os certificados (disponíveis em ' + dia + ')') +
+        '<div class="uc-linha" style="margin-top:8px;flex-wrap:wrap;gap:6px">' +
+          '<button class="btn ' + (lib ? 'btn-secondary' : 'btn-gold') + '" type="button" onclick="ucLancarResultados(\'' + esc(periodo) + '\')">' +
+            (lib ? '<i class="fas fa-eye-slash"></i> Ocultar resultados dos alunos' : '<i class="fas fa-rocket"></i> Lançar resultados aos alunos') + '</button>' +
+          '<button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button>' +
+          (aptos ? '<button class="btn btn-gold btn-mini" type="button" onclick="ucBaixarTodosCertificados(\'' + esc(periodo) + '\')"><i class="fas fa-certificate"></i> Gerar certificados dos aptos</button>' : '') +
+        '</div>' +
+        '<div class="uc-mini" style="margin-top:6px">' + (lib ? '✅ Resultados lançados: os alunos já veem as notas.' : '🔒 Ainda não lançado: nenhum aluno vê notas nem certificado.') + '</div>' +
       '</div>' +
-      docs.map(function (d) {
-        var sit = d.status === 'finalizada'
-          ? (d.aptoFinal ? 'Apto' : 'Não apto') + (d.revelado ? ' • graduação revelada' : '')
-          : 'Rascunho';
-        return '<div class="uc-item"><b>' + esc(d.alunoNome) + '</b> <span class="uc-mini">' + esc(sit) + '</span>' +
-          '<div class="uc-mini">Técnica ' + d.mediaTecnica + '% • Toques/jogos ' + d.mediaMusical + '%</div>' +
-          '<div class="uc-linha" style="margin-top:6px">' +
-            '<button class="btn btn-secondary btn-mini" type="button" onclick="ucAjustarAval(\'' + d.alunoId + '\')"><i class="fas fa-pen"></i> Ajustar</button>' +
-            (d.status === 'finalizada' && d.aptoFinal && !d.revelado
-              ? '<button class="btn btn-gold btn-mini" type="button" onclick="ucRevelarBatizado(\'' + d.id + '\')"><i class="fas fa-medal"></i> Revelar no Batizado</button>'
-              : '') +
-            (ucEhApto(d)
-              ? '<button class="btn btn-secondary btn-mini" type="button" onclick="ucBaixarCertificadoGraduacao(\'' + d.id + '\')"><i class="fas fa-certificate"></i> Certificado</button>'
-              : '') +
-          '</div></div>';
-      }).join('');
+      secao('✏️ Rascunhos', rasc, true) + secao('🆕 Sem avaliação', semDoc, false) + secao('✅ Finalizadas', fin, false);
   }
 
   window.ucAjustarAval = function (alunoId) {
@@ -17208,8 +17673,24 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var card = w.firstElementChild;
     box.insertBefore(card, box.firstChild);
 
+    /* Caixa de evolução completa do aluno (todas as avaliações) */
+    if (!el('ucEvolucaoAluno')) {
+      var evo = document.createElement('div');
+      evo.id = 'ucEvolucaoAluno';
+      evo.style.cssText = 'display:none;margin:10px 0;padding:10px;border:1px solid rgba(0,230,118,.35);border-radius:12px;background:rgba(0,230,118,.06)';
+      var ancora = el('ucStatus') || el('ucAlunoSel');
+      if (ancora && ancora.parentNode) {
+        if (ancora.id === 'ucStatus') ancora.parentNode.insertBefore(evo, ancora.nextSibling);
+        else ancora.parentNode.insertBefore(evo, ancora.nextSibling);
+      } else {
+        card.insertBefore(evo, card.children[1] || null);
+      }
+    }
+
     var s = el('ucAlunoSel');
-    ordenarPorNome(listar('alunos')).forEach(function (a) {
+    /* limpa opções antigas exceto a primeira */
+    while (s.options.length > 1) s.remove(1);
+    ordenarPorNome(listar('alunos').filter(function (a) { return a.ativo !== false; })).forEach(function (a) {
       var op = document.createElement('option');
       op.value = a.id;
       op.textContent = (a.apelido || a.nome) + (a.graduacao ? ' — ' + a.graduacao : '');
@@ -17226,8 +17707,16 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     el('ucBtnCalc').addEventListener('click', mostrarResultado);
     el('ucBtnRascunho').addEventListener('click', function () { salvar('rascunho'); });
     el('ucBtnFinalizar').addEventListener('click', function () { salvar('finalizada'); });
-    el('ucBtnNovo').addEventListener('click', function () { preencher(null); atualizarStatus(); });
+    var btnComp = el('ucBtnCompAuto');
+    if (btnComp) btnComp.addEventListener('click', function () { window.ucAtualizarCompromissoAuto(); });
+    el('ucBtnNovo').addEventListener('click', function () {
+      preencher(null);
+      atualizarStatus();
+      renderEvolucaoNoForm(alunoSelecionado());
+    });
     preencher(null);
+    /* se já havia aluno selecionado em sessão anterior do form, recarrega */
+    if (s.value) carregarAlunoNoForm();
     card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -17593,39 +18082,83 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (!card) return;
     var logado = typeof alunoLogado === 'function' ? alunoLogado() : null;
     if (!logado) { card.style.display = 'none'; card.innerHTML = ''; return; }
+
+    /* Aluno vê avaliações finalizadas (o que foi avaliado). Resultado final só após liberação. */
     var docs = listar('avaliacoesSemestrais').filter(function (d) {
       return d.alunoId === logado.id && d.status === 'finalizada';
     }).sort(function (a, b) { return String(b.periodo).localeCompare(String(a.periodo)); });
 
-    var docsLib = docs.filter(function (d) { return resultadosLiberados(d.periodo); });
     var diaPub = dataPrazo();
     var txtPub = ('0' + diaPub.getDate()).slice(-2) + '/' + ('0' + (diaPub.getMonth() + 1)).slice(-2);
-    var sig = JSON.stringify(docsLib.map(function (d) { return [d.id, d.salvoPeloAluno, d.revelado, d.atualizadoEm]; })) + logado.graduacaoLiberada + '|' + docsLib.length + '|' + txtPub;
+    var sig = JSON.stringify(docs.map(function (d) {
+      return [d.id, d.salvoPeloAluno, d.revelado, d.atualizadoEm, resultadosLiberados(d.periodo), d.mediaTecnica, d.mediaMusical];
+    })) + '|' + logado.graduacaoLiberada + '|' + txtPub;
     if (card.getAttribute('data-sig') === sig && card.style.display !== 'none') return;
     card.setAttribute('data-sig', sig);
     card.style.display = 'block';
-    if (!docsLib.length) {
+
+    if (!docs.length) {
       card.innerHTML = '<h3><i class="fas fa-file-alt"></i> Avaliação Semestral</h3>' +
-        '<p class="uc-mini" style="font-size:.9rem">📅 O resultado da Avaliação Semestral será publicado no dia <b>' + txtPub + '</b>.</p>';
+        '<p class="uc-mini" style="font-size:.9rem">Quando o professor finalizar sua avaliação, você verá aqui o que foi avaliado. O <b>resultado final</b> (apto / corda) só aparece depois que o professor liberar para todos.</p>' +
+        '<p class="uc-mini">📅 Previsão de publicação do resultado: <b>' + txtPub + '</b>.</p>';
       return;
     }
-    docs = docsLib;
 
     var html = '<h3><i class="fas fa-file-alt"></i> Minhas Avaliações Semestrais</h3>' +
-      '<p class="uc-mini">Sua graduação e o resultado final são revelados no dia do Batizado. Aqui você pode escolher salvar ou não o boletim no seu painel.</p>';
+      '<p class="uc-mini">Você pode ver <b>o que foi avaliado</b> (notas e itens). O <b>resultado final</b> e a graduação só são liberados pelo professor (e revelados no Batizado).</p>';
 
-    if (!docs.length) html += '<p class="uc-mini">Nenhuma avaliação finalizada ainda.</p>';
     docs.forEach(function (d) {
       var lib = resultadosLiberados(d.periodo);
-      html += '<div class="uc-item"><b>Período ' + esc(d.periodo) + '</b>' +
-        (lib
-          ? '<div class="uc-mini">Técnica: ' + d.mediaTecnica + '% • Toques/jogos: ' + d.mediaMusical + '%' +
-            (d.frequenciaSemanal != null ? ' • Frequência: ' + d.frequenciaSemanal + '/semana' : '') + '</div>' +
-            (d.revelado ? '<div style="margin-top:4px"><b>🥋 Graduação: ' + esc(d.cordaFinal || '—') + '</b></div>' : '') +
-            (d.textos && d.textos.obs ? '<div class="uc-mini" style="margin-top:4px">Obs.: ' + esc(d.textos.obs) + '</div>' : '')
-          : '<div class="uc-mini" style="margin-top:4px">🔒 Resultado ainda não liberado pelo professor. Ele será mostrado para todos os alunos ao mesmo tempo.</div>') +
-        '<div class="uc-linha" style="margin-top:6px"><button class="btn btn-secondary btn-mini" type="button" onclick="ucToggleBoletim(\'' + d.id + '\')">' +
-          (d.salvoPeloAluno ? '<i class="fas fa-bookmark"></i> Remover do meu painel' : '<i class="far fa-bookmark"></i> Salvar no meu painel') +
+      var n = d.nums || {};
+      var notas = d.notas || {};
+
+      /* Resumo do que foi avaliado (sempre visível para o aluno) */
+      var resumoAvaliado =
+        '<div class="uc-mini" style="margin-top:6px">Técnica: <b>' + (d.mediaTecnica != null ? d.mediaTecnica + '%' : '—') +
+        '</b> · Toques/jogos: <b>' + (d.mediaMusical != null ? d.mediaMusical + '%' : '—') + '</b>' +
+        (d.frequenciaSemanal != null ? ' · Frequência: <b>' + d.frequenciaSemanal + '/semana</b>' : '') + '</div>' +
+        '<div class="uc-mini">Compromisso: ' + (n.comp_faltas || 0) + ' falta(s) · ' + (n.comp_atrasos || 0) + ' atraso(s) · ' +
+          (n.comp_semanas || 0) + ' semana(s)</div>';
+
+      /* Detalhe por categoria (o que foi avaliado) */
+      var cats = [
+        { t: 'Chutes', p: 'chu_' }, { t: 'Esquivas', p: 'esq_' }, { t: 'Decidas', p: 'dec_' },
+        { t: 'Sequências', p: 'seq_' }, { t: 'Toques', p: 'toq_' }, { t: 'Jogos', p: 'jog_' }
+      ];
+      var detalhe = '';
+      cats.forEach(function (c) {
+        var vals = [];
+        Object.keys(notas).forEach(function (k) {
+          if (k.indexOf(c.p) === 0) vals.push(notas[k]);
+        });
+        if (!vals.length) return;
+        var m = Math.round(vals.reduce(function (a, b) { return a + b; }, 0) / vals.length);
+        detalhe += '<div class="uc-mini">' + c.t + ': média <b>' + m + '%</b> (' + vals.length + ' itens)</div>';
+      });
+
+      html += '<div class="uc-item" style="margin:8px 0;padding:10px;border:1px solid var(--card-border,#2a3f4a);border-radius:12px">' +
+        '<b>Período ' + esc(d.periodo) + '</b>' +
+        resumoAvaliado +
+        (detalhe ? '<div style="margin-top:6px">' + detalhe + '</div>' : '') +
+        (d.textos && d.textos.obs ? '<div class="uc-mini" style="margin-top:4px">Obs. do professor: ' + esc(d.textos.obs) + '</div>' : '');
+
+      if (lib) {
+        /* Resultado liberado: mostra decisão final */
+        html += '<div style="margin-top:8px;padding:8px;border-radius:10px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.3)">' +
+          '<div class="uc-mini"><b>Resultado liberado</b></div>' +
+          (d.revelado
+            ? '<div style="margin-top:4px"><b>🥋 Graduação: ' + esc(d.cordaFinal || '—') + '</b></div>'
+            : '<div class="uc-mini" style="margin-top:4px">Graduação será revelada no Batizado.</div>') +
+          (d.aptoFinal
+            ? '<div class="uc-mini" style="margin-top:4px">🎓 Certificado disponível a partir de <b>' + txtPub + '</b>.</div>'
+            : '<div class="uc-mini" style="margin-top:4px">Resultado registrado pelo professor.</div>') +
+        '</div>';
+      } else {
+        html += '<div class="uc-mini" style="margin-top:8px;color:#ffc107">🔒 Resultado final ainda não liberado pelo professor. Você já pode ver o que foi avaliado acima; a decisão (apto / corda) sai para todos juntos.</div>';
+      }
+
+      html += '<div class="uc-linha" style="margin-top:6px"><button class="btn btn-secondary btn-mini" type="button" onclick="ucToggleBoletim(\'' + d.id + '\')">' +
+        (d.salvoPeloAluno ? '<i class="fas fa-bookmark"></i> Remover do meu painel' : '<i class="far fa-bookmark"></i> Salvar no meu painel') +
         '</button></div></div>';
     });
     card.innerHTML = html;
@@ -17641,7 +18174,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
 
   /* atualiza o boletim do aluno quando o professor libera ou oculta os resultados */
-  DB.escutar('config', function () { try { renderBoletim(); } catch (e) {} });
+  DB.escutar('config', function () { try { renderBoletim(); } catch (e) {} try { renderIndicados(); } catch (e2) {} });
+  try { DB.escutar('avaliacoesSemestrais', function () { try { renderIndicados(); } catch (e3) {} }); } catch (e4) {}
 
   /* ===== CRONÔMETRO ATÉ O BATIZADO (aba Início, para todos) ===== */
   /* Data padrão; a ADM pode alterar (fica salva em config/batizado) */
@@ -17737,55 +18271,104 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   function renderIndicados() {
     var card = el('ucIndicados');
     if (!card) return;
-    card.style.display = cicloAtivo() ? '' : 'none';
-    if (!cicloAtivo()) return;
+    /* Mostra o relatório sempre que houver avaliações finalizadas, ou durante o ciclo ativo */
+    var finais = listar('avaliacoesSemestrais').filter(function (d) { return d.status === 'finalizada'; });
+    var temCiclo = !!cicloAtivo();
+    if (!temCiclo && !finais.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
 
     var alunos = listar('alunos').filter(function (a) { return a.ativo !== false && String(a.nome || '').trim(); });
-    var finais = listar('avaliacoesSemestrais').filter(function (d) { return d.status === 'finalizada'; });
 
+    /* última avaliação finalizada por aluno */
     var ultima = {};
     finais.forEach(function (d) {
       var atual = ultima[d.alunoId];
-      if (!atual || String(d.periodo) > String(atual.periodo)) ultima[d.alunoId] = d;
+      if (!atual || String(d.periodo) > String(atual.periodo) ||
+          String(d.atualizadoEm || '') > String(atual.atualizadoEm || '')) {
+        ultima[d.alunoId] = d;
+      }
     });
 
-    var linhas = alunos.filter(function (a) {
-      return !(ultima[a.id] && ultima[a.id].revelado);
-    }).map(function (a) {
+    var liberadoPorPeriodo = {};
+    function liberado(periodo) {
+      if (!periodo) return false;
+      if (liberadoPorPeriodo[periodo] != null) return liberadoPorPeriodo[periodo];
+      liberadoPorPeriodo[periodo] = !!resultadosLiberados(periodo);
+      return liberadoPorPeriodo[periodo];
+    }
+
+    var linhas = alunos.map(function (a) {
       var av = ultima[a.id] || null;
       return {
-        nome: a.nome,
+        id: a.id,
+        nome: a.apelido || a.nome,
+        nomeCompleto: a.nome,
         graduacaoAtual: a.graduacao || '',
-        indicado: av ? (av.cordaSugerida || '—') : indicacaoDe(a.graduacao),
-        av: av
+        av: av,
+        lib: av ? liberado(av.periodo) : false
       };
-    }).sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); });
+    }).sort(function (x, y) { return String(x.nomeCompleto).localeCompare(String(y.nomeCompleto)); });
+
+    var nFin = linhas.filter(function (l) { return l.av; }).length;
+    var nLib = linhas.filter(function (l) { return l.av && l.lib; }).length;
+    var nApto = linhas.filter(function (l) { return l.av && l.lib && l.av.aptoFinal; }).length;
 
     var sig = JSON.stringify(linhas.map(function (l) {
-      return [l.nome, l.graduacaoAtual, l.indicado, l.av && [l.av.id, l.av.aptoFinal, l.av.cordaFinal]];
+      var av = l.av;
+      return [l.id, av && av.id, av && av.periodo, av && av.mediaTecnica, av && av.mediaMusical,
+        av && av.aptoFinal, av && av.cordaFinal, av && av.revelado, l.lib];
     }));
     if (card.getAttribute('data-sig') === sig) return;
     card.setAttribute('data-sig', sig);
 
-    var html = '<h3><i class="fas fa-users"></i> Alunos cadastrados</h3>' +
-      '<p class="uc-mini">A situação de cada aluno atualiza depois da avaliação finalizada pelo professor.</p>';
+    var html = '<h3><i class="fas fa-clipboard-list"></i> Relatório da Avaliação Semestral</h3>' +
+      '<p class="uc-mini">Médias aparecem quando a avaliação é <b>finalizada</b>. O resultado completo (apto / corda) só depois que o professor <b>libera</b> o período.</p>' +
+      '<div class="uc-mini" style="margin-bottom:8px">Finalizados: <b>' + nFin + '</b> · Período liberado: <b>' + nLib + '</b> · Aptos (após liberação): <b>' + nApto + '</b></div>';
+
     if (!linhas.length) {
       html += '<p class="uc-mini">Nenhum aluno cadastrado.</p>';
     } else {
       html += linhas.map(function (l) {
-        var status, receber = '';
-        if (!l.av) {
+        var av = l.av;
+        var bloco = '';
+        var status;
+
+        if (!av) {
           status = '<span style="color:var(--text-sub,#9fb3bf);font-weight:700">⏳ Aguardando avaliação</span>';
-        } else if (l.av.aptoFinal) {
-          status = '<span style="color:#00c853;font-weight:700">✅ Apto</span>';
-          receber = '<div class="uc-mini">Vai receber: <b>' + esc(l.av.cordaFinal || '—') + '</b></div>';
+          bloco =
+            '<div class="uc-mini">Graduação atual: <b>' + esc(l.graduacaoAtual || '—') + '</b></div>';
+        } else if (!l.lib) {
+          /* Finalizada, ainda sem liberação: só médias / o que foi avaliado */
+          status = '<span style="color:var(--accent-blue,#00d2ff);font-weight:700">📋 Avaliado · resultado pendente</span>';
+          bloco =
+            '<div class="uc-mini">Período <b>' + esc(av.periodo || '—') + '</b></div>' +
+            '<div class="uc-mini">Técnica: <b>' + (av.mediaTecnica != null ? av.mediaTecnica + '%' : '—') +
+              '</b> · Toques/jogos: <b>' + (av.mediaMusical != null ? av.mediaMusical + '%' : '—') + '</b>' +
+              (av.frequenciaSemanal != null ? ' · Freq.: <b>' + av.frequenciaSemanal + '/sem</b>' : '') + '</div>' +
+            '<div class="uc-mini">Graduação atual: <b>' + esc(l.graduacaoAtual || av.cordaAtual || '—') + '</b></div>' +
+            '<div class="uc-mini" style="color:#ffc107;margin-top:2px">🔒 Resultado completo só após o professor liberar o período.</div>';
         } else {
-          status = '<span style="color:#ef5350;font-weight:700">❌ Não apto</span>';
+          /* Liberado: resultado completo */
+          if (av.aptoFinal) {
+            status = '<span style="color:#00c853;font-weight:700">✅ Apto</span>';
+          } else {
+            status = '<span style="color:#ef5350;font-weight:700">❌ Não apto</span>';
+          }
+          bloco =
+            '<div class="uc-mini">Período <b>' + esc(av.periodo || '—') + '</b></div>' +
+            '<div class="uc-mini">Técnica: <b>' + (av.mediaTecnica != null ? av.mediaTecnica + '%' : '—') +
+              '</b> · Toques/jogos: <b>' + (av.mediaMusical != null ? av.mediaMusical + '%' : '—') + '</b>' +
+              (av.frequenciaSemanal != null ? ' · Freq.: <b>' + av.frequenciaSemanal + '/sem</b>' : '') + '</div>' +
+            '<div class="uc-mini">Graduação atual: <b>' + esc(l.graduacaoAtual || av.cordaAtual || '—') + '</b></div>' +
+            (av.aptoFinal
+              ? '<div class="uc-mini">Vai receber: <b>' + esc(av.cordaFinal || av.cordaSugerida || '—') + '</b>' +
+                  (av.revelado ? ' · <span style="color:#00c853">revelada no Batizado</span>' : ' · revelação no Batizado') + '</div>'
+              : '<div class="uc-mini">Decisão: não apto neste período.</div>');
         }
-        return '<div class="uc-item"><div style="display:flex;justify-content:space-between;gap:8px"><b>' + esc(l.nome) +
-          '</b>' + status + '</div>' +
-          '<div class="uc-mini">Graduação atual: <b>' + esc(l.graduacaoAtual || '—') + '</b></div>' +
-          '<div class="uc-mini">Indicado: <b>' + esc(l.indicado) + '</b></div>' + receber + '</div>';
+
+        return '<div class="uc-item" style="margin:6px 0;padding:8px;border:1px solid var(--card-border,#2a3f4a);border-radius:10px">' +
+          '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>' + esc(l.nome) + '</b>' + status + '</div>' +
+          bloco + '</div>';
       }).join('');
     }
     card.innerHTML = html;
@@ -17910,7 +18493,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     '<div class="uc-item"><b>Laranja e Azul → Azul</b><div class="uc-mini">Mais de 18 anos · mais de 5 anos de capoeira</div></div>';
   function ultimaAvaliacaoDoAluno(alunoId) {
     return listar('avaliacoesSemestrais').filter(function (d) {
-      return d.alunoId === alunoId && d.status === 'finalizada';
+      return d.alunoId === alunoId && d.status === 'finalizada' && resultadosLiberados(d.periodo);
     }).sort(function (x, y) { return String(y.periodo).localeCompare(String(x.periodo)); })[0] || null;
   }
 
@@ -18320,14 +18903,17 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   function garantirProfessor() {
     var box = el('conteudoProfessor');
     if (!box) return;
-    /* Sem login de professor/ADM/Dev, só o cartão de login fica na aba (não injeta gestão de alunos) */
+    /* Sem login de professor/ADM/Dev, só o cartão de login fica na aba */
     var equipeOk = sessaoEquipe && ['professor', 'adm', 'dev'].indexOf(sessaoEquipe.papel) >= 0;
     if (!equipeOk) {
+      try { if (typeof ucPortaoEquipe === 'function') ucPortaoEquipe(false); } catch (e0) {}
       var gAnt = el('ucGestaoAlunos'); if (gAnt) gAnt.remove();
       var bAnt = el('ucBtnAvalSemestral'); if (bAnt) bAnt.remove();
       var badgeAnt = el('ucBadgeDup'); if (badgeAnt) badgeAnt.remove();
+      var cardAval = el('ucCardAvaliacao'); if (cardAval) cardAval.remove();
       return;
     }
+    try { if (typeof ucPortaoEquipe === 'function') ucPortaoEquipe(true); } catch (e1) {}
     if (!el('ucBtnAvalSemestral')) {
       var b = document.createElement('button');
       b.id = 'ucBtnAvalSemestral';
@@ -18407,6 +18993,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   };
 
   function garantirAluno() {
+    var tab = el('tab3');
+    if (tab && !tab.classList.contains('active') && tab.style.display === 'none') return;
     var painel = el('cardAlunoPainel');
     if (!painel) return;
     if (!el('ucBoletimAluno')) {
@@ -18888,10 +19476,21 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     try { garantirAluno(); } catch (e) { console.warn('[ucAval] aluno', e); }
     try { garantirFormacaoProfessor(); } catch (e) { console.warn('[ucFP]', e); }
   }
-  setTimeout(ciclo, 1200);
-  /* ciclo de atualização das abas: a cada 15 s (antes 3 s) para não travar celulares simples */
-  setInterval(ciclo, 15000);
-  setInterval(atualizarCronometroBatizado, 1000);
+  setTimeout(function () { try { if (typeof ucPortaoEquipe === 'function') ucPortaoEquipe(ucEquipeLogadaOk()); } catch (e) {} }, 600);
+  setTimeout(ciclo, 2000);
+  /* ciclo mais leve: 45 s — análise/avaliação não precisa varrer a cada poucos segundos */
+  setInterval(ciclo, 45000);
+  /* cronômetro do batizado: 1x por segundo só se o card existir e a aba Início estiver visível */
+  setInterval(function () {
+    try {
+      if (document.hidden) return;
+      var c = document.getElementById('ucCronoBatizado');
+      if (!c) return;
+      var tab = document.getElementById('tab1');
+      if (tab && tab.style.display === 'none') return;
+      atualizarCronometroBatizado();
+    } catch (e) {}
+  }, 1000);
 
   console.log('✅ Avaliação Semestral v3 + Gestão de Alunos + Boletim carregados');
 })();
@@ -19203,7 +19802,14 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   JOGOS.forEach(function (g) { try { J(g.id); } catch (e) {} });
   salvarEstado();
   setTimeout(desenhar, 1200);
-  setInterval(tick, 500);
+  setInterval(function () {
+    try {
+      if (document.hidden) return;
+      var ov = document.getElementById('arcadeOverlay');
+      if (!ov || getComputedStyle(ov).display === 'none') return;
+      tick();
+    } catch (e) {}
+  }, 500);
 })();
 </script>
 
@@ -22075,6 +22681,9 @@ function dsUsarSugestao() {
    (three.min.js e GLTFLoader.js), 3) CDN (e guarda a cópia para a próxima vez).
    Se nada disso for possível, mostra a Dandara desenhada (2D) em vez de sumir. */
 (function () {
+  /* DESATIVADO: restauração sem GLB — personagem 3D não carrega */
+  return;
+
   var LIBS = [
     { k: 'three', local: 'three.min.js', urls: ['https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js', 'https://unpkg.com/three@0.128.0/build/three.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'], ok: function () { return !!window.THREE; } },
     { k: 'gltf', local: 'GLTFLoader.js', urls: ['https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js', 'https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js'], ok: function () { return !!(window.THREE && THREE.GLTFLoader); } }
@@ -22478,7 +23087,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       localStorage.setItem(k, JSON.stringify(est));
     } catch (e3) { console.warn('[avisos]', e3); }
   }
-  setInterval(checarAvisos, 15000);
+  setInterval(checarAvisos, 60000);
   setTimeout(checarAvisos, 4000);
 })();
 </script>
@@ -22665,7 +23274,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     var jogando = !!ov && getComputedStyle(ov).display !== 'none';
     if (!jogando && fab.style.display === 'none') fab.style.display = '';
   }
-  setInterval(garantirDandara, 1000);
+  setInterval(garantirDandara, 8000);
   document.addEventListener('visibilitychange', garantirDandara);
   document.addEventListener('DOMContentLoaded', garantirDandara);
 })();
@@ -23288,7 +23897,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       }
     } catch (e) {}
   }
-  setInterval(ajustar, 700);
+  setInterval(ajustar, 4000);
   window.addEventListener('load', function () { setTimeout(function () { ajustar(); limparLembretes(); }, 1500); });
 })();
 </script>
@@ -23324,7 +23933,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       }
     });
   }
-  setInterval(garantir, 1000);
+  setInterval(garantir, 8000);
 })();
 </script>
 
@@ -23356,7 +23965,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     if (grid) Array.prototype.forEach.call(grid.children, function (ch, i) { if (i > 0) ch.style.display = 'none'; });
     var rot = document.getElementById('ucRotuloJogos'); if (rot) rot.style.display = 'none';
   }
-  setInterval(unir, 500);
+  setInterval(unir, 5000);
 })();
 </script>
 <style id="ucMissoesSemTexto">#ucMissoesCard .mini[style*="margin-bottom:6px"]:first-of-type{display:none !important;} #ucMissoesCorpo .mini[style*="margin:2px 0 4px"]{display:none !important;}</style>
@@ -23789,7 +24398,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     montarUI();
     try { DB.escutar('desafiosDandara', renderRanking); } catch (e) {}
     try { DB.escutar('testesDandaraJogos', function () { renderRelatorioAdm(); renderRanking(); }); } catch (e) {}
-    setInterval(montarUI, 2000);
+    setInterval(montarUI, 10000);
   }
   if (document.readyState === 'complete') setTimeout(iniciar, 2500);
   else window.addEventListener('load', function () { setTimeout(iniciar, 2500); });
@@ -25553,24 +26162,64 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
 </script>
 
 <script id="uc-sem-dandara">
-/* Dandara removida — stubs seguros */
+/* Assistente restaurado SEM GLB / SEM personagem 3D.
+   Apenas o botão + chat clássicos. Não sobrescreve as funções reais. */
 (function () {
-  function noop() {}
-  window.toggleAssistente = function () { /* Dandara removida */ };
-  window.mostrarDicaAssistentePrimeiroAcesso = noop;
-  window.assistenteEnviar = noop;
-  window.assistentePerguntar = noop;
-  window.assistenteAdicionarBolha = noop;
-  window.assistenteProcessar = noop;
-  window.assistenteMensagemBoasVindas = noop;
-  try {
-    var fab = document.getElementById('assistenteFab');
-    if (fab) fab.remove();
-    var painel = document.getElementById('assistentePainel');
-    if (painel) painel.remove();
-    var dica = document.getElementById('dicaAssistentePrimeiroAcesso');
-    if (dica) dica.remove();
-  } catch (e) {}
+  function garantirUI() {
+    if (document.getElementById('assistenteFab')) return;
+
+    var dica = document.createElement('div');
+    dica.id = 'dicaAssistentePrimeiroAcesso';
+    dica.className = 'dica-assistente-bolha';
+    dica.style.display = 'none';
+    dica.setAttribute('onclick', 'toggleAssistente()');
+    dica.textContent = 'Oi! Sou a Dandara 👋';
+    document.body.appendChild(dica);
+
+    var fab = document.createElement('button');
+    fab.id = 'assistenteFab';
+    fab.type = 'button';
+    fab.setAttribute('aria-label', 'Abrir assistente');
+    fab.setAttribute('onclick', 'toggleAssistente()');
+    fab.innerHTML = '<i class="fas fa-comments"></i>';
+    document.body.appendChild(fab);
+
+    var painel = document.createElement('div');
+    painel.id = 'assistentePainel';
+    painel.innerHTML =
+      '<div class="assistente-header">' +
+        '<h4><i class="fas fa-child-reaching"></i> Dandara</h4>' +
+        '<button type="button" class="btn btn-mini btn-back" style="width:auto;margin:0;padding:4px 10px;" onclick="toggleAssistente()"><i class="fas fa-times"></i></button>' +
+      '</div>' +
+      '<div class="assistente-msgs" id="assistenteMsgs"></div>' +
+      '<div class="assistente-atalhos">' +
+        '<button type="button" class="assistente-atalho" onclick="assistentePerguntar(\'próxima aula\')">Próxima aula</button>' +
+        '<button type="button" class="assistente-atalho" onclick="assistentePerguntar(\'meu check-in\')">Check-in</button>' +
+        '<button type="button" class="assistente-atalho" onclick="assistentePerguntar(\'horários\')">Horários</button>' +
+        '<button type="button" class="assistente-atalho" onclick="assistentePerguntar(\'pedir treino\')">Pedir treino</button>' +
+        '<button type="button" class="assistente-atalho" onclick="assistentePerguntar(\'ajuda\')">Ajuda</button>' +
+      '</div>' +
+      '<div class="assistente-input-row">' +
+        '<input id="assistenteInput" type="text" placeholder="Pergunte à Dandara..." autocomplete="off" onkeydown="if(event.key===\'Enter\')assistenteEnviar()">' +
+        '<button type="button" class="btn" style="width:auto;margin:0;" onclick="assistenteEnviar()"><i class="fas fa-paper-plane"></i></button>' +
+      '</div>';
+    document.body.appendChild(painel);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(garantirUI, 300); });
+  } else {
+    setTimeout(garantirUI, 300);
+  }
+
+  // Depois que o app carrega, mostra a dica de primeiro acesso se a função existir
+  setTimeout(function () {
+    try {
+      if (typeof mostrarDicaAssistentePrimeiroAcesso === 'function') {
+        mostrarDicaAssistentePrimeiroAcesso();
+      }
+    } catch (e) {}
+  }, 3500);
 })();
 </script>
 
