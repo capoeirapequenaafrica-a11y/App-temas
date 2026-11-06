@@ -934,15 +934,6 @@ button.uc-btn-invalido{opacity:.55;pointer-events:none;filter:grayscale(.2);}
     </div>
 
 
-    <!-- UX fitness: resumo no Início → detalhe na aba Jogos (nada removido abaixo) -->
-    <div class="card card-destaque brilho-verde" id="cardAtalhoArcadeInicio" style="border:1px solid var(--gold);">
-      <h3 style="color:var(--gold);"><i class="fas fa-gamepad"></i> Arcade da Academia</h3>
-      <p class="mini" style="margin-bottom:8px;">8 mini-jogos · 10 níveis · ranking grátis. O catálogo completo fica na aba <b>Jogos</b>.</p>
-      <div id="resumoArcadeInicio" class="mini" style="margin-bottom:8px;color:var(--text-sub);">Carregando progresso…</div>
-    </div>
-
-
-
     <div class="aviso-formacao-remunerada" id="avisoFormacaoRemunerada" role="note">
       <span class="aviso-icone">⚠️</span>
       <span><b>Aviso ao aluno:</b> a formação de alunos é uma etapa de aprendizado. <b>Depois de formado, o trabalho de dar aula passa a ser remunerado.</b></span>
@@ -1718,7 +1709,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'checkinsProfessor', 'atividadeAluno', 'bioCredenciais', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasFormacao', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais', 'errosApp', 'acessosAluno', 'justificativasFalta', 'testesDandaraJogos', 'desafiosDandara', 'contasTeste', 'partidasDandara', 'pontosDandara', 'checkinsFormacao', 'provasFormacaoProfessor', 'metasAluno'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'checkinsProfessor', 'atividadeAluno', 'bioCredenciais', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasFormacao', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais', 'errosApp', 'acessosAluno', 'justificativasFalta', 'testesDandaraJogos', 'desafiosDandara', 'contasTeste', 'partidasDandara', 'pontosDandara', 'checkinsFormacao', 'provasFormacaoProfessor', 'metasAluno', 'fotosTreino', 'chatAlunos'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -2064,7 +2055,12 @@ var DB = {
     COLECOES.forEach(function (col) {
       self.fs.collection(col).onSnapshot(function (snap) {
         var arr = [];
-        snap.forEach(function (doc) { arr.push(Object.assign({ id: doc.id }, doc.data())); });
+        snap.forEach(function (doc) {
+          var item = Object.assign({ id: doc.id }, doc.data());
+          try { Object.defineProperty(item, '_docId', { value: doc.id, enumerable: false }); } catch (eD) {}
+          arr.push(item);
+        });
+        if (col === 'alunos') { try { self.separarIdsRepetidos(arr); } catch (eS) { console.warn('[DB] ids repetidos', eS); } }
         self.cache[col] = arr;
         self.primeiraCarga[col] = true;
         if (col === 'alunos') {
@@ -2088,6 +2084,7 @@ var DB = {
     try { bruto = JSON.parse(localStorage.getItem(CHAVE_LOCAL) || 'null'); } catch (e) { bruto = null; }
     var self = this;
     COLECOES.forEach(function (col) { self.cache[col] = (bruto && bruto[col]) ? bruto[col] : []; });
+    try { if (self.separarIdsRepetidos(self.cache['alunos'])) self.persistirLocal(); } catch (eL) {}
   },
 
   persistirLocal: function () {
@@ -2100,6 +2097,21 @@ var DB = {
       console.warn('[DB] Não foi possível gravar no localStorage.', e);
       mostrarToast('Armazenamento local cheio ou bloqueado.', 'erro');
     }
+  },
+
+  /* Cadastro copiado por engano fica com o MESMO id do original (o id vai gravado dentro do documento),
+     e aí não dá para marcar, comparar nem juntar. Aqui cada cópia ganha o próprio id. O cadastro de
+     verdade mantém o id, então presenças, avaliações e certificados continuam ligados a ele. */
+  separarIdsRepetidos: function (arr) {
+    var grupos = {}, mudou = 0;
+    (arr || []).forEach(function (a) { if (a && a.id) { (grupos[a.id] = grupos[a.id] || []).push(a); } });
+    Object.keys(grupos).forEach(function (k) {
+      var g = grupos[k];
+      if (g.length < 2) return;
+      var dono = g.filter(function (a) { return a._docId === k; })[0] || g[0];
+      g.forEach(function (a) { if (a === dono) return; a.id = a._docId || uid(); mudou++; });
+    });
+    return mudou;
   },
 
   /* ---------- API comum ---------- */
@@ -2803,6 +2815,7 @@ function autenticarEquipe(papelRequerido) {
     return;
   }
   sessaoEquipe = { id: achado.id, nome: achado.nome, papel: achado.papel };
+  try { if (window.ucGarantirAvaliacaoAgora) window.ucGarantirAvaliacaoAgora(); } catch (e) {}
   registroLog('equipe', 'Login equipe: ' + achado.nome + ' (' + achado.papel + ')');
   setTimeout(function () { try { ucAvisarPendencias(); } catch (e) {} }, 2500);
   mostrarToast('Bem-vindo(a), ' + esc(achado.nome) + '!' + (achado.senhaPadrao ? ' Você está usando a senha padrão da equipe.' : ''));
@@ -2819,6 +2832,7 @@ function sairEquipe() {
 function exigirEquipe(papeis, container, rotuloPapel) {
   if (sessaoEquipe && papeis.indexOf(sessaoEquipe.papel) >= 0) {
     try { if (typeof ucPortaoEquipe === 'function') ucPortaoEquipe(true); } catch (e) {}
+    try { if (window.ucGarantirAvaliacaoAgora) window.ucGarantirAvaliacaoAgora(); } catch (e) {}
     return true;
   }
   montarLoginEquipe(container, rotuloPapel || papeis[papeis.length - 1]);
@@ -4440,26 +4454,7 @@ function baixarCertificado(id) {
 </script>
 
 
-<script>
-(function(){
-  function redirJogos(){
-    var c = document.getElementById('cardAtalhoArcadeInicio');
-    if(!c) return;
-    var btns = c.querySelectorAll('button, a');
-    btns.forEach(function(b){
-      if((b.textContent||'').toLowerCase().indexOf('jog')>=0 || b.onclick){
-        b.addEventListener('click', function(e){
-          /* leave existing handlers; also ensure tab */
-        });
-      }
-    });
-    var p = c.querySelector('p.mini') || c.querySelector('p');
-    if(p) p.textContent = 'Use a aba Jogos para todos os mini-games (evita duplicar no Inicio).';
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', redirJogos);
-  else setTimeout(redirJogos, 500);
-})();
-</script>
+
 
 <script>
 /* --- mural --- */
@@ -9444,7 +9439,7 @@ function bioAtivar() {
           rpId: rec.rpId,
           aparelho: (navigator.userAgent || '').slice(0, 120)
         });
-        try { a.bioCredId = rec.credId; a.bioAtualizadoEm = rec.criadoEm; DB.salvar('alunos', a); } catch (eA) {}
+        try { a.bioCredId = rec.credId; a.bioAtualizadoEm = rec.criadoEm; DB.salvar('alunos', { bioCredId: a.bioCredId, bioAtualizadoEm: a.bioAtualizadoEm }, a.id); } catch (eA) {}
       }
     } catch (eDB) {}
     mostrarToast('Digital / rosto ativado neste aparelho!');
@@ -10751,6 +10746,13 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
         '<div><label class="campo-label">Anos de capoeira</label><input type="number" id="ucAnos" min="0" max="80"></div>' +
       '</div>' +
       '<div class="uc-mini" id="ucStatus" style="margin:8px 0">Selecione um aluno.</div>' +
+      (function () {
+        var nomes = ['1. Chutes', '2. Esquivas', '3. Decidas', '4. Sequências', '5. Toques', '6. Jogos', '7. Instrumentos', '8. Participação', '9. Compromisso'];
+        return '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px">' +
+          nomes.map(function (t, i) { return '<button type="button" class="btn btn-secondary btn-mini" onclick="ucAvalAbrir(' + i + ')">' + esc(t) + '</button>'; }).join('') +
+          '<button type="button" class="btn btn-mini" onclick="ucAvalAbrir(-1)">Abrir todas</button>' +
+          '<button type="button" class="btn btn-secondary btn-mini" onclick="ucAvalAbrir(-2)">Fechar todas</button></div>';
+      })() +
 
       acc('1. Chutes', pares(CHUTES, 'chu_'), true) +
       acc('2. Esquivas', pares(ESQUIVAS, 'esq_')) +
@@ -11012,6 +11014,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   }
 
   function mostrarResultado() {
+    if (!el('ucAptoFinal') || !el('ucCordaFinal')) return;   /* formulário ainda não está na tela */
     var d = coletar();
     var r = calcular(d);
     el('ucAptoFinal').value = r.apto ? 'sim' : 'nao';
@@ -11032,6 +11035,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 
   /* ===== SALVAR ===== */
   function salvar(status) {
+    if (!el('ucPeriodo')) { toast('Reabra o período da avaliação e tente salvar de novo.', 'erro'); return; }
     var ciclo = cicloAvaliacao();
     if (status === 'finalizada' && (!ciclo || Date.now() > ciclo.prazo.getTime())) {
       toast('Fora do período de avaliação. Você ainda pode salvar rascunhos.', 'erro');
@@ -13480,6 +13484,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     try { garantirAluno(); } catch (e) { console.warn('[ucAval] aluno', e); }
     try { garantirFormacaoProfessor(); } catch (e) { console.warn('[ucFP]', e); }
   }
+  window.ucGarantirAvaliacaoAgora = function () { try { garantirProfessor(); } catch (e) {} };
   setTimeout(function () { try { if (typeof ucPortaoEquipe === 'function') ucPortaoEquipe(ucEquipeLogadaOk()); } catch (e) {} }, 600);
   setTimeout(ciclo, 2000);
   /* ciclo mais leve: 45 s — análise/avaliação não precisa varrer a cada poucos segundos */
@@ -13817,20 +13822,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
 })();
 </script>
 
-<script>
-function abrirSpaceImpact() {
-  var url = 'space-impact-aberto.html';
-  function ir() { var w = window.open(url, '_blank'); if (!w) location.href = url; }
-  function faltando() {
-    abrirModal('Space Impact não encontrado',
-      '<p class="mini">O arquivo <b>' + url + '</b> não está na mesma pasta do <b>index.html</b> (no GitHub Pages, no mesmo repositório).</p>' +
-      '<p class="mini" style="margin-top:6px">Envie esse arquivo junto com o index.html para o jogo abrir.</p>', '');
-    try { if (typeof ucReportarErro === 'function') ucReportarErro('recurso', 'Arquivo do jogo não encontrado: ' + url, 'abrirSpaceImpact'); } catch (e) {}
-  }
-  if (location.protocol === 'file:' || typeof fetch !== 'function') { ir(); return; }
-  fetch(url, { method: 'HEAD', cache: 'no-store' }).then(function (r) { if (r.ok) ir(); else faltando(); }).catch(function () { ir(); });
-}
-</script>
+
 <script id="ccCadastros">
 /* =====================================================================
    CENTRAL DE CADASTROS (Professor + ADM)
@@ -14668,11 +14660,22 @@ function abrirSpaceImpact() {
     var vinc = {}; L.forEach(function (a) { vinc[a.id] = vinculosDe(a.id); });
     var h = '<p class="cc-mini">Deslize para o lado para ver todos. <b>Principal</b> = o cadastro que continua existindo. Em cada linha, marque o dado que vale. ' +
       'As presenças, avaliações, certificados e mensagens dos outros passam para o principal. Os outros ficam <b>arquivados</b> (nada é apagado).</p>' +
+      (function () {
+        var outros = L.filter(function (a) { return a.id !== C.principal; });
+        return '<div class="cc-painel" style="margin:8px 0;padding:10px;border:1px solid var(--gold,#d4a017);border-radius:12px">' +
+          '<b>Quais cadastros juntar ao principal?</b>' +
+          outros.map(function (a) {
+            return '<label style="display:flex;gap:10px;align-items:center;padding:10px 0;font-size:1rem;cursor:pointer">' +
+              '<input type="checkbox" data-inc="' + esc(a.id) + '" style="width:24px;height:24px;min-width:24px"' + (C.incluir[a.id] !== false ? ' checked' : '') + '> ' +
+              '<span>' + esc(a.nome) + (a.apelido ? ' (' + esc(a.apelido) + ')' : '') + '</span></label>';
+          }).join('') +
+          '<div class="cc-mini">Desmarque os que não devem ser juntados. O principal é o cadastro que continua existindo.</div></div>';
+      })() +
       '<div class="cc-tab-wrap"><table class="cc-tab"><tr><th>Cadastro</th>' +
       L.map(function (a) {
         return '<th><label><input type="radio" name="ccPrinc" value="' + esc(a.id) + '"' + (a.id === C.principal ? ' checked' : '') + '> <span><b>Principal</b></span></label>' +
           '<div style="margin-top:4px"><b style="color:var(--primary-green,#20c77a)">' + esc(a.nome) + '</b></div>' +
-          (a.id !== C.principal ? '<label style="margin-top:4px"><input type="checkbox" data-inc="' + esc(a.id) + '"' + (C.incluir[a.id] !== false ? ' checked' : '') + '> <span class="cc-mini">juntar este</span></label>' : '') + '</th>';
+          '' + '</th>';
       }).join('') + '</tr>';
     h += '<tr><td>Presenças</td>' + L.map(function (a) { return '<td>' + vinc[a.id].presencas + ' (' + vinc[a.id].aprovadas + ' aprov.)</td>'; }).join('') + '</tr>';
     h += '<tr><td>Avaliações</td>' + L.map(function (a) { return '<td>' + vinc[a.id].avaliacoes + '</td>'; }).join('') + '</tr>';
@@ -16025,8 +16028,10 @@ function dsUsarSugestao() {
       try { e.setAttribute('aria-label', nomeDoCampo(e)); } catch (x) {}
     });
   }
-  function aumentarTextoMiudo() {
-    document.querySelectorAll('.tab-content *').forEach(function (e) {
+  function aumentarTextoMiudo(raiz) {
+    var lista = (raiz && raiz !== document.body) ? raiz.querySelectorAll('*') : document.querySelectorAll('.tab-content *');
+    Array.prototype.forEach.call(lista, function (e) {
+      if (!e.closest || !e.closest('.tab-content')) return;
       if (!e.childNodes.length || e.children.length > 3) return;
       var tem = false;
       for (var i = 0; i < e.childNodes.length; i++) if (e.childNodes[i].nodeType === 3 && e.childNodes[i].textContent.trim()) { tem = true; break; }
@@ -16035,8 +16040,16 @@ function dsUsarSugestao() {
       if (fs && fs < MIN) e.style.fontSize = MIN + 'px';
     });
   }
-  function rodar() { t = null; try { rotular(document); aumentarTextoMiudo(); } catch (e) {} }
-  function agendar() { if (!t) t = setTimeout(rodar, 700); }
+  var raizesRot = [];
+  function coletarRaizes(muts) {
+    if (!muts || !muts.length) { raizesRot.push(document.body); return; }
+    muts.forEach(function (m) { Array.prototype.forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1) raizesRot.push(n); }); });
+  }
+  function rodar() {
+    t = null; var rs = raizesRot.splice(0);
+    try { rs.forEach(function (r) { if (r.isConnected) { rotular(r); aumentarTextoMiudo(r); } }); } catch (e) {}
+  }
+  function agendar(muts) { coletarRaizes(muts); if (!t) t = setTimeout(rodar, 700); }
   function iconeIphone() {
     try {
       var img = document.getElementById('headerLogo1');
@@ -16093,10 +16106,12 @@ function dsUsarSugestao() {
   function iniciar() {
     marcar(document);
     var pendente = false;
-    new MutationObserver(function () {
+    var raizesMarc = [];
+    new MutationObserver(function (muts) {
+      muts.forEach(function (m) { Array.prototype.forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1) raizesMarc.push(n); }); });
       if (pendente) return;
       pendente = true;
-      setTimeout(function () { pendente = false; marcar(document); }, 300);
+      setTimeout(function () { pendente = false; var rs = raizesMarc.splice(0); rs.forEach(function (r) { if (r.isConnected) marcar(r); }); }, 300);
     }).observe(document.body, { childList: true, subtree: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
@@ -17529,8 +17544,8 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   function renderCertificados() {
     var box = document.getElementById('boxCertificadosProfessorFormacao');
     if (!box) return;
-    var certs = DB.listar('certificados').slice().sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
-    if (!certs.length) { box.innerHTML = '<p class="sem-dados">Nenhum certificado emitido ainda.</p>'; return; }
+    var certs = DB.listar('certificados').filter(function (c) { return c.tipo === 'formacao_professor'; }).sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+    if (!certs.length) { box.innerHTML = '<p class="sem-dados">Nenhum certificado de formação emitido ainda.</p>'; return; }
     box.innerHTML = certs.map(function (c) {
       if (c.oficial) {
         return '<div class="lista-item" style="margin-bottom:8px;"><div class="linha"><b>' + escH(c.alunoNome || '-') + '</b><span class="mini">' + escH(c.data || '') + '</span></div>' +
@@ -17754,20 +17769,20 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       '<div class="lista-item" style="margin-bottom:10px;">' +
       '<b>Emitir certificado oficial</b>' +
       '<label class="campo-label">Aluno</label><select id="coAluno">' + (opts || '<option value="">Nenhum aluno</option>') + '</select>' +
-      '<label class="campo-label">Tipo</label><select id="coTipo" onchange="ucCoTipo()"><option value="graduacao">Certificado de Graduação (avaliação)</option><option value="formacao_professor">Certificado de Formação de Professor</option></select>' +
+      '<label class="campo-label">Tipo</label><select id="coTipo" onchange="ucCoTipo()"><option value="formacao_professor">Certificado de Formação de Professor</option></select>' +
       '<label class="campo-label">Apelido (opcional)</label><input id="coApelido" placeholder="deixe em branco para usar o do cadastro">' +
       '<div class="lista-item" style="margin:10px 0;padding:12px;"><b>Validação obrigatória do professor</b>' +
         '<label class="campo-label">Resultado da avaliação</label><select id="coResultadoProfessor"><option value="">Selecione</option><option value="aprovado">Aprovado</option><option value="reprovado">Reprovado</option></select>' +
         '<label class="campo-label">Parecer / observações do professor</label><textarea id="coParecerProfessor" rows="3" placeholder="Registre a avaliação realizada"></textarea>' +
         '<label><input id="coValidacaoProfessor" type="checkbox"> Confirmo que avaliei pessoalmente e validei os requisitos deste certificado.</label>' +
       '</div>' +
-      '<div id="coCamposGraduacao">' +
+      '<div id="coCamposGraduacao" style="display:none;">' +
         '<label class="campo-label">Graduação atual</label><input id="coGradAtual" placeholder="Ex: Crua">' +
         '<label class="campo-label">Graduação a que está apto(a)</label><input id="coGradApta" placeholder="Ex: Amarela">' +
         '<label class="campo-label">Data da avaliação</label><input id="coDataAval" type="date">' +
         '<label class="campo-label">Carga horária acumulada</label><input id="coCarga" placeholder="Ex: 120 horas">' +
       '</div>' +
-      '<div id="coCamposFormacao" style="display:none;">' +
+      '<div id="coCamposFormacao">' +
         '<label class="campo-label">Carga total (h)</label><input id="coCargaTotal" value="200">' +
         '<label class="campo-label">Teórica (h)</label><input id="coCargaTeo" value="60">' +
         '<label class="campo-label">Prática (h)</label><input id="coCargaPra" value="120">' +
@@ -18123,9 +18138,10 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       ? '<p class="mini">Vocês treinaram juntos em ' + v.recentes.map(function (p) { return escH(p.data); }).join(', ') + '.</p>'
       : '<p class="mini">Ainda não treinaram juntos. Venha para a roda!</p>';
     var gesto = v.confianca >= 70 ? '<p class="mini">Ela faz a ginga de boas-vindas ao te ver na roda.</p>' : '';
-    card.innerHTML = '<h3 style="color:var(--gold);"><i class="fas fa-robot"></i> Sua Dandara</h3>' +
+    var htmlD = '<h3 style="color:var(--gold);"><i class="fas fa-robot"></i> Sua Dandara</h3>' +
       '<p class="mini">Personalidade: <b>' + v.personalidade + '</b> · relação: <b>' + faixa(v.confianca) + '</b></p>' +
       memoria + gesto;
+    if (card.__h !== htmlD) { card.__h = htmlD; card.innerHTML = htmlD; }
     if (ultimaConfianca[aluno.id] !== v.confianca) {
       ultimaConfianca[aluno.id] = v.confianca;
       try { DB.salvar('vinculosDandara', { alunoId: aluno.id, personalidade: v.personalidade, confianca: v.confianca, atualizadoEm: new Date().toISOString() }, aluno.id).catch(function () {}); } catch (e) {}
@@ -18172,13 +18188,18 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     cards: function () { var t = el('tab4'), cp = el('conteudoProfessor'), diretos = t ? [].slice.call(t.children).filter(function (c) { return c.id !== 'ucNavProf' && c !== cp; }) : []; return diretos.concat(cp ? [].slice.call(cp.children) : []); },
     sec: function (c) {
       var id = c.id || '', t = N(tituloDe(c));
-      if (id === 'janelaFormacaoProfessor' || id === 'ucCardCertGrad' || id === 'ucFormWrap') return 'formacao';
+      if (id === 'janelaFormacaoProfessor' || id === 'ucFormWrap') return 'formacao';
+      if (id === 'ucCardCertGrad') return 'avaliacoes';
+      if (id === 'ucDuplicadosProf') return 'alunos';
+      if (id === 'ucChatProf') return 'avisos';
+      if (id === 'ucPendentesSemana') return 'avaliacoes';
       if (id === 'ucBtnAvalSemestral') return 'avaliacoes';
       if (id === 'cardLocalProf') return 'hoje';
       if (id === 'cardPadraoEquipe') return 'sistema';
       if (id === 'ucCardAjustes' || id === 'ucSaudeProfWrap' || id === 'ucProfResumo') return id === 'ucProfResumo' ? 'hoje' : 'sistema';
       if (id === 'ccCardProf' || id === 'trProfBloco') return 'alunos';
       if (id === 'cardAvaliacaoSemanalProfessor' || id === 'cardAvalBimestral') return 'avaliacoes';
+      if (/^\s*(emitir certificado|certificados emitidos)/.test(t)) return 'alunos';
       if (/certificad|carga horaria|formacao de professor/.test(t)) return 'formacao';
       if (/dandara|jarvis|sessao|ajustes dos jogos/.test(t)) return 'sistema';
       if (/mensagens privadas|feedbacks|pergunta da semana|leituras de avisos|comentarios dos alunos|publicar aviso/.test(t)) return 'avisos';
@@ -18192,7 +18213,7 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   };
   var ALUNO = {
     key: 'uc_sub_aluno', navId: 'ucNavAluno', padrao: 'resumo',
-    secoes: [['resumo', 'Resumo', 'fa-house'], ['treino', 'Treino', 'fa-dumbbell'], ['evolucao', 'Evolução', 'fa-chart-line'], ['professor', 'Professor', 'fa-comments'], ['conta', 'Conta', 'fa-user-gear']],
+    secoes: [['resumo', 'Resumo', 'fa-house'], ['treino', 'Treino', 'fa-dumbbell'], ['evolucao', 'Evolução', 'fa-chart-line'], ['formacao', 'Formação', 'fa-user-graduate'], ['conversa', 'Conversa', 'fa-comments'], ['professor', 'Professor', 'fa-comments'], ['conta', 'Conta', 'fa-user-gear']],
     cont: function () { return el('tab3'); },
     ativo: function () { var p = el('cardAlunoPainel'); return !!(p && p.offsetParent !== null && typeof sessaoAlunoId !== 'undefined' && sessaoAlunoId); },
     cards: function () { var t = el('tab3'), p = el('cardAlunoPainel'), fora = t ? [].slice.call(t.children).filter(function (c) { return ['cardAlunoLogin', 'cardAlunoPrimeiroCadastro', 'cardAlunoPainel', 'ucNavAluno'].indexOf(c.id) < 0; }) : []; return fora.concat(p ? [].slice.call(p.children) : []); },
@@ -18205,8 +18226,13 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
       if (id === 'cardFalarProfessor') return 'professor';
       if (c.tagName === 'BUTTON') return 'conta';
       if (c.classList.contains('grade-3')) return 'resumo';
-      if (id === 'ucFormCheckinAluno') return 'treino';
-      if (id === 'ucAlunoHist' || id === 'ucFormacaoProfAluno') return 'evolucao';
+      if (id === 'ucFormCheckinAluno' || id === 'ucFormacaoProfAluno' || id === 'ucFormacaoDetalhe' || id === 'ucFormacaoDetalheBox') return 'formacao';
+      if (id === 'ucTreinoDetalheBox') return 'treino';
+      if (id === 'ucProximoTreino' || id === 'ucFotoTreino') return 'treino';
+      if (id === 'ucChatAlunos') return 'conversa';
+      if (id === 'ucAlunoAvisos') return 'professor';
+      if (id === 'ucAlunoMetas') return 'evolucao';
+      if (id === 'ucAlunoHist') return 'evolucao';
       if (id === 'ucAlunoPerfil') return 'conta';
       if (c.classList.contains('titulo-colapsavel') || c.classList.contains('card-corpo-colapsavel')) return 'professor';
       if (c.tagName !== 'DIV') return 'professor';
@@ -18240,10 +18266,11 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   function renderNav(cfg) {
     var nav = el(cfg.navId), cont = cfg.cont(); if (!nav || !cont) return;
     var atual = cont.getAttribute('data-sub') || cfg.padrao, c = contagens();
-    nav.innerHTML = cfg.secoes.map(function (s) {
+    var navHtml = cfg.secoes.map(function (s) {
       var n = cfg.badge(s[0], c);
       return '<button type="button" role="tab" aria-selected="' + (s[0] === atual) + '" class="' + (s[0] === atual ? 'on' : '') + '" data-s="' + s[0] + '"><i class="fas ' + s[2] + '"></i>' + s[1] + (n ? '<span class="uc-n">' + n + '</span>' : '') + '</button>';
     }).join('');
+    if (nav.__h !== navHtml) { nav.__h = navHtml; nav.innerHTML = navHtml; }
   }
   /* A cauda do painel do aluno (pedidos, presenças, avaliações, certificados, perfil) é um bloco só: separo em cards para cada aba */
   function dividirCaudaAluno() {
@@ -18387,13 +18414,21 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   }
 
   /* ---------- ciclo ---------- */
+  var pausado = false, obsLista = [];
   function tudo() {
+    /* pausa os observadores enquanto a montagem mexe no DOM: sem isso ela se dispara sozinha em loop */
+    pausado = true;
+    obsLista.forEach(function (x) { x.o.disconnect(); });
     try { prepararFormacao(); resumoHoje(); montar(PROF); montar(ALUNO); } catch (e) { console.warn('[abas]', e); }
+    obsLista.forEach(function (x) { x.o.takeRecords(); x.o.observe(x.a, { childList: true }); });
+    pausado = false;
   }
-  var timer = null; function agendar() { clearTimeout(timer); timer = setTimeout(tudo, 80); }
+  var timer = null; function agendar() { if (pausado) return; clearTimeout(timer); timer = setTimeout(tudo, 80); }
   function observar() {
     var alvos = [el('conteudoProfessor'), el('cardAlunoPainel'), el('tab4'), el('tab3')];
-    alvos.forEach(function (a) { if (a && !a.__ucObs) { a.__ucObs = 1; new MutationObserver(agendar).observe(a, { childList: true }); } });
+    alvos.forEach(function (a) {
+      if (a && !a.__ucObs) { a.__ucObs = 1; var o = new MutationObserver(agendar); o.observe(a, { childList: true }); obsLista.push({ o: o, a: a }); }
+    });
   }
   (function () {
     var av = DB.avisar, t = null;
@@ -19276,9 +19311,11 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   // observação contínua de novos campos (modais, abas)
   function observar() {
     try {
-      var obs = new MutationObserver(function () {
+      var raizesLig = [];
+      var obs = new MutationObserver(function (muts) {
+        muts.forEach(function (m) { Array.prototype.forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1) raizesLig.push(n); }); });
         clearTimeout(observar._t);
-        observar._t = setTimeout(function () { ligar(document); }, 200);
+        observar._t = setTimeout(function () { var rs = raizesLig.splice(0); rs.forEach(function (r) { if (r.isConnected) ligar(r); }); }, 200);
       });
       if (document.body) obs.observe(document.body, { childList: true, subtree: true });
     } catch (e) {}
@@ -19432,10 +19469,17 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     var painel = document.getElementById('cardAlunoPainel');
     if (!painel || painel.style.display === 'none') return;
     var a = alunoAtual(); if (!a) return;
-    var antigo = document.getElementById('ucAlunoExtras'); if (antigo) antigo.remove();
-    var box = document.createElement('div'); box.id = 'ucAlunoExtras';
-    box.innerHTML = htmlAvisosAluno(a) + htmlMetasAluno(a);
-    painel.insertBefore(box, painel.firstChild);
+    var antigoExtras = document.getElementById('ucAlunoExtras'); if (antigoExtras) antigoExtras.remove();
+    function caixa(id, html) {
+      var v = document.getElementById(id);
+      if (!v) { v = document.createElement('div'); v.id = id; v.__h = null; }
+      if (v.__h !== html) { v.__h = html; v.innerHTML = html; }
+      return v;
+    }
+    var bAvisos = caixa('ucAlunoAvisos', htmlAvisosAluno(a));
+    var bMetas = caixa('ucAlunoMetas', htmlMetasAluno(a));
+    if (painel.firstChild !== bMetas) painel.insertBefore(bMetas, painel.firstChild);
+    if (painel.firstChild !== bAvisos) painel.insertBefore(bAvisos, painel.firstChild);
   };
 
   /* ===== 6) NOTIFICAÇÕES PARA O ALUNO ===== */
@@ -19585,10 +19629,11 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
     var painel = document.getElementById('cardAlunoPainel');
     if (!painel || painel.style.display === 'none') return;
     var a = alunoAtual(); if (!a) return;
-    var antigo = document.getElementById('ucProximoTreino'); if (antigo) antigo.remove();
-    var box = document.createElement('div'); box.id = 'ucProximoTreino';
-    box.innerHTML = htmlProximoTreinoAluno(a);
-    painel.insertBefore(box, painel.firstChild);
+    var box = document.getElementById('ucProximoTreino');
+    if (!box) { box = document.createElement('div'); box.id = 'ucProximoTreino'; box.__h = null; }
+    var htmlT = htmlProximoTreinoAluno(a);
+    if (box.__h !== htmlT) { box.__h = htmlT; box.innerHTML = htmlT; }
+    if (painel.firstChild !== box) painel.insertBefore(box, painel.firstChild);
   };
   var _antesProf = window.htmlPainelInteracaoProfessor;
   window.htmlPainelInteracaoProfessor = function () {
@@ -19658,8 +19703,8 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   function htmlDuplicadosProf() {
     var ativos = ordenarNome(lst('alunos').filter(function (a) { return a.ativo !== false; }));
     var marcados = lst('alunos').filter(function (a) { return a.ativo === false && a.duplicadoDe; });
-    var opts = ativos.map(function (a) { return '<option value="' + h(a.id) + '">' + h(a.nome) + '</option>'; }).join('');
-    var html = '<div class="card" style="border:1px solid var(--danger);"><h3><i class="fas fa-clone"></i> Alunos duplicados</h3>' +
+    var opts = ativos.map(function (a) { return '<option value="' + h(a.id) + '">' + h(a.nome) + (a.apelido ? ' (' + h(a.apelido) + ')' : '') + (a.contato ? ' · ' + h(a.contato) : '') + '</option>'; }).join('');
+    var html = '<div class="card" id="ucDuplicadosProf" style="border:1px solid var(--danger);"><h3><i class="fas fa-clone"></i> Alunos duplicados</h3>' +
       '<p class="mini">Você decide quais cadastros são a mesma pessoa. O duplicado sai das listas e não consegue entrar, mas o histórico fica guardado e pode ser restaurado.</p>' +
       '<label class="campo-label">Este cadastro é duplicado</label><select id="dupSel"><option value="">Selecione...</option>' + opts + '</select>' +
       '<label class="campo-label">Manter este cadastro</label><select id="dupKeep"><option value="">Selecione...</option>' + opts + '</select>' +
@@ -19842,6 +19887,530 @@ window.ucIniciarDandara3D = function () { if (window.ucDandara) return; (functio
   };
 
   window.ucMotivosExclusao = MOTIVOS;
+})();
+</script>
+
+<script id="ucFotoTreinoV1">
+(function () {
+  var FOTOS = 'fotosTreino';
+  function lst(c) { try { var l = DB.listar(c); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function alunoAtual() { try { return typeof alunoLogado === 'function' ? alunoLogado() : null; } catch (e) { return null; } }
+  function diaLocal(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function meiaNoiteISO() { var d = new Date(); d.setHours(24, 0, 0, 0); return d.toISOString(); }
+  function atualizar() { try { if (window.ucAlunoExtrasAppend) window.ucAlunoExtrasAppend(); } catch (e) {} }
+
+  /* apaga por completo as fotos vencidas (do banco e da tela) */
+  function limparExpiradas() {
+    var agora = new Date().toISOString();
+    lst(FOTOS).forEach(function (f) {
+      if (f.expiraEm && f.expiraEm <= agora) {
+        try { Promise.resolve(DB.excluir(FOTOS, f.id)).catch(function () {}); } catch (e) {}
+      }
+    });
+  }
+
+  /* reduz a foto antes de enviar (menos dados e menos peso no celular) */
+  function comprimir(arquivo, larguraMax, qualidade) {
+    return new Promise(function (ok, err) {
+      var leitor = new FileReader();
+      leitor.onerror = err;
+      leitor.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var k = Math.min(1, larguraMax / img.width);
+          var c = document.createElement('canvas');
+          c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          ok(c.toDataURL('image/jpeg', qualidade));
+        };
+        img.onerror = err;
+        img.src = leitor.result;
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+
+  window.ucFotoTreinoEnviar = function (input) {
+    var a = alunoAtual();
+    if (!a) return mostrarToast('Entre como aluno primeiro.', 'erro');
+    var f = input.files && input.files[0];
+    if (!f) return;
+    if (!/^image\//.test(f.type)) return mostrarToast('Escolha uma imagem.', 'erro');
+    mostrarToast('Enviando foto…');
+    comprimir(f, 900, 0.7).then(function (dataUrl) {
+      var dia = diaLocal();
+      return DB.salvar(FOTOS, {
+        alunoId: a.id, alunoNome: a.nome, dia: dia, dataUrl: dataUrl,
+        criadoEm: new Date().toISOString(), expiraEm: meiaNoiteISO()
+      }, a.id + '_' + dia);
+    }).then(function () {
+      input.value = '';
+      mostrarToast('Foto publicada. Ela some amanhã.');
+      atualizar();
+    }).catch(function () { mostrarToast('Não foi possível enviar a foto.', 'erro'); });
+  };
+
+  window.ucFotoTreinoApagar = function () {
+    var a = alunoAtual(); if (!a) return;
+    Promise.resolve(DB.excluir(FOTOS, a.id + '_' + diaLocal())).then(function () {
+      mostrarToast('Foto apagada.');
+      atualizar();
+    }).catch(function () { mostrarToast('Não foi possível apagar.', 'erro'); });
+  };
+
+  function htmlFoto(a) {
+    var dia = diaLocal(), agora = new Date().toISOString();
+    var f = lst(FOTOS).filter(function (x) { return x.alunoId === a.id && x.dia === dia && x.expiraEm && x.expiraEm > agora; })[0];
+    var h = '<div class="card" style="border:1px solid var(--accent-blue);"><h3><i class="fas fa-camera"></i> Foto do treino de hoje</h3>' +
+      '<p class="mini">Só você vê a foto no dia. À meia-noite ela é apagada por completo.</p>';
+    if (f) {
+      return h + '<img src="' + f.dataUrl + '" alt="Foto do treino" style="width:100%;border-radius:10px;margin:6px 0">' +
+        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucFotoTreinoApagar()"><i class="fas fa-trash"></i> Apagar minha foto</button></div>';
+    }
+    return h + '<label class="btn btn-gold" style="display:inline-flex;gap:6px;cursor:pointer"><i class="fas fa-camera"></i> Tirar ou escolher foto' +
+      '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="ucFotoTreinoEnviar(this)"></label></div>';
+  }
+
+  var _antes = window.ucAlunoExtrasAppend;
+  window.ucAlunoExtrasAppend = function () {
+    if (_antes) _antes.apply(this, arguments);
+    var painel = document.getElementById('cardAlunoPainel');
+    if (!painel || painel.style.display === 'none') return;
+    var a = alunoAtual(); if (!a) return;
+    var box = document.getElementById('ucFotoTreino');
+    if (!box) { box = document.createElement('div'); box.id = 'ucFotoTreino'; box.__h = null; }
+    var hh = htmlFoto(a);
+    if (box.__h !== hh) { box.__h = hh; box.innerHTML = hh; }
+    if (painel.firstChild !== box) painel.insertBefore(box, painel.firstChild);
+  };
+
+  DB.escutar(FOTOS, function () { limparExpiradas(); atualizar(); });
+  limparExpiradas();
+  setInterval(limparExpiradas, 60000);
+})();
+</script>
+
+<script id="ucChatAlunosV1">
+(function () {
+  var CHAT = 'chatAlunos', VIDA_MS = 24 * 60 * 60 * 1000, MAX_MSG = 150;
+  function lst(c) { try { var l = DB.listar(c); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function h(x) { return esc(x == null ? '' : String(x)); }
+  function alunoAtual() { try { return typeof alunoLogado === 'function' ? alunoLogado() : null; } catch (e) { return null; } }
+  function equipeOk() { try { return typeof ucEquipeLogadaOk === 'function' && ucEquipeLogadaOk(); } catch (e) { return false; } }
+  function agoraISO() { return new Date().toISOString(); }
+  function hora(iso) { try { var d = new Date(iso); return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+
+  /* mensagens vivas (menos de 24 h), da mais nova para a mais antiga */
+  function vivas() {
+    var agora = agoraISO();
+    return lst(CHAT).filter(function (m) { return m.expiraEm && m.expiraEm > agora; })
+      .sort(function (a, b) { return String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')); })
+      .slice(0, MAX_MSG);
+  }
+
+  /* apaga por completo o que venceu (do banco e da tela) */
+  function limparVencidas() {
+    var agora = agoraISO();
+    lst(CHAT).forEach(function (m) {
+      if (m.expiraEm && m.expiraEm <= agora) {
+        try { Promise.resolve(DB.excluir(CHAT, m.id)).catch(function () {}); } catch (e) {}
+      }
+    });
+  }
+
+  function comprimir(arquivo, larguraMax, qualidade) {
+    return new Promise(function (ok, err) {
+      var leitor = new FileReader();
+      leitor.onerror = err;
+      leitor.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var k = Math.min(1, larguraMax / img.width);
+          var c = document.createElement('canvas');
+          c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          ok(c.toDataURL('image/jpeg', qualidade));
+        };
+        img.onerror = err;
+        img.src = leitor.result;
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+
+  function gravar(dados) {
+    var agora = new Date();
+    dados.criadoEm = agora.toISOString();
+    dados.expiraEm = new Date(agora.getTime() + VIDA_MS).toISOString();
+    return DB.salvar(CHAT, dados);
+  }
+
+  window.ucChatEnviar = function () {
+    var a = alunoAtual(); if (!a) return mostrarToast('Entre como aluno primeiro.', 'erro');
+    var campo = document.getElementById('ucChatTexto');
+    var texto = campo ? campo.value.trim().slice(0, 500) : '';
+    if (!texto) return mostrarToast('Escreva uma mensagem.', 'erro');
+    gravar({ alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', texto: texto, foto: '', denunciada: false })
+      .then(function () { if (campo) campo.value = ''; mostrarToast('Mensagem enviada.'); atualizar(); })
+      .catch(function () { mostrarToast('Não foi possível enviar.', 'erro'); });
+  };
+
+  window.ucChatFoto = function (input) {
+    var a = alunoAtual(); if (!a) return;
+    var f = input.files && input.files[0]; if (!f) return;
+    if (!/^image\//.test(f.type)) return mostrarToast('Escolha uma imagem.', 'erro');
+    mostrarToast('Enviando foto…');
+    comprimir(f, 600, 0.6).then(function (dataUrl) {
+      return gravar({ alunoId: a.id, alunoNome: a.nome, alunoApelido: a.apelido || '', texto: '', foto: dataUrl, denunciada: false });
+    }).then(function () { input.value = ''; mostrarToast('Foto enviada.'); atualizar(); })
+      .catch(function () { mostrarToast('Não foi possível enviar a foto.', 'erro'); });
+  };
+
+  /* o aluno apaga a própria mensagem; o professor apaga qualquer uma */
+  window.ucChatApagar = function (id) {
+    var a = alunoAtual(), dono = lst(CHAT).filter(function (m) { return m.id === id; })[0];
+    if (!dono) return;
+    if (!equipeOk() && (!a || dono.alunoId !== a.id)) return mostrarToast('Você só pode apagar as suas mensagens.', 'erro');
+    if (!confirm('Apagar esta mensagem para todos?')) return;
+    Promise.resolve(DB.excluir(CHAT, id)).then(function () { mostrarToast('Mensagem apagada.'); atualizar(); })
+      .catch(function () { mostrarToast('Não foi possível apagar.', 'erro'); });
+  };
+
+  window.ucChatDenunciar = function (id) {
+    var a = alunoAtual(); if (!a) return;
+    if (!confirm('Denunciar esta mensagem ao professor?')) return;
+    Promise.resolve(DB.salvar(CHAT, { denunciada: true, denunciadaPor: a.id, denunciadaEm: agoraISO() }, id))
+      .then(function () { mostrarToast('Denúncia enviada ao professor.'); })
+      .catch(function () { mostrarToast('Não foi possível denunciar.', 'erro'); });
+  };
+
+  function htmlMensagem(m, aluno) {
+    var meu = aluno && m.alunoId === aluno.id;
+    var cab = '<b>' + h(m.alunoApelido || m.alunoNome || 'Aluno') + '</b> <span class="mini">· ' + h(hora(m.criadoEm)) + '</span>' +
+      (m.denunciada ? ' <span class="mini" style="color:#ff8080;">· denunciada</span>' : '');
+    var corpo = (m.texto ? '<div>' + h(m.texto) + '</div>' : '') +
+      (m.foto ? '<img src="' + m.foto + '" alt="Foto" style="max-width:100%;border-radius:10px;margin-top:4px">' : '');
+    var botoes = '';
+    if (meu || equipeOk()) botoes += '<button class="btn btn-secondary btn-mini" type="button" onclick="ucChatApagar(\'' + m.id + '\')"><i class="fas fa-trash"></i> Apagar</button> ';
+    if (!meu && aluno) botoes += '<button class="btn btn-secondary btn-mini" type="button" onclick="ucChatDenunciar(\'' + m.id + '\')"><i class="fas fa-flag"></i> Denunciar</button>';
+    return '<div style="border-bottom:1px solid var(--card-border);padding:8px 0;">' + cab + corpo + (botoes ? '<div style="margin-top:4px">' + botoes + '</div>' : '') + '</div>';
+  }
+
+  function htmlChatAluno(a) {
+    var msgs = vivas();
+    var lista = msgs.length ? msgs.map(function (m) { return htmlMensagem(m, a); }).join('')
+      : '<p class="sem-dados">Ainda não há mensagens. Escreva para a turma!</p>';
+    return '<div class="card" style="border:1px solid var(--accent-blue);"><h3><i class="fas fa-comments"></i> Conversa da turma</h3>' +
+      '<p class="mini">As mensagens somem em 24 horas. Você pode apagar as suas a qualquer momento.</p>' +
+      '<div style="max-height:360px;overflow-y:auto;">' + lista + '</div>' +
+      '<textarea id="ucChatTexto" rows="2" maxlength="500" placeholder="Escreva uma mensagem…" style="margin-top:8px"></textarea>' +
+      '<div class="flex-btn" style="margin-top:6px">' +
+      '<button class="btn" type="button" onclick="ucChatEnviar()"><i class="fas fa-paper-plane"></i> Enviar</button>' +
+      '<label class="btn btn-secondary" style="cursor:pointer"><i class="fas fa-image"></i> Foto<input type="file" accept="image/*" style="display:none" onchange="ucChatFoto(this)"></label>' +
+      '</div></div>';
+  }
+
+  function htmlChatProf() {
+    var msgs = vivas();
+    var denunciadas = msgs.filter(function (m) { return m.denunciada; }).length;
+    var lista = msgs.length ? msgs.map(function (m) { return htmlMensagem(m, null); }).join('')
+      : '<p class="sem-dados">Nenhuma mensagem nas últimas 24 horas.</p>';
+    return '<div class="card" id="ucChatProf" style="border:1px solid var(--accent-blue);"><h3><i class="fas fa-comments"></i> Conversa da turma <span class="badge-count">' + msgs.length + '</span></h3>' +
+      (denunciadas ? '<p class="mini" style="color:#ff8080;"><b>' + denunciadas + ' mensagem(ns) denunciada(s)</b> — confira e apague se for o caso.</p>' : '') +
+      '<div style="max-height:420px;overflow-y:auto;">' + lista + '</div></div>';
+  }
+
+  function atualizar() { try { if (window.ucAlunoExtrasAppend) window.ucAlunoExtrasAppend(); } catch (e) {} try { if (window.ucRenderChatProf) window.ucRenderChatProf(); } catch (e) {} }
+
+  /* aluno: caixa da conversa dentro do painel */
+  var _antes = window.ucAlunoExtrasAppend;
+  window.ucAlunoExtrasAppend = function () {
+    if (_antes) _antes.apply(this, arguments);
+    var painel = document.getElementById('cardAlunoPainel');
+    if (!painel || painel.style.display === 'none') return;
+    var a = alunoAtual(); if (!a) return;
+    var box = document.getElementById('ucChatAlunos');
+    if (!box) { box = document.createElement('div'); box.id = 'ucChatAlunos'; box.__h = null; }
+    var hh = htmlChatAluno(a);
+    if (box.__h !== hh) { box.__h = hh; box.innerHTML = hh; }
+    if (painel.firstChild !== box) painel.insertBefore(box, painel.firstChild);
+  };
+
+  /* professor: lista de mensagens, com denúncias em destaque, dentro do painel da equipe */
+  var _antesProf = window.htmlPainelInteracaoProfessor;
+  window.htmlPainelInteracaoProfessor = function () {
+    return (equipeOk() ? htmlChatProf() : '') + (_antesProf ? _antesProf() : '');
+  };
+  window.ucRenderChatProf = function () {
+    var cp = document.getElementById('conteudoProfessor');
+    var box = document.getElementById('ucChatProf');
+    if (!cp || !box || !equipeOk()) return;
+    var hh = htmlChatProf();
+    if (box.__h !== hh) { box.__h = hh; box.outerHTML = hh; }
+  };
+
+  DB.escutar(CHAT, function () { limparVencidas(); atualizar(); });
+  limparVencidas();
+  setInterval(limparVencidas, 60000);
+})();
+</script>
+
+<script id="ucFormacaoDetalheV1">
+(function () {
+  function lst(c) { try { var l = DB.listar(c); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function h(x) { return esc(x == null ? '' : String(x)); }
+  function alunoAtual() { try { return typeof alunoLogado === 'function' ? alunoLogado() : null; } catch (e) { return null; } }
+  function dataBR(iso) { if (!iso) return '—'; var p = String(iso).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(iso); }
+  function horaBR(iso) { try { return iso ? new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—'; } catch (e) { return '—'; } }
+  function horas(min) { min = Number(min) || 0; var hh = Math.floor(min / 60), mm = min % 60; return (hh ? hh + ' h ' : '') + (mm ? mm + ' min' : (hh ? '' : '0 min')); }
+  var ST = { aberta: 'Em andamento', pendente: 'Aguardando aceite', aprovado: 'Aceita', recusada: 'Recusada' };
+  var STI = { pendente: 'Aguardando', aprovada: 'Ativa', aprovado: 'Ativa', recusado: 'Recusada', recusada: 'Recusada', removido: 'Removida', aberta: 'Em andamento' };
+
+  function htmlDetalhe(a) {
+    var insc = lst('formacaoProfessor').filter(function (f) { return f.alunoId === a.id && f.status !== 'removido'; })[0] || null;
+    var infantil = lst('formacaoInfantil').filter(function (f) { return f.alunoId === a.id; })
+      .sort(function (x, y) { return String(y.criadoEm || '').localeCompare(String(x.criadoEm || '')); })[0] || null;
+    var aulas = lst('aulasFormacao').filter(function (x) { return x.alunoId === a.id; })
+      .sort(function (x, y) { return String(y.data || '').localeCompare(String(x.data || '')) || (y.inicioMs || 0) - (x.inicioMs || 0); });
+
+    if (!insc && !infantil && !aulas.length) return '';
+
+    var aceitas = aulas.filter(function (x) { return x.status === 'aprovado'; });
+    var pend = aulas.filter(function (x) { return x.status === 'pendente'; }).length;
+    var recus = aulas.filter(function (x) { return x.status === 'recusada'; }).length;
+    var aberta = aulas.filter(function (x) { return x.status === 'aberta'; }).length;
+    var minAceitos = aceitas.reduce(function (s, x) { return s + (Number(x.duracaoMin) || 0); }, 0);
+    var ultima = aulas[0] ? dataBR(aulas[0].data) : '—';
+
+    var html = '<div class="card" id="ucFormacaoDetalhe" style="border:1px solid var(--gold);">' +
+      '<h3><i class="fas fa-clipboard-list"></i> Detalhes da minha formação</h3>';
+
+    if (insc) {
+      var dias = (insc.datasAula || insc.diasAula || []);
+      html += '<h4 style="margin-top:6px;">Formação de professor</h4>' +
+        '<div class="mini">Situação: <b>' + h(STI[insc.status] || insc.status) + '</b></div>' +
+        '<div class="mini">Inscrito em: <b>' + dataBR(insc.criadoEm) + '</b>' + (insc.aprovadoEm ? ' · aprovado em <b>' + dataBR(insc.aprovadoEm) + '</b>' : '') + '</div>' +
+        (dias.length ? '<div class="mini">Dias de aula: <b>' + dias.map(dataBR).map(h).join(', ') + '</b></div>' : '') +
+        '<div class="mini">Horas aceitas: <b>' + horas(minAceitos) + '</b> · aulas aceitas: <b>' + aceitas.length + '</b></div>' +
+        '<div class="mini">Aguardando aceite: <b>' + pend + '</b> · recusadas: <b>' + recus + '</b>' + (aberta ? ' · em andamento: <b>' + aberta + '</b>' : '') + '</div>' +
+        '<div class="mini">Última aula: <b>' + ultima + '</b></div>';
+    } else {
+      html += '<p class="mini">Você ainda não está inscrito na formação de professor.</p>';
+    }
+
+    if (infantil) {
+      html += '<h4 style="margin-top:10px;">Formação infantil</h4>' +
+        '<div class="mini">Pedido enviado em <b>' + dataBR(infantil.criadoEm) + '</b> · situação: <b>' + h(STI[infantil.status] || infantil.status) + '</b></div>' +
+        (infantil.respostaProfessor ? '<div class="mini">Resposta do professor: ' + h(infantil.respostaProfessor) + '</div>' : '') +
+        (infantil.decididoEm ? '<div class="mini">Decidido em ' + dataBR(infantil.decididoEm) + (infantil.decididoPor ? ' por ' + h(infantil.decididoPor) : '') + '</div>' : '');
+    }
+
+    if (aulas.length) {
+      html += '<h4 style="margin-top:10px;">Todas as aulas (' + aulas.length + ')</h4>' + aulas.map(function (x) {
+        return '<div style="border-bottom:1px solid var(--card-border);padding:6px 0;">' +
+          '<b>' + dataBR(x.data) + '</b> <span class="mini">· ' + horaBR(x.inicioEm) + ' · ' + horas(x.duracaoMin) + '</span> ' +
+          '<span class="pill">' + h(ST[x.status] || x.status) + '</span>' +
+          (x.fimEm ? '<div class="mini">Fim: ' + horaBR(x.fimEm) + '</div>' : '') +
+          '</div>';
+      }).join('');
+    }
+    return html + '</div>';
+  }
+
+  var _antes = window.ucAlunoExtrasAppend;
+  window.ucAlunoExtrasAppend = function () {
+    if (_antes) _antes.apply(this, arguments);
+    var painel = document.getElementById('cardAlunoPainel');
+    if (!painel || painel.style.display === 'none') return;
+    var a = alunoAtual(); if (!a) return;
+    var hh = htmlDetalhe(a);
+    var box = document.getElementById('ucFormacaoDetalheBox');
+    if (!hh) { if (box) box.remove(); return; }
+    if (!box) { box = document.createElement('div'); box.id = 'ucFormacaoDetalheBox'; box.__h = null; }
+    if (box.__h !== hh) { box.__h = hh; box.innerHTML = hh; }
+    if (painel.firstChild !== box) painel.insertBefore(box, painel.firstChild);
+  };
+
+  DB.escutar('aulasFormacao', function () { try { if (window.ucAlunoExtrasAppend) window.ucAlunoExtrasAppend(); } catch (e) {} });
+  DB.escutar('formacaoProfessor', function () { try { if (window.ucAlunoExtrasAppend) window.ucAlunoExtrasAppend(); } catch (e) {} });
+})();
+</script>
+
+<script id="ucTreinoDetalheV1">
+(function () {
+  function lst(c) { try { var l = DB.listar(c); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function h(x) { return esc(x == null ? '' : String(x)); }
+  function alunoAtual() { try { return typeof alunoLogado === 'function' ? alunoLogado() : null; } catch (e) { return null; } }
+  function dataBR(iso) { if (!iso) return '—'; var p = String(iso).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(iso); }
+  function inicioSemana(iso) {
+    var p = String(iso).slice(0, 10).split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function nota(v) { return (v == null || v === '') ? '—' : (Math.round(Number(v) * 10) / 10) + '/10'; }
+  var CRIT = [['tecnica', 'Técnica'], ['disciplina', 'Disciplina'], ['ritmo', 'Ritmo'], ['musicalidade', 'Musicalidade'], ['compromisso', 'Compromisso']];
+  var DICA = {
+    tecnica: 'Revise a execução dos movimentos: faça a sequência devagar, com atenção à postura e aos pés.',
+    disciplina: 'Mantenha a regularidade: não falte às aulas seguidas e pratique em casa entre um treino e outro.',
+    ritmo: 'Treine o ritmo com palmas ou acompanhando o berimbau, marcando o compasso antes de entrar no jogo.',
+    musicalidade: 'Ouça as cantigas e acompanhe o canto; isso melhora a entrada na roda.',
+    compromisso: 'Chegue no horário e registre todos os treinos; o compromisso aparece na sua avaliação.'
+  };
+  var STATUS = { aprovado: 'Confirmado', pendente: 'Aguardando', rejeitado: 'Não confirmado', recusada: 'Não confirmado' };
+
+  function htmlDetalhe(a) {
+    var pres = lst('presencas').filter(function (x) { return x.alunoId === a.id && x.data && x.status !== 'recusada'; })
+      .sort(function (x, y) { return String(y.data).localeCompare(String(x.data)); }).slice(0, 30);
+    var avs = lst('avaliacoes').filter(function (x) {
+      return x.alunoId === a.id && CRIT.some(function (c) { return x[c[0]] !== undefined && x[c[0]] !== null && x[c[0]] !== ''; });
+    }).sort(function (x, y) { return String(y.data || '').localeCompare(String(x.data || '')); });
+    if (!pres.length && !avs.length) return '';
+
+    var medias = CRIT.map(function (c) {
+      var v = avs.map(function (x) { return Number(x[c[0]]); }).filter(function (n) { return !isNaN(n); });
+      return { k: c[0], nome: c[1], m: v.length ? v.reduce(function (s, n) { return s + n; }, 0) / v.length : null };
+    }).filter(function (x) { return x.m !== null; });
+    var ord = medias.slice().sort(function (x, y) { return y.m - x.m; });
+    var fortes = ord.slice(0, 2);
+    var fracos = ord.slice().reverse().filter(function (x) { return !fortes.some(function (f) { return f.k === x.k; }); }).slice(0, 2);
+
+    var html = '<div class="card" id="ucTreinoDetalhe" style="border:1px solid var(--primary-green);">' +
+      '<h3><i class="fas fa-dumbbell"></i> Meu treino a treino</h3>';
+
+    if (medias.length) {
+      html += '<h4 style="margin-top:6px;color:var(--primary-green);">Pontos fortes</h4>' +
+        (fortes.length ? fortes.map(function (x) { return '<div class="mini">✅ <b>' + h(x.nome) + '</b>: média ' + nota(x.m) + '</div>'; }).join('') : '<p class="mini">Ainda não há notas suficientes.</p>') +
+        '<h4 style="margin-top:10px;color:#f0c040;">Para melhorar</h4>' +
+        (fracos.length ? fracos.map(function (x) { return '<div style="margin-bottom:6px"><div class="mini">🎯 <b>' + h(x.nome) + '</b>: média ' + nota(x.m) + '</div><div class="mini">' + h(DICA[x.k]) + '</div></div>'; }).join('') : '<p class="mini">Continue assim, todos os critérios estão bem avaliados.</p>');
+    } else {
+      html += '<p class="mini">Assim que o professor fizer sua avaliação semanal, aqui aparecem seus pontos fortes e o que melhorar.</p>';
+    }
+
+    if (pres.length) {
+      html += '<h4 style="margin-top:12px;">Treino a treino</h4>' + pres.map(function (p) {
+        var av = avs.filter(function (x) { return inicioSemana(x.data) === inicioSemana(p.data); })[0];
+        var linha = '<div style="border-bottom:1px solid var(--card-border);padding:8px 0;">' +
+          '<b>' + dataBR(p.data) + '</b> <span class="mini">· ' + h(p.hora || '') + (p.poloNome ? ' · ' + h(p.poloNome) : '') + '</span> ' +
+          '<span class="pill">' + h(STATUS[p.status] || p.status || '—') + '</span>';
+        if (av) {
+          linha += '<div class="mini" style="margin-top:4px">Avaliação da semana (' + h(av.professor || 'professor') + '): ' +
+            CRIT.filter(function (c) { return av[c[0]] !== undefined && av[c[0]] !== ''; })
+              .map(function (c) { return c[1] + ' ' + nota(av[c[0]]); }).join(' · ') + '</div>';
+          if (av.observacao) linha += '<div class="mini">Observação: ' + h(av.observacao) + '</div>';
+          if (av.desenvolvimento) linha += '<div class="mini">O que trabalhar: ' + h(av.desenvolvimento) + '</div>';
+        } else {
+          linha += '<div class="mini" style="margin-top:4px">Sem avaliação registrada nesta semana.</div>';
+        }
+        return linha + '</div>';
+      }).join('');
+    }
+    return html + '</div>';
+  }
+
+  var _antes = window.ucAlunoExtrasAppend;
+  window.ucAlunoExtrasAppend = function () {
+    if (_antes) _antes.apply(this, arguments);
+    var painel = document.getElementById('cardAlunoPainel');
+    if (!painel || painel.style.display === 'none') return;
+    var a = alunoAtual(); if (!a) return;
+    var hh = htmlDetalhe(a);
+    var box = document.getElementById('ucTreinoDetalheBox');
+    if (!hh) { if (box) box.remove(); return; }
+    if (!box) { box = document.createElement('div'); box.id = 'ucTreinoDetalheBox'; box.__h = null; }
+    if (box.__h !== hh) { box.__h = hh; box.innerHTML = hh; }
+    if (painel.firstChild !== box) painel.insertBefore(box, painel.firstChild);
+  };
+
+  DB.escutar('presencas', function () { try { if (window.ucAlunoExtrasAppend) window.ucAlunoExtrasAppend(); } catch (e) {} });
+  DB.escutar('avaliacoes', function () { try { if (window.ucAlunoExtrasAppend) window.ucAlunoExtrasAppend(); } catch (e) {} });
+})();
+</script>
+
+<script id="ucAvalAtalhosV1">
+/* Atalhos da avaliação semestral: abre uma seção por vez (-1 abre todas, -2 fecha todas) */
+window.ucAvalAbrir = function (i) {
+  var card = document.getElementById('ucCardAvaliacao'); if (!card) return;
+  var ds = [].slice.call(card.querySelectorAll('details.uc-acc'));
+  ds.forEach(function (d, k) { d.open = (i === -1) ? true : (i === -2 ? false : k === i); });
+  if (i >= 0 && ds[i]) { try { ds[i].scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) {} }
+};
+</script>
+
+<script id="ucDomingoV1">
+(function () {
+  function lst(c) { try { var l = DB.listar(c); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function h(x) { return esc(x == null ? '' : String(x)); }
+  function hojeISO() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function inicioSemana(iso) {
+    var p = String(iso).slice(0, 10).split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function equipeOn() { try { return typeof equipeLogadaAtiva === 'function' && !!equipeLogadaAtiva(); } catch (e) { return false; } }
+  var CRIT = ['tecnica', 'disciplina', 'ritmo', 'musicalidade', 'compromisso'];
+  var ROT = { tecnica: 'Técnica', disciplina: 'Disciplina', ritmo: 'Ritmo', musicalidade: 'Musicalidade', compromisso: 'Compromisso' };
+
+  /* quem ainda não tem avaliação semanal nesta semana */
+  function pendentes() {
+    var semana = inicioSemana(hojeISO()), feitos = {};
+    lst('avaliacoes').forEach(function (x) {
+      if (x.alunoId && x.data && inicioSemana(x.data) === semana && CRIT.some(function (c) { return x[c] !== undefined && x[c] !== ''; })) feitos[x.alunoId] = 1;
+    });
+    return lst('alunos').filter(function (a) { return a.ativo !== false && !feitos[a.id]; })
+      .sort(function (x, y) { return String(x.nome || '').localeCompare(String(y.nome || '')); });
+  }
+
+  /* domingo: aviso uma vez por semana no aparelho da equipe */
+  function alertaDomingo() {
+    if (!equipeOn() || new Date().getDay() !== 0) return;
+    var k = 'uc_alerta_domingo_' + hojeISO();
+    try { if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) {}
+    var n = pendentes().length;
+    notificarEquipe('Domingo: hora de avaliar a semana',
+      n ? n + ' aluno(s) ainda sem avaliação semanal.' : 'Todos os alunos já foram avaliados esta semana.');
+  }
+
+  /* professor: card de pendentes dentro do painel */
+  function htmlPendentes() {
+    if (!equipeOn()) return '';
+    var lista = pendentes();
+    var topo = '<div class="card" id="ucPendentesSemana" style="border:1px solid var(--gold);"><h3><i class="fas fa-bell"></i> Avaliação da semana <span class="badge-count">' + lista.length + '</span></h3>';
+    if (!lista.length) return topo + '<p class="sem-dados">Todos os alunos já foram avaliados esta semana ✅</p></div>';
+    return topo + '<p class="mini">Ainda faltam avaliar (a avaliação é feita aos domingos):</p>' +
+      lista.map(function (a) { return '<div style="border-bottom:1px solid var(--card-border);padding:4px 0;"><b>' + h(a.apelido || a.nome) + '</b> <span class="mini">· ' + h(a.nome) + '</span></div>'; }).join('') + '</div>';
+  }
+  var _antesProf = window.htmlPainelInteracaoProfessor;
+  window.htmlPainelInteracaoProfessor = function () {
+    return htmlPendentes() + (_antesProf ? _antesProf() : '');
+  };
+
+  /* avaliação semestral: histórico das avaliações semanais do aluno selecionado */
+  function htmlHistorico(alunoId) {
+    var avs = lst('avaliacoes').filter(function (x) { return x.alunoId === alunoId && CRIT.some(function (c) { return x[c] !== undefined && x[c] !== ''; }); })
+      .sort(function (x, y) { return String(y.data || '').localeCompare(String(x.data || '')); }).slice(0, 12);
+    if (!avs.length) return '<div class="card" style="border:1px solid var(--card-border);"><h3>Avaliações semanais deste aluno</h3><p class="sem-dados">Nenhuma avaliação semanal registrada ainda.</p></div>';
+    var medias = CRIT.map(function (c) {
+      var v = avs.map(function (x) { return Number(x[c]); }).filter(function (n) { return !isNaN(n); });
+      return ROT[c] + ' ' + (v.length ? (Math.round(v.reduce(function (s, n) { return s + n; }, 0) / v.length * 10) / 10) : '—');
+    }).join(' · ');
+    return '<div class="card" style="border:1px solid var(--card-border);"><h3>Avaliações semanais deste aluno (' + avs.length + ')</h3>' +
+      '<p class="mini"><b>Médias:</b> ' + h(medias) + '</p>' +
+      avs.map(function (x) {
+        return '<div style="border-bottom:1px solid var(--card-border);padding:4px 0;"><b>' + h(x.data || '') + '</b> <span class="mini">· ' + h(x.professor || '') + '</span>' +
+          '<div class="mini">' + CRIT.filter(function (c) { return x[c] !== undefined && x[c] !== ''; }).map(function (c) { return ROT[c] + ' ' + h(x[c]); }).join(' · ') + '</div>' +
+          (x.observacao ? '<div class="mini">Obs.: ' + h(x.observacao) + '</div>' : '') + '</div>';
+      }).join('') + '</div>';
+  }
+  document.addEventListener('change', function (e) {
+    if (!e.target || e.target.id !== 'ucAlunoSel') return;
+    var st = document.getElementById('ucStatus'); if (!st) return;
+    var box = document.getElementById('ucHistSemanal');
+    if (!box) { box = document.createElement('div'); box.id = 'ucHistSemanal'; st.parentNode.insertBefore(box, st.nextSibling); }
+    box.innerHTML = e.target.value ? htmlHistorico(e.target.value) : '';
+  });
+
+  setTimeout(alertaDomingo, 4000);
+  setInterval(alertaDomingo, 10 * 60 * 1000);
 })();
 </script>
 </body>
