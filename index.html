@@ -20619,21 +20619,51 @@ window.ucAvalAbrir = function (i) {
     return cat + ' ' + nome + (lado ? ' — ' + lado : '');
   }
 
+  // Aula específica por item: objetivo, exercício e sinal de sucesso
+  var LICOES = {
+    Queixada: { obj: 'subir a perna de ataque com o quadril alinhado', ex: '3 séries de 10 queixadas no ar, em frente a um espelho; depois 3 x 8 no pad com parceiro', suc: 'joelho na altura do ombro, sem girar o tronco' },
+    Armada: { obj: 'girar o corpo com a base firme antes do chute', ex: '3 x 10 armadas lentas no ar; depois 3 x 6 com parceiro segurando o alvo', suc: 'pé de apoio não sai do lugar e o chute acerta o alvo' },
+    MeiaFrente: { obj: 'levar o peito de frente para o alvo na meia-lua de frente', ex: '3 x 10 meias-luas de frente no saco, parando 1 s no ponto', suc: 'pé na altura do ombro e volta para a guarda sem pressa' },
+    MeiaCompasso: { obj: 'fechar o compasso da perna de trás', ex: '3 x 8 com pausa de 2 s no ponto final; depois no ritmo da roda', suc: 'a perna de trás faz um arco completo' },
+    MeiaPresa: { obj: 'manter a perna presa no alvo com equilíbrio', ex: '3 x 6 segurando 2 s no pad', suc: 'segura 2 s sem tremer e volta sem perder a base' },
+    MeiaSolta: { obj: 'soltar a perna no tempo certo, a partir da amarela', ex: '3 x 8 soltando no ritmo do berimbau com parceiro', suc: 'o chute sai no tempo do toque e sem apoio na mão' },
+    Frente: { obj: 'esquivar de frente, tirando a cabeça da linha do golpe', ex: '3 min de sombra de esquiva com troca de peso; depois 3 x 10 com parceiro', suc: 'a cabeça sai da linha antes do golpe e o olhar fica no parceiro' },
+    Lateral: { obj: 'esquivar pelo lado mantendo o corpo ereto', ex: '3 min de rolê de esquiva lateral em dupla; 3 x 10', suc: 'ombros alinhados e o quadril acompanha a esquiva' },
+    Diagonal: { obj: 'esquivar em diagonal sem perder o equilíbrio', ex: '3 x 10 trocas de direção em sombra; depois em dupla', suc: 'pé de apoio firme e volta à guarda no mesmo tempo' },
+    TrocaNegativa: { obj: 'trocar para a negativa com a mão de apoio firme', ex: '3 x 5 lentas; depois em ritmo, com correção do professor', suc: 'a mão toca o chão no ponto certo e o rolê sai limpo' },
+    SobePorTras: { obj: 'subir por trás mantendo o quadril baixo', ex: '3 x 5 com pausa para respirar entre as séries', suc: 'sobe sem levantar o quadril antes do tempo' },
+    SobePelaLateral: { obj: 'subir pela lateral controlando a descida do corpo', ex: '3 x 5 controlando a descida; depois em dupla', suc: 'desce devagar e apoia os dois pés juntos' },
+    Seq1: { obj: 'executar a sequência na ordem e no ritmo', ex: 'dividir em 4 partes e repetir cada uma 5 vezes; depois juntar tudo', suc: 'sequência completa, sem parar e na ordem certa' },
+    Seq2: { obj: 'executar a sequência na ordem e no ritmo', ex: 'dividir em 4 partes e repetir cada uma 5 vezes; depois juntar tudo', suc: 'sequência completa, sem parar e na ordem certa' },
+    Seq3: { obj: 'executar a sequência na ordem e no ritmo', ex: 'dividir em 4 partes e repetir cada uma 5 vezes; depois juntar tudo', suc: 'sequência completa, sem parar e na ordem certa' },
+    Seq4: { obj: 'executar a sequência na ordem e no ritmo', ex: 'dividir em 4 partes e repetir cada uma 5 vezes; depois juntar tudo', suc: 'sequência completa, sem parar e na ordem certa' },
+    Berimbau: { obj: 'tocar o ritmo básico do berimbau', ex: '10 min de toque com metrônomo, do lento ao normal', suc: 'mantém o ritmo sem parar por 1 min' },
+    Atabaque: { obj: 'manter a levada do atabaque', ex: '10 min de levada com metrônomo', suc: 'mantém a levada do começo ao fim da música' },
+    Pandeiro: { obj: 'manter a levada do pandeiro na cantiga', ex: '10 min de levada com a cantiga da aula', suc: 'acompanha a cantiga sem atrasar' }
+  };
+
+  function licaoDoItem(chave) {
+    var partes = chave.split('_'), pref = partes[0];
+    var ult = partes[partes.length - 1];
+    var lado = partes.length > 2 || (partes.length > 1 && (ult === 'E' || ult === 'D' || ult === 'saber'));
+    var base = (lado && partes.length > 2) ? partes.slice(1, -1).join(' ') : (partes.length > 1 && (ult === 'E' || ult === 'D' || ult === 'saber') ? partes.slice(1, -1).join(' ') : partes.slice(1).join(' '));
+    if (pref === 'toq') {
+      var nomeT = partes.slice(1, -1).join(' ') || partes[1];
+      if (ult === 'saber') return { obj: 'jogar no toque ' + nomeT + ' com o ritmo certo', ex: '4 min de jogo no toque ' + nomeT + ', em roda, com a música', suc: 'entra e sai do jogo no tempo do berimbau' };
+      return { obj: 'manter o ritmo do toque ' + nomeT + ' com a ginga', ex: '4 min batendo palmas no compasso e depois fazendo a ginga', suc: 'a ginga acompanha o toque sem atrasar' };
+    }
+    return LICOES[base] || null;
+  }
+
   function aulaPara(chave, valor) {
     var partes = chave.split('_');
-    var tipo = CAT[partes[0]] || 'item';
     var alvo = nomeItem(chave);
-    var passo = valor < LIMITE
-      ? 'Prioridade: melhorar ' + alvo.toLowerCase() + '. Aula de 15 min focada nesse ponto.'
-      : 'Manter e refinar ' + alvo.toLowerCase() + '. Revisão de 10 min na próxima aula.';
-    var dica = partes[0] === 'toq'
-      ? 'treine o toque com o berimbau e a música, marcando o ritmo com palmas antes de tocar; 3 séries de 4 min.'
-      : partes[0] === 'esq'
-        ? 'esquivas em sombra e em dupla, corrigindo cabeça e ombros; 3 séries de 10 trocas.'
-        : partes[0] === 'chu'
-          ? 'chutes no ar e no pad, com base firme e quadril alinhado; 3 séries de 10.'
-          : 'exercício de repetição lenta e depois em ritmo, com correção do professor; 3 séries.';
-    return { item: alvo, nota: valor, fraco: valor < LIMITE, aula: passo + ' ' + dica };
+    var l = licaoDoItem(chave);
+    var prefixo = valor < 50 ? 'Começar do básico: ' : (valor < LIMITE ? 'Refinar: ' : 'Manter e revisar: ');
+    var corpo = l
+      ? 'Objetivo: ' + l.obj + '. Exercício: ' + l.ex + '. Sinal de sucesso: ' + l.suc + '.'
+      : 'Treino específico de ' + alvo.toLowerCase() + ' por 15 min, com correção do professor.';
+    return { item: alvo, nota: valor, fraco: valor < LIMITE, aula: prefixo + corpo };
   }
 
   function periodos() {
@@ -20679,27 +20709,540 @@ window.ucAvalAbrir = function (i) {
       (ps.length
         ? '<label class="campo-label">Período</label><select id="ucPlanoPeriodo" onchange="ucPlanoRender()">' + opts + '</select>' +
           '<div id="ucPlanoLista" style="margin-top:8px;"></div>' +
-          '<button class="btn" style="margin-top:8px;" onclick="ucPlanoSalvar()"><i class="fas fa-share-square"></i> Salvar e liberar ao aluno</button>'
+          '<button class="btn" style="margin-top:8px;" onclick="ucPlanoSalvar()"><i class="fas fa-share-square"></i> Salvar e liberar ao aluno</button> ' +
+          '<button class="btn btn-whatsapp" style="margin-top:8px;" onclick="ucCertGeral()"><i class="fab fa-whatsapp"></i> Certificado geral da turma</button>' +
+          '<details style="margin-top:12px;"><summary class="mini">Corrigir o período de uma avaliação</summary>' +
+            '<p class="mini">Use se a avaliação foi lançada com o período errado (ex.: está em S2 e deveria estar em S1).</p>' +
+            '<label class="campo-label">Aluno</label><select id="ucCorrAluno" onchange="ucCorrPopularDe()"></select>' +
+            '<label class="campo-label">Avaliação atual</label><select id="ucCorrDe"></select>' +
+            '<label class="campo-label">Mover para o período</label><select id="ucCorrPara"></select>' +
+            '<button class="btn" style="margin-top:8px;" onclick="ucCorrigirPeriodo()"><i class="fas fa-exchange-alt"></i> Mover avaliação</button>' +
+          '</details>'
         : '<p class="mini">Nenhuma avaliação semestral lançada ainda.</p>') +
       '</div>';
+  }
+
+  function ordemCordas() {
+    return (typeof CONFIG !== 'undefined' && CONFIG && Array.isArray(CONFIG.graduacoes)) ? CONFIG.graduacoes : [];
   }
 
   function listaProfessor(periodo) {
     var lista = gerarLista(periodo);
     if (!lista.length) return '<p class="mini">Nenhum aluno avaliado neste período.</p>';
-    return lista.map(function (a) {
-      return '<div style="border-bottom:1px solid var(--card-border);padding:8px 0;">' +
-        '<b>' + h(a.apelido || a.nome) + '</b>' + (a.apelido ? ' <span class="mini">' + h(a.nome) + '</span>' : '') +
-        blocoItens(a.planos) + '</div>';
+    var ordem = ordemCordas();
+    var grupos = {};
+    lista.forEach(function (a) {
+      var aluno = lst('alunos').filter(function (x) { return x.id === a.alunoId; })[0] || {};
+      var corda = aluno.graduacao || 'Sem corda definida';
+      (grupos[corda] = grupos[corda] || []).push(a);
+    });
+    var nomes = Object.keys(grupos).sort(function (x, y) {
+      var ix = ordem.indexOf(x), iy = ordem.indexOf(y);
+      if (x === 'Sem corda definida') return 1;
+      if (y === 'Sem corda definida') return -1;
+      return (ix < 0 ? 999 : ix) - (iy < 0 ? 999 : iy);
+    });
+    return nomes.map(function (corda) {
+      var itens = grupos[corda].map(function (a) {
+        return '<div style="border-bottom:1px solid var(--card-border);padding:8px 0;">' +
+          '<b>' + h(a.apelido || a.nome) + '</b>' + (a.apelido ? ' <span class="mini">' + h(a.nome) + '</span>' : '') +
+          ' <button class="btn btn-whatsapp btn-mini" onclick="ucPlanoWhats(\'' + h(a.alunoId) + '\')"><i class="fab fa-whatsapp"></i> Ver e enviar certificado</button>' +
+          ' <button class="btn btn-whatsapp btn-mini" onclick="ucPlanoWhats(\'' + h(a.alunoId) + '\', true)"><i class="fas fa-users"></i> Enviar para os pais</button>' +
+          blocoItens(a.planos) + '</div>';
+      }).join('');
+      return '<h4 style="margin-top:12px;color:var(--gold);">' + h(corda) + ' <span class="mini">(' + grupos[corda].length + ')</span></h4>' + itens;
     }).join('');
   }
 
   window.ucPlanoRender = function () {
+    try { ucCorrPopular(); } catch (e) {}
     var sel = document.getElementById('ucPlanoPeriodo');
     var out = document.getElementById('ucPlanoLista');
     if (!sel || !out) return;
     out.innerHTML = listaProfessor(sel.value);
   };
+
+  function ucLinhasTexto(ctx, texto, x, y, maxW, lh) {
+    var palavras = String(texto).split(' '), linha = '', yy = y;
+    palavras.forEach(function (w) {
+      var teste = linha ? linha + ' ' + w : w;
+      if (ctx.measureText(teste).width > maxW && linha) { ctx.fillText(linha, x, yy); linha = w; yy += lh; }
+      else linha = teste;
+    });
+    if (linha) ctx.fillText(linha, x, yy);
+    return yy + lh;
+  }
+
+  function ucCertProgressoPNG(d) {
+    var W = 1080, H = 1350;
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var g = c.getContext('2d');
+
+    // Fundo azul de piscina, com linhas de água
+    var agua = g.createLinearGradient(0, 0, 0, H);
+    agua.addColorStop(0, '#3fa9d9'); agua.addColorStop(0.6, '#1b6ea3'); agua.addColorStop(1, '#0c3c5e');
+    g.fillStyle = agua; g.fillRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(255,255,255,0.10)'; g.lineWidth = 6;
+    for (var k = 0; k < 8; k++) {
+      g.beginPath();
+      for (var x = 0; x <= W; x += 12) {
+        var y = 1240 + k * 30 + Math.sin((x + k * 60) / 70) * 9;
+        if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+
+    // Cartão branco
+    var cx = 60, cy = 60, cw = W - 120, ch = 1180;
+    g.fillStyle = '#ffffff';
+    g.beginPath(); g.roundRect ? g.roundRect(cx, cy, cw, ch, 32) : g.rect(cx, cy, cw, ch); g.fill();
+
+    // Cabeçalho
+    g.textAlign = 'center';
+    g.fillStyle = '#0c3c5e'; g.font = 'bold 56px sans-serif';
+    g.fillText(d.paraPais ? 'PROGRESSO DO ALUNO' : 'DESENVOLVIMENTO E DESEMPENHO', W / 2, 150);
+    g.font = '30px sans-serif'; g.fillStyle = '#4b6b7a';
+    var sub = d.anterior ? ('Progresso: ' + d.anterior.periodo + ' → ' + d.periodo) : ('Primeiro período avaliado: ' + d.periodo);
+    g.fillText('Universo Capoeira · ' + sub, W / 2, 200);
+    g.fillStyle = '#1b6ea3'; g.fillRect(180, 225, W - 360, 4);
+
+    // Nome do aluno
+    g.fillStyle = '#00963f'; g.font = 'bold 78px sans-serif';
+    g.fillText(d.nome, W / 2, 320);
+    g.font = '32px sans-serif'; g.fillStyle = '#4b6b7a';
+    g.fillText('Corda: ' + d.corda + '   ·   Formação ' + d.ano + ': ' + String(d.horas).replace('.', ',') + ' h', W / 2, 375);
+
+    // Desempenho por área, com barras
+    g.textAlign = 'left';
+    g.fillStyle = '#0c3c5e'; g.font = 'bold 40px sans-serif';
+    g.fillText('Desempenho por área', 110, 460);
+    var y = 510;
+    (d.areas.length ? d.areas : [{ nome: 'Sem avaliação lançada', media: 0 }]).forEach(function (a) {
+      g.fillStyle = '#0c3c5e'; g.font = '34px sans-serif';
+      g.fillText(a.nome, 110, y);
+      var antes = d.anterior ? (d.anterior.areas || []).filter(function (x) { return x.nome === a.nome; })[0] : null;
+      g.textAlign = 'right';
+      if (antes) {
+        var delta = a.media - antes.media;
+        g.fillStyle = delta >= 0 ? '#00963f' : '#b26a00';
+        g.fillText(a.media + '%  (' + (delta >= 0 ? '+' : '') + delta + ' pts)', W - 110, y);
+        g.fillStyle = '#4b6b7a'; g.font = '24px sans-serif';
+        g.fillText('antes: ' + antes.media + '%', W - 110, y + 26);
+        g.font = '34px sans-serif'; g.fillStyle = '#0c3c5e';
+      } else {
+        g.fillText(a.media + '%', W - 110, y);
+      }
+      g.textAlign = 'left';
+      var barW = d.anterior ? W - 420 : W - 220;
+      g.fillStyle = '#e3eef4'; g.fillRect(110, y + 16, barW, 22);
+      g.fillStyle = a.media >= 70 ? '#00c853' : '#ffa726';
+      g.fillRect(110, y + 16, barW * Math.max(0, Math.min(100, a.media)) / 100, 22);
+      y += 78;
+    });
+
+    // Destaque e pontos de desenvolvimento
+    y += 10;
+    g.fillStyle = '#00963f'; g.font = 'bold 38px sans-serif';
+    g.fillText('Destaque: ' + (d.destaque || '—'), 110, y);
+    y += 56;
+    g.fillStyle = '#b26a00'; g.font = 'bold 38px sans-serif';
+    g.fillText(d.paraPais ? 'Em foco agora:' : 'Em desenvolvimento:', 110, y);
+    y += 46;
+    g.fillStyle = '#243f4d'; g.font = '32px sans-serif';
+    if (d.fazer.length) {
+      d.fazer.forEach(function (p) {
+        var texto = d.paraPais ? '• ' + p.item : '• ' + p.item + ' (' + p.nota + '%): ' + p.aula;
+        y = ucLinhasTexto(g, texto, 130, y, W - 260, 40) + 8;
+      });
+    } else {
+      g.fillText('Nenhum item abaixo de 70%. Ótimo trabalho!', 130, y); y += 40;
+    }
+
+    // Mensagem final, sobre a água
+    g.textAlign = 'center';
+    g.fillStyle = '#ffffff'; g.font = 'bold 60px sans-serif';
+    g.fillText(d.paraPais ? 'Obrigado pelo apoio da família!' : 'Continue evoluindo!', W / 2, 1290);
+    g.font = '30px sans-serif'; g.fillStyle = '#e3f2fd';
+    g.fillText(d.professor + ' · ' + new Date().toLocaleDateString('pt-BR'), W / 2, 1332);
+
+    return new Promise(function (res) { c.toBlob(res, 'image/png'); });
+  }
+
+  window.ucPlanoWhats = function (alunoId, paraPais) {
+    var sel = document.getElementById('ucPlanoPeriodo'); if (!sel) return;
+    var periodo = sel.value;
+    var a = lst('alunos').filter(function (x) { return x.id === alunoId; })[0] || {};
+    var item = gerarLista(periodo).filter(function (x) { return x.alunoId === alunoId; })[0];
+    var fazer = item ? item.planos.filter(function (p) { return p.fraco; }).slice(0, 3) : [];
+    var ano = String(new Date().getFullYear());
+    var horas = lst('checkinsFormacao').filter(function (c) {
+      return c.alunoId === alunoId && c.status === 'aprovado' && String(c.data || '').slice(0, 4) === ano;
+    }).reduce(function (soma, c) { return soma + (Number(c.horas) || 0); }, 0);
+    var corda = (window.ucGraduacaoAluno ? window.ucGraduacaoAluno(a) : a.graduacao) || 'ainda não definida';
+    var doc = lst('avaliacoesSemestrais').filter(function (d) { return d.alunoId === alunoId && d.periodo === periodo; })[0] || {};
+    var notas = doc.notas || {};
+    var rotulos = { chu: 'Chutes', esq: 'Esquivas', dec: 'Decidas', seq: 'Sequências', toq: 'Musicalidade', jog: 'Jogos', ins: 'Instrumentos' };
+    var soma = {};
+    Object.keys(notas).forEach(function (k) {
+      var pref = k.split('_')[0], v = Number(notas[k]);
+      if (isNaN(v) || !rotulos[pref]) return;
+      if (!soma[pref]) soma[pref] = { nome: rotulos[pref], total: 0, n: 0 };
+      soma[pref].total += v; soma[pref].n += 1;
+    });
+    var areas = Object.keys(soma).map(function (p) {
+      return { nome: soma[p].nome, media: Math.round(soma[p].total / soma[p].n) };
+    }).sort(function (x, y) { return y.media - x.media; });
+    var destaque = areas.length ? areas[0].nome + ' (' + areas[0].media + '%)' : '';
+    var pers = periodos(), idxP = pers.indexOf(periodo), periodoAnt = pers[idxP + 1] || '';
+    var docAnt = periodoAnt ? (lst('avaliacoesSemestrais').filter(function (d) { return d.alunoId === alunoId && d.periodo === periodoAnt; })[0] || {}) : {};
+    var anterior = periodoAnt ? { periodo: periodoAnt, areas: ucResumoAreas(docAnt.notas) } : null;
+    var dados = {
+      nome: a.apelido || a.nome || 'Aluno', periodo: periodo, ano: ano, corda: corda, paraPais: !!paraPais,
+      horas: horas, fazer: fazer, areas: areas, destaque: destaque, anterior: anterior,
+      professor: (typeof sessaoEquipe !== 'undefined' && sessaoEquipe && sessaoEquipe.nome) || 'Professor'
+    };
+    var fone = String((paraPais ? a.responsavelContato : a.contato) || '').replace(/\D/g, '');
+    if (paraPais && !fone) { mostrarToast('Cadastre o contato do responsável no cadastro do aluno.', 'erro'); return; }
+    if (fone && fone.length <= 11) fone = '55' + fone;
+    ucCertProgressoPNG(dados).then(function (blob) {
+      ucMostrarPreviewCert(blob, dados, fone);
+    });
+  };
+
+  // Prévia do certificado: o professor confere antes de enviar
+  function ucMostrarPreviewCert(blob, dados, fone) {
+    var antigo = document.getElementById('ucPrevCert'); if (antigo) antigo.remove();
+    var url = URL.createObjectURL(blob);
+    var ov = document.createElement('div');
+    ov.id = 'ucPrevCert';
+    ov.setAttribute('style', 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;');
+    ov.innerHTML =
+      '<div style="color:#ffd54f;font-weight:700;">Prévia do certificado de ' + h(dados.nome) + '</div>' +
+      '<img src="' + url + '" alt="Prévia" style="max-width:92vw;max-height:76vh;border-radius:10px;background:#000;">' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">' +
+        '<button class="btn btn-whatsapp" id="ucPrevEnviar"><i class="fab fa-whatsapp"></i> Enviar no WhatsApp</button>' +
+        '<button class="btn btn-sec" id="ucPrevFechar">Fechar</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.getElementById('ucPrevFechar').onclick = function () { ov.remove(); URL.revokeObjectURL(url); };
+    document.getElementById('ucPrevEnviar').onclick = function () {
+      ucEnviarCertificado(blob, dados, fone);
+      ov.remove(); URL.revokeObjectURL(url);
+    };
+  }
+
+  function ucEnviarCertificado(blob, dados, fone) {
+    var arquivo = null;
+    try { arquivo = new File([blob], 'progresso-' + dados.nome + '.png', { type: 'image/png' }); } catch (e) {}
+    if (arquivo && navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+      navigator.share({ files: [arquivo], title: 'Desenvolvimento e desempenho', text: 'Desempenho de ' + dados.nome + ' (' + dados.periodo + ')' }).catch(function () {});
+      return;
+    }
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob); link.download = 'progresso-' + dados.nome + '.png'; link.click();
+    if (!fone) { mostrarToast('Imagem salva. Envie pelo WhatsApp como preferir.'); return; }
+    var texto = 'Desenvolvimento e desempenho de ' + dados.nome + ' (' + dados.periodo + ')';
+    window.open('https://wa.me/' + fone + '?text=' + encodeURIComponent(texto), '_blank');
+    mostrarToast('Imagem salva. Anexe no WhatsApp que abri para o aluno.');
+  }
+
+  function ucResumoAreas(notas) {
+    var rotulos = { chu: 'Chutes', esq: 'Esquivas', dec: 'Decidas', seq: 'Sequências', toq: 'Musicalidade', jog: 'Jogos', ins: 'Instrumentos' };
+    var soma = {};
+    Object.keys(notas || {}).forEach(function (k) {
+      var pref = k.split('_')[0], v = Number(notas[k]);
+      if (isNaN(v) || !rotulos[pref]) return;
+      if (!soma[pref]) soma[pref] = { nome: rotulos[pref], total: 0, n: 0 };
+      soma[pref].total += v; soma[pref].n += 1;
+    });
+    return Object.keys(soma).map(function (p) {
+      return { nome: soma[p].nome, media: Math.round(soma[p].total / soma[p].n) };
+    }).sort(function (x, y) { return y.media - x.media; });
+  }
+
+  function ucCertGeralPNG(periodo) {
+    var ordem = ordemCordas();
+    var ano = String(new Date().getFullYear());
+    var pers = periodos(), idxP = pers.indexOf(periodo), periodoAnt = pers[idxP + 1] || '';
+    function mediaGeral(notas) {
+      var v = Object.keys(notas || {}).map(function (k) { return Number(notas[k]); }).filter(function (x) { return !isNaN(x); });
+      return v.length ? Math.round(v.reduce(function (a, b) { return a + b; }, 0) / v.length) : null;
+    }
+    var linhas = gerarLista(periodo).map(function (a) {
+      var aluno = lst('alunos').filter(function (x) { return x.id === a.alunoId; })[0] || {};
+      var doc = lst('avaliacoesSemestrais').filter(function (d) { return d.alunoId === a.alunoId && d.periodo === periodo; })[0] || {};
+      var docAnt = periodoAnt ? (lst('avaliacoesSemestrais').filter(function (d) { return d.alunoId === a.alunoId && d.periodo === periodoAnt; })[0] || {}) : {};
+      var geral = mediaGeral(doc.notas), geralAnt = mediaGeral(docAnt.notas);
+      var horas = lst('checkinsFormacao').filter(function (c) {
+        return c.alunoId === a.alunoId && c.status === 'aprovado' && String(c.data || '').slice(0, 4) === ano;
+      }).reduce(function (soma, c) { return soma + (Number(c.horas) || 0); }, 0);
+      return {
+        nome: a.apelido || a.nome,
+        corda: aluno.graduacao || 'Sem corda definida',
+        horas: horas,
+        geral: geral, geralAnt: geralAnt,
+        areas: ucResumoAreas(doc.notas),
+        fazer: a.planos.filter(function (p) { return p.fraco; }).slice(0, 2)
+      };
+    }).sort(function (x, y) {
+      var ix = ordem.indexOf(x.corda), iy = ordem.indexOf(y.corda);
+      if (x.corda === 'Sem corda definida') return 1;
+      if (y.corda === 'Sem corda definida') return -1;
+      if ((ix < 0 ? 999 : ix) !== (iy < 0 ? 999 : iy)) return (ix < 0 ? 999 : ix) - (iy < 0 ? 999 : iy);
+      return x.nome.localeCompare(y.nome);
+    });
+
+    var W = 1080, altura = 330 + linhas.length * 200 + 140;
+    altura = Math.min(Math.max(altura, 900), 16000);
+    var c = document.createElement('canvas'); c.width = W; c.height = altura;
+    var g = c.getContext('2d');
+
+    var agua = g.createLinearGradient(0, 0, 0, altura);
+    agua.addColorStop(0, '#3fa9d9'); agua.addColorStop(0.6, '#1b6ea3'); agua.addColorStop(1, '#0c3c5e');
+    g.fillStyle = agua; g.fillRect(0, 0, W, altura);
+
+    g.fillStyle = '#ffffff';
+    g.beginPath(); g.roundRect ? g.roundRect(40, 40, W - 80, altura - 80, 28) : g.rect(40, 40, W - 80, altura - 80); g.fill();
+
+    g.textAlign = 'center'; g.fillStyle = '#0c3c5e'; g.font = 'bold 52px sans-serif';
+    g.fillText('DESEMPENHO DA TURMA', W / 2, 120);
+    g.font = '30px sans-serif'; g.fillStyle = '#4b6b7a';
+    g.fillText('Universo Capoeira · ' + periodo + ' · ' + linhas.length + ' aluno(s)', W / 2, 170);
+    g.fillStyle = '#1b6ea3'; g.fillRect(120, 195, W - 240, 4);
+
+    var y = 260;
+    var cordaAtual = null;
+    linhas.forEach(function (a) {
+      if (a.corda !== cordaAtual) {
+        cordaAtual = a.corda;
+        var doGrupo = linhas.filter(function (x) { return x.corda === cordaAtual && x.geral !== null; });
+        var mAtual = doGrupo.length ? Math.round(doGrupo.reduce(function (t, x) { return t + x.geral; }, 0) / doGrupo.length) : null;
+        var comAnt = doGrupo.filter(function (x) { return x.geralAnt !== null; });
+        var mAnt = comAnt.length ? Math.round(comAnt.reduce(function (t, x) { return t + x.geralAnt; }, 0) / comAnt.length) : null;
+        g.textAlign = 'left'; g.fillStyle = '#b26a00'; g.font = 'bold 32px sans-serif';
+        g.fillText(cordaAtual + ' (' + linhas.filter(function (x) { return x.corda === cordaAtual; }).length + ')', 90, y);
+        if (mAtual !== null) {
+          var txtC = 'Média da corda: ' + mAtual + '%' + (mAnt !== null ? '  (antes ' + mAnt + '%, ' + (mAtual - mAnt >= 0 ? '+' : '') + (mAtual - mAnt) + ' pts)' : '');
+          g.textAlign = 'right'; g.font = '26px sans-serif'; g.fillStyle = '#4b6b7a';
+          g.fillText(txtC, W - 90, y);
+        }
+        y += 44;
+      }
+      g.textAlign = 'left'; g.fillStyle = '#0c3c5e'; g.font = 'bold 40px sans-serif';
+      g.fillText(a.nome, 90, y);
+      g.textAlign = 'right'; g.font = '28px sans-serif'; g.fillStyle = '#4b6b7a';
+      g.fillText('Formação ' + ano + ': ' + String(a.horas).replace('.', ',') + ' h', W - 90, y);
+      y += 40;
+      g.textAlign = 'left'; g.font = '28px sans-serif'; g.fillStyle = '#243f4d';
+      var varG = (a.geral !== null && a.geralAnt !== null) ? (a.geral - a.geralAnt) : null;
+      var cabG = a.geral !== null
+        ? 'Média: ' + a.geral + '%' + (varG !== null ? ' (antes ' + a.geralAnt + '%, ' + (varG >= 0 ? '+' : '') + varG + ' pts)' : '') + ' · '
+        : '';
+      var resumo = cabG + (a.areas.length
+        ? a.areas.map(function (ar) { return ar.nome + ' ' + ar.media + '%'; }).join(' · ')
+        : 'Sem avaliação lançada');
+      y = ucLinhasTexto(g, resumo, 90, y, W - 180, 36);
+      if (a.fazer.length) {
+        g.fillStyle = '#b26a00';
+        y = ucLinhasTexto(g, 'Melhorar: ' + a.fazer.map(function (p) { return p.item; }).join('; '), 90, y, W - 180, 34);
+      }
+      y += 22;
+      g.fillStyle = '#e3eef4'; g.fillRect(90, y - 14, W - 180, 2);
+    });
+
+    g.textAlign = 'center'; g.fillStyle = '#ffffff'; g.font = 'bold 52px sans-serif';
+    g.fillText('Continue evoluindo!', W / 2, altura - 70);
+
+    return new Promise(function (res) { c.toBlob(res, 'image/png'); });
+  }
+
+  window.ucCertGeral = function () {
+    var sel = document.getElementById('ucPlanoPeriodo'); if (!sel) return;
+    var periodo = sel.value;
+    if (!gerarLista(periodo).length) { mostrarToast('Nenhum aluno avaliado neste período.', 'erro'); return; }
+    ucCertGeralPNG(periodo).then(function (blob) {
+      ucMostrarPreviewCert(blob, { nome: 'Turma', periodo: periodo }, '');
+    });
+  };
+
+  function ucCorrPopular() {
+    var selA = document.getElementById('ucCorrAluno'); if (!selA) return;
+    var atual = selA.value;
+    var alunos = {};
+    lst('avaliacoesSemestrais').forEach(function (d) { alunos[d.alunoId] = true; });
+    var opts = Object.keys(alunos).map(function (id) {
+      var a = lst('alunos').filter(function (x) { return x.id === id; })[0] || {};
+      return { id: id, nome: a.apelido || a.nome || id };
+    }).sort(function (x, y) { return x.nome.localeCompare(y.nome); });
+    selA.innerHTML = opts.map(function (o) { return '<option value="' + h(o.id) + '">' + h(o.nome) + '</option>'; }).join('');
+    if (atual && alunos[atual]) selA.value = atual;
+    var selP = document.getElementById('ucCorrPara');
+    if (selP) {
+      var y = new Date().getFullYear(), per = [];
+      [y - 1, y].forEach(function (yy) { ['S1', 'S2'].forEach(function (sx) { per.push(yy + '-' + sx); }); });
+      selP.innerHTML = per.reverse().map(function (p) { return '<option value="' + p + '">' + p + '</option>'; }).join('');
+    }
+    ucCorrPopularDe();
+  }
+
+  window.ucCorrPopularDe = function () {
+    var selA = document.getElementById('ucCorrAluno'), selD = document.getElementById('ucCorrDe');
+    if (!selA || !selD) return;
+    var docs = lst('avaliacoesSemestrais').filter(function (d) { return d.alunoId === selA.value; });
+    selD.innerHTML = docs.map(function (d) {
+      return '<option value="' + h(d.id) + '">' + h(d.periodo || 'sem período') + ' · ' + h(d.status || '') + '</option>';
+    }).join('') || '<option value="">(nenhuma avaliação)</option>';
+  };
+
+  window.ucCorrigirPeriodo = function () {
+    var docId = (document.getElementById('ucCorrDe') || {}).value;
+    var para = (document.getElementById('ucCorrPara') || {}).value;
+    var alunoId = (document.getElementById('ucCorrAluno') || {}).value;
+    if (!docId || !para) { mostrarToast('Escolha a avaliação e o período.', 'erro'); return; }
+    var doc = lst('avaliacoesSemestrais').filter(function (d) { return d.id === docId; })[0];
+    if (!doc) return;
+    if (doc.periodo === para) { mostrarToast('A avaliação já está nesse período.', 'erro'); return; }
+    var conflito = lst('avaliacoesSemestrais').some(function (d) { return d.alunoId === alunoId && d.periodo === para && d.id !== docId; });
+    if (conflito) { mostrarToast('Esse aluno já tem avaliação em ' + para + '. Apague ou mova a outra antes.', 'erro'); return; }
+    if (!confirm('Mover a avaliação de ' + doc.periodo + ' para ' + para + '?')) return;
+    DB.salvar('avaliacoesSemestrais', { periodo: para }, docId).then(function () {
+      mostrarToast('Avaliação movida para ' + para + '.');
+      ucCorrPopular();
+      window.ucPlanoRender && window.ucPlanoRender();
+    });
+  };
+
+  window.ucResumoMelhoras = function () {
+    var sel = document.getElementById('ucPlanoPeriodo'); if (!sel) return;
+    var periodo = sel.value;
+    var lista = gerarLista(periodo);
+    if (!lista.length) { mostrarToast('Nenhum aluno avaliado neste período.', 'erro'); return; }
+    var pers = periodos(), idxP = pers.indexOf(periodo), periodoAnt = pers[idxP + 1] || '';
+    var ordem = ordemCordas();
+    var grupos = {};
+    lista.forEach(function (a) {
+      var aluno = lst('alunos').filter(function (x) { return x.id === a.alunoId; })[0] || {};
+      var corda = aluno.graduacao || 'Sem corda definida';
+      var docAtual = lst('avaliacoesSemestrais').filter(function (d) { return d.alunoId === a.alunoId && d.periodo === periodo; })[0] || {};
+      var docAnt = periodoAnt ? (lst('avaliacoesSemestrais').filter(function (d) { return d.alunoId === a.alunoId && d.periodo === periodoAnt; })[0] || {}) : {};
+      var melhoras = [];
+      Object.keys(docAtual.notas || {}).forEach(function (k) {
+        var atual = Number(docAtual.notas[k]);
+        if (!periodoAnt || !docAnt.notas || docAnt.notas[k] === undefined) return;
+        var antes = Number(docAnt.notas[k]);
+        if (isNaN(atual) || isNaN(antes) || atual <= antes) return;
+        melhoras.push({ item: nomeItem(k), delta: atual - antes, antes: antes, atual: atual });
+      });
+      melhoras.sort(function (x, y) { return y.delta - x.delta; });
+      (grupos[corda] = grupos[corda] || []).push({ nome: a.apelido || a.nome, melhoras: melhoras, semAnt: !periodoAnt });
+    });
+    var nomes = Object.keys(grupos).sort(function (x, y) {
+      if (x === 'Sem corda definida') return 1;
+      if (y === 'Sem corda definida') return -1;
+      var ix = ordem.indexOf(x), iy = ordem.indexOf(y);
+      return (ix < 0 ? 999 : ix) - (iy < 0 ? 999 : iy);
+    });
+    var linhas = ['Melhoras da turma · ' + (periodoAnt ? periodoAnt + ' → ' + periodo : 'Período ' + periodo), ''];
+    nomes.forEach(function (corda) {
+      linhas.push(corda.toUpperCase() + ' (' + grupos[corda].length + ')');
+      grupos[corda].sort(function (x, y) { return x.nome.localeCompare(y.nome); }).forEach(function (al) {
+        if (al.semAnt) { linhas.push('• ' + al.nome + ': primeiro período avaliado'); return; }
+        if (!al.melhoras.length) { linhas.push('• ' + al.nome + ': sem melhoras neste período'); return; }
+        linhas.push('• ' + al.nome + ':');
+        al.melhoras.forEach(function (m) {
+          linhas.push('   - ' + m.item + ': ' + m.antes + '% → ' + m.atual + '% (+' + m.delta + ' pts)');
+        });
+      });
+      linhas.push('');
+    });
+    ucMostrarResumo(linhas.join('\n'));
+  };
+
+  function ucMostrarResumo(texto) {
+    var antigo = document.getElementById('ucResumoOv'); if (antigo) antigo.remove();
+    var ov = document.createElement('div');
+    ov.id = 'ucResumoOv';
+    ov.setAttribute('style', 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;');
+    ov.innerHTML =
+      '<div style="color:#ffd54f;font-weight:700;">Resumo de melhoras</div>' +
+      '<textarea id="ucResumoTxt" style="width:92vw;height:60vh;background:#0b1419;color:#e8f1f5;border:1px solid #1f3a45;border-radius:8px;padding:8px;font-size:14px;">' + h(texto) + '</textarea>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">' +
+        '<button class="btn btn-whatsapp" id="ucResumoEnviar"><i class="fab fa-whatsapp"></i> Enviar no WhatsApp</button>' +
+        '<button class="btn" id="ucResumoCopiar">Copiar</button>' +
+        '<button class="btn btn-sec" id="ucResumoFechar">Fechar</button>' +
+      '</div>';
+    document.body.appendChild(ov);
+    document.getElementById('ucResumoFechar').onclick = function () { ov.remove(); };
+    document.getElementById('ucResumoCopiar').onclick = function () {
+      var t = document.getElementById('ucResumoTxt'); t.select();
+      try { document.execCommand('copy'); mostrarToast('Lista copiada.'); } catch (e) { mostrarToast('Não consegui copiar. Copie manualmente.', 'erro'); }
+    };
+    document.getElementById('ucResumoEnviar').onclick = function () {
+      var t = document.getElementById('ucResumoTxt').value;
+      if (navigator.share) {
+        navigator.share({ title: 'Resumo de melhoras', text: t }).catch(function () {});
+      } else {
+        window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank');
+      }
+    };
+  }
+
+
+  window.ucResumoAno = function () {
+    var ano = String(new Date().getFullYear());
+    var docs = lst('avaliacoesSemestrais').filter(function (d) { return String(d.periodo || '').slice(0, 4) === ano; });
+    if (!docs.length) { mostrarToast('Nenhuma avaliação semestral lançada em ' + ano + '.', 'erro'); return; }
+    var porAluno = {};
+    docs.forEach(function (d) { (porAluno[d.alunoId] = porAluno[d.alunoId] || []).push(d); });
+    var ordem = ordemCordas();
+    var grupos = {};
+    Object.keys(porAluno).forEach(function (alunoId) {
+      var lista = porAluno[alunoId].slice().sort(function (x, y) { return String(x.periodo).localeCompare(String(y.periodo)); });
+      var aluno = lst('alunos').filter(function (x) { return x.id === alunoId; })[0] || {};
+      var nome = aluno.apelido || aluno.nome || 'Aluno';
+      var corda = aluno.graduacao || 'Sem corda definida';
+      var primeiro = lista[0], ultimo = lista[lista.length - 1];
+      var melhoras = [];
+      if (lista.length > 1) {
+        Object.keys(ultimo.notas || {}).forEach(function (k) {
+          var antes = Number((primeiro.notas || {})[k]), depois = Number(ultimo.notas[k]);
+          if (isNaN(antes) || isNaN(depois) || depois <= antes) return;
+          melhoras.push({ item: nomeItem(k), antes: antes, depois: depois, delta: depois - antes });
+        });
+        melhoras.sort(function (x, y) { return y.delta - x.delta; });
+      }
+      (grupos[corda] = grupos[corda] || []).push({
+        nome: nome, unico: lista.length === 1, periodoUnico: primeiro.periodo,
+        de: primeiro.periodo, ate: ultimo.periodo, melhoras: melhoras
+      });
+    });
+    var nomes = Object.keys(grupos).sort(function (x, y) {
+      if (x === 'Sem corda definida') return 1;
+      if (y === 'Sem corda definida') return -1;
+      var ix = ordem.indexOf(x), iy = ordem.indexOf(y);
+      return (ix < 0 ? 999 : ix) - (iy < 0 ? 999 : iy);
+    });
+    var linhas = ['Melhoras do ano ' + ano, ''];
+    nomes.forEach(function (corda) {
+      linhas.push(corda.toUpperCase() + ' (' + grupos[corda].length + ')');
+      grupos[corda].sort(function (x, y) { return x.nome.localeCompare(y.nome); }).forEach(function (al) {
+        if (al.unico) { linhas.push('• ' + al.nome + ': avaliado só em ' + al.periodoUnico); return; }
+        if (!al.melhoras.length) { linhas.push('• ' + al.nome + ': sem melhoras de ' + al.de + ' a ' + al.ate); return; }
+        linhas.push('• ' + al.nome + ' (' + al.de + ' → ' + al.ate + '):');
+        al.melhoras.forEach(function (m) { linhas.push('   - ' + m.item + ': ' + m.antes + '% → ' + m.depois + '% (+' + m.delta + ' pts)'); });
+      });
+      linhas.push('');
+    });
+    ucMostrarResumo(linhas.join('\n'));
+  };
+
+  function htmlBoxResumoAno() {
+    return '<div class="card" id="ucResumoAnoBox" style="border:1px solid var(--gold);">' +
+      '<h3><i class="fas fa-list"></i> Melhoras do ano</h3>' +
+      '<p class="mini">Lista de todos os alunos com o que melhorou desde a primeira avaliação do ano até a última.</p>' +
+      '<button class="btn btn-whatsapp" onclick="ucResumoAno()"><i class="fab fa-whatsapp"></i> Gerar lista de melhoras</button>' +
+      '</div>';
+  }
 
   window.ucPlanoSalvar = function () {
     var sel = document.getElementById('ucPlanoPeriodo'); if (!sel) return;
@@ -20716,6 +21259,11 @@ window.ucAvalAbrir = function (i) {
 
   function montarProfessor() {
     var card = document.getElementById('ucCardAvaliacao');
+    if (card && !document.getElementById('ucResumoAnoBox')) {
+      var w0 = document.createElement('div');
+      w0.innerHTML = htmlBoxResumoAno();
+      card.parentNode.insertBefore(w0.firstChild, card.nextSibling);
+    }
     if (!card || document.getElementById('ucPlanoMelhoriaBox')) return;
     var wrap = document.createElement('div');
     wrap.innerHTML = htmlBoxProfessor();
