@@ -1709,7 +1709,7 @@ var EQUIPE_PAPEIS = [
   { id: 'dev', nome: 'Dev / Suporte' }
 ];
 
-var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'checkinsProfessor', 'atividadeAluno', 'bioCredenciais', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasFormacao', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais', 'errosApp', 'acessosAluno', 'justificativasFalta', 'testesDandaraJogos', 'desafiosDandara', 'contasTeste', 'partidasDandara', 'pontosDandara', 'checkinsFormacao', 'provasFormacaoProfessor', 'metasAluno', 'fotosTreino', 'chatAlunos'];
+var COLECOES = ['alunos', 'polos', 'horarios', 'presencas', 'avaliacoes', 'avisos', 'mural', 'certificados', 'equipe', 'config', 'logs', 'solicitacoes', 'testesConhecimento', 'mensagensPrivadas', 'checkinsProfessor', 'atividadeAluno', 'bioCredenciais', 'feedbacksAula', 'perguntasSemana', 'respostasPergunta', 'leiturasAvisos', 'pontosJogos', 'professorPresenca', 'formacaoInfantil', 'formacaoProfessor', 'aulasFormacao', 'aulasConteudo', 'desafiosJogos', 'progressoJogos', 'avaliacoesSemanaisTurma', 'notasAvaliacoesSemanais', 'planosAula', 'semanasAluno', 'boletins', 'avaliacoesSemestrais', 'agendamentos', 'pedidosResetSenha', 'advertencias', 'avaliacoesBimestrais', 'desafiosSemanais', 'errosApp', 'acessosAluno', 'justificativasFalta', 'testesDandaraJogos', 'desafiosDandara', 'contasTeste', 'partidasDandara', 'pontosDandara', 'checkinsFormacao', 'provasFormacaoProfessor', 'metasAluno', 'fotosTreino', 'chatAlunos', 'aulasRemuneradas', 'registrosFormacao', 'planosMelhoria'];
 
 var CONFIG_PADRAO = {
   tituloApp: 'Universo Capoeira',
@@ -10511,7 +10511,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     { k: 'esquivas', t: 'Esquivas', arr: ESQUIVAS, obj: true },
     { k: 'decidas', t: 'Decidas', arr: DECIDAS, obj: true },
     { k: 'sequencias', t: 'Sequências', arr: SEQUENCIAS, obj: true },
-    { k: 'toques', t: 'Toques de berimbau', arr: TOQUES, obj: false },
+    { k: 'toques', t: 'Musicalidade — instrumentos', arr: TOQUES, obj: false },
     { k: 'jogos', t: 'Jogos', arr: JOGOS, obj: false },
     { k: 'instrumentos', t: 'Instrumentos', arr: INSTRUMENTOS, obj: true }
   ];
@@ -10720,9 +10720,9 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       return sel('ins_' + i.id, i.nome, [['nao', 'Não sabe'], ['aprendizado', 'Em aprendizado'], ['sim', 'Sim']], 'nao');
     }).join('');
     var toques = TOQUES.map(function (t) {
-      return sl('toq_' + t + '_saber', 'Toque ' + t + ' — sabe jogar') +
-        sl('toq_' + t + '_E', 'Toque ' + t + ' — movimentação lado E') +
-        sl('toq_' + t + '_D', 'Toque ' + t + ' — movimentação lado D');
+      return sl('toq_' + t + '_saber', 'Toque ' + t + ' — jogo') +
+        sl('toq_' + t + '_E', 'Toque ' + t + ' — ritmo (lado E)') +
+        sl('toq_' + t + '_D', 'Toque ' + t + ' — ritmo (lado D)');
     }).join('');
     var jogos = JOGOS.map(function (j) { return sl('jog_' + j, 'Jogo ' + j); }).join('');
     var part = PARTICIPACAO.map(function (p) {
@@ -10758,7 +10758,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       acc('2. Esquivas', pares(ESQUIVAS, 'esq_')) +
       acc('3. Decidas', pares(DECIDAS, 'dec_')) +
       acc('4. Sequências', pares(SEQUENCIAS, 'seq_')) +
-      acc('5. Toques de berimbau', toques) +
+      acc('5. Musicalidade — instrumentos', toques) +
       acc('6. Jogos', jogos) +
       acc('7. Instrumentos', instr) +
       acc('8. Participação', '<label class="campo-label">Participação geral</label><select data-key="part_status" data-tipo="sel" data-default="sim">' +
@@ -11512,7 +11512,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       var cats = [
         { t: 'Chutes', p: 'chu_', arr: CHUTES }, { t: 'Esquivas', p: 'esq_', arr: ESQUIVAS },
         { t: 'Decidas', p: 'dec_', arr: DECIDAS }, { t: 'Sequências', p: 'seq_', arr: SEQUENCIAS },
-        { t: 'Toques de berimbau', p: 'toq_', arr: TOQUES }, { t: 'Jogos', p: 'jog_', arr: JOGOS }
+        { t: 'Musicalidade — instrumentos', p: 'toq_', arr: TOQUES }, { t: 'Jogos', p: 'jog_', arr: JOGOS }
       ];
       var todos = [];
       var blocos = cats.map(function (c) {
@@ -12542,8 +12542,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       return campo('seq_' + m.id + '_E', m.nome + ' — lado E') + campo('seq_' + m.id + '_D', m.nome + ' — lado D');
     }).join('');
     var toques = TOQUES.map(function (t) {
-      return campo('toq_' + t + '_saber', 'Toque ' + t + ' — sabe jogar') +
-        campo('toq_' + t + '_E', 'Toque ' + t + ' — movimentação E') + campo('toq_' + t + '_D', 'Toque ' + t + ' — movimentação D');
+      return campo('toq_' + t + '_saber', 'Toque ' + t + ' — jogo') +
+        campo('toq_' + t + '_E', 'Toque ' + t + ' — ritmo (lado E)') + campo('toq_' + t + '_D', 'Toque ' + t + ' — ritmo (lado D)');
     }).join('');
     var jogos = JOGOS.map(function (j) { return campo('jog_' + j, 'Jogo ' + j); }).join('');
     var cordaBase = (doc && doc.cordaAtual) || aluno.graduacao;
@@ -12560,7 +12560,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       '<div class="uc-linha"><div><label class="campo-label">Idade</label><input type="number" id="simIdade" min="0" value="' + idade + '"></div>' +
       '<div><label class="campo-label">Anos de capoeira</label><input type="number" id="simAnos" min="0" value="' + anos + '"></div></div>' +
       acc('Chutes', chutes, true) + acc('Esquivas', esq) + acc('Decidas', dec) + acc('Sequências', seq) +
-      acc('Toques de berimbau', toques) + acc('Jogos', jogos) +
+      acc('Musicalidade — instrumentos', toques) + acc('Jogos', jogos) +
       acc('Berimbau e compromisso', '<label class="campo-label">Berimbau</label><select id="simBerimbau">' +
         '<option value="nao"' + (textos.ins_Berimbau === 'nao' || !textos.ins_Berimbau ? ' selected' : '') + '>Não sei</option>' +
         '<option value="aprendizado"' + (textos.ins_Berimbau === 'aprendizado' ? ' selected' : '') + '>Em aprendizado</option>' +
@@ -20413,5 +20413,355 @@ window.ucAvalAbrir = function (i) {
   setInterval(alertaDomingo, 10 * 60 * 1000);
 })();
 </script>
+<script id="ucAulasRemuneradasV1">
+/* Aulas remuneradas + check-ins de formação (painel do aluno).
+   Regra: cada registro com 60 min ou mais é remunerado em R$ 8,50. Registros de 30 min contam como carga de formação, sem pagamento. */
+(function () {
+  var VALOR_AULA = 8.5, MIN_PAGA = 60, COL_AULAS = 'aulasRemuneradas', COL_CKIN = 'registrosFormacao';
+
+  function lst(c) { try { var l = DB.listar(c); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function h(x) { return esc(x == null ? '' : String(x)); }
+  function brl(v) { return 'R$ ' + (Math.round(v * 100) / 100).toFixed(2).replace('.', ','); }
+  function minTxt(m) {
+    m = Number(m) || 0; var hh = Math.floor(m / 60), mm = m % 60;
+    var s = (hh ? hh + 'h' : '') + (mm ? (hh ? ' ' : '') + mm + 'min' : '');
+    return s || '0min';
+  }
+  function ehPaga(m, tipo) { m = Number(m); return tipo === 'checkin' ? m >= 60 : m > 60; }
+  function alunoAtualRem() { try { return alunoLogado(); } catch (e) { return null; } }
+  function anoDe(iso) { return String(iso || '').slice(0, 4); }
+  function anoAtual() { return String(new Date().getFullYear()); }
+
+  function registrosDoAno(alunoId) {
+    var ano = anoAtual();
+    return lst(COL_CKIN).filter(function (r) { return r.alunoId === alunoId && anoDe(r.data) === ano; });
+  }
+  function aulasDoAno(alunoId) {
+    var ano = anoAtual();
+    return lst(COL_AULAS).filter(function (r) { return r.alunoId === alunoId && anoDe(r.data) === ano; });
+  }
+  function checkinsAprovadosDoAno(alunoId) {
+    var ano = anoAtual();
+    return lst('presencas').filter(function (p) { return p.alunoId === alunoId && p.status === 'aprovado' && anoDe(p.data) === ano; })
+      .sort(function (x, y) { return String(y.data).localeCompare(String(x.data)); });
+  }
+
+  /* ---------- ações (globais para os botões) ---------- */
+  window.ucRemSalvarAula = function () {
+    var a = alunoAtualRem(); if (!a) return;
+    var data = (document.getElementById('ucRemData') || {}).value || '';
+    var hora = (document.getElementById('ucRemHora') || {}).value || '';
+    var min = Number((document.getElementById('ucRemMin') || {}).value);
+    var obs = ((document.getElementById('ucRemObs') || {}).value || '').trim();
+    if (!data) { mostrarToast('Informe a data da aula.', 'erro'); return; }
+    if (!(min > 0)) { mostrarToast('Informe a duração em minutos.', 'erro'); return; }
+    DB.salvar(COL_AULAS, {
+      alunoId: a.id, alunoNome: a.nome, data: data, hora: hora,
+      tipo: 'aula', minutos: min, observacao: obs, criadoEm: agoraISO()
+    }).then(function () {
+      mostrarToast(ehPaga(min, 'aula') ? 'Aula registrada — remunerada (' + brl(VALOR_AULA) + ').' : 'Aula registrada (não remunerada, até 1h).');
+      var f = document.getElementById('ucRemObs'); if (f) f.value = '';
+      window.ucRemRender && window.ucRemRender();
+    });
+  };
+
+  window.ucRemExcluirAula = function (id) {
+    if (!confirm('Excluir este registro de aula?')) return;
+    DB.excluir(COL_AULAS, id).then(function () { window.ucRemRender && window.ucRemRender(); });
+  };
+
+  window.ucRemMarcarCheckin = function (presId, min) {
+    var a = alunoAtualRem(); if (!a) return;
+    var pres = DB.buscar('presencas', presId); if (!pres) return;
+    var prev = lst(COL_CKIN).filter(function (r) { return r.tipo === 'checkin' && r.refId === presId; })[0];
+    var dados = {
+      tipo: 'checkin', refId: presId, alunoId: a.id, alunoNome: a.nome,
+      data: pres.data, minutos: Number(min), criadoEm: agoraISO()
+    };
+    var p = prev ? DB.salvar(COL_CKIN, dados, prev.id) : DB.salvar(COL_CKIN, dados);
+    p.then(function () {
+      mostrarToast('Check-in de ' + dataBR(pres.data) + ': ' + minTxt(min) + (ehPaga(min, 'checkin') ? ' (remunerado)' : ''));
+      window.ucRemRender && window.ucRemRender();
+    });
+  };
+
+  /* ---------- visual ---------- */
+  function htmlResumo(a) {
+    var aulas = aulasDoAno(a.id);
+    var cks = registrosDoAno(a.id).filter(function (r) { return r.tipo === 'checkin'; });
+    var todos = aulas.concat(cks);
+    var minTotal = todos.reduce(function (s, r) { return s + (Number(r.minutos) || 0); }, 0);
+    var pagas = aulas.filter(function (r) { return ehPaga(r.minutos, 'aula'); }).concat(cks.filter(function (r) { return ehPaga(r.minutos, 'checkin'); }));
+    var total = pagas.length * VALOR_AULA;
+    var semMarcar = checkinsAprovadosDoAno(a.id).filter(function (p) {
+      return !cks.some(function (r) { return r.refId === p.id; });
+    }).length;
+
+    return '<h3 style="color:var(--gold);"><i class="fas fa-graduation-cap"></i> Formação do aluno ' + anoAtual() + '</h3>' +
+      '<div class="grade-3" style="margin-top:6px;">' +
+        '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + brl(total) + '</div><div class="mini">a receber</div></div>' +
+        '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + pagas.length + '</div><div class="mini">pagas</div></div>' +
+        '<div class="lista-item" style="text-align:center;"><div class="badge-count">' + minTxt(minTotal) + '</div><div class="mini">carga de formação</div></div>' +
+      '</div>' +
+      (semMarcar ? '<p class="mini" style="margin-top:6px;color:#ffe082;">⚠️ ' + semMarcar + ' check-in(s) sem duração marcada. Escolha 30min ou 1h abaixo.</p>' : '') +
+      '<p class="mini" style="margin-top:6px;">Aula dada com <b>mais de 1 hora</b>: <b>' + brl(VALOR_AULA) + '</b> por aula. Check-in de <b>1h</b>: remunerado (<b>' + brl(VALOR_AULA) + '</b>). Check-in de 30min: conta para a formação, sem pagamento.</p>';
+  }
+
+  function htmlFormAula() {
+    var hoje = dataLocalISO();
+    return '<h4 style="margin-top:10px;">Anotar aula dada</h4>' +
+      '<div class="grade-2" style="margin-top:6px;">' +
+        '<div><label class="campo-label">Data</label><input id="ucRemData" type="date" value="' + hoje + '"></div>' +
+        '<div><label class="campo-label">Horário</label><input id="ucRemHora" type="time"></div>' +
+      '</div>' +
+      '<label class="campo-label" style="margin-top:6px;">Duração (minutos)</label>' +
+      '<input id="ucRemMin" type="number" min="1" max="480" step="5" placeholder="Ex: 30, 60, 90" value="60">' +
+      '<input id="ucRemObs" type="text" placeholder="Observação (turma, local...)" style="margin-top:6px;">' +
+      '<button class="btn" style="margin-top:8px;" onclick="ucRemSalvarAula()"><i class="fas fa-plus"></i> Registrar aula</button>';
+  }
+
+  function htmlListaAulas(a) {
+    var aulas = aulasDoAno(a.id).sort(function (x, y) { return String(y.data).localeCompare(String(x.data)); });
+    if (!aulas.length) return '<p class="mini" style="margin-top:8px;">Nenhuma aula anotada em ' + anoAtual() + '.</p>';
+    return '<h4 style="margin-top:12px;">Aulas anotadas</h4>' + aulas.map(function (r) {
+      return '<div style="border-bottom:1px solid var(--card-border);padding:6px 0;display:flex;justify-content:space-between;gap:6px;align-items:center;">' +
+        '<div><b>' + dataBR(r.data) + '</b> <span class="mini">' + h(r.hora || '') + ' · ' + minTxt(r.minutos) + '</span>' +
+        (r.observacao ? '<div class="mini">' + h(r.observacao) + '</div>' : '') + '</div>' +
+        '<div style="text-align:right;white-space:nowrap;">' +
+          '<span class="pill" style="' + (ehPaga(r.minutos, 'aula') ? 'background:var(--primary-green);color:#062;' : '') + '">' + (ehPaga(r.minutos, 'aula') ? brl(VALOR_AULA) : 'não paga') + '</span>' +
+          ' <button class="cronometro-btn" onclick="ucRemExcluirAula(\'' + h(r.id) + '\')"><i class="fas fa-trash"></i></button>' +
+        '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  function htmlCheckins(a) {
+    var cks = checkinsAprovadosDoAno(a.id);
+    if (!cks.length) return '';
+    var marcados = lst(COL_CKIN).filter(function (r) { return r.tipo === 'checkin' && r.alunoId === a.id; });
+    return '<h4 style="margin-top:12px;">Check-ins da formação (' + anoAtual() + ')</h4>' +
+      '<p class="mini">Marque a duração de cada check-in: 30min (formação) ou 1h (formação remunerada).</p>' +
+      cks.map(function (p) {
+        var m = marcados.filter(function (r) { return r.refId === p.id; })[0];
+        var atual = m ? Number(m.minutos) : 0;
+        var btn = function (min, rot) {
+          var ativo = atual === min;
+          return '<button class="cronometro-btn" style="padding:4px 8px;' + (ativo ? 'background:var(--primary-green);color:#062;' : '') + '" onclick="ucRemMarcarCheckin(\'' + h(p.id) + '\',' + min + ')">' + rot + '</button>';
+        };
+        return '<div style="border-bottom:1px solid var(--card-border);padding:6px 0;display:flex;justify-content:space-between;gap:6px;align-items:center;">' +
+          '<div><b>' + dataBR(p.data) + '</b> <span class="mini">' + h(p.hora || '') + (p.poloNome ? ' · ' + h(p.poloNome) : '') + '</span></div>' +
+          '<div style="white-space:nowrap;">' + btn(30, '30min') + ' ' + btn(60, '1h') + '</div></div>';
+      }).join('');
+  }
+
+  function htmlBloco(a) {
+    return '<div class="card" id="ucAulasRemCard" style="border:1px solid var(--gold);">' +
+      htmlResumo(a) +
+      '<div style="margin-top:8px;">' + htmlFormAula() + '</div>' +
+      htmlListaAulas(a) +
+      htmlCheckins(a) +
+      '</div>';
+  }
+
+  window.ucRemRender = function () {
+    var box = document.getElementById('ucAulasRemBox');
+    var painel = document.getElementById('cardAlunoPainel');
+    var a = alunoAtualRem();
+    if (!box || !painel || !a || painel.style.display === 'none') return;
+    var foco = document.activeElement && document.activeElement.id;
+    box.innerHTML = htmlBloco(a);
+    if (foco) { var el = document.getElementById(foco); if (el) try { el.focus(); } catch (e) {} }
+  };
+
+  /* ---------- encaixe no painel do aluno (mesmo padrão do ucAlunoExtrasAppend) ---------- */
+  var _antesRem = window.ucAlunoExtrasAppend;
+  window.ucAlunoExtrasAppend = function () {
+    if (_antesRem) _antesRem.apply(this, arguments);
+    var painel = document.getElementById('cardAlunoPainel');
+    if (!painel || painel.style.display === 'none') return;
+    var a = alunoAtualRem();
+    var box = document.getElementById('ucAulasRemBox');
+    if (!a) { if (box) box.remove(); return; }
+    if (!box) { box = document.createElement('div'); box.id = 'ucAulasRemBox'; box.innerHTML = htmlBloco(a); }
+    if (painel.lastChild !== box) painel.appendChild(box);
+    if (!box.__ok) { box.__ok = true; }
+    window.ucRemRender();
+  };
+
+  DB.escutar('presencas', function () { try { window.ucAlunoExtrasAppend(); } catch (e) {} });
+  DB.escutar(COL_AULAS, function () { try { window.ucAlunoExtrasAppend(); } catch (e) {} });
+  DB.escutar(COL_CKIN, function () { try { window.ucAlunoExtrasAppend(); } catch (e) {} });
+})();
+</script>
+
+<script id="ucPlanoMelhoriaSemestralV2">
+/* Toda avaliação do aluno vira plano de aula.
+   Professor: vê o plano de cada aluno (todos os itens avaliados, os mais fracos primeiro) e libera.
+   Aluno: vê no próprio painel o que precisa melhorar e a aula específica. */
+(function () {
+  var LIMITE = 70, COL_PLANO = 'planosMelhoria';
+
+  function lst(c) { try { var l = DB.listar(c); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+  function h(x) { return esc(x == null ? '' : String(x)); }
+
+  var CAT = { chu: 'Chute', esq: 'Esquiva', dec: 'Decida', seq: 'Sequência', toq: 'Toque', jog: 'Jogo', ins: 'Instrumento' };
+  var LADO = { E: 'lado E', D: 'lado D', saber: 'jogo', saber_: 'jogo' };
+
+  function nomeItem(chave) {
+    var partes = chave.split('_');
+    var pref = partes[0];
+    var cat = CAT[pref] || 'Item';
+    var resto = partes.slice(1);
+    var lado = resto.length > 1 ? LADO[resto[resto.length - 1]] : null;
+    if (lado) resto = resto.slice(0, -1);
+    var nome = resto.join(' ');
+    if (pref === 'toq' && lado === 'jogo') return 'Toque ' + nome + ' — jogo';
+    if (pref === 'toq' && lado) return 'Toque ' + nome + ' — ritmo, ' + lado;
+    return cat + ' ' + nome + (lado ? ' — ' + lado : '');
+  }
+
+  function aulaPara(chave, valor) {
+    var partes = chave.split('_');
+    var tipo = CAT[partes[0]] || 'item';
+    var alvo = nomeItem(chave);
+    var passo = valor < LIMITE
+      ? 'Prioridade: melhorar ' + alvo.toLowerCase() + '. Aula de 15 min focada nesse ponto.'
+      : 'Manter e refinar ' + alvo.toLowerCase() + '. Revisão de 10 min na próxima aula.';
+    var dica = partes[0] === 'toq'
+      ? 'treine o toque com o berimbau e a música, marcando o ritmo com palmas antes de tocar; 3 séries de 4 min.'
+      : partes[0] === 'esq'
+        ? 'esquivas em sombra e em dupla, corrigindo cabeça e ombros; 3 séries de 10 trocas.'
+        : partes[0] === 'chu'
+          ? 'chutes no ar e no pad, com base firme e quadril alinhado; 3 séries de 10.'
+          : 'exercício de repetição lenta e depois em ritmo, com correção do professor; 3 séries.';
+    return { item: alvo, nota: valor, fraco: valor < LIMITE, aula: passo + ' ' + dica };
+  }
+
+  function periodos() {
+    var s = {};
+    lst('avaliacoesSemestrais').forEach(function (d) { if (d.periodo) s[d.periodo] = true; });
+    return Object.keys(s).sort().reverse();
+  }
+
+  function planoDoAluno(doc) {
+    var notas = doc.notas || {};
+    return Object.keys(notas)
+      .map(function (k) { return { k: k, v: Number(notas[k]) }; })
+      .filter(function (x) { return !isNaN(x.v); })
+      .sort(function (a, b) { return a.v - b.v; })
+      .map(function (x) { return aulaPara(x.k, x.v); });
+  }
+
+  function gerarLista(periodo) {
+    return lst('avaliacoesSemestrais').filter(function (d) { return d.periodo === periodo; })
+      .map(function (d) {
+        var a = lst('alunos').filter(function (x) { return x.id === d.alunoId; })[0] || {};
+        return { alunoId: d.alunoId, nome: a.nome || 'Aluno', apelido: a.apelido || '', periodo: periodo, planos: planoDoAluno(d), docId: d.id };
+      }).sort(function (x, y) { return (x.apelido || x.nome).localeCompare(y.apelido || y.nome); });
+  }
+
+  function blocoItens(planos) {
+    if (!planos.length) return '<p class="mini">Nenhum item avaliado.</p>';
+    return planos.map(function (p) {
+      var cor = p.fraco ? '#ffb74d' : 'var(--primary-green)';
+      return '<div style="border-left:3px solid ' + cor + ';padding:4px 8px;margin:6px 0;">' +
+        '<b>Precisa melhorar: ' + h(p.item) + '</b> <span class="mini">nota ' + p.nota + '</span>' +
+        '<div class="mini">' + h(p.aula) + '</div></div>';
+    }).join('');
+  }
+
+  /* ---------- professor ---------- */
+  function htmlBoxProfessor() {
+    var ps = periodos();
+    var opts = ps.map(function (p) { return '<option value="' + h(p) + '">' + h(p) + '</option>'; }).join('');
+    return '<div class="card" id="ucPlanoMelhoriaBox" style="border:1px solid var(--gold);">' +
+      '<h3><i class="fas fa-bullseye"></i> Plano de aula por aluno</h3>' +
+      '<p class="mini">Cada item avaliado vira um ponto de aula. Os de nota abaixo de ' + LIMITE + ' aparecem primeiro.</p>' +
+      (ps.length
+        ? '<label class="campo-label">Período</label><select id="ucPlanoPeriodo" onchange="ucPlanoRender()">' + opts + '</select>' +
+          '<div id="ucPlanoLista" style="margin-top:8px;"></div>' +
+          '<button class="btn" style="margin-top:8px;" onclick="ucPlanoSalvar()"><i class="fas fa-share-square"></i> Salvar e liberar ao aluno</button>'
+        : '<p class="mini">Nenhuma avaliação semestral lançada ainda.</p>') +
+      '</div>';
+  }
+
+  function listaProfessor(periodo) {
+    var lista = gerarLista(periodo);
+    if (!lista.length) return '<p class="mini">Nenhum aluno avaliado neste período.</p>';
+    return lista.map(function (a) {
+      return '<div style="border-bottom:1px solid var(--card-border);padding:8px 0;">' +
+        '<b>' + h(a.apelido || a.nome) + '</b>' + (a.apelido ? ' <span class="mini">' + h(a.nome) + '</span>' : '') +
+        blocoItens(a.planos) + '</div>';
+    }).join('');
+  }
+
+  window.ucPlanoRender = function () {
+    var sel = document.getElementById('ucPlanoPeriodo');
+    var out = document.getElementById('ucPlanoLista');
+    if (!sel || !out) return;
+    out.innerHTML = listaProfessor(sel.value);
+  };
+
+  window.ucPlanoSalvar = function () {
+    var sel = document.getElementById('ucPlanoPeriodo'); if (!sel) return;
+    var lista = gerarLista(sel.value);
+    Promise.all(lista.map(function (a) {
+      return DB.salvar(COL_PLANO, {
+        alunoId: a.alunoId, alunoNome: a.nome, alunoApelido: a.apelido, periodo: a.periodo,
+        planos: a.planos, liberado: true, geradoEm: agoraISO(), avaliacaoId: a.docId
+      }, a.alunoId + '_' + a.periodo);
+    })).then(function () {
+      mostrarToast('Planos salvos e liberados para ' + lista.length + ' aluno(s).');
+    });
+  };
+
+  function montarProfessor() {
+    var card = document.getElementById('ucCardAvaliacao');
+    if (!card || document.getElementById('ucPlanoMelhoriaBox')) return;
+    var wrap = document.createElement('div');
+    wrap.innerHTML = htmlBoxProfessor();
+    card.parentNode.insertBefore(wrap.firstChild, card.nextSibling);
+    window.ucPlanoRender();
+  }
+
+  /* ---------- aluno ---------- */
+  function htmlBoxAluno(a) {
+    var meus = lst(COL_PLANO).filter(function (p) { return p.alunoId === a.id && p.liberado; })
+      .sort(function (x, y) { return String(y.periodo).localeCompare(String(x.periodo)); });
+    if (!meus.length) return '';
+    var ult = meus[0];
+    return '<div class="card" id="ucPlanoAlunoBox" style="border:1px solid var(--gold);">' +
+      '<h3><i class="fas fa-bullseye"></i> O que melhorar · ' + h(ult.periodo) + '</h3>' +
+      '<p class="mini">Seu professor montou estas aulas para você.</p>' +
+      blocoItens(ult.planos || []) + '</div>';
+  }
+
+  function montarAluno() {
+    var painel = document.getElementById('cardAlunoPainel');
+    var box = document.getElementById('ucPlanoAlunoBox');
+    if (!painel || painel.style.display === 'none') { if (box) box.remove(); return; }
+    var a = null; try { a = alunoLogado(); } catch (e) {}
+    if (!a) { if (box) box.remove(); return; }
+    var html = htmlBoxAluno(a);
+    if (!html) { if (box) box.remove(); return; }
+    if (!box) {
+      var wrap = document.createElement('div');
+      wrap.innerHTML = html;
+      box = wrap.firstChild;
+      box.__html = html;
+      painel.appendChild(box);
+    } else if (box.__html !== html) {
+      var w2 = document.createElement('div');
+      w2.innerHTML = html;
+      box.parentNode.replaceChild(w2.firstChild, box);
+      w2.firstChild.__html = html;
+    }
+  }
+
+  setInterval(function () { montarProfessor(); montarAluno(); }, 1500);
+  DB.escutar('avaliacoesSemestrais', function () { try { window.ucPlanoRender(); } catch (e) {} });
+  DB.escutar(COL_PLANO, function () { try { montarAluno(); window.ucPlanoRender(); } catch (e) {} });
+})();
+</script>
+
 </body>
 </html>
