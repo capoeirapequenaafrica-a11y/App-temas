@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, viewport-fit=cover">
 <meta name="theme-color" content="#00e676" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#00c853" media="(prefers-color-scheme: light)">
 <meta name="color-scheme" content="dark light">
@@ -60,6 +60,47 @@
   --shadow-soft: 0 4px 16px rgba(0,0,0,0.35);
   --radius: 14px;
 }
+/* Painel de personalização de cores do Professor */
+#tab4 .uc-cores-prof-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0;
+}
+#tab4 .uc-cores-prof-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+#tab4 .uc-cores-prof-item input[type="color"] {
+  width: 100%;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: #0a1419;
+  cursor: pointer;
+}
+#tab4 .uc-presets-cores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+#tab4 .uc-preset-btn {
+  border: 2px solid var(--card-border);
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  background: #1a2a32;
+}
+#tab4 .uc-preset-btn:active { transform: scale(0.96); }
+#tab4 .uc-preset-btn.ativo { border-color: var(--primary-green); box-shadow: 0 0 0 1px var(--primary-green); }
 html, body {
   background-color: #050b0e !important;
   color: var(--text-main) !important;
@@ -318,16 +359,29 @@ header {
 .flex-btn .btn { flex: 1 1 110px; min-width: 0; }
 input, select, textarea {
   width: 100% !important;
-  padding: 8px 10px;
+  padding: 12px 12px;
   margin: 3px 0;
   border-radius: 8px;
   border: 1px solid var(--card-border);
   background: #0a1419;
   color: #fff;
-  font-size: 0.8rem;
+  font-size: 16px; /* evita zoom automático no iOS ao focar */
   outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
 }
-textarea { min-height: 64px; resize: vertical; }
+textarea { min-height: 72px; resize: vertical; font-size: 16px; }
+/* Alvos de toque confortáveis no celular */
+.btn, .tabs button, .uc-preset-btn, .btn-mini {
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 .lado-flex { display: flex; gap: 4px; margin: 2px 0; }
 .lado-flex input { flex: 1; }
 .campo-label { font-size: 0.72rem; color: var(--text-sub); margin: 6px 0 2px; display: block; font-weight: 600; }
@@ -968,7 +1022,7 @@ button.uc-btn-invalido{opacity:.55;pointer-events:none;filter:grayscale(.2);}
 
     <div class="aviso-formacao-remunerada" id="avisoFormacaoRemunerada" role="note">
       <span class="aviso-icone">⚠️</span>
-      <span><b>Aviso ao aluno:</b> a formação de alunos é uma etapa de aprendizado. <b>Depois de formado, o trabalho de dar aula passa a ser remunerado.</b></span>
+      <span><b>Aviso ao aluno:</b> a formação de professor é <b>remunerada</b>. Você <b>solicita</b> a inscrição; o professor aprova e define o valor (padrão <b>R$ 8,50 por 1 hora de aula</b>). As horas aceitas geram o valor a receber.</span>
     </div>
     <div class="card fechado" id="cardRelatoriosFormacao" style="border:1px solid var(--gold);">
       <h3 style="color:var(--gold);"><i class="fas fa-book-open"></i> Formação de Professor — meus relatórios</h3>
@@ -8976,6 +9030,9 @@ function renderAbaProfessor() {
     '<h3><i class="fas fa-user-shield"></i> Sessão: ' + esc(sessaoEquipe.nome) + ' <span class="pill pill-info">' + esc(sessaoEquipe.papel) + '</span></h3>' +
     '<button class="btn btn-back" style="margin:0;" onclick="sairEquipe()"><i class="fas fa-sign-out-alt"></i> Sair da equipe</button></div>';
 
+  /* --- Personalização de cores da interface do Professor --- */
+  if (typeof ucHtmlCardCoresProfessor === 'function') html += ucHtmlCardCoresProfessor();
+
   /* --- Atalho Portal de Parceiros Wellhub/Gympass --- */
   html += '<div class="card" style="border:1px solid var(--gympass-red);">' +
     '<h3 style="color:var(--gympass-red);"><i class="fas fa-ticket-alt"></i> Check-ins Wellhub / Gympass</h3>' +
@@ -16191,7 +16248,154 @@ function ucAplicarAparencia() {
   var l1 = document.getElementById('headerLogo1');
   if (logo && l1) { l1.src = logo; l1.style.display = 'block'; }
   document.body.style.backgroundImage = fundo ? 'url("' + fundo + '")' : '';
+  try { ucAplicarCoresProfessor(); } catch (e) {}
 }
+
+/* ===== Personalização de cores da interface do Professor ===== */
+window.UC_CORES_PROF_PADRAO = {
+  primary: '#00e676',
+  primaryDark: '#00c853',
+  accent: '#00d2ff',
+  accentDark: '#0091ea',
+  cardBg: '#16232b',
+  cardBorder: '#2a3f4a',
+  gold: '#ffc107',
+  textMain: '#f5f7fa',
+  textSub: '#90a4ae'
+};
+window.UC_PRESETS_CORES_PROF = {
+  classico: { nome: 'Verde clássico', primary: '#00e676', primaryDark: '#00c853', accent: '#00d2ff', accentDark: '#0091ea', cardBg: '#16232b', cardBorder: '#2a3f4a', gold: '#ffc107', textMain: '#f5f7fa', textSub: '#90a4ae' },
+  oceano: { nome: 'Oceano', primary: '#26c6da', primaryDark: '#00acc1', accent: '#4fc3f7', accentDark: '#0288d1', cardBg: '#0d2137', cardBorder: '#1e4a6e', gold: '#ffd54f', textMain: '#e3f2fd', textSub: '#90caf9' },
+  roxo: { nome: 'Roxo real', primary: '#b388ff', primaryDark: '#7c4dff', accent: '#ea80fc', accentDark: '#aa00ff', cardBg: '#1a1228', cardBorder: '#3d2a5c', gold: '#ffd740', textMain: '#f3e5f5', textSub: '#ce93d8' },
+  dourado: { nome: 'Dourado', primary: '#ffc107', primaryDark: '#ff8f00', accent: '#ffab40', accentDark: '#ff6d00', cardBg: '#1c1608', cardBorder: '#4a3b12', gold: '#ffe082', textMain: '#fff8e1', textSub: '#ffe082' },
+  vermelho: { nome: 'Vermelho', primary: '#ef5350', primaryDark: '#c62828', accent: '#ff8a65', accentDark: '#e64a19', cardBg: '#1a1010', cardBorder: '#4a2020', gold: '#ffd54f', textMain: '#ffebee', textSub: '#ef9a9a' },
+  escuro: { nome: 'Neutro escuro', primary: '#90a4ae', primaryDark: '#607d8b', accent: '#b0bec5', accentDark: '#78909c', cardBg: '#121212', cardBorder: '#2c2c2c', gold: '#ffcc80', textMain: '#eceff1', textSub: '#9e9e9e' }
+};
+
+function ucLerCoresProfessor() {
+  try {
+    var raw = localStorage.getItem('uc_cores_professor');
+    if (raw) {
+      var o = JSON.parse(raw);
+      if (o && typeof o === 'object') return Object.assign({}, window.UC_CORES_PROF_PADRAO, o);
+    }
+  } catch (e) {}
+  return Object.assign({}, window.UC_CORES_PROF_PADRAO);
+}
+
+function ucSalvarCoresProfessor(cores) {
+  try { localStorage.setItem('uc_cores_professor', JSON.stringify(cores)); } catch (e) {}
+}
+
+function ucAplicarCoresProfessor(cores) {
+  cores = cores || ucLerCoresProfessor();
+  var alvos = ['tab4', 'tab5', 'tab6'];
+  alvos.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.setProperty('--primary-green', cores.primary);
+    el.style.setProperty('--primary-green-dark', cores.primaryDark);
+    el.style.setProperty('--accent-blue', cores.accent);
+    el.style.setProperty('--accent-blue-dark', cores.accentDark);
+    el.style.setProperty('--card-bg', cores.cardBg);
+    el.style.setProperty('--card-border', cores.cardBorder);
+    el.style.setProperty('--gold', cores.gold);
+    el.style.setProperty('--text-main', cores.textMain);
+    el.style.setProperty('--text-sub', cores.textSub);
+    el.classList.add('tema-prof-custom');
+  });
+  /* botão Equipe ativo também usa as cores */
+  var btnEq = document.getElementById('btnToggleEquipe');
+  if (btnEq) {
+    btnEq.style.setProperty('--primary-green', cores.primary);
+    btnEq.style.setProperty('--primary-green-dark', cores.primaryDark);
+    btnEq.style.setProperty('--accent-blue', cores.accent);
+    btnEq.style.setProperty('--accent-blue-dark', cores.accentDark);
+  }
+}
+
+function ucHtmlCardCoresProfessor() {
+  var c = ucLerCoresProfessor();
+  var campos = [
+    { k: 'primary', label: 'Cor principal' },
+    { k: 'primaryDark', label: 'Principal (escura)' },
+    { k: 'accent', label: 'Cor de destaque' },
+    { k: 'accentDark', label: 'Destaque (escura)' },
+    { k: 'cardBg', label: 'Fundo dos cards' },
+    { k: 'cardBorder', label: 'Borda dos cards' },
+    { k: 'gold', label: 'Dourado / alertas' },
+    { k: 'textMain', label: 'Texto principal' },
+    { k: 'textSub', label: 'Texto secundário' }
+  ];
+  var grid = campos.map(function (f) {
+    return '<div class="uc-cores-prof-item"><label>' + f.label + '</label>' +
+      '<input type="color" id="corProf_' + f.k + '" value="' + (c[f.k] || '#000000') + '" onchange="ucPreviewCorProfessor()"></div>';
+  }).join('');
+  var presets = Object.keys(window.UC_PRESETS_CORES_PROF).map(function (id) {
+    var p = window.UC_PRESETS_CORES_PROF[id];
+    return '<button type="button" class="uc-preset-btn" style="background:linear-gradient(135deg,' + p.primaryDark + ',' + p.primary + ')" onclick="ucAplicarPresetCoresProfessor(\'' + id + '\')">' + p.nome + '</button>';
+  }).join('');
+  return '<div class="card" id="cardCoresProfessor" style="border:1px solid var(--gold);">' +
+    '<h3 style="color:var(--gold);"><i class="fas fa-palette"></i> Cores da interface do Professor</h3>' +
+    '<p class="mini" style="margin-bottom:4px;">Personalize as cores só da área da equipe (Professor / ADM / Dev). Os alunos continuam com o tema padrão.</p>' +
+    '<p class="campo-label" style="margin-top:6px;">Temas prontos</p>' +
+    '<div class="uc-presets-cores">' + presets + '</div>' +
+    '<p class="campo-label">Ajuste fino</p>' +
+    '<div class="uc-cores-prof-grid">' + grid + '</div>' +
+    '<div class="flex-btn" style="margin-top:8px;">' +
+      '<button type="button" class="btn" onclick="ucSalvarPainelCoresProfessor()"><i class="fas fa-save"></i> Salvar cores</button>' +
+      '<button type="button" class="btn btn-secondary" onclick="ucResetCoresProfessor()"><i class="fas fa-undo"></i> Restaurar padrão</button>' +
+    '</div></div>';
+}
+
+function ucLerPainelCoresProfessor() {
+  var o = {};
+  Object.keys(window.UC_CORES_PROF_PADRAO).forEach(function (k) {
+    var el = document.getElementById('corProf_' + k);
+    o[k] = el && el.value ? el.value : window.UC_CORES_PROF_PADRAO[k];
+  });
+  return o;
+}
+
+function ucPreviewCorProfessor() {
+  ucAplicarCoresProfessor(ucLerPainelCoresProfessor());
+}
+
+function ucSalvarPainelCoresProfessor() {
+  var cores = ucLerPainelCoresProfessor();
+  ucSalvarCoresProfessor(cores);
+  ucAplicarCoresProfessor(cores);
+  if (typeof mostrarToast === 'function') mostrarToast('Cores do Professor salvas neste dispositivo.');
+}
+
+function ucAplicarPresetCoresProfessor(id) {
+  var p = window.UC_PRESETS_CORES_PROF[id];
+  if (!p) return;
+  Object.keys(window.UC_CORES_PROF_PADRAO).forEach(function (k) {
+    var el = document.getElementById('corProf_' + k);
+    if (el && p[k]) el.value = p[k];
+  });
+  ucAplicarCoresProfessor(p);
+  if (typeof mostrarToast === 'function') mostrarToast('Tema "' + p.nome + '" aplicado. Clique em Salvar para manter.');
+}
+
+function ucResetCoresProfessor() {
+  var p = window.UC_CORES_PROF_PADRAO;
+  Object.keys(p).forEach(function (k) {
+    var el = document.getElementById('corProf_' + k);
+    if (el) el.value = p[k];
+  });
+  ucSalvarCoresProfessor(p);
+  ucAplicarCoresProfessor(p);
+  if (typeof mostrarToast === 'function') mostrarToast('Cores restauradas ao padrão.');
+}
+
+window.ucAplicarCoresProfessor = ucAplicarCoresProfessor;
+window.ucHtmlCardCoresProfessor = ucHtmlCardCoresProfessor;
+window.ucPreviewCorProfessor = ucPreviewCorProfessor;
+window.ucSalvarPainelCoresProfessor = ucSalvarPainelCoresProfessor;
+window.ucAplicarPresetCoresProfessor = ucAplicarPresetCoresProfessor;
+window.ucResetCoresProfessor = ucResetCoresProfessor;
 (function () {
   var orig = window.aplicarConfig;
   if (typeof orig === 'function') window.aplicarConfig = function () { var r = orig.apply(this, arguments); try { ucAplicarAparencia(); } catch (e) {} return r; };
@@ -16737,20 +16941,26 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     y = ucTextoPara(ctx, 'realizou com pleno êxito todas as etapas de avaliação técnica, teórica e prática de Capoeira. Demonstrando disciplina, dedicação e pleno respeito aos fundamentos da nossa arte, o(a) capoeirista está apto(a) a portar sua nova graduação:', W / 2, y, 1000, 50);
     y += 50;
 
-    var cores = ucCoresDaCorda(d.cordaFinal);
-    if (!cores.length) cores = ['#c62828'];
-    var bw = 600, bh = 54, bx = (W - bw) / 2, seg = bw / cores.length;
-    ctx.save();
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(bx, y, bw, bh, 23); else ctx.rect(bx, y, bw, bh);
-    ctx.clip();
-    cores.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(bx + i * seg, y, seg + 1, bh); });
-    ctx.restore();
-    ctx.strokeStyle = '#4a3b12'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(bx, y, bw, bh, 23); else ctx.rect(bx, y, bw, bh);
-    ctx.stroke();
-    y += bh + 62;
+    /* Opção: ocultar a barra de cor da graduação no certificado */
+    var ocultarCor = !!(d && d.ocultarCor) || (typeof window.ucOcultarCorCertificado === 'boolean' && window.ucOcultarCorCertificado);
+    if (!ocultarCor) {
+      var cores = ucCoresDaCorda(d.cordaFinal);
+      if (!cores.length) cores = ['#c62828'];
+      var bw = 600, bh = 54, bx = (W - bw) / 2, seg = bw / cores.length;
+      ctx.save();
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, y, bw, bh, 23); else ctx.rect(bx, y, bw, bh);
+      ctx.clip();
+      cores.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(bx + i * seg, y, seg + 1, bh); });
+      ctx.restore();
+      ctx.strokeStyle = '#4a3b12'; ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, y, bw, bh, 23); else ctx.rect(bx, y, bw, bh);
+      ctx.stroke();
+      y += bh + 62;
+    } else {
+      y += 20;
+    }
     ctx.fillStyle = '#222'; ctx.font = 'bold 50px Georgia, serif';
     y = ucTextoPara(ctx, d.cordaFinal || 'Graduação a definir', W / 2, y, 1000, 58);
     y += 40;
@@ -16880,6 +17090,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     listar('avaliacoesSemestrais').forEach(function (d) { if (ucEhApto(d) && d.periodo) m[d.periodo] = 1; });
     return Object.keys(m).sort().reverse();
   }
+  if (typeof window.ucOcultarCorCertificado === 'undefined') window.ucOcultarCorCertificado = false;
+
   function ucCertCardHtml() {
     var ps = ucPeriodosComApto();
     if (ps.indexOf(ucCertPeriodo) < 0) ucCertPeriodo = ps[0] || '';
@@ -16891,6 +17103,9 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       '<label class="mini" for="ucCertPeriodoSel">Avaliação (período)</label>' +
       '<select id="ucCertPeriodoSel" onchange="ucCertTrocarPeriodo(this.value)">' +
       ps.map(function (p) { return '<option value="' + esc(p) + '"' + (p === ucCertPeriodo ? ' selected' : '') + '>' + esc(p) + (p === ps[0] ? ' (última)' : '') + '</option>'; }).join('') + '</select>' +
+      '<label style="display:flex;align-items:center;gap:8px;margin:10px 0 6px;font-size:0.82rem;cursor:pointer;user-select:none;">' +
+      '<input type="checkbox" id="chkOcultarCorCert" ' + (window.ucOcultarCorCertificado ? 'checked' : '') + ' onchange="window.ucOcultarCorCertificado=this.checked">' +
+      ' Não mostrar a cor da graduação no certificado</label>' +
       '<div class="flex-btn" style="gap:6px;margin:8px 0">' +
       '<button type="button" class="btn btn-gold" onclick="ucAbrirTodosCertificados(\'' + esc(ucCertPeriodo) + '\')"><i class="fas fa-print"></i> Abrir todos (imprimir / PDF) · ' + docs.length + '</button>' +
       '<button type="button" class="btn btn-secondary" onclick="ucBaixarTodosCertificados(\'' + esc(ucCertPeriodo) + '\')"><i class="fas fa-download"></i> Baixar todos (imagens)</button></div>';
@@ -16968,10 +17183,16 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.periodo === periodo; });
     if (!docs.length) {
       box.innerHTML = '<div class="uc-mini">Nenhuma avaliação neste período ainda.</div>' +
+        '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:0.78rem;cursor:pointer;user-select:none;">' +
+          '<input type="checkbox" ' + (window.ucOcultarCorCertificado ? 'checked' : '') + ' onchange="window.ucOcultarCorCertificado=this.checked;var c=document.getElementById(\'chkOcultarCorCert\');if(c)c.checked=this.checked;">' +
+          ' Não mostrar a cor da graduação no certificado</label>' +
         '<div class="uc-linha" style="margin:6px 0"><button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button></div>';
       return;
     }
     box.innerHTML = '<h4 class="uc-mini" style="font-weight:700">Avaliações do período ' + esc(periodo) + '</h4>' +
+      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:0.78rem;cursor:pointer;user-select:none;">' +
+        '<input type="checkbox" ' + (window.ucOcultarCorCertificado ? 'checked' : '') + ' onchange="window.ucOcultarCorCertificado=this.checked;var c=document.getElementById(\'chkOcultarCorCert\');if(c)c.checked=this.checked;">' +
+        ' Não mostrar a cor da graduação no certificado</label>' +
       '<div class="uc-linha" style="margin:6px 0">' +
         '<button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button>' +
         (docs.some(ucEhApto)
@@ -18249,10 +18470,12 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     renderBoletim();
   }
 
-  /* ===== FORMAÇÃO DE PROFESSOR: inscrição, aula de 30 min com check-in e aceite do professor ===== */
+  /* ===== FORMAÇÃO DE PROFESSOR REMUNERADA: aluno solicita · prof aprova · R$ 8,50 / 1 h de aula ===== */
   var FP_DURACAO_MIN = 30;
+  var FP_VALOR_HORA_PADRAO = 8.50; /* R$ por 1 hora de aula — professor pode ajustar por aluno */
   var FP_DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   var FP_STATUS_TXT = { aberta: 'Em andamento', pendente: 'Aguardando aceite', aprovado: 'Aceita', recusada: 'Recusada' };
+  var FP_STATUS_INSC = { solicitado: 'Solicitado', pendente: 'Pendente', aprovado: 'Aprovado', recusado: 'Recusado' };
 
   function fpHoje() {
     var d = new Date();
@@ -18269,7 +18492,18 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     return fpAulasDo(alunoId).filter(function (a) { return a.status === 'aprovado'; })
       .reduce(function (soma, a) { return soma + (Number(a.duracaoMin) || 0); }, 0) / 60;
   }
+  function fpValorHora(insc) {
+    var v = insc && insc.valorHora != null ? Number(insc.valorHora) : FP_VALOR_HORA_PADRAO;
+    return isNaN(v) || v < 0 ? FP_VALOR_HORA_PADRAO : v;
+  }
+  function fpValorReceber(alunoId, insc) {
+    return Math.round(fpHorasAprovadas(alunoId) * fpValorHora(insc) * 100) / 100;
+  }
   function fpFormatarHoras(h) { return (Math.round(h * 10) / 10).toString().replace('.', ',') + 'h'; }
+  function fpFormatarReais(v) {
+    var n = Math.round(Number(v) * 100) / 100;
+    return 'R$ ' + n.toFixed(2).replace('.', ',');
+  }
   function fpMinutosRestantes(a) { return Math.max(0, Math.ceil((a.inicioMs + FP_DURACAO_MIN * 60000 - Date.now()) / 60000)); }
 
   /* Fecha sozinha a aula que chegou aos 30 min */
@@ -18503,20 +18737,41 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
       painel.insertBefore(box, painel.firstChild);
     }
     var aluno = alunoLogado();
-    var insc = aluno ? fpInscricao(aluno.id) : null;
-    if (!insc) { box.style.display = 'none'; return; }
+    if (!aluno) { box.style.display = 'none'; return; }
+    var insc = fpInscricao(aluno.id);
     box.style.display = '';
 
     var hoje = fpHoje();
-    var aulas = fpAulasDo(aluno.id);
+    var aulas = insc ? fpAulasDo(aluno.id) : [];
     var aberta = aulas.filter(function (a) { return a.status === 'aberta'; })[0];
-    var html = '<h3><i class="fas fa-chalkboard-teacher"></i> Formação de Professor</h3>';
+    var html = '<h3><i class="fas fa-chalkboard-teacher"></i> Formação de Professor (remunerada)</h3>';
 
-    if (insc.status !== 'aprovado') {
+    /* Aluno ainda não solicitou: pode pedir inscrição */
+    if (!insc) {
+      html += '<p class="mini">Formação remunerada: o professor define o valor por hora (padrão <b>' + fpFormatarReais(FP_VALOR_HORA_PADRAO) + '/h</b>). Você solicita e aguarda aprovação.</p>' +
+        '<button class="btn btn-gold" type="button" onclick="ucFpSolicitarInscricao()"><i class="fas fa-hand-paper"></i> Solicitar formação de professor</button>';
+      if (box.getAttribute('data-html') === html && !forcar) return;
+      box.setAttribute('data-html', html);
+      box.innerHTML = html;
+      return;
+    }
+
+    if (insc.status === 'solicitado' || insc.status === 'pendente') {
+      html += '<p class="mini"><span class="pill pill-pend">Solicitação enviada</span> Aguardando o professor aprovar e definir o valor/hora e os dias de aula.</p>';
+      if (insc.mensagemAluno) html += '<p class="mini">Sua mensagem: ' + esc(insc.mensagemAluno) + '</p>';
+    } else if (insc.status === 'recusado') {
+      html += '<p class="mini"><span class="pill pill-no">Solicitação recusada</span></p>' +
+        (insc.motivoRecusa ? '<p class="mini">' + esc(insc.motivoRecusa) + '</p>' : '') +
+        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucFpSolicitarInscricao()"><i class="fas fa-redo"></i> Solicitar de novo</button>';
+    } else if (insc.status !== 'aprovado') {
       html += '<p class="mini">Aguardando aprovação do professor.</p>';
     } else {
       var dias = fpDescreverDias(insc) || 'sem dias definidos';
-      html += '<div class="mini">Horas de aula aceitas: <b>' + fpFormatarHoras(fpHorasAprovadas(aluno.id)) + '</b> · Dias de aula: ' + esc(dias) + '</div>';
+      var horasOk = fpHorasAprovadas(aluno.id);
+      var valorH = fpValorHora(insc);
+      var aReceber = fpValorReceber(aluno.id, insc);
+      html += '<div class="mini">Horas aceitas: <b>' + fpFormatarHoras(horasOk) + '</b> · Valor/hora: <b>' + fpFormatarReais(valorH) + '</b> · A receber: <b style="color:var(--primary-green)">' + fpFormatarReais(aReceber) + '</b></div>' +
+        '<div class="mini">Dias de aula: ' + esc(dias) + '</div>';
       html += fpHtmlCalAluno(insc, aulas) + fpHtmlProvaAluno(aluno.id);
       var hojeEhDiaDeAula = fpEhDiaDeAula(insc, fpHoje());
       var jaTemHoje = aulas.some(function (a) { return a.data === hoje && a.status !== 'recusada'; });
@@ -18593,13 +18848,46 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     return Array.prototype.map.call(document.querySelectorAll('.fpDia:checked'), function (c) { return Number(c.value); });
   }
 
+  /* Aluno solicita a formação remunerada */
+  window.ucFpSolicitarInscricao = function () {
+    var aluno = alunoLogado();
+    if (!aluno) { toast('Faça login na aba Aluno primeiro.', 'erro'); return; }
+    var ja = fpInscricao(aluno.id);
+    if (ja && ja.status !== 'recusado' && ja.status !== 'removido') {
+      toast('Você já tem uma solicitação ou inscrição ativa.', 'erro'); return;
+    }
+    var msg = '';
+    try { msg = (window.prompt('Mensagem opcional para o professor (por que quer a formação):') || '').trim(); } catch (e) {}
+    var dados = {
+      alunoId: aluno.id,
+      alunoNome: aluno.nome,
+      alunoApelido: aluno.apelido || '',
+      status: 'solicitado',
+      valorHora: FP_VALOR_HORA_PADRAO,
+      mensagemAluno: msg,
+      datasAula: [],
+      diasAula: [],
+      criadoEm: agoraISO(),
+      solicitadoEm: agoraISO()
+    };
+    var idExistente = ja && ja.id ? ja.id : undefined;
+    DB.salvar('formacaoProfessor', dados, idExistente).then(function () {
+      toast('Solicitação enviada. O professor vai analisar e definir o valor/hora.');
+      try { notificar('Formação de professor', (aluno.apelido || aluno.nome) + ' solicitou a formação remunerada'); } catch (e) {}
+      fpRenderAluno(true); fpRenderProfessor(true);
+    }).catch(function () { toast('Não foi possível enviar a solicitação.', 'erro'); });
+  };
+
   window.ucFpAbrirInscricao = function () {
     var jaInscritos = listar('formacaoProfessor').filter(function (f) { return f.status !== 'removido'; }).map(function (f) { return f.alunoId; });
     var opcoes = listar('alunos').filter(function (a) { return a.ativo !== false && jaInscritos.indexOf(a.id) < 0; })
       .sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome)); })
       .map(function (a) { return '<option value="' + a.id + '">' + esc(a.nome) + '</option>'; }).join('');
-    abrirModal('Inscrever na formação de professor',
+    abrirModal('Inscrever na formação de professor (remunerada)',
       '<label class="campo-label">Aluno</label><select id="fpAluno">' + opcoes + '</select>' +
+      '<label class="campo-label">Valor por 1 hora de aula (R$)</label>' +
+      '<input type="number" id="fpValorHora" min="0" step="0.50" value="' + FP_VALOR_HORA_PADRAO + '" placeholder="8.50">' +
+      '<p class="mini">Padrão: R$ 8,50 por hora. Você pode ajustar depois.</p>' +
       '<label class="campo-label">Dias de aula (30 min cada) — toque nos dias</label><div id="fpCalInsc"></div>',
       '<button class="btn" type="button" onclick="ucFpSalvarInscricao()">Salvar</button>');
     FP_CAL_SEL.fpCalInsc = {}; fpCalRenderProf('fpCalInsc');
@@ -18610,19 +18898,31 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var alunoId = sel ? sel.value : '';
     var aluno = listar('alunos').filter(function (a) { return a.id === alunoId; })[0];
     var datas = fpLerDatas('fpCalInsc');
+    var valorHora = parseFloat((el('fpValorHora') || {}).value);
+    if (isNaN(valorHora) || valorHora < 0) valorHora = FP_VALOR_HORA_PADRAO;
     if (!aluno || !datas.length) { toast('Escolha o aluno e pelo menos um dia no calendário.', 'erro'); return; }
     DB.salvar('formacaoProfessor', {
       alunoId: aluno.id, alunoNome: aluno.nome, status: 'aprovado', datasAula: datas, diasAula: [],
-      criadoEm: agoraISO(), aprovadoEm: agoraISO()
-    }).then(function () { fecharModal(); toast('Aluno inscrito na formação.'); fpRenderProfessor(true); })
+      valorHora: valorHora, criadoEm: agoraISO(), aprovadoEm: agoraISO()
+    }).then(function () { fecharModal(); toast('Aluno inscrito · ' + fpFormatarReais(valorHora) + '/h'); fpRenderProfessor(true); })
       .catch(function () { toast('Não foi possível inscrever.', 'erro'); });
   };
 
   window.ucFpAbrirEditar = function (id) {
     var insc = listar('formacaoProfessor').filter(function (f) { return f.id === id; })[0];
     if (!insc) return;
+    var vh = fpValorHora(insc);
     abrirModal('Editar formação: ' + insc.alunoNome,
-      '<label class="campo-label">Situação</label><select id="fpStatus"><option value="aprovado"' + (insc.status === 'aprovado' ? ' selected' : '') + '>Aprovado</option><option value="pendente"' + (insc.status !== 'aprovado' ? ' selected' : '') + '>Pendente</option></select>' +
+      (insc.mensagemAluno ? '<p class="mini">Mensagem do aluno: ' + esc(insc.mensagemAluno) + '</p>' : '') +
+      '<label class="campo-label">Situação</label><select id="fpStatus">' +
+        '<option value="aprovado"' + (insc.status === 'aprovado' ? ' selected' : '') + '>Aprovado</option>' +
+        '<option value="solicitado"' + (insc.status === 'solicitado' ? ' selected' : '') + '>Solicitado (aguardando)</option>' +
+        '<option value="pendente"' + (insc.status === 'pendente' ? ' selected' : '') + '>Pendente</option>' +
+        '<option value="recusado"' + (insc.status === 'recusado' ? ' selected' : '') + '>Recusado</option>' +
+      '</select>' +
+      '<label class="campo-label">Valor por 1 hora de aula (R$)</label>' +
+      '<input type="number" id="fpValorHoraEdit" min="0" step="0.50" value="' + vh + '">' +
+      '<p class="mini">Padrão da academia: ' + fpFormatarReais(FP_VALOR_HORA_PADRAO) + '/h. Ajuste se quiser outro valor para este aluno.</p>' +
       '<label class="campo-label">Dias de aula — toque para marcar ou desmarcar</label><div id="fpCalEdit"></div>',
       '<button class="btn" type="button" onclick="ucFpSalvarEdicao(\'' + id + '\')">Salvar</button>' +
       '<button class="btn btn-danger" type="button" onclick="ucFpRemover(\'' + id + '\')">Remover da formação</button>');
@@ -18632,9 +18932,15 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   window.ucFpSalvarEdicao = function (id) {
     var status = el('fpStatus').value;
     var datas = fpLerDatas('fpCalEdit');
-    if (!datas.length) { toast('Escolha pelo menos um dia no calendário.', 'erro'); return; }
-    DB.salvar('formacaoProfessor', { status: status, datasAula: datas, diasAula: [], atualizadoEm: agoraISO() }, id).then(function () {
-      fecharModal(); toast('Formação atualizada.'); fpRenderProfessor(true);
+    var valorHora = parseFloat((el('fpValorHoraEdit') || {}).value);
+    if (isNaN(valorHora) || valorHora < 0) valorHora = FP_VALOR_HORA_PADRAO;
+    if (status === 'aprovado' && !datas.length) { toast('Para aprovar, escolha pelo menos um dia no calendário.', 'erro'); return; }
+    var patch = { status: status, valorHora: valorHora, datasAula: datas, diasAula: [], atualizadoEm: agoraISO() };
+    if (status === 'aprovado') patch.aprovadoEm = agoraISO();
+    DB.salvar('formacaoProfessor', patch, id).then(function () {
+      fecharModal();
+      toast('Formação atualizada · ' + fpFormatarReais(valorHora) + '/h');
+      fpRenderProfessor(true); fpRenderAluno(true);
     }).catch(function () { toast('Não foi possível salvar.', 'erro'); });
   };
 
@@ -18659,19 +18965,39 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var inscritos = listar('formacaoProfessor').filter(function (f) { return f.status !== 'removido'; })
       .sort(function (x, y) { return String(x.alunoNome).localeCompare(String(y.alunoNome)); });
 
-    var html = '<h3><i class="fas fa-chalkboard-teacher"></i> Formação de Professor</h3>' +
+    var solicitacoes = inscritos.filter(function (f) { return f.status === 'solicitado'; });
+    var html = '<h3><i class="fas fa-chalkboard-teacher"></i> Formação de Professor (remunerada)</h3>' +
+      '<p class="mini">Padrão: <b>' + fpFormatarReais(FP_VALOR_HORA_PADRAO) + ' por 1 hora de aula</b>. O aluno solicita; você aprova e pode ajustar o valor.</p>' +
       '<button class="btn btn-secondary btn-mini" type="button" onclick="ucFpAbrirInscricao()"><i class="fas fa-user-plus"></i> Inscrever aluno</button>';
 
-    if (!inscritos.length) html += '<p class="mini" style="margin-top:8px">Nenhum aluno na formação ainda.</p>';
+    if (solicitacoes.length) {
+      html += '<div style="margin-top:10px;padding:8px;border:1px solid var(--gold);border-radius:10px;background:rgba(255,193,7,0.08)">' +
+        '<b style="color:var(--gold);font-size:0.82rem"><i class="fas fa-bell"></i> Solicitações pendentes (' + solicitacoes.length + ')</b>';
+      solicitacoes.forEach(function (insc) {
+        html += '<div class="lista-item" style="margin-top:6px"><div class="linha"><b>' + esc(insc.alunoNome) + '</b><span class="pill pill-pend">Solicitado</span></div>' +
+          (insc.mensagemAluno ? '<p class="mini">' + esc(insc.mensagemAluno) + '</p>' : '') +
+          '<div class="flex-btn" style="margin-top:6px">' +
+          '<button class="btn btn-gold btn-mini" type="button" onclick="ucFpAbrirEditar(\'' + insc.id + '\')"><i class="fas fa-check"></i> Analisar / Aprovar</button>' +
+          '</div></div>';
+      });
+      html += '</div>';
+    }
+
+    if (!inscritos.length) html += '<p class="mini" style="margin-top:8px">Nenhum aluno na formação ainda. Os alunos solicitam pelo painel Aluno.</p>';
 
     inscritos.forEach(function (insc) {
       var aulas = fpAulasDo(insc.alunoId);
       var dias = fpDescreverDias(insc) || '-';
+      var horasOk = fpHorasAprovadas(insc.alunoId);
+      var valorH = fpValorHora(insc);
+      var aReceber = fpValorReceber(insc.alunoId, insc);
+      var stLabel = FP_STATUS_INSC[insc.status] || insc.status;
+      var stPill = insc.status === 'aprovado' ? 'pill-ok' : (insc.status === 'solicitado' ? 'pill-pend' : (insc.status === 'recusado' ? 'pill-no' : 'pill-pend'));
       html += '<div class="lista-item" style="margin-top:8px"><div class="linha"><b>' + esc(insc.alunoNome) + '</b>' +
-        '<span class="pill">' + (insc.status === 'aprovado' ? 'Aprovado' : 'Pendente') + '</span></div>' +
-        '<span class="mini">Dias: ' + esc(dias) + ' · Horas aceitas: ' + fpFormatarHoras(fpHorasAprovadas(insc.alunoId)) + '</span>' +
+        '<span class="pill ' + stPill + '">' + esc(stLabel) + '</span></div>' +
+        '<span class="mini">Dias: ' + esc(dias) + ' · Horas: ' + fpFormatarHoras(horasOk) + ' · ' + fpFormatarReais(valorH) + '/h · <b>A pagar: ' + fpFormatarReais(aReceber) + '</b></span>' +
         '<span class="mini" style="display:block">Prova: ' + fpResumoProva(insc.alunoId) + '</span>' +
-        '<div class="flex-btn" style="margin-top:6px"><button class="btn btn-secondary btn-mini" type="button" onclick="ucFpAbrirEditar(\'' + insc.id + '\')"><i class="fas fa-pen"></i> Editar</button></div>';
+        '<div class="flex-btn" style="margin-top:6px"><button class="btn btn-secondary btn-mini" type="button" onclick="ucFpAbrirEditar(\'' + insc.id + '\')"><i class="fas fa-pen"></i> Editar / valor</button></div>';
       aulas.slice(0, 10).forEach(function (a) {
         html += '<div class="lista-item" style="margin-top:6px"><div class="linha"><span>' + esc(String(a.data).split('-').reverse().join('/')) + ' · ' + (Number(a.duracaoMin) || 0) + ' min</span>' +
           '<span class="pill">' + esc(FP_STATUS_TXT[a.status] || a.status) + '</span></div>';
