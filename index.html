@@ -19863,7 +19863,7 @@ window.ucAvalAbrir = function (i) {
   'use strict';
   var URL_APP = 'https://capoeirapequenaafrica-a11y.github.io';
   var URL_REPO = 'https://github.com/capoeirapequenaafrica-a11y/App-temas';
-  var CHAVE_FB = 'ucFirebaseConfigDev';
+  var CHAVE_FB = 'uc_config_firebase_v87';
   var COLECOES_BACKUP = ['alunos','polos','horarios','presencas','avaliacoes','avaliacoesSemestrais','avisos','mural','certificados','logs','equipe','config'];
 
   function toast(m, t) { try { if (typeof g.mostrarToast === 'function') g.mostrarToast(m, t); else alert(m); } catch (e) {} }
@@ -20016,7 +20016,7 @@ window.TEIA = (function (dados) {
     var alunos = lista('alunos').filter(function (a) { return a.ativo !== false; });
     var pres = lista('presencas').filter(function (p) { return p.status === 'aprovado' && anoDe(p.data) === ano; });
     var avs = lista('avaliacoesSemestrais').filter(function (d) { return String(d.periodo || '').indexOf(ano) === 0; });
-    var certs = lista('certificados').filter(function (c) { return anoDe(c.criadoEm || c.data || c.emitidoEm) === ano; });
+    var certs = lista('certificados').filter(function (c) { return c.status !== 'anulado' && anoDe(c.criadoEm || c.data || c.emitidoEm) === ano; });
 
     var linhas = alunos.map(function (a) {
       var pa = pres.filter(function (p) { return p.alunoId === a.id || (!p.alunoId && p.alunoNome === a.nome); });
@@ -20059,7 +20059,7 @@ window.TEIA = (function (dados) {
   };
 
   function injetar() {
-    var tab = document.getElementById('tab4');
+    var tab = document.getElementById('tab5');
     if (!tab || document.getElementById('ucCardRelatorioAnual')) return;
     var card = document.createElement('div');
     card.id = 'ucCardRelatorioAnual'; card.className = 'card';
@@ -20072,6 +20072,11 @@ window.TEIA = (function (dados) {
   if (typeof orig === 'function' && !orig.__ucRel) {
     var novo = function () { var r = orig.apply(this, arguments); try { injetar(); } catch (e) {} return r; };
     novo.__ucRel = true; g.renderAbaProfessor = novo;
+  }
+  var origAdm2 = g.renderAbaAdm;
+  if (typeof origAdm2 === 'function' && !origAdm2.__ucRel) {
+    var novoAdm2 = function () { var r = origAdm2.apply(this, arguments); try { injetar(); } catch (e) {} return r; };
+    novoAdm2.__ucRel = true; g.renderAbaAdm = novoAdm2;
   }
   if (document.readyState !== 'loading') { try { injetar(); } catch (e) {} }
 })(window);
@@ -20187,7 +20192,7 @@ window.TEIA = (function (dados) {
   };
 
   function cartao() {
-    var tab = document.getElementById('tab4');
+    var tab = document.getElementById('tab5');
     if (!tab || document.getElementById('ucCardEventos')) return;
     var alunos = lista('alunos').filter(function (a) { return a.ativo !== false; })
       .sort(function (x, y) { return nomeAluno(x).localeCompare(nomeAluno(y)); });
@@ -20208,9 +20213,9 @@ window.TEIA = (function (dados) {
         esc(String(e.data).split('-').reverse().join('/')) + ' · ' + esc(e.local || '') + (e.obrigatorio ? ' · <b>obrigatório</b>' : '') +
         ' · presentes ' + pres + '/' + (e.alunos || []).length + '</summary>' +
         '<div style="margin-top:6px">' + (linhas || '<p class="mini">Sem alunos.</p>') + '</div>' +
-        '<div style="margin-top:8px"><b>Certificados (alunos presentes)</b>' + ((e.alunos || []).filter(function (id) { return e.presentes && e.presentes[id]; }).map(function (id) {
+        '<div style="margin-top:8px"><b>Certificados gerados (alunos presentes)</b>' + ((e.alunos || []).filter(function (id) { return e.presentes && e.presentes[id]; }).map(function (id) {
           var a = alunos.filter(function (x) { return x.id === id; })[0];
-          return '<div style="margin:4px 0"><button class="btn btn-gold btn-mini" type="button" onclick="ucEventoCertificado(\'' + esc(e.id) + '\',\'' + esc(id) + '\')"><i class="fas fa-award"></i> Gerar certificado: ' + esc(a ? nomeAluno(a) : id) + '</button></div>';
+          return '<div style="margin:4px 0"><button class="btn btn-gold btn-mini" type="button" onclick="ucEventoCertificado(\'' + esc(e.id) + '\',\'' + esc(id) + '\')"><i class="fas fa-award"></i> Ver certificado: ' + esc(a ? nomeAluno(a) : id) + '</button></div>';
         }).join('') || '<p class="mini">Marque a presença para liberar o certificado.</p>') + '</div>' +
         '<button class="btn btn-secondary btn-mini" type="button" onclick="ucEventoCancelar(\'' + esc(e.id) + '\')">Cancelar evento</button></details>';
     }).join('') || '<p class="mini">Nenhum evento criado.</p>';
@@ -20250,7 +20255,13 @@ window.TEIA = (function (dados) {
     if (!ev) return;
     var pres = Object.assign({}, ev.presentes || {});
     if (presente) pres[alunoId] = true; else delete pres[alunoId];
-    DB.salvar('eventos', Object.assign({}, ev, { presentes: pres }), eventoId).then(function () { g.ucEventosRecarregar(); });
+    DB.salvar('eventos', Object.assign({}, ev, { presentes: pres }), eventoId).then(function () {
+      var certId = 'ev_' + eventoId + '_' + alunoId;
+      if (presente) {
+        return DB.salvar('certificados', { alunoId: alunoId, tipo: 'evento', titulo: ev.nome, evento: ev.nome, local: ev.local || '', data: ev.data, criadoEm: new Date().toISOString(), emitidoPor: 'automatico', status: 'ativo' }, certId);
+      }
+      return DB.salvar('certificados', { alunoId: alunoId, tipo: 'evento', titulo: ev.nome, evento: ev.nome, local: ev.local || '', data: ev.data, criadoEm: new Date().toISOString(), emitidoPor: 'automatico', status: 'anulado' }, certId);
+    }).then(function () { g.ucEventosRecarregar(); });
   };
   g.ucEventosRecarregar = function () {
     var v = document.getElementById('ucCardEventos'); if (v) v.remove();
@@ -20292,7 +20303,84 @@ window.TEIA = (function (dados) {
     var novo = function () { var r = orig.apply(this, arguments); try { cartao(); } catch (e) {} return r; };
     novo.__ucEv = true; g.renderAbaProfessor = novo;
   }
+  var origAdm = g.renderAbaAdm;
+  if (typeof origAdm === 'function' && !origAdm.__ucEv) {
+    var novoAdm = function () { var r = origAdm.apply(this, arguments); try { cartao(); } catch (e) {} return r; };
+    novoAdm.__ucEv = true; g.renderAbaAdm = novoAdm;
+  }
   if (document.readyState !== 'loading') { try { cartao(); } catch (e) {} }
+})(window);
+</script>
+<script id="ucGuardaLogin">
+/* Cards da equipe só aparecem depois do login da própria aba (Professor, ADM ou Dev). */
+(function () {
+  'use strict';
+  var REGRAS = [
+    { id: 'ucCardEventos', aba: 'tab5' },
+    { id: 'ucCardRelatorioAnual', aba: 'tab5' },
+    { id: 'ucCardDevCorrecao', aba: 'tab6' },
+    { id: 'ucCardAvaliacoesSalvas', aba: 'tab4' }
+  ];
+  function formularioVisivel(abaId) {
+    var aba = document.getElementById(abaId);
+    return !!(aba && aba.querySelector('input[placeholder="Nome de usuário da equipe"]'));
+  }
+  function atualizar() {
+    REGRAS.forEach(function (r) {
+      var c = document.getElementById(r.id);
+      if (!c) return;
+      c.style.display = formularioVisivel(r.aba) ? 'none' : '';
+    });
+  }
+  setInterval(atualizar, 700);
+  atualizar();
+})();
+</script>
+<script id="ucAvaliacoesSalvas">
+/* Lista de TODAS as avaliações semestrais salvas (qualquer período), para o professor achar e abrir cada uma. */
+(function (g) {
+  'use strict';
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function lista(c) { try { var r = DB.listar(c); return Array.isArray(r) ? r : []; } catch (e) { return []; } }
+  function nomeAluno(a) { return a.apelido || a.nome || '(sem nome)'; }
+
+  g.ucAbrirAvaliacaoSalva = function (alunoId, periodo) {
+    var p = document.getElementById('ucPeriodo');
+    if (p) p.value = periodo;
+    if (typeof g.ucAjustarAval === 'function') { g.ucAjustarAval(alunoId); return; }
+    if (typeof g.ucCarregarPeriodoNoForm === 'function') g.ucCarregarPeriodoNoForm(periodo);
+  };
+
+  function montar() {
+    var tab = document.getElementById('tab4');
+    if (!tab) return;
+    var velho = document.getElementById('ucCardAvaliacoesSalvas'); if (velho) velho.remove();
+    var alunos = lista('alunos');
+    var avs = lista('avaliacoesSemestrais').sort(function (x, y) {
+      var p = String(y.periodo || '').localeCompare(String(x.periodo || ''));
+      return p !== 0 ? p : String((alunos.filter(function (a) { return a.id === x.alunoId; })[0] || {}).nome || '').localeCompare(String((alunos.filter(function (a) { return a.id === y.alunoId; })[0] || {}).nome || ''));
+    });
+    var linhas = avs.map(function (d) {
+      var a = alunos.filter(function (x) { return x.id === d.alunoId; })[0];
+      var st = d.status === 'finalizada' ? (d.aptoFinal ? 'finalizada · apto' : 'finalizada') : 'rascunho';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line,#2c3646);padding:6px 0">' +
+        '<span><b>' + esc(a ? nomeAluno(a) : '(aluno não encontrado)') + '</b> · ' + esc(d.periodo || '') + ' · ' + esc(st) + '</span>' +
+        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucAbrirAvaliacaoSalva(\'' + esc(d.alunoId) + '\',\'' + esc(d.periodo) + '\')">Abrir</button></div>';
+    }).join('');
+    var c = document.createElement('div'); c.id = 'ucCardAvaliacoesSalvas'; c.className = 'card';
+    c.innerHTML = '<h3><i class="fas fa-clipboard-list"></i> Avaliações salvas (todos os períodos)</h3>' +
+      (g.DB && DB.modo === 'local' ? '<p style="color:var(--gold)"><b>Atenção:</b> o app está em modo local. Estas avaliações ficam só neste aparelho e não aparecem em outros.</p>' : '') +
+      '<p class="mini">' + avs.length + ' avaliação(ões) gravada(s). Toque em "Abrir" para carregar uma delas na avaliação semestral.</p>' +
+      (linhas || '<p class="mini">Nenhuma avaliação salva ainda.</p>');
+    tab.insertBefore(c, tab.firstChild);
+  }
+
+  var orig = g.renderAbaProfessor;
+  if (typeof orig === 'function' && !orig.__ucAvS) {
+    var novo = function () { var r = orig.apply(this, arguments); try { montar(); } catch (e) {} return r; };
+    novo.__ucAvS = true; g.renderAbaProfessor = novo;
+  }
+  if (document.readyState !== 'loading') { try { montar(); } catch (e) {} }
 })(window);
 </script>
 </body>
