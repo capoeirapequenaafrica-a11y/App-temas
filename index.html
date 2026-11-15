@@ -13345,7 +13345,7 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
   /* --- cartão na aba Jogos --- */
   
   function desenhar() {
-    injetarCardMissoes();
+    
     var box = q('ucMissoesCorpo'); if (!box) return;
     var h = '<p class="mini" style="margin-bottom:6px">Cumpriu uma missão? A próxima aparece sozinha, sempre mais difícil. Você acompanha o progresso e cada missão dá pontos no ranking dos jogos.</p>' +
       '<div class="mini" style="margin-bottom:8px">🏅 <b>' + (st.feitas || 0) + '</b> missão(ões) cumprida(s) · <b>+' + (st.bonus || 0) + '</b> pts de bônus</div>';
@@ -19861,7 +19861,7 @@ window.ucAvalAbrir = function (i) {
    Não altera nenhuma função existente; só define as que faltavam e acrescenta o card de atualização na aba Dev. */
 (function (g) {
   'use strict';
-  var URL_APP = 'https://friendly-rugelach-a33f9b.netlify.app';
+  var URL_APP = 'https://capoeirapequenaafrica-a11y.github.io';
   var URL_REPO = 'https://github.com/capoeirapequenaafrica-a11y/App-temas';
   var CHAVE_FB = 'ucFirebaseConfigDev';
   var COLECOES_BACKUP = ['alunos','polos','horarios','presencas','avaliacoes','avaliacoesSemestrais','avisos','mural','certificados','logs','equipe','config'];
@@ -20150,7 +20150,7 @@ window.TEIA = (function (dados) {
     });
   }
 
-  function atualizar() { try { cartaoProfessor(); cartaoAluno(); } catch (e) {} }
+  function atualizar() { try { cartaoAluno(); } catch (e) {} }
   ['renderAbaProfessor', 'renderCheckin'].forEach(function (nome) {
     var orig = g[nome];
     if (typeof orig === 'function' && !orig.__ucModo) {
@@ -20208,6 +20208,10 @@ window.TEIA = (function (dados) {
         esc(String(e.data).split('-').reverse().join('/')) + ' · ' + esc(e.local || '') + (e.obrigatorio ? ' · <b>obrigatório</b>' : '') +
         ' · presentes ' + pres + '/' + (e.alunos || []).length + '</summary>' +
         '<div style="margin-top:6px">' + (linhas || '<p class="mini">Sem alunos.</p>') + '</div>' +
+        '<div style="margin-top:8px"><b>Certificados (alunos presentes)</b>' + ((e.alunos || []).filter(function (id) { return e.presentes && e.presentes[id]; }).map(function (id) {
+          var a = alunos.filter(function (x) { return x.id === id; })[0];
+          return '<div style="margin:4px 0"><button class="btn btn-gold btn-mini" type="button" onclick="ucEventoCertificado(\'' + esc(e.id) + '\',\'' + esc(id) + '\')"><i class="fas fa-award"></i> Gerar certificado: ' + esc(a ? nomeAluno(a) : id) + '</button></div>';
+        }).join('') || '<p class="mini">Marque a presença para liberar o certificado.</p>') + '</div>' +
         '<button class="btn btn-secondary btn-mini" type="button" onclick="ucEventoCancelar(\'' + esc(e.id) + '\')">Cancelar evento</button></details>';
     }).join('') || '<p class="mini">Nenhum evento criado.</p>';
     var c = document.createElement('div'); c.id = 'ucCardEventos'; c.className = 'card';
@@ -20246,7 +20250,32 @@ window.TEIA = (function (dados) {
     if (!ev) return;
     var pres = Object.assign({}, ev.presentes || {});
     if (presente) pres[alunoId] = true; else delete pres[alunoId];
-    DB.salvar('eventos', Object.assign({}, ev, { presentes: pres }), eventoId);
+    DB.salvar('eventos', Object.assign({}, ev, { presentes: pres }), eventoId).then(function () { g.ucEventosRecarregar(); });
+  };
+  g.ucEventosRecarregar = function () {
+    var v = document.getElementById('ucCardEventos'); if (v) v.remove();
+    cartao();
+  };
+  g.ucEventoCertificado = function (eventoId, alunoId) {
+    var ev = lista('eventos').filter(function (e) { return e.id === eventoId; })[0];
+    var a = lista('alunos').filter(function (x) { return x.id === alunoId; })[0];
+    if (!ev || !a) { if (typeof g.mostrarToast === 'function') g.mostrarToast('Evento ou aluno não encontrado.', 'erro'); return; }
+    if (!(ev.presentes && ev.presentes[alunoId])) { if (typeof g.mostrarToast === 'function') g.mostrarToast('O aluno precisa estar marcado como presente.', 'erro'); return; }
+    var certId = 'ev_' + eventoId + '_' + alunoId;
+    var dataBR = String(ev.data || '').split('-').reverse().join('/');
+    var reg = { alunoId: alunoId, tipo: 'evento', titulo: ev.nome, evento: ev.nome, local: ev.local || '', data: ev.data, criadoEm: new Date().toISOString(), emitidoPor: 'professor' };
+    DB.salvar('certificados', reg, certId).then(function () {
+      var nome = esc(a.apelido || a.nome || '');
+      var html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Certificado — ' + esc(ev.nome) + '</title>' +
+        '<style>body{font-family:Georgia,serif;text-align:center;padding:40px;color:#1d2330}.box{border:4px double #b8860b;padding:40px}h1{font-size:2rem}.nome{font-size:2.2rem;margin:24px 0;font-weight:bold}@media print{button{display:none}}</style></head>' +
+        '<body><div class="box"><h1>Certificado de participação</h1><p>Certificamos que</p><div class="nome">' + nome + '</div>' +
+        '<p>participou do evento <b>' + esc(ev.nome) + '</b>' + (ev.local ? ', em ' + esc(ev.local) : '') + ', no dia ' + esc(dataBR) + '.</p>' +
+        '<p style="margin-top:40px">Universo Capoeira</p></div><p><button onclick="window.print()">Imprimir / salvar em PDF</button></p></body></html>';
+      var w = window.open('', '_blank');
+      if (w) { w.document.write(html); w.document.close(); }
+      else { var b = new Blob([html], { type: 'text/html' }); var u = URL.createObjectURL(b); var l = document.createElement('a'); l.href = u; l.download = 'certificado-' + certId + '.html'; document.body.appendChild(l); l.click(); l.remove(); }
+      if (typeof g.mostrarToast === 'function') g.mostrarToast('Certificado gerado para ' + (a.apelido || a.nome) + '.');
+    });
   };
   g.ucEventoCancelar = function (eventoId) {
     if (!confirm('Cancelar este evento? Ele deixa de contar nos relatórios.')) return;
@@ -20262,144 +20291,6 @@ window.TEIA = (function (dados) {
   if (typeof orig === 'function' && !orig.__ucEv) {
     var novo = function () { var r = orig.apply(this, arguments); try { cartao(); } catch (e) {} return r; };
     novo.__ucEv = true; g.renderAbaProfessor = novo;
-  }
-  if (document.readyState !== 'loading') { try { cartao(); } catch (e) {} }
-})(window);
-</script>
-<script id="ucIA">
-/* Assistente de IA do professor (rascunhos). A chave é colada pelo professor e fica só no navegador dele.
-   O professor revisa e copia; nada é salvo automaticamente. */
-(function (g) {
-  'use strict';
-  var CHAVE_GROQ = 'uc_groq_key';
-  var MODELO_IA = 'llama-3.1-8b-instant';
-  function chaveSalva() { try { return localStorage.getItem(CHAVE_GROQ) || ''; } catch (e) { return ''; } }
-  function montarPrompt(tipo, d) {
-    if (tipo === 'observacao') {
-      return 'Escreva uma observação curta (até 3 frases) para o boletim semestral de capoeira do aluno abaixo, ' +
-        'em português, tom respeitoso e motivador. Use SOMENTE os dados fornecidos, não invente fatos.\n' +
-        'Aluno: ' + d.nome + '\nCorda atual: ' + d.corda + '\nPeríodo: ' + d.periodo + '\n' +
-        'Média técnica: ' + d.mediaTecnica + '%\nMédia de toques/jogos: ' + d.mediaMusical + '%\n' +
-        'Presenças aprovadas: ' + d.presencas + '\nEventos: ' + d.eventos + '\nSituação: ' + d.situacao +
-        '\nPontos a melhorar (se houver): ' + (d.melhorar || '');
-    }
-    return 'Escreva uma mensagem curta para WhatsApp avisando os alunos sobre o evento abaixo. Português, cordial, ' +
-      'até 4 linhas. Use SOMENTE os dados fornecidos. Peça confirmação de presença.\n' +
-      'Evento: ' + d.nome + '\nData: ' + d.data + '\nLocal: ' + d.local + '\nObrigatório: ' + (d.obrigatorio ? 'sim' : 'não') +
-      '\nAlunos convocados: ' + d.quantidade;
-  }
-  function chamarIA(tipo, dados) {
-    var chave = chaveSalva();
-    if (!chave) return Promise.reject(new Error('Cole sua chave da Groq no campo do assistente primeiro.'));
-    return fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + chave },
-      body: JSON.stringify({
-        model: MODELO_IA,
-        messages: [
-          { role: 'system', content: 'Você ajuda o professor de capoeira a escrever textos. Responda só com o texto pedido, sem títulos. Nunca invente dados.' },
-          { role: 'user', content: montarPrompt(tipo, dados) }
-        ],
-        temperature: 0.5, max_tokens: 220
-      })
-    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
-      .then(function (x) {
-        var t = x.j && x.j.choices && x.j.choices[0] && x.j.choices[0].message && x.j.choices[0].message.content;
-        if (!x.ok || !t) throw new Error((x.j && x.j.error && x.j.error.message) || 'A IA não respondeu. Confira a chave.');
-        return t.trim();
-      });
-  }
-  g.ucIASalvarChave = function () {
-    var v = (document.getElementById('iaChave') || {}).value || '';
-    v = v.trim();
-    if (v.length < 20) { toast('Chave inválida.', 'erro'); return; }
-    try { localStorage.setItem(CHAVE_GROQ, v); } catch (e) {}
-    document.getElementById('iaChave').value = '';
-    toast('Chave salva neste navegador.');
-    cartao(true);
-  };
-  g.ucIAApagarChave = function () {
-    try { localStorage.removeItem(CHAVE_GROQ); } catch (e) {}
-    toast('Chave removida deste navegador.');
-    cartao(true);
-  };
-
-  g.ucIAObservacao = function () {
-    var id = (document.getElementById('iaAluno') || {}).value;
-    var a = lista('alunos').filter(function (x) { return x.id === id; })[0];
-    if (!a) { toast('Escolha um aluno.', 'erro'); return; }
-    var ano = String(new Date().getFullYear());
-    var av = lista('avaliacoesSemestrais').filter(function (d) { return d.alunoId === id && String(d.periodo || '').indexOf(ano) === 0; })
-      .sort(function (x, y) { return String(y.periodo).localeCompare(String(x.periodo)); })[0] || {};
-    var presencas = lista('presencas').filter(function (p) { return p.alunoId === id && p.status === 'aprovado' && String(p.data || '').slice(0, 4) === ano; }).length;
-    var ev = g.ucEventosDoAluno ? g.ucEventosDoAluno(id, ano) : { total: 0, presentes: 0, obrigatorios: 0, obrigatoriosPresentes: 0 };
-    var dados = {
-      nome: nomeAluno(a), corda: av.cordaFinal || av.cordaAtual || a.corda || '', periodo: av.periodo || ano,
-      mediaTecnica: av.mediaTecnica, mediaMusical: av.mediaMusical, presencas: presencas,
-      eventos: ev.total ? (ev.presentes + ' de ' + ev.total + ' eventos; obrigatórios ' + ev.obrigatoriosPresentes + '/' + ev.obrigatorios) : 'nenhum',
-      situacao: av.aptoFinal ? 'apto' : (av.status === 'finalizada' ? 'não apto' : 'em andamento'),
-      melhorar: av.melhorar || ''
-    };
-    var out = document.getElementById('iaSaida');
-    out.textContent = 'Gerando rascunho...';
-    chamarIA('observacao', dados).then(function (t) {
-      out.innerHTML = '<textarea id="iaTexto" rows="5" style="width:100%">' + esc(t) + '</textarea>' +
-        '<p class="mini">Revise antes de usar. Nada foi salvo.</p>' +
-        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucIACopiar(\'iaTexto\')"><i class="fas fa-copy"></i> Copiar</button>';
-    }).catch(function (e) { out.textContent = 'Não consegui gerar: ' + e.message; });
-  };
-
-  g.ucIAMensagemEvento = function () {
-    var id = (document.getElementById('iaEvento') || {}).value;
-    var e = lista('eventos').filter(function (x) { return x.id === id; })[0];
-    if (!e) { toast('Escolha um evento.', 'erro'); return; }
-    var dados = { nome: e.nome, data: String(e.data || '').split('-').reverse().join('/'), local: e.local || '', obrigatorio: !!e.obrigatorio, quantidade: (e.alunos || []).length };
-    var out = document.getElementById('iaSaida2');
-    out.textContent = 'Gerando mensagem...';
-    chamarIA('mensagem_evento', dados).then(function (t) {
-      out.innerHTML = '<textarea id="iaTexto2" rows="4" style="width:100%">' + esc(t) + '</textarea>' +
-        '<p class="mini">Revise antes de enviar.</p>' +
-        '<button class="btn btn-secondary btn-mini" type="button" onclick="ucIACopiar(\'iaTexto2\')"><i class="fas fa-copy"></i> Copiar</button>';
-    }).catch(function (er) { out.textContent = 'Não consegui gerar: ' + er.message; });
-  };
-
-  g.ucIACopiar = function (idTexto) {
-    var t = document.getElementById(idTexto); if (!t) return;
-    t.select();
-    try { navigator.clipboard.writeText(t.value); toast('Texto copiado.'); } catch (e) { document.execCommand('copy'); toast('Texto copiado.'); }
-  };
-
-  function cartao(forcar) {
-    var tab = document.getElementById('tab4');
-    if (!tab) return;
-    var velho = document.getElementById('ucIA'); if (velho && forcar) velho.remove();
-    if (document.getElementById('ucIA')) return;
-    var alunos = lista('alunos').filter(function (a) { return a.ativo !== false; }).sort(function (x, y) { return nomeAluno(x).localeCompare(nomeAluno(y)); });
-    var evs = lista('eventos').filter(function (e) { return e.status !== 'cancelado'; }).sort(function (x, y) { return String(y.data).localeCompare(String(x.data)); });
-    var opA = alunos.map(function (a) { return '<option value="' + esc(a.id) + '">' + esc(nomeAluno(a)) + '</option>'; }).join('');
-    var opE = evs.map(function (e) { return '<option value="' + esc(e.id) + '">' + esc(e.nome) + ' (' + esc(String(e.data).split('-').reverse().join('/')) + ')</option>'; }).join('');
-    var c = document.createElement('div'); c.id = 'ucIA'; c.className = 'card';
-    c.innerHTML = '<h3><i class="fas fa-wand-magic-sparkles"></i> Assistente (IA)</h3>' +
-      '<p class="mini">A IA só sugere textos. Você revisa e copia. Nada é salvo sozinho.</p>' +
-      (chaveSalva()
-        ? '<p class="mini">Chave salva neste navegador. <button class="btn btn-secondary btn-mini" type="button" onclick="ucIAApagarChave()">Remover chave</button></p>'
-        : '<p class="mini">Cole sua chave da Groq (fica só neste navegador, não vai para o site):</p>' +
-          '<input id="iaChave" type="password" placeholder="gsk_..."> <button class="btn btn-secondary btn-mini" type="button" onclick="ucIASalvarChave()">Salvar chave</button>') +
-      '<h4 style="margin-top:10px">Rascunho de observação do aluno</h4>' +
-      '<select id="iaAluno">' + (opA || '<option value="">Nenhum aluno</option>') + '</select> ' +
-      '<button class="btn btn-secondary btn-mini" type="button" onclick="ucIAObservacao()"><i class="fas fa-pen"></i> Gerar rascunho</button>' +
-      '<div id="iaSaida" class="mini" style="margin-top:6px"></div>' +
-      '<h4 style="margin-top:14px">Mensagem para um evento</h4>' +
-      '<select id="iaEvento">' + (opE || '<option value="">Nenhum evento</option>') + '</select> ' +
-      '<button class="btn btn-secondary btn-mini" type="button" onclick="ucIAMensagemEvento()"><i class="fas fa-message"></i> Gerar mensagem</button>' +
-      '<div id="iaSaida2" class="mini" style="margin-top:6px"></div>';
-    tab.insertBefore(c, tab.firstChild);
-  }
-
-  var orig = g.renderAbaProfessor;
-  if (typeof orig === 'function' && !orig.__ucIA) {
-    var novo = function () { var r = orig.apply(this, arguments); try { cartao(); } catch (e) {} return r; };
-    novo.__ucIA = true; g.renderAbaProfessor = novo;
   }
   if (document.readyState !== 'loading') { try { cartao(); } catch (e) {} }
 })(window);
