@@ -16938,32 +16938,16 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     ctx.fillStyle = '#0b3d0b'; ctx.font = 'bold 58px Georgia, serif';
     y = ucTextoPara(ctx, d.alunoNome || '-', W / 2, y, 1000, 66) - 4;
     ctx.fillStyle = '#333'; ctx.font = '31px Georgia, serif';
-    y = ucTextoPara(ctx, 'realizou com pleno êxito todas as etapas de avaliação técnica, teórica e prática de Capoeira. Demonstrando disciplina, dedicação e pleno respeito aos fundamentos da nossa arte, o(a) capoeirista está apto(a) a portar sua nova graduação:', W / 2, y, 1000, 50);
-    y += 50;
+    y = ucTextoPara(ctx, 'realizou com pleno êxito todas as etapas de avaliação técnica, teórica e prática de Capoeira. Demonstrando disciplina, dedicação e pleno respeito aos fundamentos da nossa arte, o(a) capoeirista encontra-se:', W / 2, y, 1000, 50);
+    y += 56;
 
-    /* Opção: ocultar a barra de cor da graduação no certificado */
-    var ocultarCor = !!(d && d.ocultarCor) || (typeof window.ucOcultarCorCertificado === 'boolean' && window.ucOcultarCorCertificado);
-    if (!ocultarCor) {
-      var cores = ucCoresDaCorda(d.cordaFinal);
-      if (!cores.length) cores = ['#c62828'];
-      var bw = 600, bh = 54, bx = (W - bw) / 2, seg = bw / cores.length;
-      ctx.save();
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(bx, y, bw, bh, 23); else ctx.rect(bx, y, bw, bh);
-      ctx.clip();
-      cores.forEach(function (c, i) { ctx.fillStyle = c; ctx.fillRect(bx + i * seg, y, seg + 1, bh); });
-      ctx.restore();
-      ctx.strokeStyle = '#4a3b12'; ctx.lineWidth = 2;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(bx, y, bw, bh, 23); else ctx.rect(bx, y, bw, bh);
-      ctx.stroke();
-      y += bh + 62;
-    } else {
-      y += 20;
-    }
-    ctx.fillStyle = '#222'; ctx.font = 'bold 50px Georgia, serif';
-    y = ucTextoPara(ctx, d.cordaFinal || 'Graduação a definir', W / 2, y, 1000, 58);
-    y += 40;
+    /* Sem barra de cores: a corda pode mudar até o dia do Batizado — no certificado só consta APTO */
+    ctx.fillStyle = '#1b5e20'; ctx.font = 'bold 72px Georgia, serif';
+    ctx.fillText('APTO', W / 2, y);
+    y += 48;
+    ctx.fillStyle = '#555'; ctx.font = '26px Georgia, serif';
+    y = ucTextoPara(ctx, 'para avançar de graduação. A corda definitiva será definida e revelada no dia do Batizado.', W / 2, y, 980, 40);
+    y += 36;
 
     ctx.fillStyle = '#333'; ctx.font = '30px Georgia, serif';
     y = ucTextoPara(ctx, 'Por ser verdade, outorgamos este documento que confere legitimidade ao seu novo estágio e caminhada na nossa instituição.', W / 2, y, 980, 46);
@@ -17090,7 +17074,8 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     listar('avaliacoesSemestrais').forEach(function (d) { if (ucEhApto(d) && d.periodo) m[d.periodo] = 1; });
     return Object.keys(m).sort().reverse();
   }
-  if (typeof window.ucOcultarCorCertificado === 'undefined') window.ucOcultarCorCertificado = false;
+  /* Cores da corda NÃO entram no certificado: só APTO até o Batizado */
+  window.ucOcultarCorCertificado = true;
 
   function ucCertCardHtml() {
     var ps = ucPeriodosComApto();
@@ -17099,13 +17084,10 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     if (!ps.length) return h + '<p class="mini">Ainda não há aluno apto com avaliação finalizada. Quando você finalizar as avaliações, os certificados aparecem aqui.</p>';
     var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.periodo === ucCertPeriodo && ucEhApto(d); })
       .sort(function (a, b) { return String(a.alunoNome).localeCompare(String(b.alunoNome)); });
-    h += '<p class="mini">Alunos aptos na avaliação finalizada. Cada certificado leva o timbre, o nome e a corda do aluno.</p>' +
+    h += '<p class="mini">Alunos <b>aptos</b> na avaliação finalizada. O certificado mostra só <b>APTO</b> — sem cores de corda (a graduação pode mudar até o Batizado).</p>' +
       '<label class="mini" for="ucCertPeriodoSel">Avaliação (período)</label>' +
       '<select id="ucCertPeriodoSel" onchange="ucCertTrocarPeriodo(this.value)">' +
       ps.map(function (p) { return '<option value="' + esc(p) + '"' + (p === ucCertPeriodo ? ' selected' : '') + '>' + esc(p) + (p === ps[0] ? ' (última)' : '') + '</option>'; }).join('') + '</select>' +
-      '<label style="display:flex;align-items:center;gap:8px;margin:10px 0 6px;font-size:0.82rem;cursor:pointer;user-select:none;">' +
-      '<input type="checkbox" id="chkOcultarCorCert" ' + (window.ucOcultarCorCertificado ? 'checked' : '') + ' onchange="window.ucOcultarCorCertificado=this.checked">' +
-      ' Não mostrar a cor da graduação no certificado</label>' +
       '<div class="flex-btn" style="gap:6px;margin:8px 0">' +
       '<button type="button" class="btn btn-gold" onclick="ucAbrirTodosCertificados(\'' + esc(ucCertPeriodo) + '\')"><i class="fas fa-print"></i> Abrir todos (imprimir / PDF) · ' + docs.length + '</button>' +
       '<button type="button" class="btn btn-secondary" onclick="ucBaixarTodosCertificados(\'' + esc(ucCertPeriodo) + '\')"><i class="fas fa-download"></i> Baixar todos (imagens)</button></div>';
@@ -17183,16 +17165,12 @@ document.addEventListener('DOMContentLoaded', function () { try { ucAplicarApare
     var docs = listar('avaliacoesSemestrais').filter(function (d) { return d.periodo === periodo; });
     if (!docs.length) {
       box.innerHTML = '<div class="uc-mini">Nenhuma avaliação neste período ainda.</div>' +
-        '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:0.78rem;cursor:pointer;user-select:none;">' +
-          '<input type="checkbox" ' + (window.ucOcultarCorCertificado ? 'checked' : '') + ' onchange="window.ucOcultarCorCertificado=this.checked;var c=document.getElementById(\'chkOcultarCorCert\');if(c)c.checked=this.checked;">' +
-          ' Não mostrar a cor da graduação no certificado</label>' +
+        '<p class="mini">Certificado mostra só <b>APTO</b> (sem cores de corda até o Batizado).</p>' +
         '<div class="uc-linha" style="margin:6px 0"><button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button></div>';
       return;
     }
     box.innerHTML = '<h4 class="uc-mini" style="font-weight:700">Avaliações do período ' + esc(periodo) + '</h4>' +
-      '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:0.78rem;cursor:pointer;user-select:none;">' +
-        '<input type="checkbox" ' + (window.ucOcultarCorCertificado ? 'checked' : '') + ' onchange="window.ucOcultarCorCertificado=this.checked;var c=document.getElementById(\'chkOcultarCorCert\');if(c)c.checked=this.checked;">' +
-        ' Não mostrar a cor da graduação no certificado</label>' +
+      '<p class="mini">Certificado: só <b>APTO</b> — cores da graduação ficam para o dia do Batizado.</p>' +
       '<div class="uc-linha" style="margin:6px 0">' +
         '<button class="btn btn-secondary btn-mini" type="button" onclick="ucTestarCertificadoGraduacao()"><i class="fas fa-flask"></i> Testar certificado</button>' +
         (docs.some(ucEhApto)
